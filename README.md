@@ -18,6 +18,33 @@ There are three accompanying blog posts you might find of interest:
 
 If you are eager to upgrade your DPS5005, you may skip directly to part three. Oh, and of course you can use OpenDPS for more than a programmable power supply. Why not use it as an interface for your DIY sous vide cooker :D
 
+
+### Cloning & building
+
+Assuming you have your ARM toolchain and OpenOCD installed, clone the opendps repository and build libopencm3:
+
+```
+git clone --recursive git@github.com:kanflo/opendps.git
+cd opendps
+make -C libopencm3
+```
+
+Fire up OpenOCD:
+
+```
+cd openocd/scripts
+openocd -f interface/stlink-v2.cfg -f target/stm32f1x.cfg
+```
+
+And in another terminal:
+
+```
+cd opendps/opendps
+make -C opendps flash
+```
+
+Check [the blog](https://johan.kanflo.com/upgrading-your-dps5005/) for hints about the ARM toolchain and OpenOCD if those are new to you.
+
 ### Usage
 
 Once upgraded and connected to an ESP8266, type the following at the terminal to find its IP address:
