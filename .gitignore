@@ -1,0 +1,14 @@
+*.d
+*.o
+*.elf
+*.hex
+*.map
+*.bin
+*.pyc
+fontwidth
+rgbtobgr565
+src/opendps/gfx/bgr565/*
+protocol_test
+build/
+firmware/
+html/
