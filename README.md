@@ -18,6 +18,11 @@ There are three accompanying blog posts you might find of interest:
 
 If you are eager to upgrade your DPS5005, you may skip directly to part three. Oh, and of course you can use OpenDPS for more than a programmable power supply. Why not use it as an interface for your DIY sous vide cooker :D
 
+
+### Cloning & building
+
+Check [the blog](https://johan.kanflo.com/upgrading-your-dps5005/) for instructions on how to build, unlock and flash your DPS5005.
+
 ### Usage
 
 Once upgraded and connected to an ESP8266, type the following at the terminal to find its IP address:
