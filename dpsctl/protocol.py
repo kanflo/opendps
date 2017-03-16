@@ -1,3 +1,4 @@
+# coding=utf-8
 """
 
 Copyright (c) 2017 Johan Kanflo (github.com/kanflo)
@@ -23,7 +24,9 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 """
 
-from uframe import *
+from __future__ import absolute_import
+
+from .uframe import uFrame
 
 # command_t
 cmd_ping = 1
@@ -48,6 +51,8 @@ wifi_upgrading = 4
  Each function returns a complete frame ready for transmission.
 
 """
+
+
 def create_response(command, success):
     f = uFrame()
     f.pack8(cmd_response | command)
@@ -55,11 +60,13 @@ def create_response(command, success):
     f.end()
     return f
 
+
 def create_ping():
     f = uFrame()
     f.pack8(cmd_ping)
     f.end()
     return f
+
 
 def create_power_enable(enable):
     f = uFrame()
@@ -68,12 +75,14 @@ def create_power_enable(enable):
     f.end()
     return f
 
+
 def create_vout(vout_mv):
     f = uFrame()
     f.pack8(cmd_set_vout)
     f.pack16(vout_mv)
     f.end()
     return f
+
 
 def create_ilimit(ilimit_ma):
     f = uFrame()
@@ -82,11 +91,13 @@ def create_ilimit(ilimit_ma):
     f.end()
     return f
 
+
 def create_status():
     f = uFrame()
     f.pack8(cmd_status)
     f.end()
     return f
+
 
 def create_status_response(v_in, v_out_setting, v_out, i_out, i_limit, power_enabled):
     f = uFrame()
@@ -100,12 +111,14 @@ def create_status_response(v_in, v_out_setting, v_out, i_out, i_limit, power_ena
     f.end()
     return f
 
+
 def create_wifi_status(wifi_status):
     f = uFrame()
     f.pack8(cmd_wifi_status)
     f.pack8(wifi_status)
     f.end()
     return f
+
 
 def create_lock(locked):
     f = uFrame()
@@ -114,12 +127,14 @@ def create_lock(locked):
     f.end()
     return f
 
+
 def create_ocp(i_cut):
     f = uFrame()
     f.pack8(cmd_ocp_event)
     f.pack16(i_cut)
     f.end()
     return f
+
 
 """
 Helpers for unpacking frames.
@@ -129,21 +144,26 @@ true. If the command byte of the frame does not match the expectation or the
 frame is too short to unpack the expected payload, false will be returned.
 """
 
+
 # Returns success
-def unpack_response():
+def unpack_response(uframe):
     return uframe.unpack8()
+
 
 # Returns enable
 def unpack_power_enable(uframe):
     return uframe.unpack8()
 
+
 # Returns V_out
 def unpack_vout(uframe):
     return uframe.unpack16()
 
+
 # Returns I_limit
 def unpack_ilimit(uframe):
     return uframe.unpack16()
+
 
 # Returns v_in, v_out_setting, v_out, i_out, i_limit, power_enabled
 def unpack_status_response(uframe):
@@ -151,15 +171,17 @@ def unpack_status_response(uframe):
     status = uframe.unpack8()
     return uframe.unpack16(), uframe.unpack16(), uframe.unpack16(), uframe.unpack16(), uframe.unpack16(), uframe.unpack8()
 
+
 # Returns wifi_status
 def unpack_wifi_status(uframe):
     return uframe.unpack8()
+
 
 # Returns locked
 def unpack_lock(uframe):
     return uframe.unpack8()
 
+
 # Returns i_cut
 def unpack_ocp(uframe):
     return uframe.unpack16()
-
