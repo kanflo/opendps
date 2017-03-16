@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+# coding=utf-8
 
 """
 
@@ -36,22 +37,26 @@ time, add it tht the environment variable DPSIF.
 
 """
 
+from __future__ import absolute_import, print_function
+
 import argparse
-import sys
 import os
 import socket
+import sys
+import threading
+import time
+
 import serial
-import protocol
-import uframe
-from uframe import *
-from uhej import *
+
+from . import protocol, uframe
+from .uframe import uFrame
+from .uhej import ANNOUNCE, IllegalFrameException, MCAST_GRP, MCAST_PORT, UDP, decode_frame, query
 
 
-"""
-A abstract class that describes a comminucation interface
-"""
 class comm_interface(object):
-
+    """
+    A abstract class that describes a communication interface
+    """
     _if_name = None
 
     def __init__(self, if_name):
@@ -72,18 +77,16 @@ class comm_interface(object):
     def name(self):
         return self._if_name
 
-"""
-A class that describes a serial interface
-"""
+
 class tty_interface(comm_interface):
+    """
+    A class that describes a serial interface
+    """
 
     _port_handle = None
 
-    def __init__(self, if_name):
-        self._if_name = if_name
-
     def open(self):
-        self._port_handle = serial.Serial(baudrate = 115200, timeout = 0.5)
+        self._port_handle = serial.Serial(baudrate=115200, timeout=0.5)
         self._port_handle.port = self._if_name
         self._port_handle.open()
         return True
@@ -102,7 +105,7 @@ class tty_interface(comm_interface):
         sof = False
         while True:
             b = self._port_handle.read(1)
-            if not b: # timeout
+            if not b:  # timeout
                 break
             b = ord(b)
             if b == uframe._SOF:
@@ -114,15 +117,13 @@ class tty_interface(comm_interface):
                 break
         return bytes
 
-"""
-A class that describes a UDP interface
-"""
+
 class udp_interface(comm_interface):
+    """
+    A class that describes a UDP interface
+    """
 
     _socket = None
-
-    def __init__(self, if_name):
-        self._if_name = if_name
 
     def open(self):
         try:
@@ -140,8 +141,8 @@ class udp_interface(comm_interface):
     def write(self, bytes):
         try:
             self._socket.sendto(bytes, (self._if_name, 5005))
-        except socket.error, msg:
-            fail("%s (%d)" % (str(msg[0]), msg[1]))
+        except socket.error as msg:
+            fail("%s (%d)" % (msg.strerror, msg.errno))
         return True
 
     def read(self):
@@ -156,18 +157,19 @@ class udp_interface(comm_interface):
             pass
         return reply
 
-"""
-Print error message and exit with error
-"""
+
 def fail(message):
-        print("Error: %s." % (message))
-        sys.exit(os.EX_USAGE)
+    """
+    Print error message and exit with error
+    """
+    print("Error: %s." % (message))
+    sys.exit(os.EX_USAGE)
 
 
-"""
-Handle a response frame from the device
-"""
 def handle_response(command, frame, args):
+    """
+    Handle a response frame from the device
+    """
     resp_command = frame.get_frame()[0]
     if resp_command & protocol.cmd_response:
         resp_command ^= protocol.cmd_response
@@ -177,10 +179,10 @@ def handle_response(command, frame, args):
         if not success:
             fail("command failed according to device")
 
+    json = {}
     if args.json:
-        json = {}
-        json["cmd"] = resp_command;
-        json["status"] = 1; # we're here aren't we?
+        json["cmd"] = resp_command
+        json["status"] = 1  # we're here aren't we?
 
     if resp_command == protocol.cmd_status:
         v_in, v_out_setting, v_out, i_out, i_limit, power_enabled = protocol.unpack_status_response(frame)
@@ -188,41 +190,41 @@ def handle_response(command, frame, args):
             enable_str = "on"
         else:
             enable_str = "off"
-        v_in_str = "%d.%02d" % (v_in/1000, (v_in%1000)/10)
-        v_out_str = "%d.%02d" % (v_out/1000, (v_out%1000)/10)
-        v_set_str = "%d.%02d" % (v_out_setting/1000, (v_out_setting%1000)/10)
-        i_lim_str = "%d.%03d" % (i_limit/1000, i_limit%1000)
-        i_out_str = "%d.%03d" % (i_out/1000, i_out%1000)
+        v_in_str = "%d.%02d" % (v_in / 1000, (v_in % 1000) / 10)
+        v_out_str = "%d.%02d" % (v_out / 1000, (v_out % 1000) / 10)
+        v_set_str = "%d.%02d" % (v_out_setting / 1000, (v_out_setting % 1000) / 10)
+        i_lim_str = "%d.%03d" % (i_limit / 1000, i_limit % 1000)
+        i_out_str = "%d.%03d" % (i_out / 1000, i_out % 1000)
         if args.json:
-            json["V_in"] = v_in_str;
-            json["V_out"] = v_out_str;
-            json["V_set"] = v_set_str;
-            json["I_lim"] = i_lim_str;
-            json["I_out"] = i_out_str;
-            json["enable"] = power_enabled;
+            json["V_in"] = v_in_str
+            json["V_out"] = v_out_str
+            json["V_set"] = v_set_str
+            json["I_lim"] = i_lim_str
+            json["I_out"] = i_out_str
+            json["enable"] = power_enabled
         else:
-            print("V_in  : %s V" % (v_in_str))
-            print("V_set : %s V" % (v_set_str))
+            print("V_in  : %s V" % v_in_str)
+            print("V_set : %s V" % v_set_str)
             print("V_out : %s V (%s)" % (v_out_str, enable_str))
-            print("I_lim : %s A" % (i_lim_str))
-            print("I_out : %s A" % (i_out_str))
+            print("I_lim : %s A" % i_lim_str)
+            print("I_out : %s A" % i_out_str)
 
     if args.json:
         count = 0
-        print "{",
+        print("{", end=' ')
         for k in json:
             count += 1
             if count == len(json):
-                print"\"%s\":\"%s\"" % (k, json[k]),
+                print("\"%s\":\"%s\"" % (k, json[k]), end=' ')
             else:
-                print"\"%s\":\"%s\"," % (k, json[k]),
-        print "}"
+                print("\"%s\":\"%s\"," % (k, json[k]), end=' ')
+        print("}")
 
 
-"""
-Communicate with the DPS device according to the user's whishes
-"""
 def communicate(comms, frame, args):
+    """
+    Communicate with the DPS device according to the user's whishes
+    """
     bytes = frame.get_frame()
 
     if not comms:
@@ -249,10 +251,11 @@ def communicate(comms, frame, args):
     else:
         handle_response(frame.get_frame()[1], f, args)
 
-"""
-Communicate with the DPS device according to the user's whishes
-"""
+
 def handle_commands(args):
+    """
+    Communicate with the DPS device according to the user's whishes
+    """
     if args.scan:
         uhej_scan()
         return
@@ -296,21 +299,23 @@ def handle_commands(args):
     if args.status:
         communicate(comms, protocol.create_status(), args)
 
-"""
-Return True if the parameter if_name is an IP address.
-"""
+
 def is_ip_address(if_name):
+    """
+    Return True if the parameter if_name is an IP address.
+    """
     try:
         socket.inet_aton(if_name)
         return True
     except socket.error:
         return False
 
-"""
-Create and return a comminications interface object or None if no comms if
-was specified.
-"""
+
 def create_comms(args):
+    """
+    Create and return a communications interface object or None if no comms if
+    was specified.
+    """
     if_name = None
     comms = None
     if args.device:
@@ -327,10 +332,11 @@ def create_comms(args):
         fail("no comms interface specified")
     return comms
 
-"""
-The worker thread used by uHej for service discovery
-"""
+
 def uhej_worker_thread():
+    """
+    The worker thread used by uHej for service discovery
+    """
     global discovery_list
     global sock
     while 1:
@@ -349,18 +355,19 @@ def uhej_worker_thread():
                         key = "%s:%s:%s" % (f["source"], s["port"], s["type"])
                         if not key in discovery_list:
                             if s["service_name"] == "opendps":
-                                discovery_list[key] = True # Keep track of which hosts we have seen
+                                discovery_list[key] = True  # Keep track of which hosts we have seen
                                 print("%s" % (f["source"]))
-#                            print("%16s:%-5d  %-8s %s" % (f["source"], s["port"], types[s["type"]], s["service_name"]))
-            except IllegalFrameException, e:
+                                #                            print("%16s:%-5d  %-8s %s" % (f["source"], s["port"], types[s["type"]], s["service_name"]))
+            except IllegalFrameException as e:
                 pass
-        except socket.error, e:
-            print 'Expection', e
+        except socket.error as e:
+            print('Expection: {}'.format(e))
 
-"""
-Scan for OpenDPS devices on the local network
-"""
+
 def uhej_scan():
+    """
+    Scan for OpenDPS devices on the local network
+    """
     global discovery_list
     global sock
     discovery_list = {}
@@ -375,14 +382,14 @@ def uhej_scan():
     sock.setsockopt(socket.IPPROTO_IP, socket.IP_MULTICAST_LOOP, 1)
     sock.bind((ANY, MCAST_PORT))
 
-    thread = threading.Thread(target = uhej_worker_thread)
+    thread = threading.Thread(target=uhej_worker_thread)
     thread.daemon = True
     thread.start()
 
     sock.setsockopt(socket.SOL_IP, socket.IP_ADD_MEMBERSHIP, socket.inet_aton(MCAST_GRP) + socket.inet_aton(ANY))
 
-    run_time_s = 6 # Run query for this many seconds
-    query_interval_s = 2 # Send query this often
+    run_time_s = 6  # Run query for this many seconds
+    query_interval_s = 2  # Send query this often
     last_query = 0
     start_time = time.time()
 
@@ -402,10 +409,10 @@ def uhej_scan():
         print("%d OpenDPS devices found" % (num_found))
 
 
-"""
-Ye olde main
-"""
 def main():
+    """
+    Ye olde main
+    """
     global args
     parser = argparse.ArgumentParser(description='Instrument an OpenDPS device')
 
@@ -424,6 +431,7 @@ def main():
     args, unknown = parser.parse_known_args()
 
     handle_commands(args)
+
 
 if __name__ == "__main__":
     main()
