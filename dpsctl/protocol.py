@@ -145,43 +145,43 @@ frame is too short to unpack the expected payload, false will be returned.
 """
 
 
-# Returns success
 def unpack_response(uframe):
+    """Returns success"""
     return uframe.unpack8()
 
 
-# Returns enable
 def unpack_power_enable(uframe):
+    """Returns enable"""
     return uframe.unpack8()
 
 
-# Returns V_out
 def unpack_vout(uframe):
+    """Returns V_out"""
     return uframe.unpack16()
 
 
-# Returns I_limit
 def unpack_ilimit(uframe):
+    """Returns I_limit"""
     return uframe.unpack16()
 
 
-# Returns v_in, v_out_setting, v_out, i_out, i_limit, power_enabled
 def unpack_status_response(uframe):
+    """Returns v_in, v_out_setting, v_out, i_out, i_limit, power_enabled"""
     command = uframe.unpack8()
     status = uframe.unpack8()
     return uframe.unpack16(), uframe.unpack16(), uframe.unpack16(), uframe.unpack16(), uframe.unpack16(), uframe.unpack8()
 
 
-# Returns wifi_status
 def unpack_wifi_status(uframe):
+    """Returns wifi_status"""
     return uframe.unpack8()
 
 
-# Returns locked
 def unpack_lock(uframe):
+    """Returns locked"""
     return uframe.unpack8()
 
 
-# Returns i_cut
 def unpack_ocp(uframe):
+    """Returns i_cut"""
     return uframe.unpack16()
