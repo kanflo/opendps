@@ -24,10 +24,10 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 """
 
-_SOF = 0x7e
-_DLE = 0x7d
-_XOR = 0x20
-_EOF = 0x7f
+SOF = 0x7e
+DLE = 0x7d
+XOR = 0x20
+EOF = 0x7f
 
 # Errors returned by uframe_unescape(...)
 E_LEN = 1  # Received frame is too short to be a uframe
@@ -46,7 +46,7 @@ class uFrame(object):
 
     def __init__(self):
         self._frame = bytearray()
-        self._frame.append(_SOF)
+        self._frame.append(SOF)
         self._crc = 0
 
     def pack8(self, byte, update_crc=True):
@@ -56,9 +56,9 @@ class uFrame(object):
         byte &= 0xff
         if update_crc:
             self._crc += byte
-        if byte in [_SOF, _DLE, _EOF]:
-            self._frame.append(_DLE)
-            self._frame.append(byte ^ _XOR)
+        if byte in [SOF, DLE, EOF]:
+            self._frame.append(DLE)
+            self._frame.append(byte ^ XOR)
         else:
             self._frame.append(byte)
 
@@ -77,7 +77,7 @@ class uFrame(object):
         crc2 = self._crc & 0xff
         self.pack8(crc1, False)
         self.pack8(crc2, False)
-        self._frame.append(_EOF)
+        self._frame.append(EOF)
         self._valid = True
 
     def get_frame(self):
@@ -110,15 +110,15 @@ class uFrame(object):
         length = len(self._frame)
         if length < 4:
             return -E_LEN
-        if self._frame[0] != _SOF or self._frame[length - 1] != _EOF:
+        if self._frame[0] != SOF or self._frame[length - 1] != EOF:
             return -E_FRM
         f = bytearray()
         seen_dle = False
         for b in self._frame:
-            if b == _DLE:
+            if b == DLE:
                 seen_dle = True
             elif seen_dle:
-                f.append(b ^ _XOR)
+                f.append(b ^ XOR)
                 seen_dle = False
             else:
                 f.append(b)

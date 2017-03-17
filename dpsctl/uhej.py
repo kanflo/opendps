@@ -31,61 +31,71 @@ class IllegalFrameException(Exception):
     pass
 
 
-# Utility function to convert IP address to 32 bit integer
 def ip2int(addr):
+    """
+    Utility function to convert IP address to 32 bit integer
+    """
     return struct.unpack("!I", socket.inet_aton(addr))[0]
 
 
-# Utility function to convert 32 bit integer to IP address
 def int2ip(addr):
+    """
+    Utility function to convert 32 bit integer to IP address
+    """
     return socket.inet_ntoa(struct.pack("!I", addr))
 
 
-# Decode a received frame as an uhej frame (a byte array)
-# Raises IllegalFrameException if the frame is not a valud uhej frame
 def decode_frame(frame):
-    f = {}
+    """
+    Decode a received frame as an uhej frame (a byte array)
+    Raises IllegalFrameException if the frame is not a valid uhej frame
+    """
     try:
         magic = _decode_int32(frame, 0)
         if MAGIC != magic:
             raise IllegalFrameException
-        type = frame[4]
-        if HELLO == type:
+        type_ = frame[4]
+        if HELLO == type_:
             f = _decode_hello(frame)
-        elif ANNOUNCE == type:
+        elif ANNOUNCE == type_:
             f = _decode_announce(frame)
-        elif QUERY == type:
+        elif QUERY == type_:
             f = _decode_query(frame)
-        elif BEACON == type:
+        elif BEACON == type_:
             f = _decode_beacon(frame)
         else:
             raise IllegalFrameException
-    except IndexError as e:
+    except IndexError:
         print("Index error")
         raise IllegalFrameException
     return f
 
 
-# Create and return a frame (a byte array) with given type (UDP, TCP or MCAST)
-def create_frame(type):
+def create_frame(type_):
+    """
+    Create and return a frame (a byte array) with given type (UDP, TCP or MCAST)
+    """
     frame = bytearray()
     frame.append((MAGIC >> 24) & 0xff)
     frame.append((MAGIC >> 16) & 0xff)
     frame.append((MAGIC >> 8) & 0xff)
     frame.append((MAGIC) & 0xff)
-    frame.append(type & 0xff)
+    frame.append(type_ & 0xff)
     return frame
 
 
-# Add byte array payload to frame, return new frame
 def add_payload(frame, payload):
-    #   frame.append(len(payload))
+    """
+    Add byte array payload to frame, return new frame
+    """
     frame += payload
     return frame
 
 
-# Create and return a hello frame
 def hello(node_id, ip_addr_str, macaddr_str, name):
+    """
+    Create and return a hello frame
+    """
     f = create_frame(HELLO)
     p = bytearray()
     ip = ip2int(ip_addr_str)
@@ -114,22 +124,28 @@ def hello(node_id, ip_addr_str, macaddr_str, name):
     return f
 
 
-# Create and return a query framefor a service of type UDP, TCP or MULTICAST with given name
-def query(type, name):
+def query(type_, name):
+    """
+    Create and return a query frame for a service of type UDP, TCP or MULTICAST with given name
+    
+    """
     f = create_frame(QUERY)
     p = bytearray()
-    p.append(type & 0xff)
+    p.append(type_ & 0xff)
     p.extend(name.encode('ascii'))
     p.append(0)
     f = add_payload(f, p)
     return f
 
 
-# Create and return an announce frame. Services is an array each item being a dictionary of
-# 'type' : int8     type of service (UDP, TCP or MCAST)
-# 'port' : int16    port where service resides
-# 'name' : string   name of servier
 def announce(services):
+    """
+    Create and return an announce frame. Services is an array each item being a dictionary of
+    'type' : int8     type of service (UDP, TCP or MCAST)
+    'port' : int16    port where service resides
+    'name' : string   name of servier
+
+    """
     f = create_frame(ANNOUNCE)
     p = bytearray()
     for s in services:
@@ -154,42 +170,54 @@ def get_local_ip():
     return local_ip_address
 
 
-### Internal functions below ###
+# ## Internal functions below ## #
 
-# Decode an int32 in network byte order in the byte array 'data' startging at 'offset'
 def _decode_int32(data, offset):
+    """
+    Decode an int32 in network byte order in the byte array 'data' starting at 'offset'
+    """
     return (data[offset] << 24) | (data[offset + 1] << 16) | (data[offset + 2] << 8) | (data[offset + 3])
 
 
-# Decode an int16 in network byte order in the byte array 'data' startging at 'offset'
 def _decode_int16(data, offset):
+    """
+    Decode an int16 in network byte order in the byte array 'data' startging at 'offset'
+    """
     return (data[offset] << 8) | (data[offset + 1])
 
 
-# Find the nexto zero byte in the byte array 'data' starting at 'start'
-# Return found location or -1 if none found
 def _find_zero(data, start):
+    """
+    Find the nexto zero byte in the byte array 'data' starting at 'start'
+    Return found location or -1 if none found
+    """
     i = start
     while i < len(data):
         if data[i] == 0:
-            return i;
+            return i
         i += 1
     return -1
 
 
-# Decode a 'hello' frame
 def _decode_hello(frame):
+    """
+    Decode a 'hello' frame
+    """
     f = {}
     f['frame_type'] = frame[4]
     f['node_id'] = _decode_int32(frame, 5)
     f['ip'] = int2ip(_decode_int32(frame, 9))
-    f['mac'] = "%02x:%02x:%02x:%02x:%02x:%02x" % (frame[13], frame[14], frame[15], frame[16], frame[17], frame[18])
+    f['mac'] = "{:02x}:{:02x}:{:02x}:{:02x}:{:02x}:{:02x}".format(frame[13], frame[14],
+                                                                  frame[15], frame[16],
+                                                                  frame[17], frame[18])
     f['name'] = frame[19:-1].decode("ascii")
     return f
 
 
-# Decode a 'announce' frame
 def _decode_announce(frame):
+    """
+    Decode a 'announce' frame
+    """
     f = {}
     f['frame_type'] = frame[4]
     i = 5
@@ -208,8 +236,10 @@ def _decode_announce(frame):
     return f
 
 
-# Decode a 'query' frame
 def _decode_query(frame):
+    """
+    Decode a 'query' frame
+    """
     f = {}
     f['frame_type'] = frame[4]
     f['service_type'] = frame[5]
@@ -217,8 +247,10 @@ def _decode_query(frame):
     return f
 
 
-# Decode a 'beacon' frame
 def _decode_beacon(frame):
+    """
+    Decode a 'beacon' frame
+    """
     f = {}
     f['frame_type'] = frame[4]
     return f
