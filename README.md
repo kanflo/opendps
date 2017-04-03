@@ -61,7 +61,7 @@ The project consists of three parts:
 
 ### What about other DPS:es?
 
-In theory, OpenDPS should work for all the other models in the DPSx0xx series, such as the DPS3005, DPS3012 and DPS5015. I have none to test with but would be very surprised if the hardware differed that much. Please share any results. The maxium settable output current can be defined when building opendps, see the makefile. 
+In theory, OpenDPS should work for all the other models in the DPSx0xx series, such as the DPS3005, DPS3012 and DPS5015. I have none to test with but would be very surprised if the hardware differed that much. Please share any results. The maxium settable output current can be defined when building opendps, see the makefile.
 
--
+---
 Licensed under the MIT license. Have fun!
