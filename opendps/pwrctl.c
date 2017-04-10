@@ -57,6 +57,8 @@ bool pwrctl_set_vout(uint32_t value_mv)
     /** @todo Check with max Vout, currently filtered by ui.c */
     v_out = value_mv;
     DAC_DHR12R1 = pwrctl_calc_vout_dac(v_out);
+  /** @todo Check how the stock FW uses DAC1_OUT and DAC2_OUT to hold the voltage at high loads */
+    DAC_DHR12R2 = 0xfff;
     return true;
 }
 

@@ -379,10 +379,12 @@ static void gpio_init(void)
     gpio_set_mode(GPIOA, GPIO_MODE_INPUT, GPIO_CNF_INPUT_PULL_UPDOWN, GPIO3);
     gpio_set(GPIOA, GPIO3);
 
-    // PA4  I 0 An                    DAC1_OUT        PWM.2 (1IN-)
+    // DAC1_OUT and DAC2_OUT controls the output voltage via a TL594 Pulse-Width-Modulation Control Circuit
+    // http://www.ti.com/product/tl594?qgpn=tl594
+    // PA4  I 0 An                    DAC1_OUT        TL594.2 (1IN-)
     gpio_set_mode(GPIOA, GPIO_MODE_INPUT, GPIO_CNF_INPUT_ANALOG, GPIO4);
 
-    // PA5  I 0 An                    DAC2_OUT        PWM.15 (2IN-)
+    // PA5  I 0 An                    DAC2_OUT        TL594.15 (2IN-)
     gpio_set_mode(GPIOA, GPIO_MODE_INPUT, GPIO_CNF_INPUT_ANALOG, GPIO5);
 
     // PA6  I 1 PuPd
@@ -415,7 +417,7 @@ static void gpio_init(void)
     gpio_set_mode(GPIOA, GPIO_MODE_INPUT, GPIO_CNF_INPUT_PULL_UPDOWN, GPIO14);
     gpio_set(GPIOA, GPIO14);
 
-    // PA15 O 1 OD     (50 Mhz)                       R41-PWM.16 (PWM 2IN+)
+    // PA15 O 1 OD     (50 Mhz)                       R41-TL594.16 (2IN+)
     gpio_set_mode(GPIOA, GPIO_MODE_OUTPUT_50_MHZ, GPIO_CNF_OUTPUT_OPENDRAIN, GPIO15);
 
     // PB0  I 0 An                                    R7/R2-R14-D4
@@ -589,7 +591,7 @@ static void dac_init(void)
     DAC_CR       = 0;          // 0x40007400 disable
     DAC_SWTRIGR  = 0x00000000; // 0x40007404
     DAC_DHR12R1  = 0x00000000; // 0x40007408 0V output
-    DAC_DHR12R2  = 0x000001d6; // 0x40007414
+    DAC_DHR12R2  = 0x00000000; // 0x40007414
     DAC_CR       = 0x00030003; // 0x40007400 BOFF2, EN2, BOFF1, EN1
 }
 
