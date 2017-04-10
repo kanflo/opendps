@@ -72,14 +72,14 @@ known_pins = {
     "PA1"  : ["M2 button", ""],
     "PA2"  : ["SEL button", ""],
     "PA3"  : ["M1 button", ""],
-    "PA4"  : ["DAC1_OUT", "PWM.2 (1IN-)"],
-    "PA5"  : ["DAC2_OUT", "PWM.15 (2IN-)"],
+    "PA4"  : ["DAC1_OUT", "TL594.2 (1IN-)"],
+    "PA5"  : ["DAC2_OUT", "TL594.15 (2IN-)"],
     "PA7"  : ["ADC1_IN7", "R30-U2.7:V_OUT-B (measures Vout)"],
     "PA8"  : ["TFT.7", "(not used by TFT)"],
     "PA14" : ["", "SWDCLK"],
-    "PA15" : ["", "R41-PWM.16 (PWM 2IN+)"],
+    "PA15" : ["", "R41-TL594.16 (2IN+)"],
     "PB0"  : ["ADC1_IN8", "R7/R2-R14-D4 (measures Vin)"],
-    "PB1"  : ["ADC1_IN9", "R33-U2.1:V_OUT-A (probably measures Iout)"],
+    "PB1"  : ["ADC1_IN9", "R33-U2.1:V_OUT-A (measures Iout)"],
     "PB3"  : ["", "R11-R17-R25-U2.5 (V_inB+)"],
     "PB4"  : ["PWR button", ""],
     "PB5"  : ["Rotary press", ""],
@@ -108,8 +108,8 @@ GPIOE_BASE = 0x40011800
 GPIOF_BASE = 0x40011C00
 GPIOG_BASE = 0x40012000
 RCC_BASE   = 0x40021000
-SPI1_BASE  = 0x40013000 
-SPI2_BASE  = 0x40003800 
+SPI1_BASE  = 0x40013000
+SPI2_BASE  = 0x40003800
 TIM1_BASE  = 0x40012C00
 TIM2_BASE  = 0x40000000
 TIM3_BASE  = 0x40000400
@@ -270,40 +270,40 @@ DMA_CPAR7    = 0x88
 
 
 register_map = [
-  [0x40023000, 0x400233FF, "CRC"], 
-  [0x40022000, 0x400223FF, "Flash memory interface"], 
-  [0x40021000, 0x400213FF, "Reset and clock control RCC"], 
-  [0x40020000, 0x400203FF, "DMA1"], 
-  [0x40014800, 0x40014BFF, "TIM17 timer"], 
-  [0x40014400, 0x400147FF, "TIM16 timer"], 
-  [0x40014000, 0x400143FF, "TIM15 timer"], 
-  [0x40013800, 0x40013BFF, "USART1"], 
-  [0x40013000, 0x400133FF, "SPI1"], 
-  [0x40012C00, 0x40012FFF, "TIM1 timer"], 
-  [0x40012400, 0x400127FF, "ADC1"], 
-  [0x40011800, 0x40011BFF, "GPIO Port E"], 
-  [0x40011400, 0x400117FF, "GPIO Port D"], 
-  [0x40011000, 0x400113FF, "GPIO Port C"], 
-  [0x40010C00, 0x40010FFF, "GPIO Port B"], 
-  [0x40010800, 0x40010BFF, "GPIO Port A"], 
-  [0x40010400, 0x400107FF, "EXTI"], 
-  [0x40010000, 0x400103FF, "AFIO"], 
-  [0x40007800, 0x40007BFF, "CEC"], 
-  [0x40007400, 0x400077FF, "DAC"], 
-  [0x40007000, 0x400073FF, "Power control PWR"], 
-  [0x40006C00, 0x40006FFF, "Backup registers (BKP)"], 
-  [0x40005800, 0x40005BFF, "I2C2"], 
-  [0x40005400, 0x400057FF, "I2C1"], 
-  [0x40004800, 0x40004BFF, "USART3"], 
-  [0x40004400, 0x400047FF, "USART2"], 
-  [0x40003800, 0x40003BFF, "SPI2"], 
-  [0x40003000, 0x400033FF, "Independent watchdog (IWDG)"], 
-  [0x40002C00, 0x40002FFF, "Window watchdog (WWDG)"], 
-  [0x40002800, 0x40002BFF, "RTC"], 
-  [0x40001400, 0x400017FF, "TIM7 timer"], 
-  [0x40001000, 0x400013FF, "TIM6 timer"], 
-  [0x40000800, 0x40000BFF, "TIM4 timer"], 
-  [0x40000400, 0x400007FF, "TIM3 timer"], 
+  [0x40023000, 0x400233FF, "CRC"],
+  [0x40022000, 0x400223FF, "Flash memory interface"],
+  [0x40021000, 0x400213FF, "Reset and clock control RCC"],
+  [0x40020000, 0x400203FF, "DMA1"],
+  [0x40014800, 0x40014BFF, "TIM17 timer"],
+  [0x40014400, 0x400147FF, "TIM16 timer"],
+  [0x40014000, 0x400143FF, "TIM15 timer"],
+  [0x40013800, 0x40013BFF, "USART1"],
+  [0x40013000, 0x400133FF, "SPI1"],
+  [0x40012C00, 0x40012FFF, "TIM1 timer"],
+  [0x40012400, 0x400127FF, "ADC1"],
+  [0x40011800, 0x40011BFF, "GPIO Port E"],
+  [0x40011400, 0x400117FF, "GPIO Port D"],
+  [0x40011000, 0x400113FF, "GPIO Port C"],
+  [0x40010C00, 0x40010FFF, "GPIO Port B"],
+  [0x40010800, 0x40010BFF, "GPIO Port A"],
+  [0x40010400, 0x400107FF, "EXTI"],
+  [0x40010000, 0x400103FF, "AFIO"],
+  [0x40007800, 0x40007BFF, "CEC"],
+  [0x40007400, 0x400077FF, "DAC"],
+  [0x40007000, 0x400073FF, "Power control PWR"],
+  [0x40006C00, 0x40006FFF, "Backup registers (BKP)"],
+  [0x40005800, 0x40005BFF, "I2C2"],
+  [0x40005400, 0x400057FF, "I2C1"],
+  [0x40004800, 0x40004BFF, "USART3"],
+  [0x40004400, 0x400047FF, "USART2"],
+  [0x40003800, 0x40003BFF, "SPI2"],
+  [0x40003000, 0x400033FF, "Independent watchdog (IWDG)"],
+  [0x40002C00, 0x40002FFF, "Window watchdog (WWDG)"],
+  [0x40002800, 0x40002BFF, "RTC"],
+  [0x40001400, 0x400017FF, "TIM7 timer"],
+  [0x40001000, 0x400013FF, "TIM6 timer"],
+  [0x40000800, 0x40000BFF, "TIM4 timer"],
+  [0x40000400, 0x400007FF, "TIM3 timer"],
   [0x40000000, 0x400003FF, "TIM2 timer"]
 ]
 
@@ -390,16 +390,16 @@ def dump_reg(name, address):
 
 """
 CR1      : 0x00000081  [00] ARPE=1 CEN=1
-CR2      : 0x00000000  [04] 
-SMCR     : 0x00000000  [08] 
-DIER     : 0x00000000  [0c] 
+CR2      : 0x00000000  [04]
+SMCR     : 0x00000000  [08]
+DIER     : 0x00000000  [0c]
 SR       : 0x0000001f  [10] CC4IF=1 CC3IF=1 CC2IF=1 CC1IF=1 UIF=1
-EGR      : 0x00000000  [14] 
-CCMR1    : 0x00006800  [18] OC2M=2 OC2PE=1 
-CCMR2    : 0x00000000  [1c] 
+EGR      : 0x00000000  [14]
+CCMR1    : 0x00006800  [18] OC2M=2 OC2PE=1
+CCMR2    : 0x00000000  [1c]
 CCER     : 0x00000010  [20] CC2P=1
 CNT      : 0x000056ed  [24] <counter>
-PSC      : 0x00000000  [28] 
+PSC      : 0x00000000  [28]
 ARR      : 0x00005dbf  [2c] <auto reload>
 CCR1     : 0x00000000  [34]
 CCR2     : 0x00005dc0  [38] <TIM2 compare register 2>
@@ -653,7 +653,7 @@ def dump_gpiod_settings():
 DAC settings @ 5V :
 
 CR       : 0x00030003  [00] CH 1/2 output buffer disable,  CH 1/2 enable TSEL=000
-SWTRIGR  : 0x00000000  [04] 
+SWTRIGR  : 0x00000000  [04]
 DHR12R1  : 0x00000169  [08] DAC channel1 12-bit right-aligned data holding register
 DHR12L1  : 0x00001690  [0c] DAC channel1 12-bit left aligned data holding register
 DHR8R1   : 0x00000016  [10] DAC channel1 8-bit right aligned data holding register
@@ -665,7 +665,7 @@ DHR12LD  : 0x1d601690  [24] DUAL DAC 12-bit left aligned data holding register
 DHR8RD   : 0x00001d16  [28] DUAL DAC 8-bit right aligned data holding register
 DOR1     : 0x00000169  [2c] DAC channel1 data output register
 DOR2     : 0x000001d6  [30] DAC channel2 data output register
-SR       : 0x00000000  [34] 
+SR       : 0x00000000  [34]
 
 
 # 470/V
@@ -676,7 +676,7 @@ mww 0x40007424 0x1d600000
 # 1V
 mww 0x40007424 0x1d6004D0
 
-# 2V 
+# 2V
 mww 0x40007424 0x1d600940
 
 # 3V
