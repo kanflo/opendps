@@ -1,5 +1,7 @@
 #!/usr/bin/python
+# coding=utf-8
 
+import logging
 import socket
 import sys
 
@@ -7,65 +9,58 @@ prompt = "> "
 
 ocd_sock = False
 
-def ocd_exchange(str = ""):
+
+def ocd_exchange(str_=""):
     output = ""
     line = ""
     got_prompt = False
-    if len(str) > 0:
-        ocd_sock.send(str)
-    while 1:
+    if len(str_) > 0:
+        ocd_sock.send(str_)
+    while True:
         try:
             ch = ocd_sock.recv(1)
-#            print "'%s' [%02x]" % (ch, ord(ch))
+            logging.debug("'%s' [%02x]" % (ch, ord(ch)))
             if len(ch) > 0:
                 if ch == '\d':
                     pass
                 elif ch == '\n':
- #                   print "--------------------------"
- #                   print line
-                    if "%s\n" % line != str:
+                    if "%s\n" % line != str_:
                         output += "%s\n" % line
                     line = ""
-                elif ord(ch) >= 32 and ord(ch) <= 126:
+                elif 32 <= ord(ch) <= 126:
                     line += ch
-#                    print "[%s]" % line
                 if line == prompt:
-#                    print "==========================="
-#                    print line
                     got_prompt = True
                     break
             else:
                 break
-        except socket.timeout, e:
+        except socket.timeout as e:
             break
-#    print line
 
-#    print ">>>>>>>>>>>>>>>>>>"
-#    print output
-#    print "<<<<<<<<<<<<<<<<<<"
-#    if got_prompt:
     return output.strip()
-#    else:
-#        return False
+
 
 def ocd_sync():
     return ocd_exchange()
+
 
 def ocd_read(address):
     response = ocd_exchange("mdw 0x%08x 1\n" % (address))
     parts = response.split(":")
     if len(parts) != 2:
-        print ("Parsing error: %s" % response)
+        print("Parsing error: %s" % response)
         return False
     temp_address = int(parts[0].strip(), 16)
     value = int(parts[1].strip(), 16)
     if temp_address != address:
-        print ("Address error: %s" % response)
+        print("Address error: %s" % response)
         return False
     return value
 
+
 def ocd_write(address, value):
     response = ocd_exchange("mww 0x%08x 0x%08x\n" % (address, value))
+
 
 known_pins = {
     "PA0"  : ["", "U7 "],
@@ -95,11 +90,11 @@ known_pins = {
     "PD1"  : ["", "U7"],
 }
 
-ADC1_BASE  = 0x40012400
-AFIO_BASE  = 0x40010000
-DAC_BASE   = 0x40007400
-DMA1_BASE  = 0x40020000
-EXTI_BASE  = 0x40010400
+ADC1_BASE = 0x40012400
+AFIO_BASE = 0x40010000
+DAC_BASE = 0x40007400
+DMA1_BASE = 0x40020000
+EXTI_BASE = 0x40010400
 GPIOA_BASE = 0x40010800
 GPIOB_BASE = 0x40010c00
 GPIOC_BASE = 0x40011000
@@ -129,145 +124,141 @@ SPI_CRCPR = 0x10
 SPI_RXCRCR = 0x14
 SPI_TXCRCR = 0x18
 
-
 # TIM2 to TIM5 registers (checked)
-TIMx_CR1   = 0x00
-TIMx_CR2   = 0x04
-TIMx_SMC   = 0x08
-TIMx_DIER  = 0x0c
-TIMx_SR    = 0x10
-TIMx_EGR   = 0x14
+TIMx_CR1 = 0x00
+TIMx_CR2 = 0x04
+TIMx_SMC = 0x08
+TIMx_DIER = 0x0c
+TIMx_SR = 0x10
+TIMx_EGR = 0x14
 TIMx_CCMR1 = 0x18
 TIMx_CCMR2 = 0x1c
-TIMx_CCER  = 0x20
-TIMx_CNT   = 0x24
-TIMx_PSC   = 0x28
-TIMx_ARR   = 0x2c
-TIMx_RCR   = 0x30
-TIMx_CCR1  = 0x34
-TIMx_CCR2  = 0x38
-TIMx_CCR3  = 0x3c
-TIMx_CCR4  = 0x40
-TIMx_BDTR  = 0x44
-TIMx_DCR   = 0x48
-TIMx_DMAR  = 0x4c
-
+TIMx_CCER = 0x20
+TIMx_CNT = 0x24
+TIMx_PSC = 0x28
+TIMx_ARR = 0x2c
+TIMx_RCR = 0x30
+TIMx_CCR1 = 0x34
+TIMx_CCR2 = 0x38
+TIMx_CCR3 = 0x3c
+TIMx_CCR4 = 0x40
+TIMx_BDTR = 0x44
+TIMx_DCR = 0x48
+TIMx_DMAR = 0x4c
 
 # ADC registers (checked)
-ADC_SR    = 0x00
-ADC_CR1   = 0x04
-ADC_CR2   = 0x08
+ADC_SR = 0x00
+ADC_CR1 = 0x04
+ADC_CR2 = 0x08
 ADC_SMPR1 = 0x0C
 ADC_SMPR2 = 0x10
 ADC_JOFR1 = 0x14
 ADC_JOFR2 = 0x18
 ADC_JOFR3 = 0x1C
 ADC_JOFR4 = 0x20
-ADC_HTR   = 0x24
-ADC_LTR   = 0x28
-ADC_SQR1  = 0x2C
-ADC_SQR2  = 0x30
-ADC_SQR3  = 0x34
-ADC_JSQR  = 0x38
-ADC_JDR1  = 0x3C
-ADC_JDR2  = 0x40
-ADC_JDR3  = 0x44
-ADC_JDR4  = 0x48
-ADC_DR    = 0x4C
+ADC_HTR = 0x24
+ADC_LTR = 0x28
+ADC_SQR1 = 0x2C
+ADC_SQR2 = 0x30
+ADC_SQR3 = 0x34
+ADC_JSQR = 0x38
+ADC_JDR1 = 0x3C
+ADC_JDR2 = 0x40
+ADC_JDR3 = 0x44
+ADC_JDR4 = 0x48
+ADC_DR = 0x4C
 
 # DAC registers (checked)
-DAC_CR      = 0x00
+DAC_CR = 0x00
 DAC_SWTRIGR = 0x04
 DAC_DHR12R1 = 0x08
 DAC_DHR12L1 = 0x0C
-DAC_DHR8R1  = 0x10
+DAC_DHR8R1 = 0x10
 DAC_DHR12R2 = 0x14
 DAC_DHR12L2 = 0x18
-DAC_DHR8R2  = 0x1c
+DAC_DHR8R2 = 0x1c
 DAC_DHR12RD = 0x20
 DAC_DHR12LD = 0x24
-DAC_DHR8RD  = 0x28
-DAC_DOR1    = 0x2C
-DAC_DOR2    = 0x30
-DAC_SR      = 0x34
+DAC_DHR8RD = 0x28
+DAC_DOR1 = 0x2C
+DAC_DOR2 = 0x30
+DAC_SR = 0x34
 
 # GPIO registers (checked)
-GPIOx_CRL    = 0x00
-GPIOx_CRH    = 0x04
-GPIOx_IDR    = 0x08
-GPIOx_ODR    = 0x0c
-GPIOx_BSRR   = 0x10
-GPIOx_BRR    = 0x14
-GPIOx_LCKR   = 0x18
+GPIOx_CRL = 0x00
+GPIOx_CRH = 0x04
+GPIOx_IDR = 0x08
+GPIOx_ODR = 0x0c
+GPIOx_BSRR = 0x10
+GPIOx_BRR = 0x14
+GPIOx_LCKR = 0x18
 
 # EXTI registers (checked)
-EXTI_IMR     = 0x00
-EXTI_EMR     = 0x04
-EXTI_RTSR    = 0x08
-EXTI_FTSR    = 0x0c
-EXTI_SWIER   = 0x10
-EXTI_PR      = 0x14
+EXTI_IMR = 0x00
+EXTI_EMR = 0x04
+EXTI_RTSR = 0x08
+EXTI_FTSR = 0x0c
+EXTI_SWIER = 0x10
+EXTI_PR = 0x14
 
 # AFIO registers (checked)
-AFIO_EVCR    = 0x00
-AFIO_MAPR    = 0x04
+AFIO_EVCR = 0x00
+AFIO_MAPR = 0x04
 AFIO_EXTICR1 = 0x08
 AFIO_EXTICR2 = 0x0c
 AFIO_EXTICR3 = 0x10
 AFIO_EXTICR4 = 0x14
-AFIO_MAPR2   = 0x18
+AFIO_MAPR2 = 0x18
 
 # RCC registers (checked)
-RCC_CR       = 0x00
-RCC_CFGR     = 0x04
-RCC_CIR      = 0x08
+RCC_CR = 0x00
+RCC_CFGR = 0x04
+RCC_CIR = 0x08
 RCC_APB2RSTR = 0x0c
 RCC_APB1RSTR = 0x10
-RCC_AHBENR   = 0x14
-RCC_APB2ENR  = 0x18
-RCC_APB1ENR  = 0x1c
-RCC_BDCR     = 0x20
-RCC_CSR      = 0x24
-RCC_CFGR2    = 0x2c
+RCC_AHBENR = 0x14
+RCC_APB2ENR = 0x18
+RCC_APB1ENR = 0x1c
+RCC_BDCR = 0x20
+RCC_CSR = 0x24
+RCC_CFGR2 = 0x2c
 
 # DMA registers (checked)
-DMA_ISR      = 0x00
-DMA_IFCR     = 0x04
-DMA_CCR1     = 0x08
-DMA_CNDTR    = 0x0C
-DMA_CPAR1    = 0x10
-DMA_CMAR1    = 0x14
+DMA_ISR = 0x00
+DMA_IFCR = 0x04
+DMA_CCR1 = 0x08
+DMA_CNDTR = 0x0C
+DMA_CPAR1 = 0x10
+DMA_CMAR1 = 0x14
 #             0x18
-DMA_CCR2     = 0x1C
-DMA_CNDTR    = 0x20
-DMA_CPAR2    = 0x24
-DMA_CMAR2    = 0x28
+DMA_CCR2 = 0x1C
+DMA_CNDTR = 0x20
+DMA_CPAR2 = 0x24
+DMA_CMAR2 = 0x28
 #              0x2C
-DMA_CCR3     = 0x30
-DMA_CNDTR    = 0x34
-DMA_CPAR3    = 0x38
-DMA_CMAR3    = 0x3C
+DMA_CCR3 = 0x30
+DMA_CNDTR = 0x34
+DMA_CPAR3 = 0x38
+DMA_CMAR3 = 0x3C
 #              0x40
-DMA_CCR4     = 0x44
-DMA_CNDTR    = 0x48
-DMA_CPAR4    = 0x4C
-DMA_CMAR4    = 0x50
+DMA_CCR4 = 0x44
+DMA_CNDTR = 0x48
+DMA_CPAR4 = 0x4C
+DMA_CMAR4 = 0x50
 #              0x54
-DMA_CCR5     = 0x58
-DMA_CNDTR    = 0x5C
-DMA_CPAR5    = 0x60
-DMA_CMAR5    = 0x64
+DMA_CCR5 = 0x58
+DMA_CNDTR = 0x5C
+DMA_CPAR5 = 0x60
+DMA_CMAR5 = 0x64
 #              0x68
-DMA_CCR6     = 0x6C
-DMA_CNDTR    = 0x70
-DMA_CPAR6    = 0x74
-DMA_CMAR6    = 0x78
+DMA_CCR6 = 0x6C
+DMA_CNDTR = 0x70
+DMA_CPAR6 = 0x74
+DMA_CMAR6 = 0x78
 #              0x7C
-DMA_CCR7     = 0x80
-DMA_CNDTR    = 0x84
-DMA_CPAR7    = 0x88
-
-
+DMA_CCR7 = 0x80
+DMA_CNDTR = 0x84
+DMA_CPAR7 = 0x88
 
 register_map = [
   [0x40023000, 0x400233FF, "CRC"],
@@ -307,7 +298,6 @@ register_map = [
   [0x40000000, 0x400003FF, "TIM2 timer"]
 ]
 
-
 port_addresses = [GPIOA_BASE, GPIOB_BASE, GPIOC_BASE, GPIOD_BASE, GPIOE_BASE, GPIOF_BASE, GPIOG_BASE]
 
 CRL_CNF_IN = ["An", "Flt", "PuPd", "RFU"]
@@ -328,6 +318,7 @@ CRL_MODE_OUT_10MHZ = 1
 CRL_MODE_OUT_2MHZ = 2
 CRL_MODE_OUT_50MHZ = 3
 
+
 def print_gpio_pin(port_nbr, pin, cnf, mode, level):
     cnf_i = ["GPIO_CNF_INPUT_ANALOG", "GPIO_CNF_INPUT_FLOAT", "GPIO_CNF_INPUT_PULL_UPDOWN", "##### RESERVED #####"]
     cnf_o = ["GPIO_CNF_OUTPUT_PUSHPULL", "GPIO_CNF_OUTPUT_OPENDRAIN", "GPIO_CNF_OUTPUT_ALTFN_PUSHPULL", "GPIO_CNF_OUTPUT_ALTFN_OPENDRAIN"]
@@ -337,31 +328,31 @@ def print_gpio_pin(port_nbr, pin, cnf, mode, level):
         cnfs = cnf_i
     else:
         cnfs = cnf_o
-    a = "gpio_set_mode(GPIO%c, %s, %s, GPIO%d);\n" % (ord('A')+port_nbr, modes[mode], cnfs[cnf], pin)
+    a = "gpio_set_mode(GPIO%c, %s, %s, GPIO%d);\n" % (ord('A') + port_nbr, modes[mode], cnfs[cnf], pin)
     if mode == 0 and cnf == 2:
         if level == 0:
-            a += "gpio_clear(GPIO%c, GPIO%d);\n" % (ord('A')+port_nbr, pin)
+            a += "gpio_clear(GPIO%c, GPIO%d);\n" % (ord('A') + port_nbr, pin)
         elif level == 1:
-            a += "gpio_set(GPIO%c, GPIO%d);\n" % (ord('A')+port_nbr, pin)
+            a += "gpio_set(GPIO%c, GPIO%d);\n" % (ord('A') + port_nbr, pin)
         else:
             a += "rusk!!!!!!!!"
     return a
 
 
 def dump_port_settings(port_nbr):
-#    print("Checking GPIO%c" % (ord('A') + port_nbr))
+    logging.debug("Checking GPIO%c" % (ord('A') + port_nbr))
     crl = ocd_read(port_addresses[port_nbr] + GPIOx_CRL)
     crh = ocd_read(port_addresses[port_nbr] + GPIOx_CRH)
     idr = ocd_read(port_addresses[port_nbr] + GPIOx_IDR)
     odr = ocd_read(port_addresses[port_nbr] + GPIOx_ODR)
     for pin in range(0, 16):
         if pin < 8:
-            mode = (crl >> (4*pin)) & 3
-            cnf = (crl >> (4*pin+2)) & 3
+            mode = (crl >> (4 * pin)) & 3
+            cnf = (crl >> (4 * pin + 2)) & 3
         else:
-            mode = (crh >> (4*(pin-8))) & 3
-            cnf = (crh >> (4*(pin-8)+2)) & 3
-        pin_s = "P%c%d" % (ord('A')+port_nbr, pin)
+            mode = (crh >> (4 * (pin - 8))) & 3
+            cnf = (crh >> (4 * (pin - 8) + 2)) & 3
+        pin_s = "P%c%d" % (ord('A') + port_nbr, pin)
         if mode == CRL_MODE_IN:
             level = (idr >> pin) & 1
             info = "%-4s I %d %-5s" % (pin_s, level, CRL_CNF_IN[cnf])
@@ -375,7 +366,6 @@ def dump_port_settings(port_nbr):
         setting = print_gpio_pin(port_nbr, pin, cnf, mode, level)
         print("// %-30s %-15s %s" % (info, desc[0], desc[1]))
         print("%s" % (setting))
-
 
 
 def dump_gpio_port_settings():
@@ -413,28 +403,31 @@ U           ARR         CCR2
 
 """
 
+
 def dump_tim_settings(name, base_addr):
     print("%s settings" % (name))
-    dump_reg("CR1",   base_addr + TIMx_CR1)
-    dump_reg("CR2",   base_addr + TIMx_CR2)
-    dump_reg("SMC",   base_addr + TIMx_SMC)
-    dump_reg("DIER",  base_addr + TIMx_DIER)
-    dump_reg("SR",    base_addr + TIMx_SR)
-    dump_reg("EGR",   base_addr + TIMx_EGR)
+    dump_reg("CR1", base_addr + TIMx_CR1)
+    dump_reg("CR2", base_addr + TIMx_CR2)
+    dump_reg("SMC", base_addr + TIMx_SMC)
+    dump_reg("DIER", base_addr + TIMx_DIER)
+    dump_reg("SR", base_addr + TIMx_SR)
+    dump_reg("EGR", base_addr + TIMx_EGR)
     dump_reg("CCMR1", base_addr + TIMx_CCMR1)
     dump_reg("CCMR2", base_addr + TIMx_CCMR2)
-    dump_reg("CCER",  base_addr + TIMx_CCER)
-    dump_reg("CNT",   base_addr + TIMx_CNT)
-    dump_reg("PSC",   base_addr + TIMx_PSC)
-    dump_reg("ARR",   base_addr + TIMx_ARR)
-    dump_reg("RCR",   base_addr + TIMx_RCR)
-    dump_reg("CCR1",  base_addr + TIMx_CCR1)
-    dump_reg("CCR2",  base_addr + TIMx_CCR2)
-    dump_reg("CCR3",  base_addr + TIMx_CCR3)
-    dump_reg("CCR4",  base_addr + TIMx_CCR4)
-    dump_reg("BDTR",  base_addr + TIMx_BDTR)
-    dump_reg("DCR",   base_addr + TIMx_DCR)
-    dump_reg("DMAR",  base_addr + TIMx_DMAR)
+    dump_reg("CCER", base_addr + TIMx_CCER)
+    dump_reg("CNT", base_addr + TIMx_CNT)
+    dump_reg("PSC", base_addr + TIMx_PSC)
+    dump_reg("ARR", base_addr + TIMx_ARR)
+    dump_reg("RCR", base_addr + TIMx_RCR)
+    dump_reg("CCR1", base_addr + TIMx_CCR1)
+    dump_reg("CCR2", base_addr + TIMx_CCR2)
+    dump_reg("CCR3", base_addr + TIMx_CCR3)
+    dump_reg("CCR4", base_addr + TIMx_CCR4)
+    dump_reg("BDTR", base_addr + TIMx_BDTR)
+    dump_reg("DCR", base_addr + TIMx_DCR)
+    dump_reg("DMAR", base_addr + TIMx_DMAR)
+
+
 """
     TIM4 settings
 
@@ -459,26 +452,30 @@ def dump_tim_settings(name, base_addr):
     DCR      : 0x00000000  [0x40000848]
     DMAR     : 0x00000081  [0x4000084c]
 """
+
+
 def dump_tim4_settings():
-    dump_tim_settings("TIM4", TIM4_BASE) # TFT backlight intensity
+    dump_tim_settings("TIM4", TIM4_BASE)  # TFT backlight intensity
 
 
 def dump_dac_settings():
     print("DAC settings")
-    dump_reg("CR",      DAC_BASE + DAC_CR)
+    dump_reg("CR", DAC_BASE + DAC_CR)
     dump_reg("SWTRIGR", DAC_BASE + DAC_SWTRIGR)
     dump_reg("DHR12R1", DAC_BASE + DAC_DHR12R1)
     dump_reg("DHR12L1", DAC_BASE + DAC_DHR12L1)
-    dump_reg("DHR8R1",  DAC_BASE + DAC_DHR8R1)
+    dump_reg("DHR8R1", DAC_BASE + DAC_DHR8R1)
     dump_reg("DHR12R2", DAC_BASE + DAC_DHR12R2)
     dump_reg("DHR12L2", DAC_BASE + DAC_DHR12L2)
-    dump_reg("DHR8R2",  DAC_BASE + DAC_DHR8R2)
+    dump_reg("DHR8R2", DAC_BASE + DAC_DHR8R2)
     dump_reg("DHR12RD", DAC_BASE + DAC_DHR12RD)
     dump_reg("DHR12LD", DAC_BASE + DAC_DHR12LD)
-    dump_reg("DHR8RD",  DAC_BASE + DAC_DHR8RD)
-    dump_reg("DOR1",    DAC_BASE + DAC_DOR1)
-    dump_reg("DOR2",    DAC_BASE + DAC_DOR2)
-    dump_reg("SR",      DAC_BASE + DAC_SR)
+    dump_reg("DHR8RD", DAC_BASE + DAC_DHR8RD)
+    dump_reg("DOR1", DAC_BASE + DAC_DOR1)
+    dump_reg("DOR2", DAC_BASE + DAC_DOR2)
+    dump_reg("SR", DAC_BASE + DAC_SR)
+
+
 """
     DAC settings
 
@@ -498,28 +495,31 @@ def dump_dac_settings():
     SR       : 0x00000000  [0x40007434]
 """
 
+
 def dump_adc1_settings():
     print("ADC1 settings")
-    dump_reg("SR",      ADC1_BASE + ADC_SR)
-    dump_reg("CR1",     ADC1_BASE + ADC_CR1)
-    dump_reg("CR2",     ADC1_BASE + ADC_CR2)
-    dump_reg("SMPR1",   ADC1_BASE + ADC_SMPR1)
-    dump_reg("SMPR2",   ADC1_BASE + ADC_SMPR2)
-    dump_reg("JOFR1",   ADC1_BASE + ADC_JOFR1)
-    dump_reg("JOFR2",   ADC1_BASE + ADC_JOFR2)
-    dump_reg("JOFR3",   ADC1_BASE + ADC_JOFR3)
-    dump_reg("JOFR4",   ADC1_BASE + ADC_JOFR4)
-    dump_reg("HTR",     ADC1_BASE + ADC_HTR)
-    dump_reg("LTR",     ADC1_BASE + ADC_LTR)
-    dump_reg("SQR1",    ADC1_BASE + ADC_SQR1)
-    dump_reg("SQR2",    ADC1_BASE + ADC_SQR2)
-    dump_reg("SQR3",    ADC1_BASE + ADC_SQR3)
-    dump_reg("JSQR",    ADC1_BASE + ADC_JSQR)
-    dump_reg("JDR1",    ADC1_BASE + ADC_JDR1)
-    dump_reg("JDR2",    ADC1_BASE + ADC_JDR2)
-    dump_reg("JDR3",    ADC1_BASE + ADC_JDR3)
-    dump_reg("JDR4",    ADC1_BASE + ADC_JDR4)
-    dump_reg("DR",      ADC1_BASE + ADC_DR)
+    dump_reg("SR", ADC1_BASE + ADC_SR)
+    dump_reg("CR1", ADC1_BASE + ADC_CR1)
+    dump_reg("CR2", ADC1_BASE + ADC_CR2)
+    dump_reg("SMPR1", ADC1_BASE + ADC_SMPR1)
+    dump_reg("SMPR2", ADC1_BASE + ADC_SMPR2)
+    dump_reg("JOFR1", ADC1_BASE + ADC_JOFR1)
+    dump_reg("JOFR2", ADC1_BASE + ADC_JOFR2)
+    dump_reg("JOFR3", ADC1_BASE + ADC_JOFR3)
+    dump_reg("JOFR4", ADC1_BASE + ADC_JOFR4)
+    dump_reg("HTR", ADC1_BASE + ADC_HTR)
+    dump_reg("LTR", ADC1_BASE + ADC_LTR)
+    dump_reg("SQR1", ADC1_BASE + ADC_SQR1)
+    dump_reg("SQR2", ADC1_BASE + ADC_SQR2)
+    dump_reg("SQR3", ADC1_BASE + ADC_SQR3)
+    dump_reg("JSQR", ADC1_BASE + ADC_JSQR)
+    dump_reg("JDR1", ADC1_BASE + ADC_JDR1)
+    dump_reg("JDR2", ADC1_BASE + ADC_JDR2)
+    dump_reg("JDR3", ADC1_BASE + ADC_JDR3)
+    dump_reg("JDR4", ADC1_BASE + ADC_JDR4)
+    dump_reg("DR", ADC1_BASE + ADC_DR)
+
+
 """
     ADC1 settings
 
@@ -555,15 +555,18 @@ def dump_adc1_settings():
     Linear (tested with https://plot.ly/create/)
 """
 
+
 def dump_afio_settings():
     print("AFIO settings")
-    dump_reg("EVCR",     AFIO_BASE + AFIO_EVCR)
-    dump_reg("MAPR",     AFIO_BASE + AFIO_MAPR)
-    dump_reg("EXTICR1",  AFIO_BASE + AFIO_EXTICR1)
-    dump_reg("EXTICR2",  AFIO_BASE + AFIO_EXTICR2)
-    dump_reg("EXTICR3",  AFIO_BASE + AFIO_EXTICR3)
-    dump_reg("EXTICR4",  AFIO_BASE + AFIO_EXTICR4)
-    dump_reg("MAPR2",    AFIO_BASE + AFIO_MAPR2)
+    dump_reg("EVCR", AFIO_BASE + AFIO_EVCR)
+    dump_reg("MAPR", AFIO_BASE + AFIO_MAPR)
+    dump_reg("EXTICR1", AFIO_BASE + AFIO_EXTICR1)
+    dump_reg("EXTICR2", AFIO_BASE + AFIO_EXTICR2)
+    dump_reg("EXTICR3", AFIO_BASE + AFIO_EXTICR3)
+    dump_reg("EXTICR4", AFIO_BASE + AFIO_EXTICR4)
+    dump_reg("MAPR2", AFIO_BASE + AFIO_MAPR2)
+
+
 """
     AFIO settings
 
@@ -576,14 +579,17 @@ def dump_afio_settings():
     MAPR2    : 0x00000000  [0x40010018]
 """
 
+
 def dump_exti_settings():
     print("EXTI settings")
-    dump_reg("IMR",    EXTI_BASE + EXTI_IMR)
-    dump_reg("EMR",    EXTI_BASE + EXTI_EMR)
-    dump_reg("RTSR",   EXTI_BASE + EXTI_RTSR)
-    dump_reg("FTSR",   EXTI_BASE + EXTI_FTSR)
-    dump_reg("SWIER",  EXTI_BASE + EXTI_SWIER)
-    dump_reg("PR",     EXTI_BASE + EXTI_PR)
+    dump_reg("IMR", EXTI_BASE + EXTI_IMR)
+    dump_reg("EMR", EXTI_BASE + EXTI_EMR)
+    dump_reg("RTSR", EXTI_BASE + EXTI_RTSR)
+    dump_reg("FTSR", EXTI_BASE + EXTI_FTSR)
+    dump_reg("SWIER", EXTI_BASE + EXTI_SWIER)
+    dump_reg("PR", EXTI_BASE + EXTI_PR)
+
+
 """
     EXTI settings
 
@@ -595,54 +601,63 @@ def dump_exti_settings():
     PR       : 0x00000000  [0x40010414]
 """
 
+
 def dump_rcc_settings():
     print("RCC settings")
-    dump_reg("CR",       RCC_BASE + RCC_CR)
-    dump_reg("CFGR",     RCC_BASE + RCC_CFGR)
-    dump_reg("CIR",      RCC_BASE + RCC_CIR)
+    dump_reg("CR", RCC_BASE + RCC_CR)
+    dump_reg("CFGR", RCC_BASE + RCC_CFGR)
+    dump_reg("CIR", RCC_BASE + RCC_CIR)
     dump_reg("APB2RSTR", RCC_BASE + RCC_APB2RSTR)
     dump_reg("APB1RSTR", RCC_BASE + RCC_APB1RSTR)
-    dump_reg("AHBENR",   RCC_BASE + RCC_AHBENR)
-    dump_reg("APB2ENR",  RCC_BASE + RCC_APB2ENR)
-    dump_reg("APB1ENR",  RCC_BASE + RCC_APB1ENR)
-    dump_reg("BDCR",     RCC_BASE + RCC_BDCR)
-    dump_reg("CSR",      RCC_BASE + RCC_CSR)
-    dump_reg("CFGR2",    RCC_BASE + RCC_CFGR2)
+    dump_reg("AHBENR", RCC_BASE + RCC_AHBENR)
+    dump_reg("APB2ENR", RCC_BASE + RCC_APB2ENR)
+    dump_reg("APB1ENR", RCC_BASE + RCC_APB1ENR)
+    dump_reg("BDCR", RCC_BASE + RCC_BDCR)
+    dump_reg("CSR", RCC_BASE + RCC_CSR)
+    dump_reg("CFGR2", RCC_BASE + RCC_CFGR2)
+
 
 def dump_spi_settings(name, base_addr):
     print("%s settings" % (name))
-    dump_reg("CR2",      base_addr + SPI_CR1)
-    dump_reg("CR1",      base_addr + SPI_CR2)
-    dump_reg("SR",       base_addr + SPI_SR)
-    dump_reg("DR",       base_addr + SPI_DR)
-    dump_reg("CRCPR",    base_addr + SPI_CRCPR)
-    dump_reg("RXCRCR",   base_addr + SPI_RXCRCR)
-    dump_reg("TXCRCR",   base_addr + SPI_TXCRCR)
+    dump_reg("CR2", base_addr + SPI_CR1)
+    dump_reg("CR1", base_addr + SPI_CR2)
+    dump_reg("SR", base_addr + SPI_SR)
+    dump_reg("DR", base_addr + SPI_DR)
+    dump_reg("CRCPR", base_addr + SPI_CRCPR)
+    dump_reg("RXCRCR", base_addr + SPI_RXCRCR)
+    dump_reg("TXCRCR", base_addr + SPI_TXCRCR)
+
 
 def dump_spi1_settings():
     dump_spi_settings("SPI1", SPI1_BASE)
 
+
 def dump_spi2_settings():
     dump_spi_settings("SPI2", SPI2_BASE)
 
+
 def dump_gpio_settings(name, base_addr):
     print("%s settings" % (name))
-    dump_reg("CRL",      base_addr + GPIOx_CRL)
-    dump_reg("CRH",      base_addr + GPIOx_CRH)
-    dump_reg("IDR",      base_addr + GPIOx_IDR)
-    dump_reg("ODR",      base_addr + GPIOx_ODR)
-    dump_reg("BSRR",     base_addr + GPIOx_BSRR)
-    dump_reg("BRR",      base_addr + GPIOx_BRR)
-    dump_reg("LCKR",     base_addr + GPIOx_LCKR)
+    dump_reg("CRL", base_addr + GPIOx_CRL)
+    dump_reg("CRH", base_addr + GPIOx_CRH)
+    dump_reg("IDR", base_addr + GPIOx_IDR)
+    dump_reg("ODR", base_addr + GPIOx_ODR)
+    dump_reg("BSRR", base_addr + GPIOx_BSRR)
+    dump_reg("BRR", base_addr + GPIOx_BRR)
+    dump_reg("LCKR", base_addr + GPIOx_LCKR)
+
 
 def dump_gpioa_settings():
     dump_gpio_settings("GPIOA", GPIOA_BASE)
 
+
 def dump_gpiob_settings():
     dump_gpio_settings("GPIOB", GPIOB_BASE)
 
+
 def dump_gpioc_settings():
     dump_gpio_settings("GPIOC", GPIOC_BASE)
+
 
 def dump_gpiod_settings():
     dump_gpio_settings("GPIOD", GPIOD_BASE)
@@ -699,37 +714,39 @@ mww 0x40007424 0x1d601fff
 
 """
 
+
 def dump_dma_settings():
     print("DMA settings")
-    dump_reg("ISR",    DMA1_BASE + DMA_ISR)
-    dump_reg("IFCR",   DMA1_BASE + DMA_IFCR)
-    dump_reg("CCR1",   DMA1_BASE + DMA_CCR1)
-    dump_reg("CNDTR",  DMA1_BASE + DMA_CNDTR)
-    dump_reg("CPAR1",  DMA1_BASE + DMA_CPAR1)
-    dump_reg("CMAR1",  DMA1_BASE + DMA_CMAR1)
-    dump_reg("CCR2",   DMA1_BASE + DMA_CCR2)
-    dump_reg("CNDTR",  DMA1_BASE + DMA_CNDTR)
-    dump_reg("CPAR2",  DMA1_BASE + DMA_CPAR2)
-    dump_reg("CMAR2",  DMA1_BASE + DMA_CMAR2)
-    dump_reg("CCR3",   DMA1_BASE + DMA_CCR3)
-    dump_reg("CNDTR",  DMA1_BASE + DMA_CNDTR)
-    dump_reg("CPAR3",  DMA1_BASE + DMA_CPAR3)
-    dump_reg("CMAR3",  DMA1_BASE + DMA_CMAR3)
-    dump_reg("CCR4",   DMA1_BASE + DMA_CCR4)
-    dump_reg("CNDTR",  DMA1_BASE + DMA_CNDTR)
-    dump_reg("CPAR4",  DMA1_BASE + DMA_CPAR4)
-    dump_reg("CMAR4",  DMA1_BASE + DMA_CMAR4)
-    dump_reg("CCR5",   DMA1_BASE + DMA_CCR5)
-    dump_reg("CNDTR",  DMA1_BASE + DMA_CNDTR)
-    dump_reg("CPAR5",  DMA1_BASE + DMA_CPAR5)
-    dump_reg("CMAR5",  DMA1_BASE + DMA_CMAR5)
-    dump_reg("CCR6",   DMA1_BASE + DMA_CCR6)
-    dump_reg("CNDTR",  DMA1_BASE + DMA_CNDTR)
-    dump_reg("CPAR6",  DMA1_BASE + DMA_CPAR6)
-    dump_reg("CMAR6",  DMA1_BASE + DMA_CMAR6)
-    dump_reg("CCR7",   DMA1_BASE + DMA_CCR7)
-    dump_reg("CNDTR",  DMA1_BASE + DMA_CNDTR)
-    dump_reg("CPAR7",  DMA1_BASE + DMA_CPAR7)
+    dump_reg("ISR", DMA1_BASE + DMA_ISR)
+    dump_reg("IFCR", DMA1_BASE + DMA_IFCR)
+    dump_reg("CCR1", DMA1_BASE + DMA_CCR1)
+    dump_reg("CNDTR", DMA1_BASE + DMA_CNDTR)
+    dump_reg("CPAR1", DMA1_BASE + DMA_CPAR1)
+    dump_reg("CMAR1", DMA1_BASE + DMA_CMAR1)
+    dump_reg("CCR2", DMA1_BASE + DMA_CCR2)
+    dump_reg("CNDTR", DMA1_BASE + DMA_CNDTR)
+    dump_reg("CPAR2", DMA1_BASE + DMA_CPAR2)
+    dump_reg("CMAR2", DMA1_BASE + DMA_CMAR2)
+    dump_reg("CCR3", DMA1_BASE + DMA_CCR3)
+    dump_reg("CNDTR", DMA1_BASE + DMA_CNDTR)
+    dump_reg("CPAR3", DMA1_BASE + DMA_CPAR3)
+    dump_reg("CMAR3", DMA1_BASE + DMA_CMAR3)
+    dump_reg("CCR4", DMA1_BASE + DMA_CCR4)
+    dump_reg("CNDTR", DMA1_BASE + DMA_CNDTR)
+    dump_reg("CPAR4", DMA1_BASE + DMA_CPAR4)
+    dump_reg("CMAR4", DMA1_BASE + DMA_CMAR4)
+    dump_reg("CCR5", DMA1_BASE + DMA_CCR5)
+    dump_reg("CNDTR", DMA1_BASE + DMA_CNDTR)
+    dump_reg("CPAR5", DMA1_BASE + DMA_CPAR5)
+    dump_reg("CMAR5", DMA1_BASE + DMA_CMAR5)
+    dump_reg("CCR6", DMA1_BASE + DMA_CCR6)
+    dump_reg("CNDTR", DMA1_BASE + DMA_CNDTR)
+    dump_reg("CPAR6", DMA1_BASE + DMA_CPAR6)
+    dump_reg("CMAR6", DMA1_BASE + DMA_CMAR6)
+    dump_reg("CCR7", DMA1_BASE + DMA_CCR7)
+    dump_reg("CNDTR", DMA1_BASE + DMA_CNDTR)
+    dump_reg("CPAR7", DMA1_BASE + DMA_CPAR7)
+
 
 def dump_register_map():
     global register_map
@@ -743,6 +760,7 @@ def dump_register_map():
             print("[0x%08x] = 0x%08x" % (address, value))
             address += 4
 
+
 def write_mem():
     if len(sys.argv) != 4:
         print("%s <address> <value>" % (sys.argv[0]))
@@ -750,6 +768,7 @@ def write_mem():
         address = int(sys.argv[2], 16)
         value = int(sys.argv[3], 16)
         ocd_write(address, value)
+
 
 def read_mem():
     if len(sys.argv) < 3:
@@ -765,32 +784,37 @@ def read_mem():
             address += 4
             length -= 1
 
+
 def print_help():
     global commands
     print("Available commands:")
     for cmd in commands:
         print("   %s" % (cmd))
 
+
 def dump_all():
     global commands
     for cmd in commands:
         if cmd != "reg" and cmd != "all":
             commands[cmd]()
-            print
+
 
 def parse_mem_dump(data):
     lines = data.split('\n')
     for l in lines:
         parts = l.split(":")
         if len(parts) != 2:
-            print ("Parsing error: %s" % l)
+            print("Parsing error: %s" % l)
             return
         address = int(parts[0].strip(), 16)
         parts[1] = parts[1].strip()
         data = parts[1].split(" ")
         for (i, item) in enumerate(data):
+            print("FIXME: Unknown call to function decode_mem?")  # FIXME
             decode_mem(address+4*i, int(item, 16))
-#            data[i] = int(item, 16)
+
+
+# data[i] = int(item, 16)
 #            print i, item
 #        print "0x%08x" % address
 #        for d in data:
@@ -810,31 +834,31 @@ if not ocd_sync():
     sys.exit(1)
 
 commands = {
-    "adc1"  : dump_adc1_settings,
-    "afio"  : dump_afio_settings,
-    "dac"   : dump_dac_settings,
-    "dma"   : dump_dma_settings,
-    "exti"  : dump_exti_settings,
-    "gpio"  : dump_gpio_port_settings,
-    "gpioa" : dump_gpioa_settings,
-    "gpiob" : dump_gpiob_settings,
-    "gpioc" : dump_gpioc_settings,
-    "gpiod" : dump_gpiod_settings,
-    "reg"   : dump_register_map,
-    "rcc"   : dump_rcc_settings,
-    "spi1"  : dump_spi1_settings,
-    "spi2"  : dump_spi2_settings,
-    "tim4"  : dump_tim4_settings,
-    "w"     : write_mem,
-    "r"     : read_mem,
-    "help"  : print_help,
-    "all"   : dump_all,
+    "adc1": dump_adc1_settings,
+    "afio": dump_afio_settings,
+    "dac": dump_dac_settings,
+    "dma": dump_dma_settings,
+    "exti": dump_exti_settings,
+    "gpio": dump_gpio_port_settings,
+    "gpioa": dump_gpioa_settings,
+    "gpiob": dump_gpiob_settings,
+    "gpioc": dump_gpioc_settings,
+    "gpiod": dump_gpiod_settings,
+    "reg": dump_register_map,
+    "rcc": dump_rcc_settings,
+    "spi1": dump_spi1_settings,
+    "spi2": dump_spi2_settings,
+    "tim4": dump_tim4_settings,
+    "w": write_mem,
+    "r": read_mem,
+    "help": print_help,
+    "all": dump_all,
 }
 
 if len(sys.argv) >= 2:
     if sys.argv[1] in commands:
         commands[sys.argv[1]]()
     else:
-        print_help();
+        print_help()
 else:
-    print_help();
+    print_help()
