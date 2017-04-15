@@ -63,31 +63,31 @@ def ocd_write(address, value):
 
 
 known_pins = {
-    "PA0"  : ["", "U7 "],
-    "PA1"  : ["M2 button", ""],
-    "PA2"  : ["SEL button", ""],
-    "PA3"  : ["M1 button", ""],
-    "PA4"  : ["DAC1_OUT", "TL594.2 (1IN-)"],
-    "PA5"  : ["DAC2_OUT", "TL594.15 (2IN-)"],
-    "PA7"  : ["ADC1_IN7", "R30-U2.7:V_OUT-B (measures Vout)"],
-    "PA8"  : ["TFT.7", "(not used by TFT)"],
-    "PA14" : ["", "SWDCLK"],
-    "PA15" : ["", "R41-TL594.16 (2IN+)"],
-    "PB0"  : ["ADC1_IN8", "R7/R2-R14-D4 (measures Vin)"],
-    "PB1"  : ["ADC1_IN9", "R33-U2.1:V_OUT-A (measures Iout)"],
-    "PB3"  : ["", "R11-R17-R25-U2.5 (V_inB+)"],
-    "PB4"  : ["PWR button", ""],
-    "PB5"  : ["Rotary press", ""],
-    "PB6"  : ["", "NC?"],
-    "PB7"  : ["TIM4_CH2", ""],
-    "PB8"  : ["Rotary enc", ""],
-    "PB9"  : ["Rotary enc", ""],
-    "PB11" : ["nPwrEnable", "R29-TFT.2 (TFT_VCC)"],
-    "PB12" : ["SPI2_NSS", "TFT_RESET"],
-    "PB13" : ["SPI2_SCK", ""],
-    "PB14" : ["SPI2_MISO", "TFT_A0"],
-    "PB15" : ["SPI2_MOSI", ""],
-    "PD1"  : ["", "U7"],
+    "PA0": ["", "U7 "],
+    "PA1": ["M2 button", ""],
+    "PA2": ["SEL button", ""],
+    "PA3": ["M1 button", ""],
+    "PA4": ["DAC1_OUT", "TL594.2 (1IN-)"],
+    "PA5": ["DAC2_OUT", "TL594.15 (2IN-)"],
+    "PA7": ["ADC1_IN7", "R30-U2.7:V_OUT-B (measures Vout)"],
+    "PA8": ["TFT.7", "(not used by TFT)"],
+    "PA14": ["", "SWDCLK"],
+    "PA15": ["", "R41-TL594.16 (2IN+)"],
+    "PB0": ["ADC1_IN8", "R7/R2-R14-D4 (measures Vin)"],
+    "PB1": ["ADC1_IN9", "R33-U2.1:V_OUT-A (measures Iout)"],
+    "PB3": ["", "R11-R17-R25-U2.5 (V_inB+)"],
+    "PB4": ["PWR button", ""],
+    "PB5": ["Rotary press", ""],
+    "PB6": ["", "NC?"],
+    "PB7": ["TIM4_CH2", ""],
+    "PB8": ["Rotary enc", ""],
+    "PB9": ["Rotary enc", ""],
+    "PB11": ["nPwrEnable", "R29-TFT.2 (TFT_VCC)"],
+    "PB12": ["SPI2_NSS", "TFT_RESET"],
+    "PB13": ["SPI2_SCK", ""],
+    "PB14": ["SPI2_MISO", "TFT_A0"],
+    "PB15": ["SPI2_MOSI", ""],
+    "PD1": ["", "U7"],
 }
 
 ADC1_BASE = 0x40012400
@@ -102,15 +102,15 @@ GPIOD_BASE = 0x40011400
 GPIOE_BASE = 0x40011800
 GPIOF_BASE = 0x40011C00
 GPIOG_BASE = 0x40012000
-RCC_BASE   = 0x40021000
-SPI1_BASE  = 0x40013000
-SPI2_BASE  = 0x40003800
-TIM1_BASE  = 0x40012C00
-TIM2_BASE  = 0x40000000
-TIM3_BASE  = 0x40000400
-TIM4_BASE  = 0x40000800
-TIM6_BASE  = 0x40001000
-TIM7_BASE  = 0x40001400
+RCC_BASE = 0x40021000
+SPI1_BASE = 0x40013000
+SPI2_BASE = 0x40003800
+TIM1_BASE = 0x40012C00
+TIM2_BASE = 0x40000000
+TIM3_BASE = 0x40000400
+TIM4_BASE = 0x40000800
+TIM6_BASE = 0x40001000
+TIM7_BASE = 0x40001400
 TIM15_BASE = 0x40014000
 TIM16_BASE = 0x40014400
 TIM17_BASE = 0x40014800
@@ -261,41 +261,41 @@ DMA_CNDTR = 0x84
 DMA_CPAR7 = 0x88
 
 register_map = [
-  [0x40023000, 0x400233FF, "CRC"],
-  [0x40022000, 0x400223FF, "Flash memory interface"],
-  [0x40021000, 0x400213FF, "Reset and clock control RCC"],
-  [0x40020000, 0x400203FF, "DMA1"],
-  [0x40014800, 0x40014BFF, "TIM17 timer"],
-  [0x40014400, 0x400147FF, "TIM16 timer"],
-  [0x40014000, 0x400143FF, "TIM15 timer"],
-  [0x40013800, 0x40013BFF, "USART1"],
-  [0x40013000, 0x400133FF, "SPI1"],
-  [0x40012C00, 0x40012FFF, "TIM1 timer"],
-  [0x40012400, 0x400127FF, "ADC1"],
-  [0x40011800, 0x40011BFF, "GPIO Port E"],
-  [0x40011400, 0x400117FF, "GPIO Port D"],
-  [0x40011000, 0x400113FF, "GPIO Port C"],
-  [0x40010C00, 0x40010FFF, "GPIO Port B"],
-  [0x40010800, 0x40010BFF, "GPIO Port A"],
-  [0x40010400, 0x400107FF, "EXTI"],
-  [0x40010000, 0x400103FF, "AFIO"],
-  [0x40007800, 0x40007BFF, "CEC"],
-  [0x40007400, 0x400077FF, "DAC"],
-  [0x40007000, 0x400073FF, "Power control PWR"],
-  [0x40006C00, 0x40006FFF, "Backup registers (BKP)"],
-  [0x40005800, 0x40005BFF, "I2C2"],
-  [0x40005400, 0x400057FF, "I2C1"],
-  [0x40004800, 0x40004BFF, "USART3"],
-  [0x40004400, 0x400047FF, "USART2"],
-  [0x40003800, 0x40003BFF, "SPI2"],
-  [0x40003000, 0x400033FF, "Independent watchdog (IWDG)"],
-  [0x40002C00, 0x40002FFF, "Window watchdog (WWDG)"],
-  [0x40002800, 0x40002BFF, "RTC"],
-  [0x40001400, 0x400017FF, "TIM7 timer"],
-  [0x40001000, 0x400013FF, "TIM6 timer"],
-  [0x40000800, 0x40000BFF, "TIM4 timer"],
-  [0x40000400, 0x400007FF, "TIM3 timer"],
-  [0x40000000, 0x400003FF, "TIM2 timer"]
+    [0x40023000, 0x400233FF, "CRC"],
+    [0x40022000, 0x400223FF, "Flash memory interface"],
+    [0x40021000, 0x400213FF, "Reset and clock control RCC"],
+    [0x40020000, 0x400203FF, "DMA1"],
+    [0x40014800, 0x40014BFF, "TIM17 timer"],
+    [0x40014400, 0x400147FF, "TIM16 timer"],
+    [0x40014000, 0x400143FF, "TIM15 timer"],
+    [0x40013800, 0x40013BFF, "USART1"],
+    [0x40013000, 0x400133FF, "SPI1"],
+    [0x40012C00, 0x40012FFF, "TIM1 timer"],
+    [0x40012400, 0x400127FF, "ADC1"],
+    [0x40011800, 0x40011BFF, "GPIO Port E"],
+    [0x40011400, 0x400117FF, "GPIO Port D"],
+    [0x40011000, 0x400113FF, "GPIO Port C"],
+    [0x40010C00, 0x40010FFF, "GPIO Port B"],
+    [0x40010800, 0x40010BFF, "GPIO Port A"],
+    [0x40010400, 0x400107FF, "EXTI"],
+    [0x40010000, 0x400103FF, "AFIO"],
+    [0x40007800, 0x40007BFF, "CEC"],
+    [0x40007400, 0x400077FF, "DAC"],
+    [0x40007000, 0x400073FF, "Power control PWR"],
+    [0x40006C00, 0x40006FFF, "Backup registers (BKP)"],
+    [0x40005800, 0x40005BFF, "I2C2"],
+    [0x40005400, 0x400057FF, "I2C1"],
+    [0x40004800, 0x40004BFF, "USART3"],
+    [0x40004400, 0x400047FF, "USART2"],
+    [0x40003800, 0x40003BFF, "SPI2"],
+    [0x40003000, 0x400033FF, "Independent watchdog (IWDG)"],
+    [0x40002C00, 0x40002FFF, "Window watchdog (WWDG)"],
+    [0x40002800, 0x40002BFF, "RTC"],
+    [0x40001400, 0x400017FF, "TIM7 timer"],
+    [0x40001000, 0x400013FF, "TIM6 timer"],
+    [0x40000800, 0x40000BFF, "TIM4 timer"],
+    [0x40000400, 0x400007FF, "TIM3 timer"],
+    [0x40000000, 0x400003FF, "TIM2 timer"]
 ]
 
 port_addresses = [GPIOA_BASE, GPIOB_BASE, GPIOC_BASE, GPIOD_BASE, GPIOE_BASE, GPIOF_BASE, GPIOG_BASE]
@@ -811,7 +811,7 @@ def parse_mem_dump(data):
         data = parts[1].split(" ")
         for (i, item) in enumerate(data):
             print("FIXME: Unknown call to function decode_mem?")  # FIXME
-            decode_mem(address+4*i, int(item, 16))
+            decode_mem(address + 4 * i, int(item, 16))
 
 
 # data[i] = int(item, 16)
