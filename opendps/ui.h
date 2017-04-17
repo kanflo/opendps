@@ -30,6 +30,14 @@
 #ifndef __UI_H__
 #define __UI_H__
 
+/** Supported power out modes */
+typedef enum {
+        pm_min = 0,
+        pm_constant_voltage = pm_min,
+        pm_constant_current,
+        pm_max
+} power_mode_t;
+
 
 /**
   * @brief Initialize the UI module
@@ -88,6 +96,18 @@ void ui_update_wifi_status(wifi_status_t status);
   * @retval none
   */
 void ui_update_power_status(bool enabled);
+
+/**
+  * @brief Select next output mode (currently CV or CC)
+  * @retval none
+  */
+void ui_next_power_mode(void);
+
+/**
+  * @brief Get current output mode (currently CV or CC)
+  * @retval current power mode
+  */
+power_mode_t ui_get_power_mode(void);
 
 #ifdef CONFIG_SPLASH_SCREEN
 /**

@@ -49,7 +49,7 @@ void pwrctl_init(void)
 
 /**
   * @brief Set voltage output
-  * @param value_mv voltage in millivolt
+  * @param value_mv voltage in milli volt
   * @retval true requested voltage was within specs
   */
 bool pwrctl_set_vout(uint32_t value_mv)
@@ -57,14 +57,23 @@ bool pwrctl_set_vout(uint32_t value_mv)
     /** @todo Check with max Vout, currently filtered by ui.c */
     v_out = value_mv;
     DAC_DHR12R1 = pwrctl_calc_vout_dac(v_out);
-  /** @todo Check how the stock FW uses DAC1_OUT and DAC2_OUT to hold the voltage at high loads */
-    DAC_DHR12R2 = 0xfff;
+    return true;
+}
+
+/**
+  * @brief Set current output
+  * @param current_ma current in milli ampere
+  * @retval true requested current was within specs
+  */
+bool pwrctl_set_iout(uint32_t value_mv)
+{
+    DAC_DHR12R2 = pwrctl_calc_iout_dac(value_mv);
     return true;
 }
 
 /**
   * @brief Get voltage output setting
-  * @retval current setting in millivolt
+  * @retval current setting in milli volt
   */
 uint32_t pwrctl_get_vout(void)
 {
@@ -120,7 +129,7 @@ bool pwrctl_vout_enabled(void)
 /**
   * @brief Calculate V_in based on raw ADC measurement
   * @param raw value from ADC
-  * @retval corresponding voltage in millivolt
+  * @retval corresponding voltage in milli volt
   */
 uint32_t pwrctl_calc_vin(uint16_t raw)
 {
@@ -130,7 +139,7 @@ uint32_t pwrctl_calc_vin(uint16_t raw)
 /**
   * @brief Calculate V_out based on raw ADC measurement
   * @param raw value from ADC
-  * @retval corresponding voltage in millivolt
+  * @retval corresponding voltage in milli volt
   */
 uint32_t pwrctl_calc_vout(uint16_t raw)
 {
@@ -140,7 +149,7 @@ uint32_t pwrctl_calc_vout(uint16_t raw)
 /**
   * @brief Calculate DAC setting for requested V_out
   * @param v_out_mv requested output voltage
-  * @retval corresponding voltage in millivolt
+  * @retval corresponding voltage in milli volt
   */
 uint16_t pwrctl_calc_vout_dac(uint32_t v_out_mv)
 {
@@ -165,4 +174,15 @@ uint32_t pwrctl_calc_iout(uint16_t raw)
 uint16_t pwrctl_calc_ilimit_adc(uint16_t i_limit_ma)
 {
     return (i_limit_ma + 118.51) / 1.713 + 1;
+}
+
+/**
+  * @brief Calculate DAC setting for constant current mode
+  * @param i_out_ma requested constant current
+  * @retval corresponding DAC value
+  */
+uint16_t pwrctl_calc_iout_dac(uint32_t i_out_ma)
+{
+  uint32_t dac = 0.652 * i_out_ma + 288.611;
+  return dac & 0xfff;
 }
