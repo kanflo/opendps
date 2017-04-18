@@ -2,7 +2,7 @@
 
 #### Give your DPS5005 the upgrade it deserves
 
-OpenDPS is a firmware replacement for the DPS5005 (and friends) that has the same functionality, has a less cluttered user interface and is remote controllable via wifi (ESP8266) or via a serial port.
+OpenDPS is a firmware replacement for the DPS5005 (and friends) that has the roughly same functionality (constant voltage mode with over current protection and constant current mode), has a less cluttered user interface and is remote controllable via wifi (ESP8266) or via a serial port.
 
 <p align="center">
 <img src="https://raw.githubusercontent.com/kanflo/opendps/master/image.jpg" alt="A DPS5005 with wifi"/>
@@ -68,7 +68,7 @@ The project consists of three parts:
 
 ### What about other DPS:es?
 
-In theory, OpenDPS should work for all the other models in the DPSx0xx series, such as the DPS3005, DPS3012 and DPS5015. I have none to test with but would be very surprised if the hardware differed that much. Please share any results. The maxium settable output current can be defined when building opendps, see the makefile.
+In theory, OpenDPS should work for all the other models in the DPSx0xx series, such as the DPS3005, DPS3012 and DPS5015. For constant current mode in the 12A and 15A versions, you probably need to visit ```pwrctl_calc_iout_dac``` in ```pwrcrl.c````. Please share any results. The maxium settable output current can be defined when building opendps, see the makefile.
 
 ---
 Licensed under the MIT license. Have fun!
