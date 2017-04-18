@@ -66,6 +66,7 @@
 #define TFT_FLASHING_PERIOD               (100)
 #define TFT_FLASHING_COUNTER                (2)
 
+static void update_power_output(void);
 static void update_power_mode_status(void);
 static void update_input_voltage(void);
 static void update_settings_ui(bool update_both);
@@ -261,20 +262,7 @@ void ui_hande_event(event_t event, uint8_t data)
                     pwr_start = get_ticks();
                 }
                 if (new_state) {
-                    switch(power_mode) {
-                        case pm_constant_voltage:
-                            pwrctl_set_vout(v_setting);
-                            pwrctl_set_ilimit(i_setting);
-                            pwrctl_set_iout(max_i_limit);
-                            break;
-                        case pm_constant_current:
-                            pwrctl_set_vout(max_v_out);
-                            pwrctl_set_ilimit(max_i_limit);
-                            pwrctl_set_iout(i_setting);
-                            break;
-                        default:
-                            break;
-                    }
+                    update_power_output();
                 }
                 pwrctl_enable_vout(new_state);
                 ui_update_power_status(new_state);
@@ -328,14 +316,14 @@ void ui_hande_event(event_t event, uint8_t data)
                 uint32_t increment = get_voltage_increment(edit_position);
                 if (v_setting >= increment) {
                     v_setting -= increment;
-                    pwrctl_set_vout(v_setting);
+                    update_power_output();
                     update_settings_ui(false);
                 }
             } else if (edit_mode == edit_ampere) {
                 uint32_t increment = get_ampere_increment(edit_position);
                 if (i_setting >= increment) {
                     i_setting -= increment;
-                    (void) pwrctl_set_ilimit(i_setting);
+                    update_power_output();
                     update_settings_ui(false);
                 }
             }
@@ -345,14 +333,14 @@ void ui_hande_event(event_t event, uint8_t data)
                 uint32_t increment = get_voltage_increment(edit_position);
                 if (v_setting + increment <= max_v_out) {
                     v_setting += increment;
-                    pwrctl_set_vout(v_setting);
+                    update_power_output();
                     update_settings_ui(false);
                 }
             } else if (edit_mode == edit_ampere) {
                 uint32_t increment = get_ampere_increment(edit_position);
                 if (i_setting + increment <= max_i_limit) {
                     i_setting += increment;
-                    (void) pwrctl_set_ilimit(i_setting);
+                    update_power_output();
                     update_settings_ui(false);
                 }
             }
@@ -617,6 +605,28 @@ void ui_draw_splash_screen(void)
     tft_blit((uint16_t*) logo, logo_width, logo_height, (ui_width-logo_width)/2, (ui_height-logo_height)/2);
 }
 #endif // CONFIG_SPLASH_SCREEN
+
+/**
+  * @brief Update power output according to current settings
+  * @retval none
+  */
+static void update_power_output(void)
+{
+    switch(power_mode) {
+        case pm_constant_voltage:
+            pwrctl_set_vout(v_setting);
+            pwrctl_set_ilimit(i_setting);
+            pwrctl_set_iout(max_i_limit);
+            break;
+        case pm_constant_current:
+            pwrctl_set_vout(max_v_out);
+            pwrctl_set_ilimit(max_i_limit);
+            pwrctl_set_iout(i_setting);
+            break;
+        default:
+            break;
+    }
+}
 
 /**
   * @brief Update power mode status icon
