@@ -116,6 +116,9 @@ void tft_putch(uint8_t size, char ch, uint32_t x, uint32_t y, uint32_t w, uint32
         case 'A':
             glyph_index = 12;
             break;
+        case '-':
+            glyph_index = 13;
+            break;
         default:
             printf("Cannot print character '%c'\n", ch);
             return;
