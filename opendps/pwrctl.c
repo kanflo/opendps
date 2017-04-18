@@ -28,7 +28,7 @@
 #include <gpio.h>
 #include <dac.h>
 
-/** This module handles cultage and currrent calculations.
+/** This module handles voltege and current calculations on the DPS5005
   * Calculations based on measurements found at
   * https://docs.google.com/spreadsheets/d/1AhGsU_gvZjqZyr2ZYrnkz6BeUqMquzh9UNYoTqy_Zp4/edit?usp=sharing
   */
@@ -169,7 +169,8 @@ uint32_t pwrctl_calc_vout(uint16_t raw)
   */
 uint16_t pwrctl_calc_vout_dac(uint32_t v_out_mv)
 {
-    return 0.072*v_out_mv + 1.85;
+    uint32_t dac = 0.072*v_out_mv + 1.85;
+    return dac & 0xfff; /** 12 bits */
 }
 
 /**
@@ -196,9 +197,11 @@ uint16_t pwrctl_calc_ilimit_adc(uint16_t i_limit_ma)
   * @brief Calculate DAC setting for constant current mode
   * @param i_out_ma requested constant current
   * @retval corresponding DAC value
+  * @note this formula is valid for the DPS5005 and would probably need changes
+  *       for DPS:es capable of higher current output.
   */
 uint16_t pwrctl_calc_iout_dac(uint32_t i_out_ma)
 {
-  uint32_t dac = 0.652 * i_out_ma + 288.611;
-  return dac & 0xfff;
+    uint32_t dac = 0.652 * i_out_ma + 288.611;
+    return dac & 0xfff; /** 12 bits */
 }
