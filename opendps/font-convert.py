@@ -31,6 +31,7 @@ def convert_font(font_fname, font_width_fname, characters, font_size):
 	(fwidth, fheight) = image_size(font_fname)
 	if fwidth != width or fheight != height:
 		print("Something is fishy with your font.")
+		print("The font pixmap and the glyph pixmap have different sizes.")
 		sys.exit(1)
 
 	cmd = "magick %s -depth 8 rgb:-" % (font_width_fname)
@@ -54,6 +55,8 @@ def convert_font(font_fname, font_width_fname, characters, font_size):
 
 	if total_width != width or len(glyph_widths) != len(characters):
 		print("Something is fishy with your font.")
+		print("The width does not match the specified glyphs.")
+		print("If you added a character you need to add it in the 'characters' array.")
 		sys.exit(1)
 
 	x_position = 0;
@@ -99,6 +102,7 @@ def convert_font(font_fname, font_width_fname, characters, font_size):
 	shell("rm temp.565")
 
 
-characters = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'dot', 'v', 'a']
+characters = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'dot', 'v', 'a', 'dash']
 convert_font("gfx/fonts/ubuntu_condensed_18.png", "gfx/fonts/ubuntu_condensed_18_width.png", characters, 0)
 convert_font("gfx/fonts/ubuntu_condensed_48.png", "gfx/fonts/ubuntu_condensed_48_width.png", characters, 1)
+print("Success! If you added glyphs, you need to fix tft_putch(...) in tft.c")

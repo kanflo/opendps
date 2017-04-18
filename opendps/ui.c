@@ -397,11 +397,11 @@ void ui_update_values(uint32_t v_in, uint32_t v_out, uint32_t i_out)
         // Print voltage
         if (power_mode == pm_constant_current && !pwrctl_vout_enabled()) {
             tft_fill(voltage_positions[0], YPOS_VOLTAGE, w, h, bg_color);
-            tft_fill(voltage_positions[1], YPOS_VOLTAGE, w, h, bg_color);
-            tft_fill(voltage_positions[2], YPOS_VOLTAGE, w, h, bg_color);
-            tft_fill(voltage_positions[3], YPOS_VOLTAGE, w, h, bg_color);
-            tft_fill(voltage_positions[4], YPOS_VOLTAGE, w, h, bg_color);
-            tft_fill(voltage_positions[5], YPOS_VOLTAGE, font_1_widths[font_1_num_glyphs-1], h, bg_color);
+            tft_putch(1, '-', voltage_positions[1], YPOS_VOLTAGE, w, h, false);
+            tft_putch(1, '.', voltage_positions[2], YPOS_VOLTAGE, 10, h, false);
+            tft_putch(1, '-', voltage_positions[3], YPOS_VOLTAGE, w, h, false);
+            tft_putch(1, '-', voltage_positions[4], YPOS_VOLTAGE, w, h, false);
+            tft_putch(1, 'V', voltage_positions[5], YPOS_VOLTAGE, font_1_widths[font_1_num_glyphs-1], h, false);
         } else {
             if (temp/10000) {
                 tft_putch(1, '0'+temp/10000, voltage_positions[0], YPOS_VOLTAGE, w, h, false);
@@ -685,11 +685,11 @@ static void update_settings_ui(bool update_both)
     if (edit_mode == edit_voltage || update_both) {
         if (power_mode == pm_constant_current) {
             tft_fill(voltage_positions[0], YPOS_VOLTAGE, w, h, bg_color);
-            tft_fill(voltage_positions[1], YPOS_VOLTAGE, w, h, bg_color);
-            tft_fill(voltage_positions[2], YPOS_VOLTAGE, w, h, bg_color);
-            tft_fill(voltage_positions[3], YPOS_VOLTAGE, w, h, bg_color);
-            tft_fill(voltage_positions[4], YPOS_VOLTAGE, w, h, bg_color);
-            tft_fill(voltage_positions[5], YPOS_VOLTAGE, font_1_widths[font_1_num_glyphs-1], h, bg_color);
+            tft_putch(1, '-', voltage_positions[1], YPOS_VOLTAGE, w, h, false);
+            tft_putch(1, '.', voltage_positions[2], YPOS_VOLTAGE, 10, h, false);
+            tft_putch(1, '-', voltage_positions[3], YPOS_VOLTAGE, w, h, false);
+            tft_putch(1, '-', voltage_positions[4], YPOS_VOLTAGE, w, h, false);
+            tft_putch(1, 'V', voltage_positions[5], YPOS_VOLTAGE, font_1_widths[font_1_num_glyphs-1], h, false);
         } else {
             if (temp/10000 > 0) {
                 tft_putch(1, '0'+temp/10000, voltage_positions[0], YPOS_VOLTAGE, w, h, false);
