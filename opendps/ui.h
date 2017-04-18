@@ -1,18 +1,18 @@
-/* 
+/*
  * The MIT License (MIT)
- * 
+ *
  * Copyright (c) 2017 Johan Kanflo (github.com/kanflo)
- * 
+ *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
  * in the Software without restriction, including without limitation the rights
  * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
  * copies of the Software, and to permit persons to whom the Software is
  * furnished to do so, subject to the following conditions:
- * 
+ *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
  * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
  * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
@@ -98,14 +98,42 @@ void ui_update_wifi_status(wifi_status_t status);
 void ui_update_power_status(bool enabled);
 
 /**
-  * @brief Select next output mode (currently CV or CC)
+  * @brief Set output mode
+  * @param mode new output mode
+  * @retval true if change was successful
+  */
+bool ui_set_power_mode(power_mode_t mode);
+
+/**
+  * @brief Set output voltage
+  * @param voltage_mv new output voltage
+  * @retval true if change was successful
+  */
+bool ui_set_voltage(uint32_t voltage_mv);
+
+/**
+  * @brief Set output current
+  * @param current_ma new output current
+  * @retval true if change was successful
+  */
+bool ui_set_current(uint32_t current_ma);
+
+/**
+  * @brief Enable output power
+  * @param enable true if enable
+  * @retval none
+  */
+void ui_enable_power(bool enable);
+
+/**
+  * @brief Select next output mode
   * @retval none
   */
 void ui_next_power_mode(void);
 
 /**
-  * @brief Get current output mode (currently CV or CC)
-  * @retval current power mode
+  * @brief Get current output mode
+  * @retval current output mode
   */
 power_mode_t ui_get_power_mode(void);
 

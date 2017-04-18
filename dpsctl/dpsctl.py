@@ -279,6 +279,16 @@ def handle_commands(args):
         i_limit = int(args.current)
         communicate(comms, create_ilimit(i_limit), args)
 
+    # The set output mode command
+    if args.mode != None:
+        if args.mode == "CV" or args.mode == "cv":
+            mode = 0
+        elif args.mode == "CC" or args.mode == "cc":
+            mode = 1
+        else:
+            fail("please say CV/CC or cv/cc")
+        communicate(comms, protocol.cmd_set_output_mode(mode), args)
+
     # The power enable command
     if args.power != None:
         if args.power == "on" or args.power == "1":
@@ -413,6 +423,7 @@ def main():
     parser.add_argument('-S', '--scan', action="store_true", help="Scan for OpenDPS wifi devices")
     parser.add_argument('-u', '--voltage', type=int, help="Set voltage (millivolt)")
     parser.add_argument('-i', '--current', type=int, help="Set maximum current (milliampere)")
+    parser.add_argument('-m', '--mode', type=str, help="Set output mode (CV or CC)")
     parser.add_argument('-p', '--power', help="Power 'on' or 'off'")
     parser.add_argument('-P', '--ping', action='store_true', help="Ping device")
     parser.add_argument('-L', '--lock', action='store_true', help="Lock device keys")
