@@ -26,6 +26,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 from uframe import *
 
 # command_t
+# Make sure these match protocol.h
 cmd_ping = 1
 cmd_set_vout = 2
 cmd_set_ilimit = 3
@@ -34,6 +35,7 @@ cmd_power_enable = 5
 cmd_wifi_status = 6
 cmd_lock = 7
 cmd_ocp_event = 8
+cmd_output_mode = 9
 cmd_response = 0x80
 
 # wifi_status_t
@@ -79,6 +81,13 @@ def create_ilimit(ilimit_ma):
     f = uFrame()
     f.pack8(cmd_set_ilimit)
     f.pack16(ilimit_ma)
+    f.end()
+    return f
+
+def cmd_set_output_mode(mode):
+    f = uFrame()
+    f.pack8(cmd_output_mode)
+    f.pack8(mode)
     f.end()
     return f
 

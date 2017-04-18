@@ -1,18 +1,18 @@
-/* 
+/*
  * The MIT License (MIT)
- * 
+ *
  * Copyright (c) 2017 Johan Kanflo (github.com/kanflo)
- * 
+ *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
  * in the Software without restriction, including without limitation the rights
  * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
  * copies of the Software, and to permit persons to whom the Software is
  * furnished to do so, subject to the following conditions:
- * 
+ *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
  * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
  * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
@@ -26,7 +26,7 @@
 /* This module defines the serial interface protocol. Everything you can do via
  * the buttons and dial on the DPS can be instrumented via the serial port.
  *
- * The basic frame payload is [<cmd>] [<optional payload>]* to which the device 
+ * The basic frame payload is [<cmd>] [<optional payload>]* to which the device
  * will respond [cmd_response | <cmd>] [success] [<response data>]*
  */
 
@@ -36,15 +36,16 @@
 #include <stdint.h>
 #include <stdbool.h>
 
-typedef enum {
+typedef enum { /** Make sure these match protocol.py */
     cmd_ping = 1,
-    cmd_set_vout,
-    cmd_set_ilimit,
-    cmd_status,
-    cmd_power_enable,
-    cmd_wifi_status,
-    cmd_lock,
-    cmd_ocp_event,
+    cmd_set_vout = 2,
+    cmd_set_ilimit = 3,
+    cmd_status = 4,
+    cmd_power_enable = 5,
+    cmd_wifi_status = 6,
+    cmd_lock = 7,
+    cmd_ocp_event = 8,
+    cmd_output_mode = 9,
     cmd_response = 0x80
 } command_t;
 
@@ -61,9 +62,9 @@ typedef enum {
 /*
  * Helpers for creating frames.
  *
- * On return, 'frame' will hold a complete frame ready for transmission and the 
- * return value will be the length of the frame. If the specified 'length' of 
- * the frame buffer is not sufficient, the return value will be zero and the 
+ * On return, 'frame' will hold a complete frame ready for transmission and the
+ * return value will be the length of the frame. If the specified 'length' of
+ * the frame buffer is not sufficient, the return value will be zero and the
  * 'frame' buffer is left untouched.
  */
 uint32_t protocol_create_response(uint8_t *frame, uint32_t length, command_t cmd, uint8_t success);
@@ -92,9 +93,44 @@ bool protocol_unpack_status_response(uint8_t *payload, uint32_t length, uint16_t
 bool protocol_unpack_wifi_status(uint8_t *payload, uint32_t length, wifi_status_t *status);
 bool protocol_unpack_lock(uint8_t *payload, uint32_t length, uint8_t *locked);
 bool protocol_unpack_ocp(uint8_t *payload, uint32_t length, uint16_t *i_cut);
-
+bool protocol_unpack_output_mode(uint8_t *payload, uint32_t length, uint8_t *mode);
 
 /*
+ *    *** Adding new commands ***
+ *
+ * opendps/protocol.h
+ * ------------------
+ *  Add command number in the command_t list
+ *  Add a descrption of the command with parameters, response format etc. etc.
+ *
+ * dpsctl/protocol.py
+ * ------------------
+ *  Add the same command number in the cmd_* list
+ *  Add command frame creeation (eg. cmd_set_my_thing(...))
+ *  Add optional response frame in the same file.
+ *
+ * dpsctl/dpsctl.py
+ * ----------------
+ *  Add argument, eg. parser.add_argument('-q', '--quick', help="Quick command")
+ *  Add command handler in handle_commands(...), eg. communicate(comms,
+ *    protocol.cmd_quick_command(mode), args)
+ *  Add optional response handler in handle_response(...)
+ *
+ * opendps/protocol.h
+ * ------------------
+ *  Add the same command number as in protocol.h
+ *
+ * opendps/protocol_handler.c
+ * --------------------------
+ *  Add command enum in handle_frame(...)
+ *  Add command handler, eg. handle_quick(...)
+ *  Add frame unpacker, eg. protocol_unpack_quick(...)
+ *  Do your thing
+ *
+ * There are simple commands such as the 'lock' and 'power mode' commands and more
+ * complex commands such as the 'status' command returning a bit if data.
+ *
+ *
  *    *** Command types ***
  *
  * === Pinging DPS ===
@@ -118,6 +154,14 @@ bool protocol_unpack_ocp(uint8_t *payload, uint32_t length, uint16_t *i_cut);
  *
  *  HOST:   [cmd_set_ilimit] [ilimit_ma(15:8)] [ilimit_ma(7:0)]
  *  DPS:    [cmd_response | cmd_set_ilimit] [<success>]
+ *
+ *
+ * === Setting CV or CC mode ===
+ * The <mode> is 0 for CV and 1 for CC
+ * 0 if the requested current was outside of what the DPS can provide.
+ *
+ *  HOST:   [cmd_output_mode] [<mode>]
+ *  DPS:    [cmd_response | cmd_output_mode] [<success>]
  *
  *
  * === Reading the status of the DPS ===

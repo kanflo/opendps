@@ -259,13 +259,8 @@ void ui_hande_event(event_t event, uint8_t data)
                 bool new_state = !pwrctl_vout_enabled();
                 if (new_state) {
                     write_past_settings();
-                    pwr_start = get_ticks();
                 }
-                if (new_state) {
-                    update_power_output();
-                }
-                pwrctl_enable_vout(new_state);
-                ui_update_power_status(new_state);
+                ui_enable_power(new_state);
             }
             break;
         case event_button_m1:
@@ -316,15 +311,13 @@ void ui_hande_event(event_t event, uint8_t data)
                 uint32_t increment = get_voltage_increment(edit_position);
                 if (v_setting >= increment) {
                     v_setting -= increment;
-                    update_power_output();
-                    update_settings_ui(false);
+                    (void) ui_set_voltage(v_setting);
                 }
             } else if (edit_mode == edit_ampere) {
                 uint32_t increment = get_ampere_increment(edit_position);
                 if (i_setting >= increment) {
                     i_setting -= increment;
-                    update_power_output();
-                    update_settings_ui(false);
+                    (void) ui_set_current(i_setting);
                 }
             }
             break;
@@ -333,15 +326,13 @@ void ui_hande_event(event_t event, uint8_t data)
                 uint32_t increment = get_voltage_increment(edit_position);
                 if (v_setting + increment <= max_v_out) {
                     v_setting += increment;
-                    update_power_output();
-                    update_settings_ui(false);
+                    (void) ui_set_voltage(v_setting);
                 }
             } else if (edit_mode == edit_ampere) {
                 uint32_t increment = get_ampere_increment(edit_position);
                 if (i_setting + increment <= max_i_limit) {
                     i_setting += increment;
-                    update_power_output();
-                    update_settings_ui(false);
+                    (void) ui_set_current(i_setting);
                 }
             }
             break;
@@ -574,11 +565,102 @@ void ui_update_power_status(bool enabled)
 }
 
 /**
-  * @brief Select next output mode (currently CV or CC)
+  * @brief Set output voltage
+  * @param voltage_mv new output voltage
+  * @retval none
+  */
+bool ui_set_voltage(uint32_t voltage_mv)
+{
+    bool success = false;
+    switch(power_mode) {
+        case pm_constant_voltage:
+            success = pwrctl_set_vout(voltage_mv);
+            break;
+        case pm_constant_current:
+            success = pwrctl_set_vout(max_v_out);
+            break;
+        default:
+            break;
+    }
+    if (success) {
+        v_setting = voltage_mv;
+        if (edit_mode != edit_none) {
+            update_settings_ui(true);
+        }
+    }
+    return success;
+}
+
+/**
+  * @brief Set output current
+  * @param current_ma new output current
+  * @retval none
+  */
+bool ui_set_current(uint32_t current_ma)
+{
+    bool success = false;
+    switch(power_mode) {
+        case pm_constant_voltage:
+            success = pwrctl_set_ilimit(current_ma);
+            success &= pwrctl_set_iout(max_i_limit);
+            break;
+        case pm_constant_current:
+            success = pwrctl_set_ilimit(max_i_limit);
+            success &= pwrctl_set_iout(current_ma);
+            break;
+        default:
+            break;
+    }
+    if (success) {
+        i_setting = current_ma;
+        if (edit_mode != edit_none) {
+            update_settings_ui(true);
+        }
+    }
+    return success;
+}
+
+/**
+  * @brief Enable output power
+  * @param enable true if enable
+  * @retval none
+  */
+void ui_enable_power(bool enable)
+{
+    if (enable) {
+        pwr_start = get_ticks();
+        update_power_output();
+    }
+    pwrctl_enable_vout(enable);
+    ui_update_power_status(enable);
+}
+
+/**
+  * @brief Set output mode
+  * @param mode new output mode
+  * @retval true if change was successful
+  */
+bool ui_set_power_mode(power_mode_t mode)
+{
+    bool success = false;
+    if (!pwrctl_vout_enabled() && power_mode != mode && power_mode < pm_max) {
+        power_mode = mode;
+        update_power_mode_status();
+        update_settings_ui(true);
+        success = true;
+    }
+    return success;
+}
+
+/**
+  * @brief Select next output mode
   * @retval none
   */
 void ui_next_power_mode(void)
 {
+    if (pwrctl_vout_enabled()) {
+        return;
+    }
     power_mode++;
     if (power_mode == pm_max) {
         power_mode = pm_min;
@@ -587,7 +669,7 @@ void ui_next_power_mode(void)
 }
 
 /**
-  * @brief Get current output mode (currently CV or CC)
+  * @brief Get current output mode
   * @retval current power mode
   */
 power_mode_t ui_get_power_mode(void)

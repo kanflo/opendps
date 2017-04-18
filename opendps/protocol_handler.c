@@ -1,18 +1,18 @@
-/* 
+/*
  * The MIT License (MIT)
- * 
+ *
  * Copyright (c) 2017 Johan Kanflo (github.com/kanflo)
- * 
+ *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
  * in the Software without restriction, including without limitation the rights
  * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
  * copies of the Software, and to permit persons to whom the Software is
  * furnished to do so, subject to the following conditions:
- * 
+ *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
  * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
  * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
@@ -64,7 +64,7 @@ static bool handle_set_vout(uint8_t *payload, uint32_t payload_len)
     bool success = false;
     uint16_t setting;
     if (protocol_unpack_vout(payload, payload_len, &setting)) {
-        success = pwrctl_set_vout(setting);
+        success = ui_set_voltage(setting);
     }
     return success;
 }
@@ -80,7 +80,7 @@ static bool handle_set_ilimit(uint8_t *payload, uint32_t payload_len)
     bool success = false;
     uint16_t setting;
     if (protocol_unpack_ilimit(payload, payload_len, &setting)) {
-        success = pwrctl_set_ilimit(setting);
+        success = ui_set_current(setting);
     }
     return success;
 }
@@ -117,8 +117,7 @@ static bool handle_power_enable(uint8_t *payload, uint32_t payload_len)
     bool success = false;
     uint8_t status;
     if (protocol_unpack_power_enable(payload, payload_len, &status)) {
-        pwrctl_enable_vout(status);
-        ui_update_power_status(status);
+        ui_enable_power(status);
         success = true;
     }
     return success;
@@ -154,6 +153,22 @@ static bool handle_lock(uint8_t *payload, uint32_t payload_len)
     if (protocol_unpack_lock(payload, payload_len, &status)) {
         success = true;
         ui_lock(status);
+    }
+    return success;
+}
+
+/**
+  * @brief Handle a power mode command
+  * @param payload payload of command frame
+  * @param payload_len length of payload
+  * @retval true if frame was correct and command executed ok
+  */
+static bool handle_power_mode(uint8_t *payload, uint32_t payload_len)
+{
+    bool success = false;
+    uint8_t mode = 0;
+    if (protocol_unpack_output_mode(payload, payload_len, &mode)) {
+        success = ui_set_power_mode((power_mode_t) mode);
     }
     return success;
 }
@@ -197,6 +212,9 @@ static void handle_frame(uint8_t *frame, uint32_t length)
                 break;
             case cmd_lock:
                 success = handle_lock(payload, payload_len);
+                break;
+            case cmd_output_mode:
+                success = handle_power_mode(payload, payload_len);
                 break;
             default:
                 break;
