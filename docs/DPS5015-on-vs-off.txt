@@ -1,0 +1,32 @@
+Comparing GPIO setting on new DPS5015, "on" vs "off" state (not button press; looking for voltage control)
+
+off vs on
+
+GPIOA settings
+CRL      : 0x00008887  [0x40010800]
+CRH      : 0x78844443  [0x40010804]
+IDR      : 0x00005f0f  [0x40010808]: 0x00005e0f  [0x40010808]
+ODR      : 0x0000a14f  [0x4001080c]: 0x0000a04f  [0x4001080c]
+BSRR     : 0x00000000  [0x40010810]
+BRR      : 0x00000000  [0x40010814]
+LCKR     : 0x00000000  [0x40010818]
+gojimmypi@ubuntu : ~/workspace/opendps
+0 $ ./ocd-client2.py gpiob
+GPIOB settings
+CRL      : 0xb4887400  [0x40010c00]
+CRH      : 0xb3b33488  [0x40010c04]
+IDR      : 0x000077f4  [0x40010c08]: 0x000077f4  [0x40010c08]
+ODR      : 0x0000f338  [0x40010c0c]: 0x0000f338  [0x40010c0c]
+BSRR     : 0x00000000  [0x40010c10]
+BRR      : 0x00000000  [0x40010c14]
+LCKR     : 0x00000000  [0x40010c18]
+gojimmypi@ubuntu : ~/workspace/opendps
+0 $ ./ocd-client2.py gpioc
+GPIOC settings
+CRL      : 0x44444444  [0x40011000]
+CRH      : 0x44344444  [0x40011004]
+IDR      : 0x0000e000  [0x40011008]: 0x0000c000  [0x40011008]
+ODR      : 0x00002000  [0x4001100c]: 0x00000000  [0x4001100c]
+BSRR     : 0x00000000  [0x40011010]
+BRR      : 0x00000000  [0x40011014]
+LCKR     : 0x00000000  [0x40011018]

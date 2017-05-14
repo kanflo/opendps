@@ -1,0 +1,29 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+
+        {
+            "name": "Debug",
+            "type": "cppdbg",
+            "request": "launch",
+            "miDebuggerPath": "C:/workspace/opendps/opendps/arm-none-eabi-gdb.exe",
+            "targetArchitecture": "arm",
+            "program": "Z:/home/gojimmypi/workspace/opendps/opendps/opendps.elf",
+
+            "setupCommands": [
+            {
+                "text": "file Z:/home/gojimmypi/workspace/opendps/opendps/opendps.elf"
+            },
+            {
+                "text": "target remote 192.168.8.130:3333"
+            },
+            {
+                "text": "monitor reset init"
+            }
+                
+            ],
+            "externalConsole": false,
+            "cwd": "Z:/home/gojimmypi/workspace/opendps/opendps/"
+            }
+    ]
+}

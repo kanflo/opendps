@@ -1,0 +1,191 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="Source files">
+      <UniqueIdentifier>{08ab0774-bb73-431b-8a8b-a7662d1dce22}</UniqueIdentifier>
+      <Extensions>cpp;c;cc;cxx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
+    </Filter>
+    <Filter Include="Header files">
+      <UniqueIdentifier>{60019d7f-d009-4854-8975-dc0944dfd9d9}</UniqueIdentifier>
+      <Extensions>h;hpp;hxx;hm;inl;inc;xsd</Extensions>
+    </Filter>
+    <Filter Include="VisualGDB settings">
+      <UniqueIdentifier>{a4c0e51f-34fb-43fe-a2b9-2fe26ecad216}</UniqueIdentifier>
+      <Extensions>*.vgdbsettings</Extensions>
+    </Filter>
+    <Filter Include="Source files\Device-specific files">
+      <UniqueIdentifier>{4940f89f-7cfe-4354-ae5f-1ae5b7c2a229}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header files\Device-specific files">
+      <UniqueIdentifier>{4f5a9209-98fb-4dc8-a557-1f89c4844ee0}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source files\Resource files">
+      <UniqueIdentifier>{0b6df59f-a792-438a-b1e0-a3e00e6fcf7d}</UniqueIdentifier>
+      <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav</Extensions>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="opendps-Debug.vgdbsettings">
+      <Filter>VisualGDB settings</Filter>
+    </None>
+    <None Include="opendps-Release.vgdbsettings">
+      <Filter>VisualGDB settings</Filter>
+    </None>
+    <None Include="..\..\..\workspace\opendps\stm32.mak">
+      <Filter>Source files\Device-specific files</Filter>
+    </None>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="..\..\..\Users\gojimmypi\AppData\Local\VisualGDB\EmbeddedBSPs\arm-eabi\com.sysprogs.arm.stm32\STM32F1xxxx\StartupFiles\startup_stm32f100xb.c">
+      <Filter>Source files\Device-specific files</Filter>
+    </ClCompile>
+    <ClCompile Include="cli.c">
+      <Filter>Source files</Filter>
+    </ClCompile>
+    <ClCompile Include="command_handler.c">
+      <Filter>Source files</Filter>
+    </ClCompile>
+    <ClCompile Include="event.c">
+      <Filter>Source files</Filter>
+    </ClCompile>
+    <ClCompile Include="font-0.c">
+      <Filter>Source files</Filter>
+    </ClCompile>
+    <ClCompile Include="font-1.c">
+      <Filter>Source files</Filter>
+    </ClCompile>
+    <ClCompile Include="fontwidth.c">
+      <Filter>Source files</Filter>
+    </ClCompile>
+    <ClCompile Include="hw.c">
+      <Filter>Source files</Filter>
+    </ClCompile>
+    <ClCompile Include="ili9163c.c">
+      <Filter>Source files</Filter>
+    </ClCompile>
+    <ClCompile Include="opendps.c">
+      <Filter>Source files</Filter>
+    </ClCompile>
+    <ClCompile Include="past.c">
+      <Filter>Source files</Filter>
+    </ClCompile>
+    <ClCompile Include="protocol.c">
+      <Filter>Source files</Filter>
+    </ClCompile>
+    <ClCompile Include="protocol_handler.c">
+      <Filter>Source files</Filter>
+    </ClCompile>
+    <ClCompile Include="pwrctl.c">
+      <Filter>Source files</Filter>
+    </ClCompile>
+    <ClCompile Include="rgbtobgr565.c">
+      <Filter>Source files</Filter>
+    </ClCompile>
+    <ClCompile Include="ringbuf.c">
+      <Filter>Source files</Filter>
+    </ClCompile>
+    <ClCompile Include="spi_driver.c">
+      <Filter>Source files</Filter>
+    </ClCompile>
+    <ClCompile Include="stdio.c">
+      <Filter>Source files</Filter>
+    </ClCompile>
+    <ClCompile Include="tft.c">
+      <Filter>Source files</Filter>
+    </ClCompile>
+    <ClCompile Include="tick.c">
+      <Filter>Source files</Filter>
+    </ClCompile>
+    <ClCompile Include="uframe.c">
+      <Filter>Source files</Filter>
+    </ClCompile>
+    <ClCompile Include="ui.c">
+      <Filter>Source files</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <Xml Include="stm32.xml">
+      <Filter>VisualGDB settings</Filter>
+    </Xml>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="cli.h">
+      <Filter>Header files</Filter>
+    </ClInclude>
+    <ClInclude Include="event.h">
+      <Filter>Header files</Filter>
+    </ClInclude>
+    <ClInclude Include="font-0.h">
+      <Filter>Header files</Filter>
+    </ClInclude>
+    <ClInclude Include="font-1.h">
+      <Filter>Header files</Filter>
+    </ClInclude>
+    <ClInclude Include="gcc_Debug.h">
+      <Filter>Header files</Filter>
+    </ClInclude>
+    <ClInclude Include="gcc_Release.h">
+      <Filter>Header files</Filter>
+    </ClInclude>
+    <ClInclude Include="graphics.h">
+      <Filter>Header files</Filter>
+    </ClInclude>
+    <ClInclude Include="hw.h">
+      <Filter>Header files</Filter>
+    </ClInclude>
+    <ClInclude Include="ili9163c.h">
+      <Filter>Header files</Filter>
+    </ClInclude>
+    <ClInclude Include="ili9163c_registers.h">
+      <Filter>Header files</Filter>
+    </ClInclude>
+    <ClInclude Include="ili9163c_settings.h">
+      <Filter>Header files</Filter>
+    </ClInclude>
+    <ClInclude Include="logo.h">
+      <Filter>Header files</Filter>
+    </ClInclude>
+    <ClInclude Include="padlock.h">
+      <Filter>Header files</Filter>
+    </ClInclude>
+    <ClInclude Include="past.h">
+      <Filter>Header files</Filter>
+    </ClInclude>
+    <ClInclude Include="power.h">
+      <Filter>Header files</Filter>
+    </ClInclude>
+    <ClInclude Include="protocol.h">
+      <Filter>Header files</Filter>
+    </ClInclude>
+    <ClInclude Include="pwrctl.h">
+      <Filter>Header files</Filter>
+    </ClInclude>
+    <ClInclude Include="ringbuf.h">
+      <Filter>Header files</Filter>
+    </ClInclude>
+    <ClInclude Include="serialhandler.h">
+      <Filter>Header files</Filter>
+    </ClInclude>
+    <ClInclude Include="spi_driver.h">
+      <Filter>Header files</Filter>
+    </ClInclude>
+    <ClInclude Include="tft.h">
+      <Filter>Header files</Filter>
+    </ClInclude>
+    <ClInclude Include="tick.h">
+      <Filter>Header files</Filter>
+    </ClInclude>
+    <ClInclude Include="uframe.h">
+      <Filter>Header files</Filter>
+    </ClInclude>
+    <ClInclude Include="ui.h">
+      <Filter>Header files</Filter>
+    </ClInclude>
+    <ClInclude Include="wifi.h">
+      <Filter>Header files</Filter>
+    </ClInclude>
+    <ClInclude Include="dps-model.h">
+      <Filter>Header files</Filter>
+    </ClInclude>
+  </ItemGroup>
+</Project>
