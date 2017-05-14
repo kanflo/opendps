@@ -23,6 +23,7 @@
  */
 
 #include "pwrctl.h"
+#include "dps-model.h"
 #include <stdio.h>
 #include <gpio.h>
 #include <dac.h>
@@ -100,12 +101,27 @@ uint32_t pwrctl_get_ilimit(void)
   */
 void pwrctl_enable_vout(bool enable)
 {
-    v_out_enabled = enable;
-    if (v_out_enabled) {
-        gpio_clear(GPIOB, GPIO11);
-    } else {
-        gpio_set(GPIOB, GPIO11);
-    }
+  v_out_enabled = enable;
+  if (v_out_enabled)
+  {
+#ifdef DPS5015
+    //gpio_clear(GPIOA, GPIO9); // this is power control on '5015
+    gpio_set(GPIOB, GPIO11);    // B11 is fan control on '5015
+    gpio_clear(GPIOC, GPIO13);  // C13 is power control on '5015
+#else
+    gpio_clear(GPIOB, GPIO11);  // B11 is power control on '5005
+#endif
+  }
+  else
+  {
+#ifdef DPS5015
+    //gpio_set(GPIOA, GPIO9);    // gpio_set(GPIOB, GPIO11);
+    gpio_clear(GPIOB, GPIO11); // B11 is fan control on '5015
+    gpio_set(GPIOC, GPIO13);   // C13 is power control on '5015
+#else
+    gpio_set(GPIOB, GPIO11);  // B11 is power control on '5005
+#endif
+  }
 }
 
 /**
