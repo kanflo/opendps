@@ -1,0 +1,204 @@
+# for reference, this is the result of gpio peek on a new, unmodified DPS5015
+
+0 $ ./ocd-client2.py gpio
+// PA0  O 1 OD     (50 Mhz)                       U7
+gpio_set_mode(GPIOA, GPIO_MODE_OUTPUT_50_MHZ, GPIO_CNF_OUTPUT_OPENDRAIN, GPIO0);
+
+// PA1  I 1 PuPd                  M2 button
+gpio_set_mode(GPIOA, GPIO_MODE_INPUT, GPIO_CNF_INPUT_PULL_UPDOWN, GPIO1);
+gpio_set(GPIOA, GPIO1);
+
+// PA2  I 1 PuPd                  SEL button
+gpio_set_mode(GPIOA, GPIO_MODE_INPUT, GPIO_CNF_INPUT_PULL_UPDOWN, GPIO2);
+gpio_set(GPIOA, GPIO2);
+
+// PA3  I 1 PuPd                  M1 button
+gpio_set_mode(GPIOA, GPIO_MODE_INPUT, GPIO_CNF_INPUT_PULL_UPDOWN, GPIO3);
+gpio_set(GPIOA, GPIO3);
+
+// PA4  I 0 An                    DAC1_OUT        TL594.2 (1IN-)
+gpio_set_mode(GPIOA, GPIO_MODE_INPUT, GPIO_CNF_INPUT_ANALOG, GPIO4);
+
+// PA5  I 0 An                    DAC2_OUT        TL594.15 (2IN-)
+gpio_set_mode(GPIOA, GPIO_MODE_INPUT, GPIO_CNF_INPUT_ANALOG, GPIO5);
+
+// PA6  I 0 An
+gpio_set_mode(GPIOA, GPIO_MODE_INPUT, GPIO_CNF_INPUT_ANALOG, GPIO6);
+
+// PA7  I 0 An                    ADC1_IN7        R30-U2.7:V_OUT-B (measures Vou               t)
+gpio_set_mode(GPIOA, GPIO_MODE_INPUT, GPIO_CNF_INPUT_ANALOG, GPIO7);
+
+// PA8  O 1 PP     (50 Mhz)       TFT.7           (not used by TFT)
+gpio_set_mode(GPIOA, GPIO_MODE_OUTPUT_50_MHZ, GPIO_CNF_OUTPUT_PUSHPULL, GPIO8);
+
+// PA9  I 1 Flt
+gpio_set_mode(GPIOA, GPIO_MODE_INPUT, GPIO_CNF_INPUT_FLOAT, GPIO9);
+
+// PA10 I 1 Flt
+gpio_set_mode(GPIOA, GPIO_MODE_INPUT, GPIO_CNF_INPUT_FLOAT, GPIO10);
+
+// PA11 I 1 Flt
+gpio_set_mode(GPIOA, GPIO_MODE_INPUT, GPIO_CNF_INPUT_FLOAT, GPIO11);
+
+// PA12 I 1 Flt
+gpio_set_mode(GPIOA, GPIO_MODE_INPUT, GPIO_CNF_INPUT_FLOAT, GPIO12);
+
+// PA13 I 0 PuPd
+gpio_set_mode(GPIOA, GPIO_MODE_INPUT, GPIO_CNF_INPUT_PULL_UPDOWN, GPIO13);
+gpio_clear(GPIOA, GPIO13);
+
+// PA14 I 1 PuPd                                  SWDCLK
+gpio_set_mode(GPIOA, GPIO_MODE_INPUT, GPIO_CNF_INPUT_PULL_UPDOWN, GPIO14);
+gpio_set(GPIOA, GPIO14);
+
+// PA15 O 1 OD     (50 Mhz)                       R41-TL594.16 (2IN+)
+gpio_set_mode(GPIOA, GPIO_MODE_OUTPUT_50_MHZ, GPIO_CNF_OUTPUT_OPENDRAIN, GPIO15)               ;
+
+// PB0  I 0 An                    ADC1_IN8        R7/R2-R14-D4 (measures Vin)
+gpio_set_mode(GPIOB, GPIO_MODE_INPUT, GPIO_CNF_INPUT_ANALOG, GPIO0);
+
+// PB1  I 0 An                    ADC1_IN9        R33-U2.1:V_OUT-A (measures Iou               t)
+gpio_set_mode(GPIOB, GPIO_MODE_INPUT, GPIO_CNF_INPUT_ANALOG, GPIO1);
+
+// PB2  I 1 Flt
+gpio_set_mode(GPIOB, GPIO_MODE_INPUT, GPIO_CNF_INPUT_FLOAT, GPIO2);
+
+// PB3  O 1 OD     (50 Mhz)                       R11-R17-R25-U2.5 (V_inB+)
+gpio_set_mode(GPIOB, GPIO_MODE_OUTPUT_50_MHZ, GPIO_CNF_OUTPUT_OPENDRAIN, GPIO3);
+
+// PB4  I 1 PuPd                  PWR button
+gpio_set_mode(GPIOB, GPIO_MODE_INPUT, GPIO_CNF_INPUT_PULL_UPDOWN, GPIO4);
+gpio_set(GPIOB, GPIO4);
+
+// PB5  I 1 PuPd                  Rotary press
+gpio_set_mode(GPIOB, GPIO_MODE_INPUT, GPIO_CNF_INPUT_PULL_UPDOWN, GPIO5);
+gpio_set(GPIOB, GPIO5);
+
+// PB6  I 1 Flt                                   NC?
+gpio_set_mode(GPIOB, GPIO_MODE_INPUT, GPIO_CNF_INPUT_FLOAT, GPIO6);
+
+// PB7  O 0 AF-PP  (50 Mhz)       TIM4_CH2
+gpio_set_mode(GPIOB, GPIO_MODE_OUTPUT_50_MHZ, GPIO_CNF_OUTPUT_ALTFN_PUSHPULL, GP               IO7);
+
+// PB8  I 1 PuPd                  Rotary enc
+gpio_set_mode(GPIOB, GPIO_MODE_INPUT, GPIO_CNF_INPUT_PULL_UPDOWN, GPIO8);
+gpio_set(GPIOB, GPIO8);
+
+// PB9  I 1 PuPd                  Rotary enc
+gpio_set_mode(GPIOB, GPIO_MODE_INPUT, GPIO_CNF_INPUT_PULL_UPDOWN, GPIO9);
+gpio_set(GPIOB, GPIO9);
+
+// PB10 I 1 Flt
+gpio_set_mode(GPIOB, GPIO_MODE_INPUT, GPIO_CNF_INPUT_FLOAT, GPIO10);
+
+// PB11 O 0 PP     (50 Mhz)       nPwrEnable      R29-TFT.2 (TFT_VCC)
+gpio_set_mode(GPIOB, GPIO_MODE_OUTPUT_50_MHZ, GPIO_CNF_OUTPUT_PUSHPULL, GPIO11);
+
+// PB12 O 1 PP     (50 Mhz)       SPI2_NSS        TFT_RESET
+gpio_set_mode(GPIOB, GPIO_MODE_OUTPUT_50_MHZ, GPIO_CNF_OUTPUT_PUSHPULL, GPIO12);
+
+// PB13 O 1 AF-PP  (50 Mhz)       SPI2_SCK
+gpio_set_mode(GPIOB, GPIO_MODE_OUTPUT_50_MHZ, GPIO_CNF_OUTPUT_ALTFN_PUSHPULL, GP               IO13);
+
+// PB14 O 1 PP     (50 Mhz)       SPI2_MISO       TFT_A0
+gpio_set_mode(GPIOB, GPIO_MODE_OUTPUT_50_MHZ, GPIO_CNF_OUTPUT_PUSHPULL, GPIO14);
+
+// PB15 O 1 AF-PP  (50 Mhz)       SPI2_MOSI
+gpio_set_mode(GPIOB, GPIO_MODE_OUTPUT_50_MHZ, GPIO_CNF_OUTPUT_ALTFN_PUSHPULL, GP               IO15);
+
+// PC0  I 0 Flt
+gpio_set_mode(GPIOC, GPIO_MODE_INPUT, GPIO_CNF_INPUT_FLOAT, GPIO0);
+
+// PC1  I 0 Flt
+gpio_set_mode(GPIOC, GPIO_MODE_INPUT, GPIO_CNF_INPUT_FLOAT, GPIO1);
+
+// PC2  I 0 Flt
+gpio_set_mode(GPIOC, GPIO_MODE_INPUT, GPIO_CNF_INPUT_FLOAT, GPIO2);
+
+// PC3  I 0 Flt
+gpio_set_mode(GPIOC, GPIO_MODE_INPUT, GPIO_CNF_INPUT_FLOAT, GPIO3);
+
+// PC4  I 0 Flt
+gpio_set_mode(GPIOC, GPIO_MODE_INPUT, GPIO_CNF_INPUT_FLOAT, GPIO4);
+
+// PC5  I 0 Flt
+gpio_set_mode(GPIOC, GPIO_MODE_INPUT, GPIO_CNF_INPUT_FLOAT, GPIO5);
+
+// PC6  I 0 Flt
+gpio_set_mode(GPIOC, GPIO_MODE_INPUT, GPIO_CNF_INPUT_FLOAT, GPIO6);
+
+// PC7  I 0 Flt
+gpio_set_mode(GPIOC, GPIO_MODE_INPUT, GPIO_CNF_INPUT_FLOAT, GPIO7);
+
+// PC8  I 0 Flt
+gpio_set_mode(GPIOC, GPIO_MODE_INPUT, GPIO_CNF_INPUT_FLOAT, GPIO8);
+
+// PC9  I 0 Flt
+gpio_set_mode(GPIOC, GPIO_MODE_INPUT, GPIO_CNF_INPUT_FLOAT, GPIO9);
+
+// PC10 I 0 Flt
+gpio_set_mode(GPIOC, GPIO_MODE_INPUT, GPIO_CNF_INPUT_FLOAT, GPIO10);
+
+// PC11 I 0 Flt
+gpio_set_mode(GPIOC, GPIO_MODE_INPUT, GPIO_CNF_INPUT_FLOAT, GPIO11);
+
+// PC12 I 0 Flt
+gpio_set_mode(GPIOC, GPIO_MODE_INPUT, GPIO_CNF_INPUT_FLOAT, GPIO12);
+
+// PC13 O 1 PP     (50 Mhz)
+gpio_set_mode(GPIOC, GPIO_MODE_OUTPUT_50_MHZ, GPIO_CNF_OUTPUT_PUSHPULL, GPIO13);
+
+// PC14 I 1 Flt
+gpio_set_mode(GPIOC, GPIO_MODE_INPUT, GPIO_CNF_INPUT_FLOAT, GPIO14);
+
+// PC15 I 1 Flt
+gpio_set_mode(GPIOC, GPIO_MODE_INPUT, GPIO_CNF_INPUT_FLOAT, GPIO15);
+
+// PD0  I 1 Flt
+gpio_set_mode(GPIOD, GPIO_MODE_INPUT, GPIO_CNF_INPUT_FLOAT, GPIO0);
+
+// PD1  O 1 PP     (50 Mhz)                       U7
+gpio_set_mode(GPIOD, GPIO_MODE_OUTPUT_50_MHZ, GPIO_CNF_OUTPUT_PUSHPULL, GPIO1);
+
+// PD2  I 0 Flt
+gpio_set_mode(GPIOD, GPIO_MODE_INPUT, GPIO_CNF_INPUT_FLOAT, GPIO2);
+
+// PD3  I 0 Flt
+gpio_set_mode(GPIOD, GPIO_MODE_INPUT, GPIO_CNF_INPUT_FLOAT, GPIO3);
+
+// PD4  I 0 Flt
+gpio_set_mode(GPIOD, GPIO_MODE_INPUT, GPIO_CNF_INPUT_FLOAT, GPIO4);
+
+// PD5  I 0 Flt
+gpio_set_mode(GPIOD, GPIO_MODE_INPUT, GPIO_CNF_INPUT_FLOAT, GPIO5);
+
+// PD6  I 0 Flt
+gpio_set_mode(GPIOD, GPIO_MODE_INPUT, GPIO_CNF_INPUT_FLOAT, GPIO6);
+
+// PD7  I 0 Flt
+gpio_set_mode(GPIOD, GPIO_MODE_INPUT, GPIO_CNF_INPUT_FLOAT, GPIO7);
+
+// PD8  I 0 Flt
+gpio_set_mode(GPIOD, GPIO_MODE_INPUT, GPIO_CNF_INPUT_FLOAT, GPIO8);
+
+// PD9  I 0 Flt
+gpio_set_mode(GPIOD, GPIO_MODE_INPUT, GPIO_CNF_INPUT_FLOAT, GPIO9);
+
+// PD10 I 0 Flt
+gpio_set_mode(GPIOD, GPIO_MODE_INPUT, GPIO_CNF_INPUT_FLOAT, GPIO10);
+
+// PD11 I 0 Flt
+gpio_set_mode(GPIOD, GPIO_MODE_INPUT, GPIO_CNF_INPUT_FLOAT, GPIO11);
+
+// PD12 I 0 Flt
+gpio_set_mode(GPIOD, GPIO_MODE_INPUT, GPIO_CNF_INPUT_FLOAT, GPIO12);
+
+// PD13 I 0 Flt
+gpio_set_mode(GPIOD, GPIO_MODE_INPUT, GPIO_CNF_INPUT_FLOAT, GPIO13);
+
+// PD14 I 0 Flt
+gpio_set_mode(GPIOD, GPIO_MODE_INPUT, GPIO_CNF_INPUT_FLOAT, GPIO14);
+
+// PD15 I 0 Flt
+gpio_set_mode(GPIOD, GPIO_MODE_INPUT, GPIO_CNF_INPUT_FLOAT, GPIO15);
+

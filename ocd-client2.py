@@ -1,5 +1,7 @@
 #!/usr/bin/python
-
+#
+# this x2 version connects to the second OpenOCD instance, assumed to be at port 4445 (see openocd/stlink-v2-Port2.cfg)
+#
 import socket
 import sys
 
@@ -799,7 +801,7 @@ def parse_mem_dump(data):
 
 try:
     ocd_sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    ocd_sock.connect(('localhost', 4444))
+    ocd_sock.connect(('localhost', 4445))
     ocd_sock.settimeout(1.0)
 except socket.error:
     print("Failed connect to Open OCD")
