@@ -39,6 +39,7 @@
 #include "pwrctl.h"
 #include "hw.h"
 #include "event.h"
+#include "dps-model.h"
 
 static void tim2_init(void);
 static void clock_init(void);
@@ -514,8 +515,11 @@ static void gpio_init(void)
 
     // PC13 I 0 Flt
 //    gpio_set_mode(GPIOC, GPIO_MODE_INPUT, GPIO_CNF_INPUT_FLOAT, GPIO13);
+#ifdef DPS5015
+	gpio_set_mode(GPIOC, GPIO_MODE_OUTPUT_50_MHZ, GPIO_CNF_OUTPUT_PUSHPULL, GPIO13);
+#endif
 
-    // PC14 I 0 Flt
+	// PC14 I 0 Flt
     gpio_set_mode(GPIOC, GPIO_MODE_INPUT, GPIO_CNF_INPUT_FLOAT, GPIO14);
 
     // PC15 I 0 Flt
