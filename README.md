@@ -5,7 +5,7 @@
 OpenDPS is a firmware replacement for the DPS5005 (and friends) that has the same functionality, has a less cluttered user interface and is remote controllable via wifi (ESP8266) or via a serial port.
 
 <p align="center">
-<img src="https://raw.githubusercontent.com/kanflo/opendps/master/opendps.jpg" alt="A DPS5005 with wifi"/>
+<img src="https://raw.githubusercontent.com/kanflo/opendps/master/image.jpg" alt="A DPS5005 with wifi"/>
 </p>
 
 There are three accompanying blog posts you might find of interest:
