@@ -99,14 +99,6 @@ static void udp_receive_callback(void *arg, struct udp_pcb *upcb, struct pbuf *p
             printf("Failed to enqueue\n");
             /** @todo Handle queue error */
         }
-#if 0
-        uint8_t *buf = (uint8_t*) p->payload;
-        // Send to DPS device, response is handled in dps_task(...)
-        uint32_t i = 0;
-        while(i < p->len) {
-            uart_putc(0, buf[i++]);
-        }
-#endif
         pbuf_free(p);
     }
 }
@@ -271,7 +263,7 @@ static void wifi_task(void *pvParameters)
 
     //set_dps_wifi_status(wifi_connecting); // Do this early as there will be lots of spam when wifi connection begins
     xSemaphoreTake(wifi_alive_sem, portMAX_DELAY);
-    //printf("WiFi: connecting to WiFi\n");
+    //printf("WiFi: connecting to WiFi\n"); /** Don't use too much output as it will be seen by the DPS device */
     sdk_wifi_set_opmode(STATION_MODE);
     sdk_wifi_station_set_config(&config);
 
