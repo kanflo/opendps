@@ -96,6 +96,7 @@ static void udp_receive_callback(void *arg, struct udp_pcb *upcb, struct pbuf *p
         memcpy((void*) item.frame, (void*) p->payload, p->len);
         item.frame_length = p->len;
         if (pdPASS != xQueueSend(tx_queue, (void*) &item, 1000/portTICK_PERIOD_MS)) {
+            printf("Failed to enqueue\n");
             /** @todo Handle queue error */
         }
 #if 0
@@ -227,6 +228,7 @@ static void uart_comm_task(void *arg)
             uint8_t buffer[MAX_FRAME_LENGTH];
             uint32_t size;
             uart_tx((uint8_t*) &item.frame, item.frame_length);
+
             size = uart_rx_frame((uint8_t*) &buffer, sizeof(buffer));
             if (size > 0) {
                 if (item.client_port > 0) {

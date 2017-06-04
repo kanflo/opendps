@@ -51,11 +51,12 @@
 #define PACK8(b) \
     if (_length < sizeof(_buffer)) { \
         _crc += (b); \
-        if (((uint8_t) b) == _SOF || ((uint8_t) b) == _DLE || ((uint8_t) b) == _EOF) { \
+        uint8_t _byte = (b); \
+        if (_byte == _SOF || _byte == _DLE || _byte == _EOF) { \
             _buffer[_length++] = _DLE; \
-            _buffer[_length++] = (b) ^ _XOR; \
+            _buffer[_length++] = _byte ^ _XOR; \
         } else { \
-            _buffer[_length++] = (b); \
+            _buffer[_length++] = _byte; \
         } \
     }
 
@@ -66,11 +67,12 @@
 /** Like PACK8 but does not compute crc */
 #define STUFF8(b) \
     if (_length+2 < sizeof(_buffer)) { \
-        if (((uint8_t) b) == _SOF || ((uint8_t) b) == _DLE || ((uint8_t) b) == _EOF) { \
+        uint8_t _byte = (b); \
+        if (_byte == _SOF || _byte == _DLE || _byte == _EOF) { \
             _buffer[_length++] = _DLE; \
-            _buffer[_length++] = (b) ^ _XOR; \
+            _buffer[_length++] = _byte ^ _XOR; \
         } else { \
-            _buffer[_length++] = (b); \
+            _buffer[_length++] = _byte; \
         } \
     }
 

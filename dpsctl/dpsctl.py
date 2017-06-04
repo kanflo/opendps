@@ -1,28 +1,27 @@
 #!/usr/bin/env python
 
 """
+The MIT License (MIT)
 
 Copyright (c) 2017 Johan Kanflo (github.com/kanflo)
 
-Permission is hereby granted, free of charge, to any person obtaining
-a copy of this software and associated documentation files (the
-"Software"), to deal in the Software without restriction, including
-without limitation the rights to use, copy, modify, merge, publish,
-distribute, sublicense, and/or sell copies of the Software, and to
-permit persons to whom the Software is furnished to do so, subject to
-the following conditions:
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
 
-The above copyright notice and this permission notice shall be
-included in all copies or substantial portions of the Software.
+The above copyright notice and this permission notice shall be included in
+all copies or substantial portions of the Software.
 
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
-EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
-MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
-NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE
-LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
-OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
-WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
-
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+THE SOFTWARE.
 
 This script is used to communicate with an OpenDPS device and can be used to
 change all the settings possible with the buttons and dial on the device
@@ -41,10 +40,11 @@ import sys
 import os
 import socket
 import serial
-import protocol
-import uframe
+import threading
+import time
+import uhej
+from protocol import *
 from uframe import *
-from uhej import *
 
 
 """
@@ -169,8 +169,8 @@ Handle a response frame from the device
 """
 def handle_response(command, frame, args):
     resp_command = frame.get_frame()[0]
-    if resp_command & protocol.cmd_response:
-        resp_command ^= protocol.cmd_response
+    if resp_command & cmd_response:
+        resp_command ^= cmd_response
         success = frame.get_frame()[1]
         if resp_command != command:
             print("Warning: sent command %02x, response was %02x." % (command, resp_command))
@@ -182,8 +182,8 @@ def handle_response(command, frame, args):
         json["cmd"] = resp_command;
         json["status"] = 1; # we're here aren't we?
 
-    if resp_command == protocol.cmd_status:
-        v_in, v_out_setting, v_out, i_out, i_limit, power_enabled = protocol.unpack_status_response(frame)
+    if resp_command == cmd_status:
+        v_in, v_out_setting, v_out, i_out, i_limit, power_enabled = unpack_status_response(frame)
         if power_enabled:
             enable_str = "on"
         else:
@@ -261,23 +261,23 @@ def handle_commands(args):
 
     # The ping command
     if args.ping:
-        communicate(comms, protocol.create_ping(), args)
+        communicate(comms, create_ping(), args)
 
     # The lock and unlock commands
     if args.lock:
-        communicate(comms, protocol.create_lock(1), args)
+        communicate(comms, create_lock(1), args)
     if args.unlock:
-        communicate(comms, protocol.create_lock(0), args)
+        communicate(comms, create_lock(0), args)
 
     # The V_out set command
     if args.voltage != None:
         v_out = int(args.voltage)
-        communicate(comms, protocol.create_vout(v_out), args)
+        communicate(comms, create_vout(v_out), args)
 
     # The I_max set command
     if args.current != None:
         i_limit = int(args.current)
-        communicate(comms, protocol.create_ilimit(i_limit), args)
+        communicate(comms, create_ilimit(i_limit), args)
 
     # The power enable command
     if args.power != None:
@@ -290,11 +290,11 @@ def handle_commands(args):
         if pwr == None:
             fail("please say on/off or 1/0")
         else:
-            communicate(comms, protocol.create_power_enable(pwr), args)
+            communicate(comms, create_power_enable(pwr), args)
 
     # The status set command
     if args.status:
-        communicate(comms, protocol.create_status(), args)
+        communicate(comms, create_status(), args)
 
 """
 Return True if the parameter if_name is an IP address.
@@ -340,11 +340,11 @@ def uhej_worker_thread():
             addr = addr[0]
             frame = bytearray(data)
             try:
-                f = decode_frame(frame)
+                f = uhej.decode_frame(frame)
                 f["source"] = addr
                 f["port"] = port
                 types = ["UDP", "TCP", "mcast"]
-                if ANNOUNCE == f["frame_type"]:
+                if uhej.ANNOUNCE == f["frame_type"]:
                     for s in f["services"]:
                         key = "%s:%s:%s" % (f["source"], s["port"], s["type"])
                         if not key in discovery_list:
@@ -352,7 +352,7 @@ def uhej_worker_thread():
                                 discovery_list[key] = True # Keep track of which hosts we have seen
                                 print("%s" % (f["source"]))
 #                            print("%16s:%-5d  %-8s %s" % (f["source"], s["port"], types[s["type"]], s["service_name"]))
-            except IllegalFrameException, e:
+            except uhej.IllegalFrameException, e:
                 pass
         except socket.error, e:
             print 'Expection', e
@@ -373,13 +373,13 @@ def uhej_scan():
         pass
     sock.setsockopt(socket.IPPROTO_IP, socket.IP_MULTICAST_TTL, 32)
     sock.setsockopt(socket.IPPROTO_IP, socket.IP_MULTICAST_LOOP, 1)
-    sock.bind((ANY, MCAST_PORT))
+    sock.bind((ANY, uhej.MCAST_PORT))
 
     thread = threading.Thread(target = uhej_worker_thread)
     thread.daemon = True
     thread.start()
 
-    sock.setsockopt(socket.SOL_IP, socket.IP_ADD_MEMBERSHIP, socket.inet_aton(MCAST_GRP) + socket.inet_aton(ANY))
+    sock.setsockopt(socket.SOL_IP, socket.IP_ADD_MEMBERSHIP, socket.inet_aton(uhej.MCAST_GRP) + socket.inet_aton(ANY))
 
     run_time_s = 6 # Run query for this many seconds
     query_interval_s = 2 # Send query this often
@@ -388,8 +388,8 @@ def uhej_scan():
 
     while time.time() - start_time < run_time_s:
         if time.time() - last_query > query_interval_s:
-            f = query(UDP, "*")
-            sock.sendto(f, (MCAST_GRP, MCAST_PORT))
+            f = uhej.query(uhej.UDP, "*")
+            sock.sendto(f, (uhej.MCAST_GRP, uhej.MCAST_PORT))
             last_query = time.time()
         time.sleep(1)
 

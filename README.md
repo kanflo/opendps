@@ -21,7 +21,14 @@ If you are eager to upgrade your DPS5005, you may skip directly to part three. O
 
 ### Cloning & building
 
-Check [the blog](https://johan.kanflo.com/upgrading-your-dps5005/) for instructions on how to build, unlock and flash your DPS5005.
+```
+git clone --recursive https://github.com/kanflo/opendps.git
+cd opendps
+make -C libopencm3
+make -C opendps
+```
+
+Check [the blog](https://johan.kanflo.com/upgrading-your-dps5005/) for instructions on how to unlock and flash your DPS5005.
 
 ### Usage
 

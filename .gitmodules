@@ -1,3 +1,9 @@
 [submodule "libopencm3"]
 	path = libopencm3
 	url = https://github.com/libopencm3/libopencm3.git
+[submodule "dpsctl/uhej"]
+	path = dpsctl/uhej
+	url = https://github.com/kanflo/uhej-python.git
+[submodule "esp8266-proxy/uhej"]
+	path = esp8266-proxy/uhej
+	url = https://github.com/kanflo/uhej
