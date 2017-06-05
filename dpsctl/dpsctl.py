@@ -289,6 +289,16 @@ def handle_commands(args):
             fail("please say CV/CC or cv/cc")
         communicate(comms, protocol.cmd_set_output_mode(mode), args)
 
+    # The set output mode command
+    if args.mode != None:
+        if args.mode == "CV" or args.mode == "cv":
+            mode = 0
+        elif args.mode == "CC" or args.mode == "cc":
+            mode = 1
+        else:
+            fail("please say CV/CC or cv/cc")
+        communicate(comms, protocol.cmd_set_output_mode(mode), args)
+
     # The power enable command
     if args.power != None:
         if args.power == "on" or args.power == "1":
