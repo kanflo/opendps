@@ -773,8 +773,10 @@ def print_help():
 
 def dump_all():
     global commands
+    blocklist = ["reg", "all", "r", "w", "help"]
     for cmd in commands:
-        if cmd != "reg" and cmd != "all":
+        if cmd not in blocklist:
+            print ">>>> %s" % cmd
             commands[cmd]()
             print
 
