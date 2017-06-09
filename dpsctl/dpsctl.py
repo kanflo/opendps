@@ -44,8 +44,7 @@ import threading
 import time
 import uhej
 from protocol import *
-from uframe import *
-
+import uframe
 
 """
 A abstract class that describes a comminucation interface
@@ -140,7 +139,7 @@ class udp_interface(comm_interface):
     def write(self, bytes):
         try:
             self._socket.sendto(bytes, (self._if_name, 5005))
-        except socket.error, msg:
+        except socket.error as msg:
             fail("%s (%d)" % (str(msg[0]), msg[1]))
         return True
 
@@ -352,9 +351,9 @@ def uhej_worker_thread():
                                 discovery_list[key] = True # Keep track of which hosts we have seen
                                 print("%s" % (f["source"]))
 #                            print("%16s:%-5d  %-8s %s" % (f["source"], s["port"], types[s["type"]], s["service_name"]))
-            except uhej.IllegalFrameException, e:
+            except uhej.IllegalFrameException as e:
                 pass
-        except socket.error, e:
+        except socket.error as e:
             print 'Expection', e
 
 """
