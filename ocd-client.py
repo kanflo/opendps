@@ -1,9 +1,17 @@
 #!/usr/bin/python
+#
+# This is a script for dumping and changing peripheral settings on an STM32
+# on a running target with he help of OpenOCD. It was written for reverse
+# engineering the DPS5005 but should work for any STM32 target with little
+# change.
+#
+# No rights reserved
+#
 
 import socket
 import sys
 
-prompt = "> "
+prompt = "> " # OpenOCD prompt
 
 ocd_sock = False
 
@@ -16,37 +24,23 @@ def ocd_exchange(str = ""):
     while 1:
         try:
             ch = ocd_sock.recv(1)
-#            print "'%s' [%02x]" % (ch, ord(ch))
             if len(ch) > 0:
                 if ch == '\d':
                     pass
                 elif ch == '\n':
- #                   print "--------------------------"
- #                   print line
                     if "%s\n" % line != str:
                         output += "%s\n" % line
                     line = ""
                 elif ord(ch) >= 32 and ord(ch) <= 126:
                     line += ch
-#                    print "[%s]" % line
                 if line == prompt:
-#                    print "==========================="
-#                    print line
                     got_prompt = True
                     break
             else:
                 break
         except socket.timeout, e:
             break
-#    print line
-
-#    print ">>>>>>>>>>>>>>>>>>"
-#    print output
-#    print "<<<<<<<<<<<<<<<<<<"
-#    if got_prompt:
     return output.strip()
-#    else:
-#        return False
 
 def ocd_sync():
     return ocd_exchange()
@@ -792,12 +786,6 @@ def parse_mem_dump(data):
         data = parts[1].split(" ")
         for (i, item) in enumerate(data):
             decode_mem(address+4*i, int(item, 16))
-#            data[i] = int(item, 16)
-#            print i, item
-#        print "0x%08x" % address
-#        for d in data:
-#           print "   0x%08x" % d
-
 
 try:
     ocd_sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
