@@ -35,6 +35,7 @@ typedef enum {
         pm_min = 0,
         pm_constant_voltage = pm_min,
         pm_constant_current,
+        pm_current_limit,
         pm_max
 } power_mode_t;
 

@@ -51,6 +51,12 @@ bool pwrctl_set_vout(uint32_t value_mv);
 bool pwrctl_set_iout(uint32_t value_mv);
 
 /**
+  * @brief Get current output setting
+  * @retval current setting in milli amps
+  */
+uint32_t pwrctl_get_iout(void);
+
+/**
   * @brief Get voltage output setting
   * @retval current setting in millivolt
   */

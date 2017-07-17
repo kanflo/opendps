@@ -67,7 +67,7 @@
 #define TFT_FLASHING_COUNTER                (2)
 
 static void update_power_output(void);
-static void update_power_mode_status(void);
+static void update_power_mode_status(power_mode_t mode);
 static void update_input_voltage(void);
 static void update_settings_ui(bool update_both);
 static uint32_t get_voltage_increment(uint32_t edit_pos);
@@ -129,11 +129,16 @@ static power_mode_t power_mode = pm_constant_voltage;
 static uint32_t v_setting;
 static uint32_t i_setting;
 
+power_mode_t ui_actual_mode(void);
+
 /** X positions at which we will draw digits */
                                    //  1   2   .   3   4   V
 const uint32_t voltage_positions[] = { 9, 30, 51, 63, 83, 105};
                                    //  0   .   1   2   3   A
 const uint32_t ampere_positions[] =  {10, 30, 40, 60, 80, 105};
+
+                                   //  1   2   .   1   2   A
+const uint32_t dampere_positions[] = {9, 30, 51, 63, 83, 105};
 
                                    //  1   2   .   3   V
 const uint32_t bottom_positions[] =   {0,  7, 14, 19, 26}; /// + XPOS_VIN
@@ -341,6 +346,95 @@ void ui_hande_event(event_t event, uint8_t data)
     }
 }
 
+power_mode_t ui_actual_mode(void)
+{
+    uint16_t i_out_raw, v_in_raw, v_out_raw;
+    power_mode_t mode=ui_get_power_mode();
+
+    hw_get_adc_values(&i_out_raw, &v_in_raw, &v_out_raw);
+    uint32_t v_actual = pwrctl_calc_vout(v_out_raw);
+    //uint32_t i_actual = pwrctl_calc_iout(i_out_raw);
+    uint32_t v_set=pwrctl_get_vout();
+
+    if(mode==pm_constant_current){
+        return pm_constant_current; 
+    }else if(mode==pm_constant_voltage){
+        return pm_constant_voltage; 
+    }else{
+        if(pwrctl_vout_enabled()){
+            if(v_set>v_actual) 
+                return pm_constant_current;
+            else
+                return pm_constant_voltage;
+        }else{
+            return pm_current_limit;
+        }
+    }
+    return pm_constant_voltage;
+}
+
+static void display_current(uint32_t temp)
+{
+    uint32_t w = font_1_widths[4] + 2;
+    uint32_t h = font_1_height + 2;
+    if(temp>=9000){
+        tft_putch(1, '0'+(temp/10000), dampere_positions[0], YPOS_AMPERE, w, h, false);
+        temp %= 10000;
+        tft_putch(1, '0'+temp/1000, dampere_positions[1], YPOS_AMPERE, w, h, (edit_mode == edit_ampere && edit_position == 0));
+        temp %= 1000;
+        tft_putch(1, '.', dampere_positions[2], YPOS_AMPERE, 10, h, false);
+        tft_putch(1, '0'+temp/100, dampere_positions[3], YPOS_AMPERE, w, h, (edit_mode == edit_ampere && edit_position == 1));
+        temp %= 100;
+        tft_putch(1, '0'+temp/10, dampere_positions[4], YPOS_AMPERE, w, h, (edit_mode == edit_ampere && edit_position == 2));
+        temp %= 10;
+        if(edit_mode == edit_ampere && edit_position == 3)
+        tft_putch(1, '0'+temp, ampere_positions[5], YPOS_AMPERE, w, h, true);
+        else
+        tft_putch(1, 'A', ampere_positions[5], YPOS_AMPERE, font_1_widths[font_1_num_glyphs-1], h, false);
+    }else{
+        tft_putch(1, '0'+temp/1000, ampere_positions[0], YPOS_AMPERE, w, h, (edit_mode == edit_ampere && edit_position == 0));
+        temp %= 1000;
+        tft_putch(1, '.', ampere_positions[1], YPOS_AMPERE, 10, h, false);
+        tft_putch(1, '0'+temp/100, ampere_positions[2], YPOS_AMPERE, w, h, (edit_mode == edit_ampere && edit_position == 1));
+        temp %= 100;
+        tft_putch(1, '0'+temp/10, ampere_positions[3], YPOS_AMPERE, w, h, (edit_mode == edit_ampere && edit_position == 2));
+        temp %= 10;
+        tft_putch(1, '0'+temp, ampere_positions[4], YPOS_AMPERE, w, h, (edit_mode == edit_ampere && edit_position == 3));
+        tft_putch(1, 'A', ampere_positions[5], YPOS_AMPERE, font_1_widths[font_1_num_glyphs-1], h, false);
+    }
+}
+static void display_voltage(uint32_t temp)
+{
+    uint32_t w = font_1_widths[4] + 2;
+    uint32_t h = font_1_height + 2;
+
+    if (power_mode == pm_constant_current) {
+        tft_fill(voltage_positions[0], YPOS_VOLTAGE, w, h, bg_color);
+        tft_putch(1, '-', voltage_positions[1], YPOS_VOLTAGE, w, h, false);
+        tft_putch(1, '.', voltage_positions[2], YPOS_VOLTAGE, 10, h, false);
+        tft_putch(1, '-', voltage_positions[3], YPOS_VOLTAGE, w, h, false);
+        tft_putch(1, '-', voltage_positions[4], YPOS_VOLTAGE, w, h, false);
+        tft_putch(1, 'V', voltage_positions[5], YPOS_VOLTAGE, font_1_widths[font_1_num_glyphs-1], h, false);
+    } else {
+        if (temp/10000) {
+            tft_putch(1, '0'+temp/10000, voltage_positions[0], YPOS_VOLTAGE, w, h, false);
+            temp %= 10000;
+        } else {
+            tft_fill(voltage_positions[0], YPOS_VOLTAGE, w, h, bg_color);
+        }
+
+        tft_putch(1, '0'+temp/1000, voltage_positions[1], YPOS_VOLTAGE, w, h, (edit_mode == edit_voltage && edit_position == 0));
+        temp %= 1000;
+        tft_putch(1, '.', voltage_positions[2], YPOS_VOLTAGE, 10, h, false);
+        tft_putch(1, '0'+temp/100, voltage_positions[3], YPOS_VOLTAGE, w, h, (edit_mode == edit_voltage && edit_position == 1));
+        temp %= 100;
+        tft_putch(1, '0'+temp/10, voltage_positions[4], YPOS_VOLTAGE, w, h, (edit_mode == edit_voltage && edit_position == 2));
+        temp %= 10;
+        tft_putch(1, 'V', voltage_positions[5], YPOS_VOLTAGE, font_1_widths[font_1_num_glyphs-1], h, false);
+    }
+
+}
+
 /**
   * @brief Update values on the UI
   * @param v_in input voltage (mV)
@@ -352,6 +446,8 @@ void ui_hande_event(event_t event, uint8_t data)
 void ui_update_values(uint32_t v_in, uint32_t v_out, uint32_t i_out)
 {
     static uint64_t last = 0;
+    static power_mode_t last_actual_mode=0;
+
     /** Update on the first call and every UI_UPDATE_INTERVAL_MS ms */
     if (last > 0 && get_ticks() - last < UI_UPDATE_INTERVAL_MS) {
         return;
@@ -376,8 +472,6 @@ void ui_update_values(uint32_t v_in, uint32_t v_out, uint32_t i_out)
 
     if (edit_mode == edit_none) {
         /** @todo Select the widest character instead of hard coding [4] */
-        uint32_t w = font_1_widths[4] + 2;
-        uint32_t h = font_1_height + 2;
         uint32_t temp;
         if (pwrctl_vout_enabled()) {
             temp = cur_v_out;
@@ -386,31 +480,8 @@ void ui_update_values(uint32_t v_in, uint32_t v_out, uint32_t i_out)
         }
 
         // Print voltage
-        if (power_mode == pm_constant_current && !pwrctl_vout_enabled()) {
-            tft_fill(voltage_positions[0], YPOS_VOLTAGE, w, h, bg_color);
-            tft_putch(1, '-', voltage_positions[1], YPOS_VOLTAGE, w, h, false);
-            tft_putch(1, '.', voltage_positions[2], YPOS_VOLTAGE, 10, h, false);
-            tft_putch(1, '-', voltage_positions[3], YPOS_VOLTAGE, w, h, false);
-            tft_putch(1, '-', voltage_positions[4], YPOS_VOLTAGE, w, h, false);
-            tft_putch(1, 'V', voltage_positions[5], YPOS_VOLTAGE, font_1_widths[font_1_num_glyphs-1], h, false);
-        } else {
-            if (temp/10000) {
-                tft_putch(1, '0'+temp/10000, voltage_positions[0], YPOS_VOLTAGE, w, h, false);
-                temp %= 10000;
-            } else {
-                tft_fill(voltage_positions[0], YPOS_VOLTAGE, w, h, bg_color);
-            }
-
-            tft_putch(1, '0'+temp/1000, voltage_positions[1], YPOS_VOLTAGE, w, h, false);
-            temp %= 1000;
-            tft_putch(1, '.', voltage_positions[2], YPOS_VOLTAGE, 10, h, false);
-            tft_putch(1, '0'+temp/100, voltage_positions[3], YPOS_VOLTAGE, w, h, false);
-            temp %= 100;
-            tft_putch(1, '0'+temp/10, voltage_positions[4], YPOS_VOLTAGE, w, h, false);
-            temp %= 10;
-            tft_putch(1, 'V', voltage_positions[5], YPOS_VOLTAGE, font_1_widths[font_1_num_glyphs-1], h, false);
-        }
-
+        display_voltage(temp);
+        
         // Print current current (mohahahaha) or selected I max
         if (pwrctl_vout_enabled()) {
             temp = cur_i_out;
@@ -418,16 +489,13 @@ void ui_update_values(uint32_t v_in, uint32_t v_out, uint32_t i_out)
             temp = i_setting;
         }
 
-        tft_putch(1, '0'+temp/1000, ampere_positions[0], YPOS_AMPERE, w, h, false);
-        temp %= 1000;
-        tft_putch(1, '.', ampere_positions[1], YPOS_AMPERE, 10, h, false);
-        tft_putch(1, '0'+temp/100, ampere_positions[2], YPOS_AMPERE, w, h, false);
-        temp %= 100;
-        tft_putch(1, '0'+temp/10, ampere_positions[3], YPOS_AMPERE, w, h, false);
-        temp %= 10;
-        tft_putch(1, '0'+temp, ampere_positions[4], YPOS_AMPERE, w, h, false);
-        tft_putch(1, 'A', ampere_positions[5], YPOS_AMPERE, font_1_widths[font_1_num_glyphs-1], h, false);
-
+        display_current(temp);
+        
+        power_mode_t actual_mode=ui_actual_mode();
+        if(actual_mode!=last_actual_mode){
+            update_power_mode_status(actual_mode);
+            last_actual_mode=actual_mode;
+        }
         // Print current input voltage
         update_input_voltage();
     }
@@ -579,6 +647,9 @@ bool ui_set_voltage(uint32_t voltage_mv)
         case pm_constant_current:
             success = pwrctl_set_vout(max_v_out);
             break;
+         case pm_current_limit:
+            success = pwrctl_set_vout(voltage_mv);
+            break;
         default:
             break;
     }
@@ -605,6 +676,10 @@ bool ui_set_current(uint32_t current_ma)
             success &= pwrctl_set_iout(max_i_limit);
             break;
         case pm_constant_current:
+            success = pwrctl_set_ilimit(max_i_limit);
+            success &= pwrctl_set_iout(current_ma);
+            break;
+        case pm_current_limit:
             success = pwrctl_set_ilimit(max_i_limit);
             success &= pwrctl_set_iout(current_ma);
             break;
@@ -645,7 +720,7 @@ bool ui_set_power_mode(power_mode_t mode)
     bool success = false;
     if (!pwrctl_vout_enabled() && power_mode != mode && power_mode < pm_max) {
         power_mode = mode;
-        update_power_mode_status();
+        update_power_mode_status(power_mode);
         update_settings_ui(true);
         success = true;
     }
@@ -665,7 +740,7 @@ void ui_next_power_mode(void)
     if (power_mode == pm_max) {
         power_mode = pm_min;
     }
-    update_power_mode_status();
+    update_power_mode_status(power_mode);
 }
 
 /**
@@ -700,6 +775,11 @@ static void update_power_output(void)
             pwrctl_set_ilimit(i_setting);
             pwrctl_set_iout(max_i_limit);
             break;
+        case pm_current_limit:
+            pwrctl_set_vout(v_setting);
+            pwrctl_set_ilimit(max_i_limit);
+            pwrctl_set_iout(i_setting);
+            break;
         case pm_constant_current:
             pwrctl_set_vout(max_v_out);
             pwrctl_set_ilimit(max_i_limit);
@@ -714,14 +794,17 @@ static void update_power_output(void)
   * @brief Update power mode status icon
   * @retval none
   */
-static void update_power_mode_status(void)
+static void update_power_mode_status(power_mode_t mode)
 {
-    switch(power_mode) {
+    switch(mode) {
         case pm_constant_current:
             tft_blit((uint16_t*) cc, cc_width, cc_height, XPOS_MODE, ui_height-cc_height);
             break;
         case pm_constant_voltage:
             tft_blit((uint16_t*) cv, cv_width, cv_height, XPOS_MODE, ui_height-cv_height);
+            break;
+        case pm_current_limit:
+            tft_blit((uint16_t*) cl, cl_width, cl_height, XPOS_MODE, ui_height-cl_height);
             break;
         default:
             break;
@@ -758,51 +841,15 @@ static void update_input_voltage(void)
   */
 static void update_settings_ui(bool update_both)
 {
-    uint32_t w = font_1_widths[4] + 2;
-    uint32_t h = font_1_height + 2;
-    uint32_t temp = v_setting;
-
     // Print desired voltage
     /** @todo: print dashes as voltage when in editing mode and constant current mode */
     if (edit_mode == edit_voltage || update_both) {
-        if (power_mode == pm_constant_current) {
-            tft_fill(voltage_positions[0], YPOS_VOLTAGE, w, h, bg_color);
-            tft_putch(1, '-', voltage_positions[1], YPOS_VOLTAGE, w, h, false);
-            tft_putch(1, '.', voltage_positions[2], YPOS_VOLTAGE, 10, h, false);
-            tft_putch(1, '-', voltage_positions[3], YPOS_VOLTAGE, w, h, false);
-            tft_putch(1, '-', voltage_positions[4], YPOS_VOLTAGE, w, h, false);
-            tft_putch(1, 'V', voltage_positions[5], YPOS_VOLTAGE, font_1_widths[font_1_num_glyphs-1], h, false);
-        } else {
-            if (temp/10000 > 0) {
-                tft_putch(1, '0'+temp/10000, voltage_positions[0], YPOS_VOLTAGE, w, h, false);
-                temp %= 10000;
-            } else {
-                tft_fill(voltage_positions[0], YPOS_VOLTAGE, w, h, bg_color);
-            }
-
-            tft_putch(1, '0'+temp/1000, voltage_positions[1], YPOS_VOLTAGE, w, h, (edit_mode == edit_voltage && edit_position == 0));
-            temp %= 1000;
-            tft_putch(1, '.', voltage_positions[2], YPOS_VOLTAGE, 10, h, false);
-            tft_putch(1, '0'+temp/100, voltage_positions[3], YPOS_VOLTAGE, w, h, (edit_mode == edit_voltage && edit_position == 1));
-            temp %= 100;
-            tft_putch(1, '0'+temp/10, voltage_positions[4], YPOS_VOLTAGE, w, h, (edit_mode == edit_voltage && edit_position == 2));
-            temp %= 10;
-            tft_putch(1, 'V', voltage_positions[5], YPOS_VOLTAGE, font_1_widths[font_1_num_glyphs-1], h, false);
-        }
+        display_voltage(v_setting);
     }
 
     if (edit_mode == edit_ampere || update_both) {
         // Print desired current
-        temp = i_setting;
-        tft_putch(1, '0'+temp/1000, ampere_positions[0], YPOS_AMPERE, w, h, (edit_mode == edit_ampere && edit_position == 0));
-        temp %= 1000;
-        tft_putch(1, '.', ampere_positions[1], YPOS_AMPERE, 10, h, false);
-        tft_putch(1, '0'+temp/100, ampere_positions[2], YPOS_AMPERE, w, h, (edit_mode == edit_ampere && edit_position == 1));
-        temp %= 100;
-        tft_putch(1, '0'+temp/10, ampere_positions[3], YPOS_AMPERE, w, h, (edit_mode == edit_ampere && edit_position == 2));
-        temp %= 10;
-        tft_putch(1, '0'+temp, ampere_positions[4], YPOS_AMPERE, w, h, (edit_mode == edit_ampere && edit_position == 3));
-        tft_putch(1, 'A', ampere_positions[5], YPOS_AMPERE, font_1_widths[font_1_num_glyphs-1], h, false);
+        display_current(i_setting);
     }
     // Print current input voltage
     update_input_voltage();
@@ -888,22 +935,6 @@ static void read_past_settings(void)
         i_setting = CONFIG_DEFAULT_ILIMIT;
     }
 
-    // Set limits, with sanity check
-    if (!pwrctl_set_vout(v_setting)) {
-        v_setting = CONFIG_DEFAULT_VOUT;
-        (void) pwrctl_set_vout(v_setting);
-    }
-    if (!pwrctl_set_ilimit(i_setting)) {
-        i_setting = CONFIG_DEFAULT_ILIMIT;
-        (void) pwrctl_set_ilimit(i_setting);
-    }
-
-    if (past_read_unit(&g_past, past_tft_inversion, (const void**) &p, &length)) {
-        if (p) {
-            inverse_setting = !!(*p);
-        }
-    }
-
     /** stored power_mode_t */
     if (past_read_unit(&g_past, past_power_mode, (const void**) &p, &length)) {
         if (p) {
@@ -917,8 +948,25 @@ static void read_past_settings(void)
     if (power_mode >= pm_max) {
         power_mode = pm_min;
     }
-    update_power_mode_status();
+    update_power_mode_status(power_mode);
 
+    // Set limits, with sanity check
+    if (!pwrctl_set_vout(v_setting)) {
+        v_setting = CONFIG_DEFAULT_VOUT;
+        (void) ui_set_voltage(v_setting);
+    }
+    if (!pwrctl_set_ilimit(i_setting)) {
+        i_setting = CONFIG_DEFAULT_ILIMIT;
+        (void) ui_set_current(i_setting);
+    }
+
+    if (past_read_unit(&g_past, past_tft_inversion, (const void**) &p, &length)) {
+        if (p) {
+            inverse_setting = !!(*p);
+        }
+    }
+    update_power_output();
+    
     //tft_invert(inverse_setting);
 
     last_vout_setting = v_setting;

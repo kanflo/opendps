@@ -52,10 +52,12 @@ static void button_irq_init(void);
 
 static volatile uint16_t i_out_adc;
 static volatile uint16_t i_out_trig_adc;
-static volatile uint16_t v_in_adc;
+volatile uint16_t a_in_adc;
+volatile uint16_t v_in_adc;
 static volatile uint16_t v_out_adc;
 uint8_t channels[3]; /** for injected sampling, 4 channels max, for regular, 16 max */
 
+#define DEBOUNCE_MS (10)
 /** Used to handle long presses */
 #define LONGPRESS_TIME_MS (1000)
 static event_t longpress_event;
@@ -86,7 +88,6 @@ static uint32_t adc_counter;
   * the current measurement was quite off, the reason being the ADC reading
   * at 0mA had an offset. For that reason, we calculate the individual offset
   * for the unit we're running on. Might work out... */
-#define ADC_CHA_IOUT_GOLDEN_VALUE  (0x45)
 /** How many measurements do we take before calculating adc_i_offset */
 #define ADC_I_OFFSET_COUNT  (1000)
 /** Offset from golden value when measuring 0.00mA output current on this unit */
@@ -232,6 +233,7 @@ void adc1_2_isr(void)
     // If pwrctl_i_limit_raw == 0, the setting hasn't been read from past yet
     adc_counter++;
     uint32_t i = adc_read_injected(ADC1, 1);
+    a_in_adc=i;
     /** @todo Make sure power out is not enabled during this measurement */
     if (measure_i_out) {
         if (adc_counter < ADC_I_OFFSET_COUNT) {
@@ -704,12 +706,16 @@ void BUTTON_M2_isr(void)
 void BUTTON_ENABLE_isr(void)
 {
     static bool falling = true;
+    static uint32_t lastclick=0;
     exti_reset_request(BUTTON_ENABLE_EXTI);
     if (falling) {
         exti_set_trigger(BUTTON_ENABLE_EXTI, EXTI_TRIGGER_RISING);
     } else {
-        event_put(event_button_enable, press_short);
-        exti_set_trigger(BUTTON_ENABLE_EXTI, EXTI_TRIGGER_FALLING);
+        if (get_ticks() - lastclick > DEBOUNCE_MS) {
+            event_put(event_button_enable, press_short);
+            exti_set_trigger(BUTTON_ENABLE_EXTI, EXTI_TRIGGER_FALLING);
+            lastclick=get_ticks();
+        }
     }
     falling = !falling;
 }

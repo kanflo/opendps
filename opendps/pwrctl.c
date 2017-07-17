@@ -33,7 +33,7 @@
   * https://docs.google.com/spreadsheets/d/1AhGsU_gvZjqZyr2ZYrnkz6BeUqMquzh9UNYoTqy_Zp4/edit?usp=sharing
   */
 
-static uint32_t v_out, i_limit;
+static uint32_t i_out, v_out, i_limit;
 static bool v_out_enabled;
 
 /** not static as it is referred to from hw.c for performance reasons */
@@ -66,11 +66,23 @@ bool pwrctl_set_vout(uint32_t value_mv)
   * @param current_ma current in milli ampere
   * @retval true requested current was within specs
   */
-bool pwrctl_set_iout(uint32_t value_mv)
+bool pwrctl_set_iout(uint32_t value_ma)
 {
-    DAC_DHR12R2 = pwrctl_calc_iout_dac(value_mv);
+    i_out = value_ma;
+    DAC_DHR12R2 = pwrctl_calc_iout_dac(value_ma);
     return true;
 }
+
+/**
+  * @brief Get current output setting
+  * @retval current setting in milli amps
+  */
+uint32_t pwrctl_get_iout(void)
+{
+    return i_out;
+}
+
+
 
 /**
   * @brief Get voltage output setting
@@ -180,7 +192,7 @@ uint16_t pwrctl_calc_vout_dac(uint32_t v_out_mv)
   */
 uint32_t pwrctl_calc_iout(uint16_t raw)
 {
-    return 1.713*raw - 118.51;
+    return CUR_ADC_K*raw + CUR_ADC_C;
 }
 
 /**
@@ -190,7 +202,7 @@ uint32_t pwrctl_calc_iout(uint16_t raw)
   */
 uint16_t pwrctl_calc_ilimit_adc(uint16_t i_limit_ma)
 {
-    return (i_limit_ma + 118.51) / 1.713 + 1;
+    return (i_limit_ma - CUR_ADC_C) / CUR_ADC_K + 1;
 }
 
 /**
@@ -202,6 +214,8 @@ uint16_t pwrctl_calc_ilimit_adc(uint16_t i_limit_ma)
   */
 uint16_t pwrctl_calc_iout_dac(uint32_t i_out_ma)
 {
-    uint32_t dac = 0.652 * i_out_ma + 288.611;
+    uint32_t dac = CUR_DAC_K * i_out_ma + CUR_DAC_C;
     return dac & 0xfff; /** 12 bits */
 }
+
+

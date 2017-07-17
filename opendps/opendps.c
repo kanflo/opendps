@@ -107,8 +107,8 @@ int main(void)
     event_init();
 
 #ifdef CONFIG_COMMANDLINE
-    printf("Welcome to OpenDPS!\n");
-    printf("Try 'help;' for, well, help (note the semicolon).\n");
+    printf("\r\nWelcome to OpenDPS!\r\n");
+    printf("Try 'help;' for, well, help (note the semicolon).\r\n");
 #endif // CONFIG_COMMANDLINE
 
     tft_init();
