@@ -29,6 +29,7 @@
 #include <spi.h>
 #include <stdio.h>
 #include <errno.h>
+#include "hw.h"
 #include "spi_driver.h"
 
 /** Used to keep track of the SPI DMA status */
@@ -89,6 +90,9 @@ bool spi_dma_transceive(uint8_t *tx_buf, uint32_t tx_len, uint8_t *rx_buf, uint3
         temp = SPI_DR(SPI2);
     }
 
+#ifdef TFT_CSN_PORT
+    gpio_clear(TFT_CSN_PORT, TFT_CSN_PIN);
+#endif
     dma_status = spi_idle;
 
     if (rx_len) {
@@ -136,6 +140,9 @@ bool spi_dma_transceive(uint8_t *tx_buf, uint32_t tx_len, uint8_t *rx_buf, uint3
     while (dma_status != spi_idle) ;
     while (!(SPI_SR(SPI2) & SPI_SR_TXE)) ;
     while (SPI_SR(SPI2) & SPI_SR_BSY) ;
+#ifdef TFT_CSN_PORT
+    gpio_set(TFT_CSN_PORT, TFT_CSN_PIN);
+#endif
 
 #ifndef SPI_NSS_GROUNDED
     gpio_set(GPIOB, GPIO12);

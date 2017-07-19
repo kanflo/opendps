@@ -397,8 +397,13 @@ static void gpio_init(void)
     // PA7  I 0 An                    ADC1_IN7        R30-U2.7:V_OUT-B
 //tft    gpio_set_mode(GPIOA, GPIO_MODE_INPUT, GPIO_CNF_INPUT_ANALOG, GPIO7);
 
+#ifdef TFT_CSN_PORT
+    gpio_set_mode(TFT_CSN_PORT, GPIO_MODE_OUTPUT_50_MHZ, GPIO_CNF_OUTPUT_PUSHPULL, TFT_CSN_PIN);
+    gpio_set(TFT_CSN_PORT, TFT_CSN_PIN);
+#else
     // PA8  O 0 PP     (50 Mhz)       TFT.7           (not used by TFT)
     gpio_set_mode(GPIOA, GPIO_MODE_OUTPUT_50_MHZ, GPIO_CNF_OUTPUT_PUSHPULL, GPIO8);
+#endif
 
     // PA9  I 1 Flt
 //    gpio_set_mode(GPIOA, GPIO_MODE_INPUT, GPIO_CNF_INPUT_FLOAT, GPIO9);

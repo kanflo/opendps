@@ -143,11 +143,6 @@ static void on_cmd(uint32_t argc, char *argv[])
     printf("Power on\n");
     pwrctl_enable_vout(true);
     ui_update_power_status(true);
-
-
-#warning TEMPORARY HACK TO UNFREEZE LCD
-    ili9163c_init();
-    ili9163c_set_rotation(3); // Specific for DPS5005
 }
 
 static void off_cmd(uint32_t argc, char *argv[])
