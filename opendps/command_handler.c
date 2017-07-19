@@ -121,7 +121,6 @@ void serial_handle_rx_char(char c)
     } else if (i >= sizeof(buffer) - 1) {
         usart_send_blocking(USART1, '\a');
     } else if (c == ';') {
-        usart_send_blocking(USART1, '\r');
         usart_send_blocking(USART1, '\n');
         if (strlen(buffer) > 0) {
             cli_run(commands, sizeof(commands) / sizeof(cli_command_t), (char*) buffer);
@@ -141,7 +140,7 @@ static void on_cmd(uint32_t argc, char *argv[])
 {
     (void) argc;
     (void) argv;
-    printf("Power on\r\n");
+    printf("Power on\n");
     pwrctl_enable_vout(true);
     ui_update_power_status(true);
 
@@ -155,7 +154,7 @@ static void off_cmd(uint32_t argc, char *argv[])
 {
     (void) argc;
     (void) argv;
-    printf("Power off\r\n");
+    printf("Power off\n");
     pwrctl_enable_vout(false);
     ui_update_power_status(false);
 }
@@ -175,41 +174,41 @@ static void stat_cmd(uint32_t argc, char *argv[])
     uint32_t v_set=pwrctl_get_vout();
     uint32_t i_set=pwrctl_get_iout();
     if(mode==pm_current_limit)
-        printf(" Mode  : CL\r\n");
+        printf(" Mode  : CL\n");
     else if(mode==pm_constant_current)
-        printf(" Mode  : CC\r\n");
+        printf(" Mode  : CC\n");
     else if(mode==pm_constant_voltage)
-        printf(" Mode  : CV\r\n");
+        printf(" Mode  : CV\n");
     else
-        printf(" Mode  : %d\r\n",mode);
-    printf(" V_in  : %2lu.%02lu V\r\n", v_in/1000,  (v_in%1000)/10);
-    printf(" set  U out : %2lu.%02lu V\r\n", v_set/1000, (v_set%1000)/10);
-    printf(" real U out : %2lu.%02lu V (%s)\r\n", v_out/1000, (v_out%1000)/10, pwrctl_vout_enabled() ? "enabled" : "disabled");
-    printf(" ADC(U): %d\r\n",v_in_adc);
-    printf(" set  I out : %2lu.%03lu A\r\n", i_set/1000, i_set%1000);
-    printf(" real I out : %2lu.%03lu A\r\n", i_out/1000, i_out%1000);
-    printf(" ADC(I): %d\r\n",a_in_adc);
+        printf(" Mode  : %d\n",mode);
+    printf(" V_in  : %2lu.%02lu V\n", v_in/1000,  (v_in%1000)/10);
+    printf(" set  U out : %2lu.%02lu V\n", v_set/1000, (v_set%1000)/10);
+    printf(" real U out : %2lu.%02lu V (%s)\n", v_out/1000, (v_out%1000)/10, pwrctl_vout_enabled() ? "enabled" : "disabled");
+    printf(" ADC(U): %d\n",v_in_adc);
+    printf(" set  I out : %2lu.%03lu A\n", i_set/1000, i_set%1000);
+    printf(" real I out : %2lu.%03lu A\n", i_out/1000, i_out%1000);
+    printf(" ADC(I): %d\n",a_in_adc);
     int acc=0;
     if(mode==pm_constant_current){
         acc=1;
     }else if(pwrctl_vout_enabled()){
         if(v_set>v_out) acc=1;
     }
-    printf("Actual mode: %s\r\n",acc?"CC":"CV");
+    printf("Actual mode: %s\n",acc?"CC":"CV");
 }
 
 static void u_cmd(uint32_t argc, char *argv[])
 {
     (void) argc;
     uint32_t v_out = atoi(argv[1]);
-    printf("Setting U(out) to %lumv\r\n", v_out);
+    printf("Setting U(out) to %lumv\n", v_out);
     ui_set_voltage(v_out);
 }
 static void i_cmd(uint32_t argc, char *argv[])
 {
     (void) argc;
     uint32_t a_out = atoi(argv[1]);
-    printf("Setting A(out) to %luma\r\n", a_out);
+    printf("Setting A(out) to %luma\n", a_out);
     ui_set_current(a_out);
 }
 static void cv_cmd(uint32_t argc, char *argv[])
@@ -217,20 +216,20 @@ static void cv_cmd(uint32_t argc, char *argv[])
     (void) argc;
     (void) argv;
     int success = ui_set_power_mode(pm_constant_voltage);
-    printf("Setting CV mode %d\r\n", success);
+    printf("Setting CV mode %d\n", success);
 }
 static void cc_cmd(uint32_t argc, char *argv[])
 {
     (void) argc;
     (void) argv;
     int success = ui_set_power_mode(pm_constant_current);
-    printf("Setting CC mode %d\r\n", success);
+    printf("Setting CC mode %d\n", success);
 }
 static void cl_cmd(uint32_t argc, char *argv[])
 {
     (void) argc;
     (void) argv;
     int success = ui_set_power_mode(pm_current_limit);
-    printf("Setting CL mode %d\r\n", success);
+    printf("Setting CL mode %d\n", success);
 }
 
