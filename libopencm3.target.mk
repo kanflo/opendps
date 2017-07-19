@@ -46,7 +46,7 @@ ifeq ($(strip $(OPENCM3_DIR)),)
 OPENCM3_DIR = ../libopencm3
 endif
 
-LDSCRIPT = $(OPENCM3_DIR)/lib/stm32/f1/stm32f100x8.ld
+#LDSCRIPT = $(OPENCM3_DIR)/lib/stm32/f1/stm32f100x8.ld
 
 # Blue pill
 #LDSCRIPT = $(OPENCM3_DIR)/lib/stm32/f1/stm32f103x8.ld
