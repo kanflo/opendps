@@ -2,8 +2,7 @@
 #define __DPS_MODEL_H__
 
 // if no other DPSxxxx model is specified, we will assume DPS5005
-
-#define DPS5015 
+//#define DPS5015 
 
 /*
  * K - angle factor
