@@ -176,7 +176,7 @@ uint32_t pwrctl_calc_vin(uint16_t raw)
   */
 uint32_t pwrctl_calc_vout(uint16_t raw)
 {
-    return 13.164*raw - 100.751;
+    return V_ADC_K*raw + V_ADC_C;
 }
 
 /**
@@ -186,7 +186,7 @@ uint32_t pwrctl_calc_vout(uint16_t raw)
   */
 uint16_t pwrctl_calc_vout_dac(uint32_t v_out_mv)
 {
-    uint32_t dac = 0.072*v_out_mv + 1.85;
+    uint32_t dac = V_DAC_K*v_out_mv + V_DAC_C;
     return dac & 0xfff; /** 12 bits */
 }
 
@@ -197,7 +197,7 @@ uint16_t pwrctl_calc_vout_dac(uint32_t v_out_mv)
   */
 uint32_t pwrctl_calc_iout(uint16_t raw)
 {
-    return CUR_ADC_K*raw + CUR_ADC_C;
+    return A_ADC_K*raw + A_ADC_C;
 }
 
 /**
@@ -207,7 +207,7 @@ uint32_t pwrctl_calc_iout(uint16_t raw)
   */
 uint16_t pwrctl_calc_ilimit_adc(uint16_t i_limit_ma)
 {
-    return (i_limit_ma - CUR_ADC_C) / CUR_ADC_K + 1;
+    return (i_limit_ma - A_ADC_C) / A_ADC_K + 1;
 }
 
 /**
@@ -219,7 +219,7 @@ uint16_t pwrctl_calc_ilimit_adc(uint16_t i_limit_ma)
   */
 uint16_t pwrctl_calc_iout_dac(uint32_t i_out_ma)
 {
-    uint32_t dac = CUR_DAC_K * i_out_ma + CUR_DAC_C;
+    uint32_t dac = A_DAC_K * i_out_ma + A_DAC_C;
     return dac & 0xfff; /** 12 bits */
 }
 

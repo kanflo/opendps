@@ -153,7 +153,6 @@ static void off_cmd(uint32_t argc, char *argv[])
 }
 
 extern volatile uint16_t a_in_adc;
-extern volatile uint16_t v_in_adc;
 static void stat_cmd(uint32_t argc, char *argv[])
 {
     (void) argc;
@@ -177,7 +176,7 @@ static void stat_cmd(uint32_t argc, char *argv[])
     printf(" V_in  : %2lu.%02lu V\n", v_in/1000,  (v_in%1000)/10);
     printf(" set  U out : %2lu.%02lu V\n", v_set/1000, (v_set%1000)/10);
     printf(" real U out : %2lu.%02lu V (%s)\n", v_out/1000, (v_out%1000)/10, pwrctl_vout_enabled() ? "enabled" : "disabled");
-    printf(" ADC(U): %d\n",v_in_adc);
+    printf(" ADC(U): %d\n",v_out_raw);
     printf(" set  I out : %2lu.%03lu A\n", i_set/1000, i_set%1000);
     printf(" real I out : %2lu.%03lu A\n", i_out/1000, i_out%1000);
     printf(" ADC(I): %d\n",a_in_adc);
