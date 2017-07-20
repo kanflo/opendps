@@ -141,8 +141,7 @@ static void on_cmd(uint32_t argc, char *argv[])
     (void) argc;
     (void) argv;
     printf("Power on\n");
-    pwrctl_enable_vout(true);
-    ui_update_power_status(true);
+    ui_enable_power(true);
 }
 
 static void off_cmd(uint32_t argc, char *argv[])
@@ -150,8 +149,7 @@ static void off_cmd(uint32_t argc, char *argv[])
     (void) argc;
     (void) argv;
     printf("Power off\n");
-    pwrctl_enable_vout(false);
-    ui_update_power_status(false);
+    ui_enable_power(false);
 }
 
 extern volatile uint16_t a_in_adc;

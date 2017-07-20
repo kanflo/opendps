@@ -29,6 +29,7 @@
 #define __PWRCTL_H__
 
 extern uint32_t pwrctl_i_limit_raw;
+extern uint64_t pwr_start;
 
 /**
   * @brief Initialize the power control module

@@ -110,9 +110,6 @@ static wifi_status_t wifi_status;
 static bool is_locked;
 static bool is_enabled;
 
-/** Time at wich V_out was enabled */
-static uint64_t pwr_start;
-
 /** Last settings written to past */
 static uint32_t     last_vout_setting;
 static uint32_t     last_ilimit_setting;

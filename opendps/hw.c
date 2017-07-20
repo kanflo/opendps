@@ -244,7 +244,8 @@ void adc1_2_isr(void)
         }
     }
     if (pwrctl_i_limit_raw) {
-        if (adc_counter >= STARTUP_SKIP_COUNT) {
+        //skip STARTUP_SKIP_COUNT counts and 2 mSec
+        if (adc_counter >= STARTUP_SKIP_COUNT && get_ticks()-pwr_start>2) {
             i += adc_i_offset;
             if (i > pwrctl_i_limit_raw) { /** OCP! */
                 handle_ocp(i);
