@@ -22,29 +22,12 @@
  * THE SOFTWARE.
  */
 
-#include <stdio.h>
-#include <errno.h>
-#include <usart.h>
+#ifndef __DBG_PRINTF_H__
+#define __DBG_PRINTF_H__
 
-int _write(int file, char *ptr, int len);
+#include <stdarg.h>
+//#define dbg_printf printf
 
-/**
-  * @brief Called by stdlib when doing printf
-  * @param file file descriptor (1 for stdout)
-  * @param ptr pointer to string to output
-  * @param len length of string
-  * @retval number of characters output or -1 in case of errors
-  */
-int _write(int file, char *ptr, int len)
-{
-    int i;
-    if (file == 1) {
-        for (i = 0; i < len; i++) {
-            usart_send_blocking(USART1, ptr[i]);
-        }
-        return i;
-    }
-    errno = EIO;
-    return -1;
-}
+int dbg_printf(const char *fmt, ...);
 
+#endif // __DBG_PRINTF_H__

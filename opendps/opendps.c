@@ -22,7 +22,6 @@
  * THE SOFTWARE.
  */
 
-#include <stdio.h>
 #include <stdint.h>
 #include <stdbool.h>
 #include <string.h>
@@ -32,6 +31,7 @@
 #include <systick.h>
 #include <usart.h>
 #include <timer.h>
+#include "dbg_printf.h"
 #include "tick.h"
 #include "tft.h"
 #include "event.h"
@@ -81,7 +81,7 @@ static void event_handler(void)
         } else {
             switch(event) {
                 case event_none:
-                    printf("Weird, should not receive 'none events'\n");
+                    dbg_printf("Weird, should not receive 'none events'\n");
                     break;
                 case event_uart_rx:
                     serial_handle_rx_char(data);
@@ -107,8 +107,8 @@ int main(void)
     event_init();
 
 #ifdef CONFIG_COMMANDLINE
-    printf("Welcome to OpenDPS!\n");
-    printf("Try 'help;' for, well, help (note the semicolon).\n");
+    dbg_printf("Welcome to OpenDPS!\n");
+    dbg_printf("Try 'help;' for, well, help (note the semicolon).\n");
 #endif // CONFIG_COMMANDLINE
 
     tft_init();

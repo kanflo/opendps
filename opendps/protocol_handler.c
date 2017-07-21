@@ -22,12 +22,12 @@
  * THE SOFTWARE.
  */
 
-#include <stdio.h>
 #include <stdint.h>
 #include <stdbool.h>
 #include <usart.h>
 #include <string.h>
 #include <stdlib.h>
+#include "dbg_printf.h"
 #include "ui.h"
 #include "hw.h"
 #include "pwrctl.h"
@@ -172,7 +172,7 @@ static void handle_frame(uint8_t *frame, uint32_t length)
     int32_t payload_len = uframe_extract_payload(frame, length);
     payload = frame; // Why? Well, frame now points to the payload
     if (payload_len <= 0) {
-        printf("Frame error %ld\n", payload_len);
+        dbg_printf("Frame error %ld\n", payload_len);
     } else {
         cmd = frame[0];
         switch(cmd) {

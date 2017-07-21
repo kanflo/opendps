@@ -28,6 +28,7 @@
 #include <usart.h>
 #include <string.h>
 #include <stdlib.h>
+#include "dbg_printf.h"
 #include "cli.h"
 #include "ui.h"
 #include "hw.h"
@@ -82,7 +83,7 @@ void serial_handle_rx_char(char c)
 
     if (c == '\b' || c == 0x7f) {
         if (i) {
-            printf("\b \b");
+            dbg_printf("\b \b");
             i--;
         }
     } else if (i >= sizeof(buffer) - 1) {
@@ -107,7 +108,7 @@ static void on_cmd(uint32_t argc, char *argv[])
 {
     (void) argc;
     (void) argv;
-    printf("Power on\n");
+    dbg_printf("Power on\n");
     pwrctl_enable_vout(true);
     ui_update_power_status(true);
 }
@@ -116,7 +117,7 @@ static void off_cmd(uint32_t argc, char *argv[])
 {
     (void) argc;
     (void) argv;
-    printf("Power off\n");
+    dbg_printf("Power off\n");
     pwrctl_enable_vout(false);
     ui_update_power_status(false);
 }
@@ -130,15 +131,15 @@ static void stat_cmd(uint32_t argc, char *argv[])
     uint32_t v_in = pwrctl_calc_vin(v_in_raw);
     uint32_t v_out = pwrctl_calc_vout(v_out_raw);
     uint32_t i_out = pwrctl_calc_iout(i_out_raw);
-    printf(" V_in  : %2lu.%02lu V\n", v_in/1000,  (v_in%1000)/10);
-    printf(" V_out : %2lu.%02lu V (%s)\n", v_out/1000, (v_out%1000)/10, pwrctl_vout_enabled() ? "enabled" : "disabled");
-    printf(" I_out : %2lu.%03lu A\n", i_out/1000, i_out%1000);
+    dbg_printf(" V_in  : %02u.%02u V\n", v_in/1000,  (v_in%1000)/10);
+    dbg_printf(" V_out : %02u.%02u V (%s)\n", v_out/1000, (v_out%1000)/10, pwrctl_vout_enabled() ? "enabled" : "disabled");
+    dbg_printf(" I_out : %02u.%03u A\n", i_out/1000, i_out%1000);
 }
 
 static void v_cmd(uint32_t argc, char *argv[])
 {
     (void) argc;
     uint32_t v_out = atoi(argv[1]);
-    printf("Setting V_out to %lumv\n", v_out);
+    dbg_printf("Setting V_out to %umv\n", v_out);
     pwrctl_set_vout(v_out);
 }

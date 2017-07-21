@@ -31,7 +31,8 @@ OBJS = \
     spi_driver.o \
     ringbuf.o \
     ili9163c.o \
-    stdio.o \
+    dbg_printf.o \
+    mini-printf.o \
     font-0.o \
     font-1.o
 

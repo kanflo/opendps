@@ -24,11 +24,11 @@
 
 #include <stdint.h>
 #include <stdbool.h>
-#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <usart.h>
 #include "cli.h"
+#include "dbg_printf.h"
 
 #ifdef CONFIG_CMD_EXTRA_PADDING
  #define CMD_EXTRA_PADDING CONFIG_CMD_EXTRA_PADDING
@@ -83,9 +83,9 @@ void cli_run(const cli_command_t cmds[], const uint32_t num, char *line)
     for (uint32_t i=0; i<num; i++) {
         if (cmds[i].cmd && strcmp(argv[0], cmds[i].cmd) == 0) {
             if (cmds[i].min_arg > argc-1 || cmds[i].max_arg < argc-1) {
-                printf("Wrong number of arguments:\n");
+                dbg_printf("Wrong number of arguments:\n");
                 if (cmds[i].usage) {
-                    printf("Usage: %s%s%s;\n", cmds[i].cmd, ARG_DELIMITER_STR, cmds[i].usage);
+                    dbg_printf("Usage: %s%s%s;\n", cmds[i].cmd, ARG_DELIMITER_STR, cmds[i].usage);
                 }
             } else {
                 cmds[i].handler(argc, argv);
@@ -105,12 +105,16 @@ void cli_run(const cli_command_t cmds[], const uint32_t num, char *line)
             }
             for (uint32_t i=0; i<num; i++) {
                 if (cmds[i].help) {
-                    printf("%-*s %s\n", (int) max_len+CMD_EXTRA_PADDING, cmds[i].cmd, cmds[i].help);
+                    if (cmds[i].usage) {
+                        dbg_printf("%s %s;   %s\n", cmds[i].cmd, cmds[i].usage, cmds[i].help);
+                    } else {
+                        dbg_printf("%s;   %s\n", cmds[i].cmd, cmds[i].help);
+                    }
                 }
             }
-            printf("(end commands with semicolon, not enter).\n");
+            dbg_printf("(end commands with semicolon, not enter).\n");
         } else {
-            printf("Unknown command, try 'help'\n");
+            dbg_printf("Unknown command, try 'help'\n");
         }
     }
 }

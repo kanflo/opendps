@@ -24,7 +24,6 @@
 
 #include <stdint.h>
 #include <inttypes.h>
-#include <stdio.h>
 #include <string.h>
 #include <rcc.h>
 #include <adc.h>
@@ -40,6 +39,7 @@
 #include "ili9163c.h"
 #include "font-0.h"
 #include "font-1.h"
+#include "dbg_printf.h"
 
 static bool is_inverted;
 
@@ -117,7 +117,7 @@ void tft_putch(uint8_t size, char ch, uint32_t x, uint32_t y, uint32_t w, uint32
             glyph_index = 12;
             break;
         default:
-            printf("Cannot print character '%c'\n", ch);
+            dbg_printf("Cannot print character '%c'\n", ch);
             return;
     }
     switch(size) {
@@ -134,7 +134,7 @@ void tft_putch(uint8_t size, char ch, uint32_t x, uint32_t y, uint32_t w, uint32
             glyph_height = font_1_height;
             break;
         default:
-            printf("Cannot print at size %d\n", (int) size);
+            dbg_printf("Cannot print at size %d\n", (int) size);
             return;
     }
 

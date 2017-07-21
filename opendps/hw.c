@@ -179,7 +179,7 @@ void hw_longpress_check(void)
 void hw_print_ticks(void)
 {
     uint32_t temp = (uint32_t) get_ticks() - adc_tick_start;
-    printf("%lu ADC ticks in %lu ms (%lu Hz)\n", adc_counter, temp, adc_counter/(temp/1000));
+    printf("%u ADC ticks in %u ms (%u Hz)\n", adc_counter, temp, adc_counter/(temp/1000));
 }
 #endif // CONFIG_ADC_BENCHMARK
 

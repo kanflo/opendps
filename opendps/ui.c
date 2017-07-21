@@ -25,8 +25,8 @@
 #include "ui.h"
 #include <stdint.h>
 #include <inttypes.h>
-#include <stdio.h>
 #include <string.h>
+#include "dbg_printf.h"
 #include "tft.h"
 #include "tick.h"
 #include "pwrctl.h"
@@ -159,7 +159,7 @@ void ui_init(uint32_t width, uint32_t height)
     g_past.blocks[1] = 0x0800fc00;
 
     if (!past_init(&g_past)) {
-        printf("Error: past init failed!\n");
+        dbg_printf("Error: past init failed!\n");
         /** @todo Handle past init failure */
     }
 
@@ -218,7 +218,7 @@ void ui_hande_event(event_t event, uint8_t data)
                 (void) v_in_raw;
                 (void) v_out_raw;
                 uint16_t trig = hw_get_itrig_ma();
-                printf("%10lu OCP: trig:%lumA limit:%lumA cur:%lumA\n", (uint32_t) (get_ticks() - pwr_start), pwrctl_calc_iout(trig), pwrctl_calc_iout(pwrctl_i_limit_raw), pwrctl_calc_iout(i_out_raw));
+                dbg_printf("%10u OCP: trig:%umA limit:%umA cur:%umA\n", (uint32_t) (get_ticks() - pwr_start), pwrctl_calc_iout(trig), pwrctl_calc_iout(pwrctl_i_limit_raw), pwrctl_calc_iout(i_out_raw));
 #endif // CONFIG_OCP_DEBUGGING
                 ui_flash(); /** @todo When OCP kicks in, show last I_out on screen */
                 ui_update_power_status(pwrctl_vout_enabled());
@@ -735,7 +735,7 @@ static void write_past_settings(void)
         uint32_t setting = (last_ilimit_setting & 0xffff) << 16 | (last_vout_setting & 0xffff);
         if (!past_write_unit(&g_past, past_power, (void*) &setting, sizeof(setting))) {
             /** @todo Handle past write errors */
-            printf("Error: past write pwr failed!\n");
+            dbg_printf("Error: past write pwr failed!\n");
         }
     }
 
@@ -744,7 +744,7 @@ static void write_past_settings(void)
         uint32_t setting = last_tft_inv_setting;
         if (!past_write_unit(&g_past, past_tft_inversion, (void*) &setting, sizeof(setting))) {
             /** @todo Handle past write errors */
-            printf("Error: past write inv failed!\n");
+            dbg_printf("Error: past write inv failed!\n");
         }
     }
 }
@@ -756,10 +756,10 @@ static void write_past_settings(void)
 static void check_master_reset(void)
 {
     if (hw_sel_button_pressed()) {
-        printf("Master reset\n");
+        dbg_printf("Master reset\n");
         if (!past_format(&g_past)) {
             /** @todo Handle past format errors */
-            printf("Error: past formatting failed!\n");
+            dbg_printf("Error: past formatting failed!\n");
         }
     }
 }
