@@ -3,6 +3,9 @@ BINARY = opendps
 # Build with commandline interface rather than serial interface
 COMMANDLINE := 0
 
+# Set build model, defaults to DPS5005
+MODEL := DPS5005
+
 # Include splash screen
 SPLASH_SCREEN := 0
 
@@ -35,6 +38,8 @@ OBJS = \
     font-0.o \
     font-1.o
 
+
+CFLAGS +=-D$(MODEL)
 
 ifeq ($(SPLASH_SCREEN),1)
 	CFLAGS +=-DCONFIG_SPLASH_SCREEN
