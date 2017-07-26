@@ -33,6 +33,8 @@ cmd_power_enable = 5
 cmd_wifi_status = 6
 cmd_lock = 7
 cmd_ocp_event = 8
+cmd_upgrade_start = 9
+cmd_upgrade_data = 10
 cmd_response = 0x80
 
 # wifi_status_t
@@ -41,6 +43,16 @@ wifi_connecting = 1
 wifi_connected = 2
 wifi_error = 3
 wifi_upgrading = 4
+
+# upgrade_status_t
+upgrade_continue = 0
+upgrade_bootcom_error = 1
+upgrade_crc_error = 2
+upgrade_erase_error = 3
+upgrade_flash_error = 4
+upgrade_overflow_error = 5
+upgrade_success = 16
+
 
 """
  Helpers for creating frames.
@@ -117,6 +129,22 @@ def create_ocp(i_cut):
     f = uFrame()
     f.pack8(cmd_ocp_event)
     f.pack16(i_cut)
+    f.end()
+    return f
+
+def create_upgrade_start(window_size, crc):
+    f = uFrame()
+    f.pack8(cmd_upgrade_start)
+    f.pack16(window_size)
+    f.pack16(crc)
+    f.end()
+    return f
+
+def create_upgrade_data(data):
+    f = uFrame()
+    f.pack8(cmd_upgrade_data)
+    for d in data:
+        f.pack8(d)
     f.end()
     return f
 

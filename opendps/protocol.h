@@ -45,8 +45,8 @@ typedef enum {
     cmd_wifi_status,
     cmd_lock,
     cmd_ocp_event,
-    cmd_fota_start,
-    cmd_fota_data,
+    cmd_upgrade_start,
+    cmd_upgrade_data,
     cmd_response = 0x80
 } command_t;
 
@@ -62,8 +62,10 @@ typedef enum {
     upgrade_continue = 0,
     upgrade_bootcom_error,
     upgrade_crc_error,
+    upgrade_erase_error,
     upgrade_flash_error,
-    upgrade_success
+    upgrade_overflow_error,
+    upgrade_success = 16
 } upgrade_status_t;
 
 #define MAX_FRAME_LENGTH (2*16) // Based on the cmd_status reponse frame (fully escaped)
@@ -102,6 +104,7 @@ bool protocol_unpack_status_response(uint8_t *payload, uint32_t length, uint16_t
 bool protocol_unpack_wifi_status(uint8_t *payload, uint32_t length, wifi_status_t *status);
 bool protocol_unpack_lock(uint8_t *payload, uint32_t length, uint8_t *locked);
 bool protocol_unpack_ocp(uint8_t *payload, uint32_t length, uint16_t *i_cut);
+bool protocol_unpack_upgrade_start(uint8_t *payload, uint32_t length, uint16_t *chunk_size, uint16_t *crc);
 
 
 /*
@@ -173,8 +176,8 @@ bool protocol_unpack_ocp(uint8_t *payload, uint32_t length, uint16_t *i_cut);
  * === DPS upgrade sessions ===
  * When the cmd_upgrade_start packet is received, the device prepares for
  * an upgrade session:
- *  1. The upgrade packet window size is determined based on the host's request
- *     and is written into the bootcom RAM in addition with the 32 bit crc of
+ *  1. The upgrade packet chunk size is determined based on the host's request
+ *     and is written into the bootcom RAM in addition with the 16 bit crc of
  *     the new firmware. and the upgrade magick.
  *  2. The device restarts.
  *  3. The booloader detecs the upgrade magic in the bootcom RAM.
@@ -187,12 +190,12 @@ bool protocol_unpack_ocp(uint8_t *payload, uint32_t length, uint16_t *i_cut);
  *     flag in the PAST and boots the app.
  *  8. The host pings the app to check the new firmware started.
  *
- *  HOST:   [cmd_upgrade_start] [window_size:16] [crc:32]
- *  DPS BL: [cmd_response | cmd_upgrade_start] [<upgrade_status_t>] [<window_size:16>]
+ *  HOST:     [cmd_upgrade_start] [chunk_size:16] [crc:16]
+ *  DPS (BL): [cmd_response | cmd_upgrade_start] [<upgrade_status_t>] [<chunk_size:16>]
  *
- * The host will send packets of the agreed window size with the device 
+ * The host will send packets of the agreed chunk size with the device 
  * acknowledging each packet once crc checked and written to flash. A packet
- * smaller than the window size or with zero payload indicates the end of the
+ * smaller than the chunk size or with zero payload indicates the end of the
  * upgrade session. The device will now return the outcome of the 32 bit crc
  * check of the new firmware and continue on step 7 above.
  *

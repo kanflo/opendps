@@ -67,6 +67,13 @@ class uFrame(object):
         self.pack8(h1)
         self.pack8(h2)
 
+    def pack32(self, word):
+        word &= 0xffffffff
+        self.pack8((word >> 24) & 0xff)
+        self.pack8((word >> 16) & 0xff)
+        self.pack8((word >>  8) & 0xff)
+        self.pack8((word >>  0) & 0xff)
+
     """
     End packing
     """
@@ -146,5 +153,9 @@ class uFrame(object):
 
     def unpack16(self):
         h = self.unpack8() << 8 | self.unpack8()
+        return h
+
+    def unpack32(self):
+        h = self.unpack8() << 24 | self.unpack8() << 16 | self.unpack8() << 8 | self.unpack8()
         return h
 

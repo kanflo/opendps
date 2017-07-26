@@ -45,6 +45,8 @@ typedef enum {
     cmd_wifi_status,
     cmd_lock,
     cmd_ocp_event,
+    cmd_upgrade_start,
+    cmd_upgrade_data,
     cmd_response = 0x80
 } command_t;
 
@@ -56,7 +58,17 @@ typedef enum {
     wifi_upgrading // Used by the ESP8266 when doing FOTA
 } wifi_status_t;
 
-#define MAX_FRAME_LENGTH (2*16) // Based on the cmd_status reponse frame (fullu escaped)
+typedef enum {
+    upgrade_continue = 0,
+    upgrade_bootcom_error,
+    upgrade_crc_error,
+    upgrade_erase_error,
+    upgrade_flash_error,
+    upgrade_overflow_error,
+    upgrade_success = 16
+} upgrade_status_t;
+
+#define MAX_FRAME_LENGTH (2*16) // Based on the cmd_status reponse frame (fully escaped)
 
 /*
  * Helpers for creating frames.
@@ -159,6 +171,38 @@ bool protocol_unpack_ocp(uint8_t *payload, uint32_t length, uint16_t *i_cut);
  *
  *  DPS:    [cmd_ocp_event] [I_cut(7:0)] [I_cut(15:8)]
  *  HOST:   none
+ *
+ * === DPS upgrade sessions ===
+ * When the cmd_upgrade_start packet is received, the device prepares for
+ * an upgrade session:
+ *  1. The upgrade packet chunk size is determined based on the host's request
+ *     and is written into the bootcom RAM in addition with the 32 bit crc of
+ *     the new firmware. and the upgrade magick.
+ *  2. The device restarts.
+ *  3. The booloader detecs the upgrade magic in the bootcom RAM.
+ *  4. The booloader sets the upgrade flag in the PAST.
+ *  5. The bootloader initializes the UART, sends the cmd_upgrade_start ack and
+ *     prepares for download.
+ *  6. The bootloader receives the upgrade packets, writes the data to flash
+ *     and acks each packet.
+ *  7. When the last packet has been received, the bootloader clears the upgrade
+ *     flag in the PAST and boots the app.
+ *  8. The host pings the app to check the new firmware started.
+ *
+ *  HOST:   [cmd_upgrade_start] [chunk_size:16] [crc:32]
+ *  DPS BL: [cmd_response | cmd_upgrade_start] [<upgrade_status_t>] [<chunk_size:16>]
+ *
+ * The host will send packets of the agreed chunk size with the device 
+ * acknowledging each packet once crc checked and written to flash. A packet
+ * smaller than the chunk size or with zero payload indicates the end of the
+ * upgrade session. The device will now return the outcome of the 32 bit crc
+ * check of the new firmware and continue on step 7 above.
+ *
+ * The upgrade data packets have the following format with the payload size
+ * expected to be equal to what was aggreed upon in the cmd_upgrade_start packet.
+ *
+ *  HOST:   [cmd_upgrade_data] [<payload>]+
+ *  DPS BL: [cmd_response | cmd_upgrade_data] [<upgrade_status_t>]
  *
  */
 

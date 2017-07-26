@@ -22,9 +22,24 @@
  * THE SOFTWARE.
  */
 
-#ifndef __SERIALHANDER_H__
-#define __SERIALHANDER_H__
+#ifndef __BOOTCOM_H__
+#define __BOOTCOM_H__
 
-void serial_handle_rx_char(char c);
+#include <stdint.h>
+#include <stdbool.h>
 
-#endif // __SERIALHANDER_H__
+/**
+  * @brief Put data into bootcom buffer and set the bootcom magic
+  * @param w1, w2 data to place into buffer
+  * @retval void
+  */
+void bootcom_put(uint32_t w1, uint32_t w2);
+
+/**
+  * @brief Get data from bootcom buffer
+  * @param w1, w2 pointers to place bootcom data info
+  * @retval true if bootcom data was found, false otherwise
+  */
+bool bootcom_get(uint32_t *w1, uint32_t *w2);
+
+#endif // __BOOTCOM_H__

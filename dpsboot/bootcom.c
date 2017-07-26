@@ -22,59 +22,48 @@
  * THE SOFTWARE.
  */
 
-#include <stdint.h>
-#include <stdbool.h>
 #include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include "ringbuf.h"
-#include "event.h"
+#include "bootcom.h"
+#include "crc16.h"
 
-#define MAX_EVENTS	(16)
+/** If this magic is found at _bootcom_start, we have bootcom data */
+#define BOOTCOM_MAGIC (0xfa1affe1)
 
-static ringbuf_t events;
-static uint8_t buffer[2*MAX_EVENTS];
-
+/** Linker symbols */
+extern uint32_t *_bootcom_start;
+extern uint32_t *_bootcom_end;
 
 /**
-  * @brief Initialize the event module
-  * @retval None
+  * @brief Put data into bootcom buffer and set the bootcom magic
+  * @param w1, w2 data to place into buffer
+  * @retval void
   */
-void event_init(void)
+void bootcom_put(uint32_t w1, uint32_t w2)
 {
-	ringbuf_init(&events, (uint8_t*) buffer, sizeof(buffer));
-	memset(buffer, 0, sizeof(buffer));
+    uint32_t *bootcom = (uint32_t*) &_bootcom_start;
+    bootcom[0] = BOOTCOM_MAGIC;
+    bootcom[1] = w1;
+    bootcom[2] = w2;
+    bootcom[3] = crc16((uint8_t*) bootcom, 12);
 }
 
 /**
-  * @brief Fetch next event in queue
-  * @param event the type of event received or 'event_none' if no events in queue
-  * @param data additional event data
-  * @retval true if an event was found
+  * @brief Get data from bootcom buffer
+  * @param w1, w2 pointers to place bootcom data info
+  * @retval true if bootcom data was found, false otherwise
   */
-bool event_get(event_t *event, uint8_t *data)
+bool bootcom_get(uint32_t *w1, uint32_t *w2)
 {
-	bool got_event = true;
-	uint16_t e;
-	if (!ringbuf_get(&events, &e)) {
-		*event = event_none;
-		*data = 0;
-		got_event = false;
-	} else {
-		*event = e >> 8;
-		*data = e & 0xff;
-
-	}
-	return got_event;
+    bool success = false;
+    uint32_t *bootcom = (uint32_t*) &_bootcom_start;
+    if (w1 && w2 && bootcom[0] == BOOTCOM_MAGIC) {
+        if (bootcom[3] == crc16((uint8_t*) bootcom, 12)) {
+            *w1 = bootcom[1];
+            *w2 = bootcom[2];
+            bootcom[0] = bootcom[1] = bootcom[2] = bootcom[3] = 0;
+            success = true;
+        }
+    }
+	return success;
 }
 
-/**
-  * @brief Place event in event fifo
-  * @param event event type
-  * @param data additional event data
-  * @retval None
-  */
-bool event_put(event_t event, uint8_t data)
-{
-	return ringbuf_put(&events, (uint16_t) (event << 8 | data));
-}

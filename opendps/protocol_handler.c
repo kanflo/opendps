@@ -27,6 +27,7 @@
 #include <usart.h>
 #include <string.h>
 #include <stdlib.h>
+#include <scb.h>
 #include "dbg_printf.h"
 #include "ui.h"
 #include "hw.h"
@@ -34,6 +35,7 @@
 #include "uframe.h"
 #include "protocol.h"
 #include "serialhandler.h"
+#include "bootcom.h"
 
 static uint8_t frame_buffer[FRAME_OVERHEAD(MAX_FRAME_LENGTH)];
 static uint32_t rx_idx = 0;
@@ -159,6 +161,23 @@ static bool handle_lock(uint8_t *payload, uint32_t payload_len)
 }
 
 /**
+  * @brief Handle an upgrde start command
+  * @param payload payload of command frame
+  * @param payload_len length of payload
+  * @retval false in case of errors, if successful the device reboots
+  */
+static bool handle_upgrade_start(uint8_t *payload, uint32_t payload_len)
+{
+    bool success = false;
+    uint16_t chunk_size, crc;
+    if (protocol_unpack_upgrade_start(payload, payload_len, &chunk_size, &crc)) {
+        bootcom_put(0xfedebeda, (chunk_size << 16) | crc);
+        scb_reset_system();
+    }
+    return success;
+}
+
+/**
   * @brief Handle a receved frame
   * @param frame the received frame
   * @param length length of frame
@@ -197,6 +216,9 @@ static void handle_frame(uint8_t *frame, uint32_t length)
                 break;
             case cmd_lock:
                 success = handle_lock(payload, payload_len);
+                break;
+            case cmd_upgrade_start:
+                success = handle_upgrade_start(payload, payload_len);
                 break;
             default:
                 break;

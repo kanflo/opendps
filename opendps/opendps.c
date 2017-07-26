@@ -43,6 +43,15 @@
 #define TFT_HEIGHT  (128)
 #define TFT_WIDTH   (128)
 
+/** Linker file symbols */
+extern uint32_t *_app_start;
+extern uint32_t *_app_end;
+extern uint32_t *_past_start;
+extern uint32_t *_past_end;
+extern uint32_t *_bootcom_start;
+extern uint32_t *_bootcom_end;
+
+
 static void update_measurements(void)
 {
     uint16_t i_out_raw, v_in_raw, v_out_raw;

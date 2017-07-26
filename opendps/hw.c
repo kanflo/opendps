@@ -33,13 +33,18 @@
 #include <nvic.h>
 #include <exti.h>
 #include <usart.h>
-#include <stdio.h>
+#include <scb.h>
 #include "tick.h"
 #include "spi_driver.h"
 #include "pwrctl.h"
 #include "hw.h"
 #include "event.h"
 #include "dps-model.h"
+
+/** Linker file symbols */
+extern uint32_t *_ram_vect_start;
+extern uint32_t *_ram_vect_end;
+extern uint32_t *vector_table;
 
 static void tim2_init(void);
 static void clock_init(void);
@@ -49,6 +54,7 @@ static void gpio_init(void);
 static void exti_init(void);
 static void dac_init(void);
 static void button_irq_init(void);
+static void copy_vectors(void);
 
 static volatile uint16_t i_out_adc;
 static volatile uint16_t i_out_trig_adc;
@@ -102,6 +108,7 @@ static uint32_t i_offset_calc;
   */
 void hw_init(void)
 {
+    copy_vectors();
     clock_init();
     systick_init();
     gpio_init();
@@ -792,3 +799,28 @@ static void button_irq_init(void)
     exti_set_trigger(BUTTON_ROT_PRESS_EXTI, EXTI_TRIGGER_FALLING);
     exti_enable_request(BUTTON_ROT_PRESS_EXTI);
 }
+
+/**
+  * @brief Relocate the vector table to the internal SRAM
+  * @retval None
+  */
+static void copy_vectors(void)
+{
+    uint32_t v_size = (uint32_t) &_ram_vect_end - (uint32_t) &_ram_vect_start;
+    volatile uint32_t *v_rom = (uint32_t*) &vector_table;
+    volatile uint32_t *v_ram = (uint32_t*) &_ram_vect_start;
+
+    for(uint32_t i = 0; i < v_size/4; i++) {
+        v_ram[i] = v_rom[i];
+    }
+ 
+    /* Enable the SYSCFG peripheral clock*/
+//    rcc_periph_clock_enable(RCC_SYSCFG);
+//    RCC_APB2PeriphClockCmd(RCC_APB2Periph_SYSCFG, ENABLE); // Not Reset, Clock
+ 
+    SCB_VTOR = (uint32_t) &_ram_vect_start;
+    /* Remap SRAM at 0x20000000 */
+//    SYSCFG_CFGR1 &= SYSCFG_CFGR1_MEM_MODE;
+//    SYSCFG_CFGR1 |= SYSCFG_CFGR1_MEM_MODE_SRAM;
+}
+

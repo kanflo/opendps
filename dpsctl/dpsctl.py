@@ -45,6 +45,13 @@ import time
 import uhej
 from protocol import *
 import uframe
+import binascii
+try:
+    from PyCRC.CRCCCITT import CRCCCITT
+except:
+    print("Please install pycrc:")
+    print(" sudo pip install pycrc")
+    raise SystemExit()
 
 """
 A abstract class that describes a comminucation interface
@@ -82,7 +89,7 @@ class tty_interface(comm_interface):
         self._if_name = if_name
 
     def open(self):
-        self._port_handle = serial.Serial(baudrate = 115200, timeout = 0.5)
+        self._port_handle = serial.Serial(baudrate = 115200, timeout = 1.0)
         self._port_handle.port = self._if_name
         self._port_handle.open()
         return True
@@ -160,20 +167,22 @@ Print error message and exit with error
 """
 def fail(message):
         print("Error: %s." % (message))
-        sys.exit(os.EX_USAGE)
+        sys.exit(1)
 
 
 """
-Handle a response frame from the device
+Handle a response frame from the device.
+Return a dictionaty of interesting information.
 """
 def handle_response(command, frame, args):
+    ret_dict = {}
     resp_command = frame.get_frame()[0]
     if resp_command & cmd_response:
         resp_command ^= cmd_response
         success = frame.get_frame()[1]
         if resp_command != command:
             print("Warning: sent command %02x, response was %02x." % (command, resp_command))
-        if not success:
+        if resp_command !=  cmd_upgrade_start and resp_command !=  cmd_upgrade_data and not success:
             fail("command failed according to device")
 
     if args.json:
@@ -205,6 +214,17 @@ def handle_response(command, frame, args):
             print("V_out : %s V (%s)" % (v_out_str, enable_str))
             print("I_lim : %s A" % (i_lim_str))
             print("I_out : %s A" % (i_out_str))
+    elif resp_command == cmd_upgrade_start:
+    #  *  DPS BL: [cmd_response | cmd_upgrade_start] [<upgrade_status_t>] [<chunk_size:16>]
+        cmd = frame.unpack8()
+        status = frame.unpack8()
+        chunk_size = frame.unpack16()
+        ret_dict["status"] = status
+        ret_dict["chunk_size"] = chunk_size
+    elif resp_command == cmd_upgrade_data:
+        cmd = frame.unpack8()
+        status = frame.unpack8()
+        ret_dict["status"] = status
 
     if args.json:
         count = 0
@@ -217,6 +237,7 @@ def handle_response(command, frame, args):
                 print"\"%s\":\"%s\"," % (k, json[k]),
         print "}"
 
+    return ret_dict
 
 """
 Communicate with the DPS device according to the user's whishes
@@ -246,7 +267,7 @@ def communicate(comms, frame, args):
     if res < 0:
         fail("protocol error (%d)" % (res))
     else:
-        handle_response(frame.get_frame()[1], f, args)
+        return handle_response(frame.get_frame()[1], f, args)
 
 """
 Communicate with the DPS device according to the user's whishes
@@ -261,6 +282,10 @@ def handle_commands(args):
     # The ping command
     if args.ping:
         communicate(comms, create_ping(), args)
+
+    # The upgrade
+    if args.firmware:
+        run_upgrade(comms, args.firmware, args)
 
     # The lock and unlock commands
     if args.lock:
@@ -304,6 +329,63 @@ def is_ip_address(if_name):
         return True
     except socket.error:
         return False
+
+# Darn beautiful, from SO: https://stackoverflow.com/a/1035456
+def chunk_from_file(filename, chunk_size):
+    with open(filename, "rb") as f:
+        while True:
+            chunk = f.read(chunk_size)
+            if chunk:
+                yield bytearray(chunk)
+            else:
+                break
+
+"""
+Run OpenDPS firmware upgrade
+"""
+def run_upgrade(comms, fw_file_name, args):
+    with open(fw_file_name, mode='rb') as file:
+        #crc = binascii.crc32(file.read()) % (1<<32)
+        content = file.read()
+        if content.encode('hex')[6:8] != "20" and not args.force:
+            fail("The firmware file does not seem valid, use --force to force upgrade")
+        crc = CRCCCITT().calculate(content)
+    chunk_size = 1024
+    ret_dict = communicate(comms, create_upgrade_start(chunk_size, crc), args)
+    if ret_dict["status"] == upgrade_continue:
+        if chunk_size != ret_dict["chunk_size"]:
+            print("Device selected chunk size %d" % (ret_dict["chunk_size"]))
+        counter = 0
+        for chunk in chunk_from_file(fw_file_name, chunk_size):
+            counter += len(chunk)
+            sys.stdout.write("\rDownload progress: %d%% " % (counter*1.0/len(content)*100.0) )
+            sys.stdout.flush()
+#            print(" %d bytes" % (counter))
+
+            ret_dict = communicate(comms, create_upgrade_data(chunk), args)
+            status = ret_dict["status"]
+            if status == upgrade_continue:
+                pass
+            elif status == upgrade_crc_error:
+                print("")
+                fail("device reported CRC error")
+            elif status == upgrade_erase_error:
+                print("")
+                fail("device reported erasing error")
+            elif status == upgrade_flash_error:
+                print("")
+                fail("device reported flashing error")
+            elif status == upgrade_overflow_error:
+                print("")
+                fail("device reported firmware overflow error")
+            elif status == upgrade_success:
+                print("")
+            else:
+                print("")
+                fail("device reported an unknown error (%d)" % status)
+    else:
+        fail("Device rejected firmware upgrade")
+    sys.exit(os.EX_OK)
 
 """
 Create and return a comminications interface object or None if no comms if
@@ -419,6 +501,8 @@ def main():
     parser.add_argument('-s', '--status', action='store_true', help="Read voltage/current settings and measurements")
     parser.add_argument('-j', '--json', action='store_true', help="Output status as JSON")
     parser.add_argument('-v', '--verbose', action='store_true', help="Verbose communications")
+    parser.add_argument('-U', '--upgrade', type=str, dest="firmware", help="Perform upgrade of OpenDPS firmware")
+    parser.add_argument('-f', '--force', action='store_true', help="Force upgrade even if dpsctl complains about the firmware")
 
     args, unknown = parser.parse_known_args()
 

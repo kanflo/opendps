@@ -1,10 +1,12 @@
-/* Linker script for STM32F100x8, 64K flash, 8K RAM. */
+/* Bootloader linker script for STM32F100x8, 64K flash, 8K RAM. */
 
-/*boot_size = 4096;*/
-boot_size = 30000;
+flash_size = 64k;
+ram_size = 8k;
+
+boot_size = 5k;
 past_size = 2048;
 bootcom_size = 16;
-app_size = 64k - boot_size - past_size;
+app_size = flash_size - boot_size - past_size;
 
 /* Define memory regions. */
 MEMORY
@@ -12,7 +14,7 @@ MEMORY
     rom           (rx) : ORIGIN = 0x08000000, LENGTH = boot_size
 	app           (rx) : ORIGIN = 0x08000000 + boot_size,  LENGTH = app_size
     past           (r) : ORIGIN = 0x0800F800, LENGTH = past_size
-    ram          (rwx) : ORIGIN = 0x20000000, LENGTH = 8K - bootcom_size
+    ram          (rwx) : ORIGIN = 0x20000000, LENGTH = ram_size - bootcom_size
     bootcom_ram  (rwx) : ORIGIN = 0x20001FF0, LENGTH = bootcom_size
 }
 

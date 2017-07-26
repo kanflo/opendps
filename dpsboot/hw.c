@@ -45,9 +45,9 @@ static ringbuf_t *rx_buf;
   * @brief Initialize the hardware
   * @retval None
   */
-void hw_init(ringbuf_t *ring_buf)
+void hw_init(ringbuf_t *usart_rx_buf)
 {
-    rx_buf = ring_buf;
+    rx_buf = usart_rx_buf;
     clock_init();
     systick_init();
     gpio_init();

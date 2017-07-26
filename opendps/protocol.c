@@ -206,6 +206,16 @@ bool protocol_unpack_lock(uint8_t *payload, uint32_t length, uint8_t *locked)
 	return _remain == 0 && cmd == cmd_lock;
 }
 
+bool protocol_unpack_upgrade_start(uint8_t *payload, uint32_t length, uint16_t *chunk_size, uint16_t *crc)
+{
+	command_t cmd;
+	DECLARE_UNPACK(payload, length);
+	UNPACK8(cmd);
+	UNPACK16(*chunk_size);
+	UNPACK16(*crc);
+	return _remain == 0 && cmd == cmd_upgrade_start;
+}
+
 bool protocol_unpack_ocp(uint8_t *payload, uint32_t length, uint16_t *i_cut)
 {
 	command_t cmd;

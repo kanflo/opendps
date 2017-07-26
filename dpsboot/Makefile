@@ -1,16 +1,17 @@
 BINARY = dpsboot
 
-CFLAGS = -I. -I../stm32common
+CFLAGS = -I. 
 
 OBJS = \
 	hw.o \
-	protocol_handler.o \
 	past.o \
 	tick.o \
 	ringbuf.o \
 	uframe.o \
 	protocol.o \
 	stdio.o \
+	bootcom.o \
+	crc16.o
 
 # Bootloader linker script
 LDSCRIPT = stm32f401_boot.ld

@@ -125,10 +125,10 @@
 static uint32_t past_find_unit(past_t *past, past_id_t id);
 static bool past_erase_unit_at(uint32_t address);
 static bool past_garbage_collect(past_t *past);
-static bool flash_write32(uint32_t address, uint32_t data);
-static uint32_t flash_read32(uint32_t address); /** @todo Make a macro out of read32*/
-static void unlock_flash(void);
-static void lock_flash(void);
+static inline bool flash_write32(uint32_t address, uint32_t data);
+static inline uint32_t flash_read32(uint32_t address); /** @todo Make a macro out of read32*/
+static inline void unlock_flash(void);
+static inline void lock_flash(void);
 static bool copy_parameters(past_t *past, uint32_t src_base, uint32_t dst_base);
 static uint32_t past_remaining_size(past_t *past);
 
@@ -472,7 +472,7 @@ static bool past_garbage_collect(past_t *past)
   * @param data well, data
   * @retval true if write was successfuk
   */
-static bool flash_write32(uint32_t address, uint32_t data)
+static inline bool flash_write32(uint32_t address, uint32_t data)
 {
     bool success = false;
     if (address % 4 == 0) {
@@ -489,7 +489,7 @@ static bool flash_write32(uint32_t address, uint32_t data)
   * @param address address to read from
   * @retval data at secified address
   */
-static uint32_t flash_read32(uint32_t address)
+static inline uint32_t flash_read32(uint32_t address)
 {
     uint32_t *p = (uint32_t*) address;
     return *p;
@@ -499,7 +499,7 @@ static uint32_t flash_read32(uint32_t address)
   * @brief Lock flash, keeping a lock counter
   * @retval none
   */
-static void unlock_flash(void)
+static inline void unlock_flash(void)
 {
     if (!flash_unlock_count) {
         flash_unlock();
@@ -511,7 +511,7 @@ static void unlock_flash(void)
   * @brief Unlock flash based on lock counter
   * @retval none
   */
-static void lock_flash(void)
+static inline void lock_flash(void)
 {
     flash_unlock_count--;
     if (!flash_unlock_count) {

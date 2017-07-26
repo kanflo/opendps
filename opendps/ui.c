@@ -114,7 +114,7 @@ static uint32_t last_vout_setting;
 static uint32_t last_ilimit_setting;
 static bool     last_tft_inv_setting;
 
-/** Out parameter storage */
+/** Our parameter storage */
 static past_t g_past;
 
 /** X positions at which we will draw digits */

@@ -60,9 +60,15 @@
         } \
     }
 
-#define PACK16(b) \
-    PACK8((b) >> 8); \
-    PACK8((b) & 0xff);
+#define PACK16(h) \
+    PACK8((h) >> 8); \
+    PACK8((h) & 0xff);
+
+#define PACK32(w) \
+    PACK8((w) >> 24); \
+    PACK8(((w) >> 16) & 0xff); \
+    PACK8(((w) >> 8) & 0xff); \
+    PACK8((w) & 0xff);
 
 /** Like PACK8 but does not compute crc */
 #define STUFF8(b) \
@@ -103,6 +109,17 @@
         (h)  = _buffer[_pos++] << 8; \
         (h) |= _buffer[_pos++]; \
         _remain -= 2; \
+    } else { \
+        (h) = 0; \
+    }
+
+#define UNPACK32(h) \
+    if (_remain >= 4) { \
+        (h)  = _buffer[_pos++] << 24; \
+        (h) |= _buffer[_pos++] << 16; \
+        (h) |= _buffer[_pos++] << 8; \
+        (h) |= _buffer[_pos++]; \
+        _remain -= 4; \
     } else { \
         (h) = 0; \
     }
