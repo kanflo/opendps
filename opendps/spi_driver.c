@@ -27,7 +27,6 @@
 #include <dma.h>
 #include <nvic.h>
 #include <spi.h>
-#include <stdio.h>
 #include <errno.h>
 #include "spi_driver.h"
 

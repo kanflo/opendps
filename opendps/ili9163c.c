@@ -27,7 +27,6 @@
 #include "ili9163c_settings.h"
 #include "ili9163c_registers.h"
 #include <limits.h>
-#include <stdio.h>
 #include <gpio.h>
 #include "tick.h"
 #include "spi_driver.h"
