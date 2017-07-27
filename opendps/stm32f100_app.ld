@@ -1,4 +1,4 @@
-/* Linker script for STM32F100x8, 64K flash, 8K RAM. */
+/* App linker script for STM32F100x8, 64K flash, 8K RAM. */
 
 flash_size = 64k;
 ram_size   = 8k;

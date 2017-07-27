@@ -12,7 +12,7 @@ app_size = flash_size - boot_size - past_size;
 MEMORY
 {
     rom           (rx) : ORIGIN = 0x08000000, LENGTH = boot_size
-	app           (rx) : ORIGIN = 0x08000000 + boot_size,  LENGTH = app_size
+    app           (rx) : ORIGIN = 0x08000000 + boot_size, LENGTH = app_size
     past           (r) : ORIGIN = 0x0800F800, LENGTH = past_size
     ram          (rwx) : ORIGIN = 0x20000000, LENGTH = ram_size - bootcom_size
     bootcom_ram  (rwx) : ORIGIN = 0x20001FF0, LENGTH = bootcom_size
@@ -20,7 +20,6 @@ MEMORY
 
 /* Include the common ld script. */
 INCLUDE libopencm3_stm32f1.ld
-
 
 SECTIONS {
     .app : {
