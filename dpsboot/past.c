@@ -24,10 +24,10 @@
 
 #include <stdint.h>
 #include <stdbool.h>
-#include <stdio.h>
 #include <string.h>
 #include <past.h>
 #include <flash.h>
+#include "flashlock.h"
 
 /*
  * Past - parameter storage
@@ -127,12 +127,8 @@ static bool past_erase_unit_at(uint32_t address);
 static bool past_garbage_collect(past_t *past);
 static inline bool flash_write32(uint32_t address, uint32_t data);
 static inline uint32_t flash_read32(uint32_t address); /** @todo Make a macro out of read32*/
-static inline void unlock_flash(void);
-static inline void lock_flash(void);
 static bool copy_parameters(past_t *past, uint32_t src_base, uint32_t dst_base);
 static uint32_t past_remaining_size(past_t *past);
-
-static uint32_t flash_unlock_count;
 
 /**
   * @brief Initialize the past, format or garbage collect if needed
@@ -196,7 +192,7 @@ bool past_init(past_t *past)
   */
 bool past_read_unit(past_t *past, past_id_t id, const void **data, uint32_t *length)
 {
-    if (!past || !data || !length) {
+    if (!past || !past->_valid || !data || !length) {
         return false;
     }
     uint32_t address = past_find_unit(past, id);
@@ -218,7 +214,7 @@ bool past_read_unit(past_t *past, past_id_t id, const void **data, uint32_t *len
   */
 bool past_write_unit(past_t *past, past_id_t id, void *data, uint32_t length)
 {
-    if (!past || !data || !length || id == PAST_UNIT_ID_INVALID || id == PAST_UNIT_ID_END) {
+    if (!past || !past->_valid || !data || !length || id == PAST_UNIT_ID_INVALID || id == PAST_UNIT_ID_END) {
         return false;
     }
     uint32_t end_address;
@@ -296,7 +292,7 @@ bool past_write_unit(past_t *past, past_id_t id, void *data, uint32_t length)
   */
 bool past_erase_unit(past_t *past, past_id_t id)
 {
-    if (!past || id == PAST_UNIT_ID_INVALID || id == PAST_UNIT_ID_END) {
+    if (!past || !past->_valid || id == PAST_UNIT_ID_INVALID || id == PAST_UNIT_ID_END) {
         return false;
     }
     bool success = false;
@@ -322,7 +318,7 @@ bool past_erase_unit(past_t *past, past_id_t id)
 bool past_format(past_t *past)
 {
     bool success = false;
-    if (!past) {
+    if (!past || !past->blocks[0] || !past->blocks[1]) {
         return success;
     }
     unlock_flash();
@@ -417,6 +413,11 @@ static uint32_t past_find_unit(past_t *past, past_id_t id)
             if (cur_size % 4 ) {
                 cur_size += 4 - (cur_size % 4); // Word align
             }
+            if (cur_size == 0) {
+                /** Make sure we do not get stuck */
+                cur_address = 0;
+                break;
+            }
             cur_address += UNIT_DATA_OFFSET + cur_size;
         }
 
@@ -493,30 +494,6 @@ static inline uint32_t flash_read32(uint32_t address)
 {
     uint32_t *p = (uint32_t*) address;
     return *p;
-}
-
-/**
-  * @brief Lock flash, keeping a lock counter
-  * @retval none
-  */
-static inline void unlock_flash(void)
-{
-    if (!flash_unlock_count) {
-        flash_unlock();
-    }
-    flash_unlock_count++;
-}
-
-/**
-  * @brief Unlock flash based on lock counter
-  * @retval none
-  */
-static inline void lock_flash(void)
-{
-    flash_unlock_count--;
-    if (!flash_unlock_count) {
-        flash_lock();
-    }
 }
 
 /**

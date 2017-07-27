@@ -3,6 +3,7 @@ BINARY = dpsboot
 CFLAGS = -I. 
 
 OBJS = \
+	flashlock.o \
 	hw.o \
 	past.o \
 	tick.o \

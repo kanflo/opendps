@@ -30,7 +30,7 @@
 
 typedef uint32_t past_id_t;
 
-/** A structure describing a past instance. The user is expected to fill out the
+/** A structure describing a past instace. The user is expected to fill out the
   * blocks array before calling past_init(...). The other fields must not be
   * touched.
   */

@@ -24,6 +24,7 @@ CFLAGS += -DCONFIG_DEFAULT_VOUT=5000 -DCONFIG_DEFAULT_ILIMIT=500
 LDSCRIPT = stm32f401_app.ld
 
 OBJS = \
+    flashlock.o \
     bootcom.o \
     crc16.o \
     ui.o \
