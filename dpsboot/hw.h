@@ -34,4 +34,10 @@
   */
 void hw_init(ringbuf_t *usart_rx_buf);
 
+/**
+  * @brief Check state of rotary press
+  * @retval true if rutary button is pressed
+  */
+bool hw_rotary_pressed(void);
+
 #endif // __HW_H__

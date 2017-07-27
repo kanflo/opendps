@@ -42,6 +42,7 @@
 #include "protocol.h"
 #include "bootcom.h"
 #include "crc16.h"
+#include "flashlock.h"
 
 #ifndef MIN
 #define MIN(x, y) ((x) < (y) ? (x) : (y))
@@ -75,7 +76,7 @@ static bool receiving_frame = false;
 
 /** For keeping track of flash writing */
 static uint16_t chunk_size;
-static uint32_t cur_flash_address =  (uint32_t) &_app_start;
+static uint32_t cur_flash_address;
 static uint16_t fw_crc16;
 
 static void handle_frame(uint8_t *frame, uint32_t length);
@@ -87,15 +88,16 @@ static void send_frame(uint8_t *frame, uint32_t length);
   */
 static void handle_upgrade(void)
 {
+    unlock_flash();
     if (fw_crc16) { /** dpsctl.py is expecting a response */
         DECLARE_FRAME(MAX_FRAME_LENGTH);
         PACK8(cmd_response | cmd_upgrade_start);
         PACK8(upgrade_continue);
         PACK16(chunk_size);
         FINISH_FRAME();
-        flash_unlock();
         uint32_t setting = 1;
         (void) past_write_unit(&past, PAST_UNIT_UPGRADE_STARTED, (void*) &setting, sizeof(setting));
+        cur_flash_address = (uint32_t) &_app_start;
         send_frame(_buffer, _length);
     }
 
@@ -181,7 +183,6 @@ static void handle_frame(uint8_t *frame, uint32_t length)
         switch(cmd) {
             case cmd_upgrade_start:
             {
-                cur_flash_address = (uint32_t) &_app_start;
                 {
                     DECLARE_UNPACK(payload, length);
                     UNPACK8(cmd);
@@ -195,20 +196,24 @@ static void handle_frame(uint8_t *frame, uint32_t length)
                     PACK8(upgrade_continue);
                     PACK16(chunk_size);
                     FINISH_FRAME();
-                    flash_unlock();
                     uint32_t setting = 1;
                     (void) past_write_unit(&past, PAST_UNIT_UPGRADE_STARTED, (void*) &setting, sizeof(setting));
+                    cur_flash_address = (uint32_t) &_app_start;
                     send_frame(_buffer, _length);
                 }
                 break;
             }
             case cmd_upgrade_data:
-                if (payload_len < 0) {
+                if (!cur_flash_address || !fw_crc16) {
+                    status = upgrade_protocol_error;
+                } else if (payload_len < 0) {
                     status = upgrade_crc_error;
                 } else if (cur_flash_address >= (uint32_t) &_app_end) {
                     status = upgrade_overflow_error;
                 } else {
-                    if (payload_len > 0) {
+                    status = upgrade_continue; /** think positive thoughts */
+                    uint32_t chunk_length = payload_len - 1; /** frame type of the payload occupies 1 byte, the rest is upgrade data */
+                    if (chunk_length > 0) {
                         flash_erase_page(cur_flash_address);
                         if (!(FLASH_SR_EOP & flash_get_status_flags())) {
                             status = upgrade_erase_error;
@@ -216,7 +221,7 @@ static void handle_frame(uint8_t *frame, uint32_t length)
                             uint32_t word;
                             status = upgrade_continue; // Think positive
                             /** Note, payload contains 1 frame type byte and N bytes data */
-                            for (uint32_t i = 0; i < (uint32_t) payload_len-1; i+=4) {
+                            for (uint32_t i = 0; i < (uint32_t) chunk_length; i+=4) {
                                 word = payload[i+4] << 24 | payload[i+3] << 16 | payload[i+2] << 8 | payload[i+1];
                                 /** @todo: Handle binaries not size aliged to 4 bytes */
                                 if (!flash_write32(cur_flash_address+i, word)) {
@@ -224,13 +229,12 @@ static void handle_frame(uint8_t *frame, uint32_t length)
                                     break;
                                 }
                             }
-                            cur_flash_address += payload_len-1; // -1 is the frame type of the payload
+                            cur_flash_address += chunk_length;
                         }
                     }
-                    if (payload_len < chunk_size) {
+                    if (chunk_length < chunk_size) { /** @todo verify code for even kb binaries */
                         uint16_t calc_crc = crc16((uint8_t*) &_app_start, cur_flash_address - (uint32_t) &_app_start);
                         status = fw_crc16 == calc_crc ? upgrade_success : upgrade_crc_error;
-                        flash_lock();
                     }
                 }
                 {
@@ -242,6 +246,8 @@ static void handle_frame(uint8_t *frame, uint32_t length)
                     if (status == upgrade_success) {
                         usart_wait_send_ready(USART1); /** make sure FIFO is empty */
                         (void) past_erase_unit(&past, PAST_UNIT_UPGRADE_STARTED);
+                        cur_flash_address = 0;
+                        lock_flash();
                         if (!start_app()) {
                             handle_upgrade(); /** Try again... */
                         }
@@ -262,33 +268,54 @@ int main(void)
 {
     uint32_t magic = 0, temp = 0;
     uint32_t past_start = (uint32_t) &_past_start;
+    bool enter_upgrade = false;
+    void *data;
+    uint32_t length;
 
     ringbuf_init(&rx_buf, (uint8_t*) buffer, sizeof(buffer));
     hw_init(&rx_buf);
 
-    past.blocks[0] = past_start;
-    past.blocks[1] = past_start + 1024;
-    if (!past_init(&past)) {
-        handle_upgrade(); /** Not much we can do */
-    }
+    do {
+        if (hw_rotary_pressed()) {
+            /** This gives us an opportunity to enter upgrade as early as
+              * possible in case we flashed something really really fishy. */
+            enter_upgrade = true;
+            break;
+        }
 
-    /** @todo implement host sync, enabling us to enter upgrade mode from cold/warm boot - arduino style */
+        past.blocks[0] = past_start;
+        past.blocks[1] = past_start + 1024;
+        if (!past_init(&past)) {
+            /** Not much we can do */
+            enter_upgrade = true;
+            break;
+        }
 
-    if (bootcom_get(&magic, &temp) && magic == 0xfedebeda) {
-        chunk_size = temp >> 16;
-        fw_crc16 = temp & 0xffff;
+        if (bootcom_get(&magic, &temp) && magic == 0xfedebeda) {
+            /** We got invoced by the app */
+            chunk_size = temp >> 16;
+            fw_crc16 = temp & 0xffff;
+            enter_upgrade = true;
+            break;
+        }
+
+        if (past_read_unit(&past, PAST_UNIT_UPGRADE_STARTED, (const void**) &data, &length)) {
+            /** We have a non finished upgrade */
+            enter_upgrade = true;
+            break;
+        }
+    } while(0);
+
+    if (enter_upgrade) {
         handle_upgrade();
+    } else {
+#if 0
+        handle_upgrade();
+#else
+        if (!start_app()) {
+            handle_upgrade(); /** In case we somehow returned from the app */
+        }
+#endif
     }
-
-    void *data;
-    uint32_t length;
-    if (past_read_unit(&past, PAST_UNIT_UPGRADE_STARTED, (const void**) &data, &length)) {
-        handle_upgrade(); /** We have a non finished upgrade */
-    }
-
-    if (!start_app()) {
-        handle_upgrade(); /** In case we somehow returned from the app */
-    }
-
     return 0;
 }

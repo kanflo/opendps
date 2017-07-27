@@ -54,6 +54,15 @@ void hw_init(ringbuf_t *usart_rx_buf)
     usart_init();
 }
 
+/**
+  * @brief Check state of rotary press
+  * @retval true if rutary button is pressed
+  */
+bool hw_rotary_pressed(void)
+{
+    return !gpio_get(GPIOB, GPIO5);
+}
+
 void usart1_isr(void)
 {
     if ((USART_CR1(USART1) & USART_CR1_RXNEIE) != 0 &&
@@ -78,11 +87,8 @@ void usart1_isr(void)
 static void clock_init(void)
 {
     rcc_clock_setup_in_hsi_out_48mhz();
-    rcc_periph_clock_enable(RCC_GPIOA);
-    rcc_periph_clock_enable(RCC_GPIOB);
-    rcc_periph_clock_enable(RCC_GPIOC);
-    rcc_periph_clock_enable(RCC_GPIOD);
-    rcc_periph_clock_enable(RCC_AFIO);
+    rcc_periph_clock_enable(RCC_GPIOA); /** UART1 */
+    rcc_periph_clock_enable(RCC_GPIOB); /** Rotary press */
 }
 
 /**
@@ -115,4 +121,7 @@ static void usart_init(void)
   */
 static void gpio_init(void)
 {
+    // PB5  I 1 PuPd                  Rotary press
+    gpio_set_mode(GPIOB, GPIO_MODE_INPUT, GPIO_CNF_INPUT_PULL_UPDOWN, GPIO5);
+    gpio_set(GPIOB, GPIO5);
 }
