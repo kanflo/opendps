@@ -59,13 +59,14 @@ typedef enum {
 } wifi_status_t;
 
 typedef enum {
-    upgrade_continue = 0,
-    upgrade_bootcom_error,
-    upgrade_crc_error,
-    upgrade_erase_error,
-    upgrade_flash_error,
-    upgrade_overflow_error,
-    upgrade_success = 16
+    upgrade_continue = 0, /** device sent go-ahead for continued upgrade */
+    upgrade_bootcom_error, /** device found errors in the bootcom data */
+    upgrade_crc_error, /** crc verification of downloaded upgrade failed */
+    upgrade_erase_error, /** device encountered error while erasing flash */
+    upgrade_flash_error, /** device encountered error while writing to flash */
+    upgrade_overflow_error, /** downloaded image would overflow flash */
+    upgrade_protocol_error, /** device received upgrade data but no upgrade start */
+    upgrade_success = 16 /** device received entire firmware and crc, branch verification was successful */
 } upgrade_status_t;
 
 #define MAX_FRAME_LENGTH (2*16) // Based on the cmd_status reponse frame (fully escaped)
