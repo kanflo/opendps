@@ -21,7 +21,7 @@ CFLAGS = -I. -DCONFIG_DPS_MAX_CURRENT=$(MAX_CURRENT)
 CFLAGS += -DCONFIG_DEFAULT_VOUT=5000 -DCONFIG_DEFAULT_ILIMIT=500
 
 # Application linker script
-LDSCRIPT = stm32f401_app.ld
+LDSCRIPT = stm32f100_app.ld
 
 OBJS = \
     flashlock.o \

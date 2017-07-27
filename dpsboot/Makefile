@@ -15,7 +15,7 @@ OBJS = \
 	crc16.o
 
 # Bootloader linker script
-LDSCRIPT = stm32f401_boot.ld
+LDSCRIPT = stm32f100_boot.ld
 
 #include ../stm32common/makefile.inc
 include ../libopencm3.target.mk
