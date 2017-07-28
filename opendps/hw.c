@@ -404,6 +404,7 @@ static void gpio_init(void)
 
     // PA8  O 0 PP     (50 Mhz)       TFT.7           (not used by TFT)
     gpio_set_mode(GPIOA, GPIO_MODE_OUTPUT_50_MHZ, GPIO_CNF_OUTPUT_PUSHPULL, GPIO8);
+//    gpio_clear(GPIOA, GPIO8); /** @todo DPS5005 comms version with fw 1.3 does this, check functions */
 
     // PA9  I 1 Flt
 //    gpio_set_mode(GPIOA, GPIO_MODE_INPUT, GPIO_CNF_INPUT_FLOAT, GPIO9);
