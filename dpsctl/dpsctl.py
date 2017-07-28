@@ -39,7 +39,12 @@ import argparse
 import sys
 import os
 import socket
-import serial
+try:
+    import serial
+except:
+    print("Missing dependency pyserial:")
+    print(" sudo pip install pyserial")
+    raise SystemExit()
 import threading
 import time
 import uhej
@@ -49,7 +54,7 @@ import binascii
 try:
     from PyCRC.CRCCCITT import CRCCCITT
 except:
-    print("Please install pycrc:")
+    print("Missing dependency pycrc:")
     print(" sudo pip install pycrc")
     raise SystemExit()
 

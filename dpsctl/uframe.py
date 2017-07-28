@@ -32,6 +32,15 @@ E_LEN = 1 # Received frame is too short to be a uframe
 E_FRM = 2 # Received data has no framing
 E_CRC = 3 # CRC mismatch
 
+# https://stackoverflow.com/a/30357446
+def crc16_ccitt(crc, data):
+    msb = crc >> 8
+    lsb = crc & 255
+    x = data ^ msb
+    x ^= (x >> 4)
+    msb = (lsb ^ (x >> 3) ^ (x << 4)) & 255
+    lsb = (x ^ (x << 5)) & 255
+    return (msb << 8) + lsb
 
 """
 Describes a class for simple serial protocols
@@ -53,7 +62,7 @@ class uFrame(object):
     def pack8(self, byte, update_crc = True):
         byte &= 0xff
         if update_crc:
-            self._crc += byte
+            self._crc = crc16_ccitt(self._crc, byte)
         if byte in [_SOF, _DLE, _EOF]:
             self._frame.append(_DLE)
             self._frame.append(byte ^ _XOR)
@@ -136,7 +145,7 @@ class uFrame(object):
     def _calc_crc(self):
         self._crc = 0
         for b in self._frame[:-2]:
-            self._crc += b
+            self._crc = crc16_ccitt(self._crc, b)
         self._crc &= 0xffff
         crc = (self._frame[-2] << 8) | self._frame[-1]
         self._valid = crc == self._crc

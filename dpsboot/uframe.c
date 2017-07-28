@@ -25,6 +25,7 @@
 #include <stdint.h>
 #include <stdbool.h>
 #include "uframe.h"
+#include "crc16.h"
 
 
 /**
@@ -66,10 +67,7 @@ int32_t uframe_extract_payload(uint8_t *frame, uint32_t length)
         }
 
         // Then calculate CRC
-        /** @todo: Replace this silly CRC calculation with Fletcher16 (https://en.wikipedia.org/wiki/Fletcher's_checksum) */
-        for (uint32_t r = 0; r < w-2; r++) {
-            calc_crc += frame[r];
-        }
+        calc_crc = crc16((uint8_t*) frame, w - 2);
 
         frame_crc = (uint16_t) ((frame[w-2] << 8) | frame[w-1]);
         if (calc_crc == frame_crc) {

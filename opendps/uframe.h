@@ -25,6 +25,8 @@
 #ifndef __UFRAME_H__
 #define __UFRAME_H__
 
+#include "crc16.h"
+
 #define _SOF 0x7e
 #define _DLE 0x7d
 #define _XOR 0x20
@@ -51,7 +53,7 @@
 /** Pack a byte with stuffing and crc updating */
 #define PACK8(b) \
     if (_length < sizeof(_buffer)) { \
-        _crc += (b); \
+        _crc = crc16_add(_crc, b); \
         uint8_t _byte = (b); \
         if (_byte == _SOF || _byte == _DLE || _byte == _EOF) { \
             _buffer[_length++] = _DLE; \
