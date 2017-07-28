@@ -1,6 +1,7 @@
 BINARY = dpsboot
 
-CFLAGS = -I. 
+GIT_VERSION := $(shell git describe --abbrev=4 --dirty --always --tags)
+CFLAGS = -I. -DGIT_VERSION=\"$(GIT_VERSION)\"
 
 OBJS = \
 	flashlock.o \

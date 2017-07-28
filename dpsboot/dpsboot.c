@@ -38,6 +38,7 @@
 #include "hw.h"
 #include "ringbuf.h"
 #include "past.h"
+#include "pastunits.h"
 #include "uframe.h"
 #include "protocol.h"
 #include "bootcom.h"
@@ -51,9 +52,6 @@
 #define RX_BUF_SIZE  (16)
 #define MAX_CHUNK_SIZE (2*1024)
 
-/** A past unit who's precense indicates we have a non finished upgrade and
-    must not boot */
-#define PAST_UNIT_UPGRADE_STARTED  (0xff)
 /** Our parameter storage */
 static past_t past;
 
@@ -97,7 +95,7 @@ static void send_start_response(void)
     PACK8(reason);
     FINISH_FRAME();
     uint32_t setting = 1;
-    (void) past_write_unit(&past, PAST_UNIT_UPGRADE_STARTED, (void*) &setting, sizeof(setting));
+    (void) past_write_unit(&past, past_upgrade_started, (void*) &setting, sizeof(setting));
     cur_flash_address = (uint32_t) &_app_start;
     send_frame(_buffer, _length);
 }
@@ -247,7 +245,7 @@ static void handle_frame(uint8_t *frame, uint32_t length)
                     send_frame(_buffer, _length);
                     if (status == upgrade_success) {
                         usart_wait_send_ready(USART1); /** make sure FIFO is empty */
-                        (void) past_erase_unit(&past, PAST_UNIT_UPGRADE_STARTED);
+                        (void) past_erase_unit(&past, past_upgrade_started);
                         cur_flash_address = 0;
                         lock_flash();
                         if (!start_app()) {
@@ -295,6 +293,19 @@ int main(void)
             break;
         }
 
+#ifdef GIT_VERSION
+        /** Update boot git hash in past if needed */
+        char *ver = 0;
+        uint32_t foo;
+        (void) past_read_unit(&past, past_boot_git_hash, (const void**) &ver, &foo);
+        if (!ver || strncmp((char*) ver, GIT_VERSION, strlen(GIT_VERSION)) != 0) {
+            if (!past_write_unit(&past, past_boot_git_hash, (void*) &GIT_VERSION, strlen(GIT_VERSION))) {
+                /** @todo Handle past write errors */
+            }
+        }
+#endif // GIT_VERSION
+
+
         if (bootcom_get(&magic, &temp) && magic == 0xfedebeda) {
             /** We got invoced by the app */
             chunk_size = temp >> 16;
@@ -304,7 +315,7 @@ int main(void)
             break;
         }
 
-        if (past_read_unit(&past, PAST_UNIT_UPGRADE_STARTED, (const void**) &data, &length)) {
+        if (past_read_unit(&past, past_upgrade_started, (const void**) &data, &length)) {
             /** We have a non finished upgrade */
             enter_upgrade = true;
             reason = reason_unfinished_upgrade;

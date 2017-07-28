@@ -37,7 +37,7 @@
 #include "font-1.h"
 #include "gpio.h"
 #include "past.h"
-
+#include "pastunits.h"
 
 /** How ofter we update the measurements in the UI (ms) */
 #define UI_UPDATE_INTERVAL_MS  (250)
@@ -137,15 +137,6 @@ typedef enum {
 static edit_mode_t edit_mode;
 static edit_mode_t last_edit_mode;
 static uint32_t edit_position;
-
-/** Parameters stored in flash */
-typedef enum {
-    /** stored as [I_limit:16] | [V_out:16] */
-    past_power = 1,
-    /** stored as 0 or 1 */
-    past_tft_inversion
-} parameter_id_t;
-
 
 /**
   * @brief Initialize the UI module
@@ -720,6 +711,18 @@ static void read_past_settings(void)
     last_vout_setting = v_setting;
     last_ilimit_setting = i_setting;
     last_tft_inv_setting = inverse_setting;
+
+#ifdef GIT_VERSION
+    /** Update app git hash in past if needed */
+    char *ver = 0;
+    (void) past_read_unit(&g_past, past_app_git_hash, (const void**) &ver, &length);
+    if (!ver || strncmp((char*) ver, GIT_VERSION, strlen(GIT_VERSION)) != 0) {
+        if (!past_write_unit(&g_past, past_app_git_hash, (void*) &GIT_VERSION, strlen(GIT_VERSION))) {
+            /** @todo Handle past write errors */
+            dbg_printf("Error: past write app git hash failed!\n");
+        }
+    }
+#endif // GIT_VERSION
 }
 
 /**
