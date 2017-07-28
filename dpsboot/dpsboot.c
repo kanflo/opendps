@@ -79,8 +79,28 @@ static uint16_t chunk_size;
 static uint32_t cur_flash_address;
 static uint16_t fw_crc16;
 
+static upgrade_reason_t reason = reason_unknown;
+
 static void handle_frame(uint8_t *frame, uint32_t length);
 static void send_frame(uint8_t *frame, uint32_t length);
+
+/**
+  * @brief Send ack to upgrade start and do some book keeping
+  * @retval none
+  */
+static void send_start_response(void)
+{
+    DECLARE_FRAME(MAX_FRAME_LENGTH);
+    PACK8(cmd_response | cmd_upgrade_start);
+    PACK8(upgrade_continue);
+    PACK16(chunk_size);
+    PACK8(reason);
+    FINISH_FRAME();
+    uint32_t setting = 1;
+    (void) past_write_unit(&past, PAST_UNIT_UPGRADE_STARTED, (void*) &setting, sizeof(setting));
+    cur_flash_address = (uint32_t) &_app_start;
+    send_frame(_buffer, _length);
+}
 
 /**
   * @brief Handle firmware upgrade
@@ -90,15 +110,7 @@ static void handle_upgrade(void)
 {
     unlock_flash();
     if (fw_crc16) { /** dpsctl.py is expecting a response */
-        DECLARE_FRAME(MAX_FRAME_LENGTH);
-        PACK8(cmd_response | cmd_upgrade_start);
-        PACK8(upgrade_continue);
-        PACK16(chunk_size);
-        FINISH_FRAME();
-        uint32_t setting = 1;
-        (void) past_write_unit(&past, PAST_UNIT_UPGRADE_STARTED, (void*) &setting, sizeof(setting));
-        cur_flash_address = (uint32_t) &_app_start;
-        send_frame(_buffer, _length);
+        send_start_response();
     }
 
     while(1) {
@@ -190,17 +202,7 @@ static void handle_frame(uint8_t *frame, uint32_t length)
                     chunk_size = MIN(MAX_CHUNK_SIZE, chunk_size);
                     UNPACK16(fw_crc16);
                 }
-                {
-                    DECLARE_FRAME(MAX_FRAME_LENGTH);
-                    PACK8(cmd_response | cmd_upgrade_start);
-                    PACK8(upgrade_continue);
-                    PACK16(chunk_size);
-                    FINISH_FRAME();
-                    uint32_t setting = 1;
-                    (void) past_write_unit(&past, PAST_UNIT_UPGRADE_STARTED, (void*) &setting, sizeof(setting));
-                    cur_flash_address = (uint32_t) &_app_start;
-                    send_frame(_buffer, _length);
-                }
+                send_start_response();
                 break;
             }
             case cmd_upgrade_data:
@@ -276,10 +278,11 @@ int main(void)
     hw_init(&rx_buf);
 
     do {
-        if (hw_rotary_pressed()) {
+        if (hw_check_forced_upgrade()) {
             /** This gives us an opportunity to enter upgrade as early as
               * possible in case we flashed something really really fishy. */
             enter_upgrade = true;
+            reason = reason_forced;
             break;
         }
 
@@ -288,6 +291,7 @@ int main(void)
         if (!past_init(&past)) {
             /** Not much we can do */
             enter_upgrade = true;
+            reason = reason_past_failure;
             break;
         }
 
@@ -296,12 +300,14 @@ int main(void)
             chunk_size = temp >> 16;
             fw_crc16 = temp & 0xffff;
             enter_upgrade = true;
+            reason = reason_bootcom;
             break;
         }
 
         if (past_read_unit(&past, PAST_UNIT_UPGRADE_STARTED, (const void**) &data, &length)) {
             /** We have a non finished upgrade */
             enter_upgrade = true;
+            reason = reason_unfinished_upgrade;
             break;
         }
     } while(0);
@@ -309,13 +315,10 @@ int main(void)
     if (enter_upgrade) {
         handle_upgrade();
     } else {
-#if 0
-        handle_upgrade();
-#else
         if (!start_app()) {
+            reason = reason_app_start_failed;
             handle_upgrade(); /** In case we somehow returned from the app */
         }
-#endif
     }
     return 0;
 }

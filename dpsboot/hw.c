@@ -55,12 +55,20 @@ void hw_init(ringbuf_t *usart_rx_buf)
 }
 
 /**
-  * @brief Check state of rotary press
-  * @retval true if rutary button is pressed
+  * @brief Check if we are to enter forced upgrade
+  * @retval true if so
   */
-bool hw_rotary_pressed(void)
+bool hw_check_forced_upgrade(void)
 {
-    return !gpio_get(GPIOB, GPIO5);
+    /** What the heck? Without this delay we will always read "button pressed"
+      * for the first milli seconds or so. Constantly printing GPIO_IDR(PORTA)
+      * reveals it changes after some time on cold boots. */
+    static bool first_call = false;
+    if (!first_call) {
+        delay_ms(100);
+        first_call = true;
+    }
+    return gpio_get(BUTTON_SEL_PORT, BUTTON_SEL_PIN) != BUTTON_SEL_PIN;
 }
 
 void usart1_isr(void)
@@ -87,8 +95,11 @@ void usart1_isr(void)
 static void clock_init(void)
 {
     rcc_clock_setup_in_hsi_out_48mhz();
-    rcc_periph_clock_enable(RCC_GPIOA); /** UART1 */
-    rcc_periph_clock_enable(RCC_GPIOB); /** Rotary press */
+    rcc_periph_clock_enable(RCC_GPIOA);
+    rcc_periph_clock_enable(RCC_GPIOB);
+    rcc_periph_clock_enable(RCC_GPIOC);
+    rcc_periph_clock_enable(RCC_GPIOD);
+    rcc_periph_clock_enable(RCC_AFIO);
 }
 
 /**
@@ -121,7 +132,6 @@ static void usart_init(void)
   */
 static void gpio_init(void)
 {
-    // PB5  I 1 PuPd                  Rotary press
-    gpio_set_mode(GPIOB, GPIO_MODE_INPUT, GPIO_CNF_INPUT_PULL_UPDOWN, GPIO5);
-    gpio_set(GPIOB, GPIO5);
+    gpio_set_mode(BUTTON_SEL_PORT, GPIO_MODE_INPUT, GPIO_CNF_INPUT_PULL_UPDOWN, BUTTON_SEL_PIN);
+    gpio_set(BUTTON_SEL_PORT, BUTTON_SEL_PIN);
 }

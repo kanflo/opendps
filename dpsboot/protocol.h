@@ -69,6 +69,16 @@ typedef enum {
     upgrade_success = 16 /** device received entire firmware and crc, branch verification was successful */
 } upgrade_status_t;
 
+/** The boot is will report why it entered upgrade mode */
+typedef enum {
+    reason_unknown = 0, /** No idea why I'm here */
+    reason_forced, /** User forced via rotary pressed */
+    reason_past_failure, /** Past init failed */
+    reason_bootcom, /** App told us via bootcom */
+    reason_unfinished_upgrade, /** A previous unfinished sympathy, eh upgrade */
+    reason_app_start_failed /** App returned */
+} upgrade_reason_t;
+
 #define MAX_FRAME_LENGTH (2*16) // Based on the cmd_status reponse frame (fully escaped)
 
 /*
@@ -191,7 +201,7 @@ bool protocol_unpack_ocp(uint8_t *payload, uint32_t length, uint16_t *i_cut);
  *  8. The host pings the app to check the new firmware started.
  *
  *  HOST:   [cmd_upgrade_start] [chunk_size:16] [crc:32]
- *  DPS BL: [cmd_response | cmd_upgrade_start] [<upgrade_status_t>] [<chunk_size:16>]
+ *  DPS BL: [cmd_response | cmd_upgrade_start] [<upgrade_status_t>] [<chunk_size:16>]  [<upgrade_reason_t:8>]
  *
  * The host will send packets of the agreed chunk size with the device 
  * acknowledging each packet once crc checked and written to flash. A packet

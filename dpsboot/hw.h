@@ -27,6 +27,10 @@
 
 #include "ringbuf.h"
 
+#define BUTTON_SEL_PORT GPIOA
+#define BUTTON_SEL_PIN  GPIO2
+
+
 /**
   * @brief Initialize the hardware
   * @param usart_rx_buf pointer to the USART RX ringbuffer
@@ -35,9 +39,9 @@
 void hw_init(ringbuf_t *usart_rx_buf);
 
 /**
-  * @brief Check state of rotary press
-  * @retval true if rutary button is pressed
+  * @brief Check if we are to enter forced upgrade
+  * @retval true if so
   */
-bool hw_rotary_pressed(void);
+bool hw_check_forced_upgrade(void);
 
 #endif // __HW_H__
