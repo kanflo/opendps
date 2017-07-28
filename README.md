@@ -26,6 +26,7 @@ git clone --recursive https://github.com/kanflo/opendps.git
 cd opendps
 make -C libopencm3
 make -C opendps
+make -C dpsboot
 ```
 
 Check [the blog](https://johan.kanflo.com/upgrading-your-dps5005/) for instructions on how to unlock and flash your DPS5005.
@@ -58,11 +59,33 @@ I_lim : 0.500 A
 I_out : 0.040 A
 ```
 
+### Upgrading
+
+As newer DPS:es have 1.5mm spaced JTAG pins and limited space for running the JTAG signals towards the back of the device, a permanent soldered JTAG is somewhat cumbersome. People not activly developing OpenDPS will not need JTAG anyway. To facilitate upgrade, OpenDPS comes with a bootloader enabling upgrade over UART:
+
+```
+% make -C opendps bin
+% dpsctl.py -d /dev/ttyUSB0 -U opendps/opendps.bin
+```
+
+If you accidentally upgrade to a really b0rken version, the bootloader can be forced to enter upgrade mode if you keep the SEL button pressed while enabling power.
+
+The display will be black during the entire upgrade operation. If it stays black, the bootloader might refuse or fail to start the OpenDPS application, or the application crashed. If you attempt the upgrade operation again, and upgrading begins, the bootloader is running but is refusing to boot your firmware. But why? Well, let's find out. If you append the ```-v``` option to ```dpsctl.py``` you will get a dump of the UART traffic.
+
+```
+Communicating with /dev/ttyUSB0
+TX  9 bytes 7e 09 04 00 27 86 0c b2 7f
+RX 9 bytes 7e 89 00 04 00 03 66 0f 7f
+```
+
+The fourth byte from the end in the received data (0x03 in this example) will tell us why the bootloader refused to boot the firmware. See [protocol.h](https://github.com/kanflo/opendps/blob/master/opendps/protocol.h#L72) for the different reasons.
+
 ### Source code organisaton
 
-The project consists of three parts:
+The project consists of four parts:
 
-* ```opendps/``` The DPS5005 firmware.
+* ```opendps/``` The OpenDPS firmware.
+* ```dpsboot/``` The OpenDPS bootloader.
 * ```esp8266-proxy/``` The ESP8266 firmware for wifi connected OpenDPS:es.
 * ```dpsctl/``` A pyton script for controlling your OpenDPS via wifi or a serial port.
 
