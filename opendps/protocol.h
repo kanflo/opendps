@@ -72,7 +72,7 @@ typedef enum {
 /** The boot will report why it entered upgrade mode */
 typedef enum {
     reason_unknown = 0, /** No idea why I'm here */
-    reason_forced, /** User forced via rotary pressed */
+    reason_forced, /** User forced via button */
     reason_past_failure, /** Past init failed */
     reason_bootcom, /** App told us via bootcom */
     reason_unfinished_upgrade, /** A previous unfinished sympathy, eh upgrade */
