@@ -137,8 +137,8 @@ static bool test_small_frame(char *test_name)
         }
         return false;
     }
-    EXTRACT_PAYLOAD()
-    DECLARE_UNPACK(frame, len);
+    EXTRACT_PAYLOAD();
+    DECLARE_UNPACK(frame, res);
     UNPACK8(out1);
     UNPACK8(out2);
     UNPACK8(out3);
@@ -158,7 +158,7 @@ static bool test_ping(char *test_name)
         }
         return false;
     }
-    EXTRACT_PAYLOAD()
+    EXTRACT_PAYLOAD();
     return true;
 }
 
@@ -174,7 +174,7 @@ static bool test_response(char *test_name)
         }
         return false;
     }
-    EXTRACT_PAYLOAD()
+    EXTRACT_PAYLOAD();
     len = protocol_unpack_response(f, res, &out1, &out2);
     if (len == 0) {
         printf("%s: unpack response failed with %d\n", test_name, res);
@@ -196,7 +196,7 @@ static bool test_vout(char *test_name)
         }
         return false;
     }
-    EXTRACT_PAYLOAD()
+    EXTRACT_PAYLOAD();
     if (!protocol_unpack_vout(f, res, &out)) {
         printf("%s: unpack response failed\n", test_name);
         return false;
@@ -216,7 +216,7 @@ static bool test_ilimit(char *test_name)
         }
         return false;
     }
-    EXTRACT_PAYLOAD()
+    EXTRACT_PAYLOAD();
     if (!protocol_unpack_ilimit(f, res, &out)) {
         printf("%s: unpack response failed\n", test_name);
         return false;
@@ -236,8 +236,8 @@ static bool test_status(char *test_name)
         }
         return false;
     }
-    EXTRACT_PAYLOAD()
-    DECLARE_UNPACK(frame, len);
+    EXTRACT_PAYLOAD();
+    DECLARE_UNPACK(frame, res);
     UNPACK8(out);
     COMPARE(1, cmd_status, out);
     return true;
@@ -260,7 +260,7 @@ static bool test_status_response(char *test_name)
         }
         return false;
     }
-    EXTRACT_PAYLOAD()
+    EXTRACT_PAYLOAD();
     if (!protocol_unpack_status_response(f, res, &out1, &out2, &out3, &out4, &out5, &out6)) {
         printf("%s: unpack response failed\n", test_name);
         return false;
@@ -285,7 +285,7 @@ static bool test_wifi(char *test_name)
         }
         return false;
     }
-    EXTRACT_PAYLOAD()
+    EXTRACT_PAYLOAD();
     if (!protocol_unpack_wifi_status(f, res, &out)) {
         printf("%s: unpack response failed\n", test_name);
         return false;
@@ -305,7 +305,7 @@ static bool test_lock(char *test_name)
         }
         return false;
     }
-    EXTRACT_PAYLOAD()
+    EXTRACT_PAYLOAD();
     if (!protocol_unpack_lock(f, res, &out)) {
         printf("%s: unpack response failed\n", test_name);
         return false;
@@ -325,7 +325,7 @@ static bool test_ocp(char *test_name)
         }
         return false;
     }
-    EXTRACT_PAYLOAD()
+    EXTRACT_PAYLOAD();
     if (!protocol_unpack_ocp(f, res, &out)) {
         printf("%s: unpack response failed\n", test_name);
         return false;
@@ -346,7 +346,7 @@ static bool test_power_enable(char *test_name)
         }
         return false;
     }
-    EXTRACT_PAYLOAD()
+    EXTRACT_PAYLOAD();
     if (!protocol_unpack_power_enable(f, res, &out)) {
         printf("%s: unpack response failed\n", test_name);
         return false;
