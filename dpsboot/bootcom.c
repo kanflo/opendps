@@ -22,7 +22,6 @@
  * THE SOFTWARE.
  */
 
-#include <stdio.h>
 #include "bootcom.h"
 #include "crc16.h"
 

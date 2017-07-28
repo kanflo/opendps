@@ -69,7 +69,7 @@ typedef enum {
     upgrade_success = 16 /** device received entire firmware and crc, branch verification was successful */
 } upgrade_status_t;
 
-/** The boot is will report why it entered upgrade mode */
+/** The boot will report why it entered upgrade mode */
 typedef enum {
     reason_unknown = 0, /** No idea why I'm here */
     reason_forced, /** User forced via rotary pressed */
@@ -115,6 +115,7 @@ bool protocol_unpack_status_response(uint8_t *payload, uint32_t length, uint16_t
 bool protocol_unpack_wifi_status(uint8_t *payload, uint32_t length, wifi_status_t *status);
 bool protocol_unpack_lock(uint8_t *payload, uint32_t length, uint8_t *locked);
 bool protocol_unpack_ocp(uint8_t *payload, uint32_t length, uint16_t *i_cut);
+bool protocol_unpack_upgrade_start(uint8_t *payload, uint32_t length, uint16_t *chunk_size, uint16_t *crc);
 
 
 /*
@@ -187,7 +188,7 @@ bool protocol_unpack_ocp(uint8_t *payload, uint32_t length, uint16_t *i_cut);
  * When the cmd_upgrade_start packet is received, the device prepares for
  * an upgrade session:
  *  1. The upgrade packet chunk size is determined based on the host's request
- *     and is written into the bootcom RAM in addition with the 32 bit crc of
+ *     and is written into the bootcom RAM in addition with the 16 bit crc of
  *     the new firmware. and the upgrade magick.
  *  2. The device restarts.
  *  3. The booloader detecs the upgrade magic in the bootcom RAM.
@@ -200,8 +201,8 @@ bool protocol_unpack_ocp(uint8_t *payload, uint32_t length, uint16_t *i_cut);
  *     flag in the PAST and boots the app.
  *  8. The host pings the app to check the new firmware started.
  *
- *  HOST:   [cmd_upgrade_start] [chunk_size:16] [crc:32]
- *  DPS BL: [cmd_response | cmd_upgrade_start] [<upgrade_status_t>] [<chunk_size:16>]  [<upgrade_reason_t:8>]
+ *  HOST:     [cmd_upgrade_start] [chunk_size:16] [crc:16]
+ *  DPS (BL): [cmd_response | cmd_upgrade_start] [<upgrade_status_t>] [<chunk_size:16>]  [<upgrade_reason_t:8>]
  *
  * The host will send packets of the agreed chunk size with the device 
  * acknowledging each packet once crc checked and written to flash. A packet

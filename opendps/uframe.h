@@ -43,7 +43,8 @@
 
 /** Declare a frame of length 'length' for dumping data into */
 #define DECLARE_FRAME(length) \
-    uint8_t _buffer[ FRAME_OVERHEAD(length) ] = { _SOF }; \
+    uint8_t _buffer[ FRAME_OVERHEAD(length) ]; \
+    _buffer[0] = _SOF; \
     uint32_t _length = 1; \
     uint16_t _crc = 0;
 
