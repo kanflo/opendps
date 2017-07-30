@@ -374,6 +374,10 @@ static bool past_erase_unit_at(uint32_t address)
     bool success = true;
     uint32_t length = flash_read32(address + UNIT_SIZE_OFFSET);
     unlock_flash();
+
+    if (length % 4) {
+        length = 4*(length/4) + 4;
+    }
     do {
         /** Wipe data, always an even multiple of 4 bytes */
         for (uint32_t i = 0; i < length/4 && success; i++) {
