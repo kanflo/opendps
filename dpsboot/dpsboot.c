@@ -298,13 +298,12 @@ int main(void)
         char *ver = 0;
         uint32_t foo;
         (void) past_read_unit(&past, past_boot_git_hash, (const void**) &ver, &foo);
-        if (!ver || strncmp((char*) ver, GIT_VERSION, strlen(GIT_VERSION)) != 0) {
+        if (!ver || strncmp((char*) ver, GIT_VERSION, 32 /* probably never longer than 32 bytes */) != 0) {
             if (!past_write_unit(&past, past_boot_git_hash, (void*) &GIT_VERSION, strlen(GIT_VERSION))) {
                 /** @todo Handle past write errors */
             }
         }
 #endif // GIT_VERSION
-
 
         if (bootcom_get(&magic, &temp) && magic == 0xfedebeda) {
             /** We got invoced by the app */
