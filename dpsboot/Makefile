@@ -1,19 +1,11 @@
 BINARY = dpsboot
 
 GIT_VERSION := $(shell git describe --abbrev=4 --dirty --always --tags)
-CFLAGS = -I. -DGIT_VERSION=\"$(GIT_VERSION)\"
+CFLAGS = -I. -I../opendps -DGIT_VERSION=\"$(GIT_VERSION)\"
 
 OBJS = \
-	flashlock.o \
-	hw.o \
-	past.o \
-	tick.o \
-	ringbuf.o \
-	uframe.o \
-	protocol.o \
-	stdio.o \
-	bootcom.o \
-	crc16.o
+	common.o \
+	hw.o
 
 # Bootloader linker script
 LDSCRIPT = stm32f100_boot.ld
