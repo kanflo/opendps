@@ -715,8 +715,8 @@ static void read_past_settings(void)
 #ifdef GIT_VERSION
     /** Update app git hash in past if needed */
     char *ver = 0;
-    (void) past_read_unit(&g_past, past_app_git_hash, (const void**) &ver, &length);
-    if (!ver || strncmp((char*) ver, GIT_VERSION, 32 /* probably never longer than 32 bytes */) != 0) {
+    bool exists = past_read_unit(&g_past, past_app_git_hash, (const void**) &ver, &length);
+    if (!exists || strncmp((char*) ver, GIT_VERSION, 32 /* probably never longer than 32 bytes */) != 0) {
         if (!past_write_unit(&g_past, past_app_git_hash, (void*) &GIT_VERSION, strlen(GIT_VERSION))) {
             /** @todo Handle past write errors */
             dbg_printf("Error: past write app git hash failed!\n");
