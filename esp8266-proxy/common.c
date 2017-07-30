@@ -2,3 +2,4 @@
 
 #include "../opendps/protocol.c"
 #include "../opendps/uframe.c"
+#include "../opendps/crc16.c"
