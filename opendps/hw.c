@@ -60,7 +60,17 @@ static volatile uint16_t i_out_adc;
 static volatile uint16_t i_out_trig_adc;
 static volatile uint16_t v_in_adc;
 static volatile uint16_t v_out_adc;
-uint8_t channels[3]; /** for injected sampling, 4 channels max, for regular, 16 max */
+
+typedef enum {
+    adc_cha_i_out = 0,
+    adc_cha_v_in,
+    adc_cha_v_out,
+    adc_cha_max,
+
+} adc_channel_t;
+_Static_assert (adc_cha_max <= 4, "Max 4 channels for injected sampling");
+
+const uint8_t channels[adc_cha_max] = { ADC_CHA_IOUT, ADC_CHA_VIN, ADC_CHA_VOUT }; /** Must have the same order as adc_channel_t */
 
 /** Used to handle long presses */
 #define LONGPRESS_TIME_MS (1000)
@@ -238,7 +248,8 @@ void adc1_2_isr(void)
     ADC_SR(ADC1) &= ~ADC_SR_JEOC;
     // If pwrctl_i_limit_raw == 0, the setting hasn't been read from past yet
     adc_counter++;
-    uint32_t i = adc_read_injected(ADC1, 1);
+    uint32_t i = adc_read_injected(ADC1, adc_cha_i_out + 1); // Yes, this is correct
+
     /** @todo Make sure power out is not enabled during this measurement */
     if (measure_i_out) {
         if (adc_counter < ADC_I_OFFSET_COUNT) {
@@ -257,8 +268,8 @@ void adc1_2_isr(void)
             i_out_adc = i;
         }
     }
-    v_in_adc  = adc_read_injected(ADC1, 2);
-    v_out_adc = adc_read_injected(ADC1, 3);
+    v_in_adc  = adc_read_injected(ADC1, adc_cha_v_in + 1); // Yes, this is correct
+    v_out_adc = adc_read_injected(ADC1, adc_cha_v_out + 1); // Yes, this is correct
 }
 
 /**
@@ -322,13 +333,7 @@ static void adc1_init(void)
     adc_set_right_aligned(ADC1);
     //adc_enable_temperature_sensor(); /** @todo Use internal temperature sensor for monitoring */
     adc_set_sample_time_on_all_channels(ADC1, ADC_SMPR_SMP_28DOT5CYC);
-
-    channels[0] = ADC_CHA_IOUT;
-    channels[1] = ADC_CHA_VIN;
-    channels[2] = ADC_CHA_VOUT;
-    // channels[3] = 16; // Temperature sensor
-    adc_set_injected_sequence(ADC1, 3, channels);
-
+    adc_set_injected_sequence(ADC1, adc_cha_max, (uint8_t*) channels);
     adc_power_on(ADC1);
 
     // Wait for ADC starting up.
