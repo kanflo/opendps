@@ -25,9 +25,11 @@ If you are eager to upgrade your DPS5005, you may skip directly to part three. O
 git clone --recursive https://github.com/kanflo/opendps.git
 cd opendps
 make -C libopencm3
-make -C opendps
-make -C dpsboot
+make -C opendps flash
+make -C dpsboot flash
 ```
+
+*Please note that you currently MUST flash the bootloader last.*
 
 Check [the blog](https://johan.kanflo.com/upgrading-your-dps5005/) for instructions on how to unlock and flash your DPS5005.
 
@@ -61,7 +63,7 @@ I_out : 0.040 A
 
 ### Upgrading
 
-As newer DPS:es have 1.5mm spaced JTAG pins and limited space for running the JTAG signals towards the back of the device, a permanent soldered JTAG is somewhat cumbersome. People not activly developing OpenDPS will not need JTAG anyway. To facilitate upgrade, OpenDPS comes with a bootloader enabling upgrade over UART:
+As newer DPS:es have 1.25mm spaced JTAG pins (JST-GH) and limited space for running the JTAG signals towards the back of the device, a permanent soldered JTAG is somewhat cumbersome. People not activly developing OpenDPS will not need JTAG anyway. To facilitate upgrade, OpenDPS comes with a bootloader enabling upgrade over UART:
 
 ```
 % make -C opendps bin
