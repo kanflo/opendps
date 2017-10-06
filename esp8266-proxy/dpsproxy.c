@@ -70,7 +70,7 @@ typedef struct {
     /** if client_port != 0, send the respnse frame to client_addr:client_port
         otherwise, deal with it locally */
     struct udp_pcb *upcb;
-    struct ip_addr client_addr;
+    ip_addr_t client_addr;
     uint16_t client_port;
     uint8_t frame[MAX_FRAME_LENGTH];
     uint32_t frame_length;
@@ -86,11 +86,12 @@ typedef struct {
   * @param port the remote port from which the packet was received
   * @retval None
   */
-static void udp_receive_callback(void *arg, struct udp_pcb *upcb, struct pbuf *p, struct ip_addr *addr, u16_t port)
+//static struct udp_pcb* mcast_join_group(char *group_ip, uint16_t group_port, void (* recv)(void *arg, struct udp_pcb *upcb, struct pbuf *p, const ip_addr_t *addr, u16_t port))
+static void udp_receive_callback(void *arg, struct udp_pcb *upcb, struct pbuf *p, const ip_addr_t *addr, u16_t port)
 {
     if (p) {
         tx_item_t item;
-        memcpy((void*) &item.client_addr, (void*) addr, sizeof(struct ip_addr));
+        memcpy((void*) &item.client_addr, (void*) addr, sizeof(ip_addr_t));
         item.upcb = upcb;
         item.client_port = port;
         memcpy((void*) item.frame, (void*) p->payload, p->len);
