@@ -28,4 +28,4 @@ The pinout is described in the silk and you should be able to make out which is 
 
 Soldering the right angle header on the suggested side helps you in pressing the adapter against the DPS with one hand only.
 
-SWD *Bottle*? Well it looks like on, doesn't it?
+SWD *Bottle*? Well it looks like one, doesn't it?
