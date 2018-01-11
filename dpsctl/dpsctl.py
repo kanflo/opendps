@@ -47,7 +47,7 @@ except:
     raise SystemExit()
 import threading
 import time
-import uhej
+from uhej import uhej
 from protocol import *
 import uframe
 import binascii
@@ -57,6 +57,7 @@ except:
     print("Missing dependency pycrc:")
     print(" sudo pip install pycrc")
     raise SystemExit()
+import json
 
 """
 A abstract class that describes a comminucation interface
@@ -191,9 +192,9 @@ def handle_response(command, frame, args):
             fail("command failed according to device")
 
     if args.json:
-        json = {}
-        json["cmd"] = resp_command;
-        json["status"] = 1; # we're here aren't we?
+        _json = {}
+        _json["cmd"] = resp_command;
+        _json["status"] = 1; # we're here aren't we?
 
     if resp_command == cmd_status:
         v_in, v_out_setting, v_out, i_out, i_limit, power_enabled = unpack_status_response(frame)
@@ -207,12 +208,12 @@ def handle_response(command, frame, args):
         i_lim_str = "%d.%03d" % (i_limit/1000, i_limit%1000)
         i_out_str = "%d.%03d" % (i_out/1000, i_out%1000)
         if args.json:
-            json["V_in"] = v_in_str;
-            json["V_out"] = v_out_str;
-            json["V_set"] = v_set_str;
-            json["I_lim"] = i_lim_str;
-            json["I_out"] = i_out_str;
-            json["enable"] = power_enabled;
+            _json["V_in"] = v_in_str;
+            _json["V_out"] = v_out_str;
+            _json["V_set"] = v_set_str;
+            _json["I_lim"] = i_lim_str;
+            _json["I_out"] = i_out_str;
+            _json["enable"] = power_enabled;
         else:
             print("V_in  : %s V" % (v_in_str))
             print("V_set : %s V" % (v_set_str))
@@ -232,16 +233,8 @@ def handle_response(command, frame, args):
         ret_dict["status"] = status
 
     if args.json:
-        count = 0
-        print "{",
-        for k in json:
-            count += 1
-            if count == len(json):
-                print"\"%s\":\"%s\"" % (k, json[k]),
-            else:
-                print"\"%s\":\"%s\"," % (k, json[k]),
-        print "}"
-
+        print(json.dumps(_json, indent=4, sort_keys=True))
+ 
     return ret_dict
 
 """
@@ -441,7 +434,7 @@ def uhej_worker_thread():
             except uhej.IllegalFrameException as e:
                 pass
         except socket.error as e:
-            print 'Expection', e
+            print('Exception'), e
 
 """
 Scan for OpenDPS devices on the local network

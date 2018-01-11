@@ -20,25 +20,25 @@ def ocd_exchange(str = ""):
     line = ""
     got_prompt = False
     if len(str) > 0:
-        ocd_sock.send(str)
+        ocd_sock.send(bytearray(str, "ascii"))
     while 1:
         try:
             ch = ocd_sock.recv(1)
             if len(ch) > 0:
-                if ch == '\d':
+                if ch == b'\d':
                     pass
-                elif ch == '\n':
+                if ch == b'\n':
                     if "%s\n" % line != str:
                         output += "%s\n" % line
                     line = ""
                 elif ord(ch) >= 32 and ord(ch) <= 126:
-                    line += ch
-                if line == prompt:
+                    line += ch.decode("ascii")
+                if line.endswith(prompt):
                     got_prompt = True
                     break
             else:
                 break
-        except socket.timeout, e:
+        except socket.timeout as e:
             break
     return output.strip()
 
@@ -770,9 +770,9 @@ def dump_all():
     blocklist = ["reg", "all", "r", "w", "help"]
     for cmd in commands:
         if cmd not in blocklist:
-            print ">>>> %s" % cmd
+            print(">>>> %s" % cmd)
             commands[cmd]()
-            print
+            print("")
 
 def parse_mem_dump(data):
     lines = data.split('\n')
