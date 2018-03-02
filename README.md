@@ -21,6 +21,8 @@ If you are eager to upgrade your DPS5005, you may skip directly to part three. O
 
 ### Cloning & building
 
+First build the OpenDPS firmware:
+
 ```
 git clone --recursive https://github.com/kanflo/opendps.git
 cd opendps
@@ -29,9 +31,22 @@ make -C opendps flash
 make -C dpsboot flash
 ```
 
-*Please note that you currently MUST flash the bootloader last.*
+*Please note that you currently MUST flash the bootloader last as OpenOCD overwrites the bootloader when flashing the firmware. No idea why :-/ *
 
 Check [the blog](https://johan.kanflo.com/upgrading-your-dps5005/) for instructions on how to unlock and flash your DPS5005.
+
+Second, build and flash the ESP8266 firmware. First you need to create the file ```esp8266-proxy/esp-open-rtos/include/private_ssid_config.h``` with the following content:
+
+```
+#define WIFI_SSID "My SSID"
+#define WIFI_PASS "Secret password"
+```
+
+Next:
+
+```
+make -C esp8266-proxy flash
+```
 
 ### Usage
 
@@ -50,6 +65,7 @@ Enable 3.3V limited to 500mA:
 % dpsctl -d 172.16.3.203 --current 500
 % dpsctl -d 172.16.3.203 --power on
 ```
+
 Query the status of the device:
 
 ```
@@ -82,7 +98,7 @@ RX 9 bytes 7e 89 00 04 00 03 66 0f 7f
 
 The fourth byte from the end in the received data (0x03 in this example) will tell us why the bootloader refused to boot the firmware. See [protocol.h](https://github.com/kanflo/opendps/blob/master/opendps/protocol.h#L72) for the different reasons.
 
-### Source code organisaton
+### Source code organisation
 
 The project consists of four parts:
 

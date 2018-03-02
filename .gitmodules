@@ -7,3 +7,6 @@
 [submodule "esp8266-proxy/uhej"]
 	path = esp8266-proxy/uhej
 	url = https://github.com/kanflo/uhej
+[submodule "esp8266-proxy/esp-open-rtos"]
+	path = esp8266-proxy/esp-open-rtos
+	url = git@github.com:SuperHouse/esp-open-rtos.git
