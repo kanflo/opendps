@@ -48,6 +48,7 @@
 #include <lwip/igmp.h>
 #include <ssid_config.h>
 #include <espressif/esp_wifi.h>
+#include <stdin_uart_interrupt.h>
 #include "lwipopts.h"
 #include "uhej.h"
 #include "protocol.h"
@@ -56,6 +57,7 @@
 
 /** User friendly FreeRTOS delay macro */
 #define delay_ms(ms) vTaskDelay(ms / portTICK_PERIOD_MS)
+#define systime_ms() (xTaskGetTickCount() * portTICK_PERIOD_MS)
 
 /** Semaphore to signal wifi availability */
 static SemaphoreHandle_t wifi_alive_sem;
@@ -64,6 +66,8 @@ static SemaphoreHandle_t wifi_alive_sem;
 static QueueHandle_t tx_queue;
 
 #define TX_QUEUE_DEPTH  (5)
+
+#define UART_RX_TIMEOUT_MS  (250)
 
 /** A structure used in the tx_queue */
 typedef struct {
@@ -129,21 +133,30 @@ static uint32_t uart_rx_frame(uint8_t *buffer, uint32_t buffer_size)
     uint32_t size = 0;
     uint8_t ch;
     bool sof = false;
-    while(size < buffer_size) {
-        /** @todo Use timeout when reading from the UART */
-        if (read(0, (void*) &ch, 1)) { // 0 is stdin
-            if (ch == _SOF) {
-                size = 0;
-                sof = true;
+    bool timeout = false;
+    uint32_t start_time = systime_ms();
+    while(size < buffer_size && !timeout) {
+        if (uart0_num_char() > 0) {
+            if (read(0, (void*) &ch, 1)) { // 0 is stdin
+                if (ch == _SOF) {
+                    size = 0;
+                    sof = true;
+                }
+                if (sof) {
+                    buffer[size++] = ch;
+                }
+                if (ch == _EOF) {
+                    sof = false;
+                    break;
+                }
             }
-            if (sof) {
-                buffer[size++] = ch;
-            }
-            if (ch == _EOF) {
-                sof = false;
-                break;
-            }
+        } else {
+            delay_ms(5);
         }
+        timeout = systime_ms() - start_time >= UART_RX_TIMEOUT_MS;
+    }
+    if (timeout) {
+        size = 0;
     }
     return size;
 }
@@ -237,6 +250,9 @@ static void uart_comm_task(void *arg)
                         pbuf_free(p);
                     }
                 }
+            } else {
+                printf("Timeout from DPS\n");
+                /** @todo: handle timeout */
             }
         }
     }
