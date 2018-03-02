@@ -195,6 +195,7 @@ static void uhej_task(void *arg)
     (void) uhej_announce_udp("tftp", 69);
     (void) uhej_announce_udp("opendps", 5005);
 
+    sys_lock_tcpip_core();
     do {
         upcb = udp_new();
         if (!upcb) {
@@ -209,8 +210,10 @@ static void uhej_task(void *arg)
         udp_recv(upcb, udp_receive_callback, upcb);
         success = true;
     } while(0);
+    sys_unlock_tcpip_core();
 
     if (!success) {
+        /** @todo: handle failure */
     }
 
     while(1) {
