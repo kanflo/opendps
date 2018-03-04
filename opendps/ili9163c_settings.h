@@ -26,7 +26,7 @@ you can copy those parameters and create setup for different displays.
 	#define _GRAMWIDTH      128
 	#define _GRAMHEIGH      160//160
 	#define _GRAMSIZE		_GRAMWIDTH * _GRAMHEIGH//*see note 1
-	#define __COLORSPC		1// 1:GBR - 0:RGB
+	#define __COLORSPC		COLORSPACE// 1:GBR - 0:RGB
 	#define __GAMMASET3		//uncomment for another gamma
 	#define __OFFSET		32//*see note 2
 	//Tested!

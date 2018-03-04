@@ -14,12 +14,15 @@ WIFI := 1
 MAX_CURRENT := 5000
 # Please note that the UI currently does not handle settings larger that 9.99A
 
+# Color space for the DPS display. Most units use GBR but RGB has been spotted in the wild
+COLORSPACE ?= 0
+
 GIT_VERSION := $(shell git describe --abbrev=4 --dirty --always --tags)
 CFLAGS = -I. -DCONFIG_DPS_MAX_CURRENT=$(MAX_CURRENT) -DGIT_VERSION=\"$(GIT_VERSION)\"
 
 # Output voltage and curren limit are persisted in flash,
 # this is the default setting
-CFLAGS += -DCONFIG_DEFAULT_VOUT=5000 -DCONFIG_DEFAULT_ILIMIT=500
+CFLAGS += -DCONFIG_DEFAULT_VOUT=5000 -DCONFIG_DEFAULT_ILIMIT=500 -DCOLORSPACE=$(COLORSPACE)
 
 # Application linker script
 LDSCRIPT = stm32f100_app.ld
