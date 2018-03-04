@@ -12,3 +12,4 @@ protocol_test
 build/
 firmware/
 html/
+.gdb_history
