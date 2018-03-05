@@ -504,7 +504,10 @@ def main():
 
     args, unknown = parser.parse_known_args()
 
-    handle_commands(args)
+    try:
+        handle_commands(args)
+    except KeyboardInterrupt:
+        print("")
 
 if __name__ == "__main__":
     main()
