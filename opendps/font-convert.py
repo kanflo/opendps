@@ -5,12 +5,6 @@ from subprocess import call
 import sys
 
 
-# file rusk.png
-# rusk.png: PNG image data, 209 x 35, 8-bit/color RGB, non-interlaced
-# convert -size 209x35 xc:#0f0 colormask.png
-# composite rusk.png -compose Multiply colormask.png prick.png
-
-
 # Execute cmd in a shell returning stdout
 def shell(cmd):
 	return subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE).stdout.read()
@@ -18,24 +12,22 @@ def shell(cmd):
 # Return size of named image as the tuple (width, height)
 def image_size(fname):
 	cmd = "file %s" % (fname)
-#	info = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE).stdout.read().replace(" ", "")
 	info = shell(cmd).replace(" ", "")
 	(width, height) = info.split(",")[1].split("x")
 	return (int(width), int(height))
 
-def convert_font(font_fname, font_width_fname, characters, font_size):
+def convert_font(font_fname, font_width_fname, characters, font_size, tint):
 	print "Converting %s to font-%d.c" % (font_fname, font_size)
 	glyph_widths = []
 	glyph_sizes = []
 	(width, height) = image_size(font_width_fname)
 	(fwidth, fheight) = image_size(font_fname)
 	if fwidth != width or fheight != height:
-		print("Something is fishy with your font.")
+		print("Something is fishy with your font, widths of font and 'font width image' differ.")
 		sys.exit(1)
 
 	cmd = "magick %s -depth 8 rgb:-" % (font_width_fname)
 	rgb = shell(cmd)
-#	rgb = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE).stdout.read()
 	i = 0
 	ch_width = 0
 	total_width = 0;
@@ -63,10 +55,9 @@ def convert_font(font_fname, font_width_fname, characters, font_size):
 	shell("echo \"const uint32_t font_%d_num_glyphs = %d;\" >> font-%d.c" % (font_size, len(characters), font_size))
 	shell("echo >> font-%d.c" % (font_size))
 
-
 	for i in range(0, len(characters)):
 		# Crop, convert to rgb888 and then to bgr565
-		cmd = "convert -crop %dx%d+%d+0 %s - | magick - -depth 8 rgb:- | ./rgbtobgr565 > temp.565" % (glyph_widths[i], height, x_position, font_fname)
+		cmd = "convert -crop %dx%d+%d+0 %s - | magick - -colorspace gray +level-colors ,#%s  -depth 8 rgb:- | ./rgbtobgr565 > temp.565" % (glyph_widths[i], height, x_position, font_fname, tint)
 		shell(cmd)
 		cmd = "xxd -c 16 -i temp.565 | sed 's/unsigned char/const uint8_t/g' | sed 's/unsigned int/const uint32_t/g' | sed 's/temp_565/font_%d_%s/' >> font-%d.c" % (font_size, characters[i], font_size)
 		shell(cmd)
@@ -99,6 +90,15 @@ def convert_font(font_fname, font_width_fname, characters, font_size):
 	shell("rm temp.565")
 
 
-characters = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'dot', 'v', 'a']
-convert_font("gfx/fonts/ubuntu_condensed_18.png", "gfx/fonts/ubuntu_condensed_18_width.png", characters, 0)
-convert_font("gfx/fonts/ubuntu_condensed_48.png", "gfx/fonts/ubuntu_condensed_48_width.png", characters, 1)
+def main():
+	if len(sys.argv) == 2:
+		tint = sys.argv[1]
+	else:
+		tint = "ffffff"
+	characters = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'dot', 'v', 'a']
+	convert_font("gfx/fonts/ubuntu_condensed_18.png", "gfx/fonts/ubuntu_condensed_18_width.png", characters, 0, tint)
+	convert_font("gfx/fonts/ubuntu_condensed_48.png", "gfx/fonts/ubuntu_condensed_48_width.png", characters, 1, tint)
+
+
+if __name__ == "__main__":
+    main()

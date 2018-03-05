@@ -17,6 +17,9 @@ MAX_CURRENT := 5000
 # Color space for the DPS display. Most units use GBR but RGB has been spotted in the wild
 COLORSPACE ?= 0
 
+# Optional tinting for UI elements
+TINT ?= ffffff
+
 GIT_VERSION := $(shell git describe --abbrev=4 --dirty --always --tags)
 CFLAGS = -I. -DCONFIG_DPS_MAX_CURRENT=$(MAX_CURRENT) -DGIT_VERSION=\"$(GIT_VERSION)\"
 
@@ -66,10 +69,10 @@ endif
 include ../libopencm3.target.mk
 
 fonts:
-	@./font-convert.py
+	@./font-convert.py $(TINT)
 
 graphics:
-	@./gfx-convert.sh
+	@./gfx-convert.sh $(TINT)
 
 test:
 	@make -C tests

@@ -3,6 +3,13 @@
 # Convert gfx/png/*.png to bgr565 formatted header files
 #
 
+
+if [ "$#" -ne 1 ]; then
+    TINT=ffffff
+else
+	TINT=$1
+fi
+
 if which magick >/dev/null; then
 	gcc -o rgbtobgr565 rgbtobgr565.c
 
@@ -16,7 +23,7 @@ if which magick >/dev/null; then
 
 	    dst=../../$base.h
 	    echo Converting $src to $dst
-		magick $src -depth 8 rgb:- | ../../rgbtobgr565 > $base
+		magick $src -colorspace gray +level-colors ,#$TINT -depth 8 rgb:- | ../../rgbtobgr565 > $base
 		width="_width = "`file $src | sed 's/\ //g' | cut -d, -f 2 | cut -dx -f1`
 		height="_height = "`file $src | sed 's/\ //g' | cut -d, -f 2 | cut -dx -f2`
 
