@@ -111,18 +111,6 @@ static void cv_enable(bool enabled)
     }
 }
 
-      //      {
-                
-    //            bool new_state = !pwrctl_vout_enabled();
-//                if (new_state) {
-//                    write_past_settings();
-//                    pwr_start = get_ticks();
-      //          }
-//                uui_handle_screen_event(&func_ui, event);
-  //          }
-    //        break;
-
-
 /**
  * @brief      Callback for when value of the voltage item is changed
  *

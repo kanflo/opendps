@@ -22,7 +22,6 @@
  * THE SOFTWARE.
  */
 
-#include "dbg_printf.h"
 #include <stdint.h>
 #include <stdbool.h>
 #include "my_assert.h"
@@ -215,7 +214,6 @@ static void switch_screen(uui_t *ui, bool forward)
         if (item->has_focus) {
             MCALL(item, lost_focus);
         }
-        dbg_printf("Switching from screen '%s' to '%s'\n", cur_screen->name, new_screen->name);
         uui_activate(ui);
     }
 }
