@@ -23,7 +23,7 @@ TINT ?= ffffff
 GIT_VERSION := $(shell git describe --abbrev=4 --dirty --always --tags)
 CFLAGS = -I. -DCONFIG_DPS_MAX_CURRENT=$(MAX_CURRENT) -DGIT_VERSION=\"$(GIT_VERSION)\"
 
-# Output voltage and curren limit are persisted in flash,
+# Output voltage and current limit are persisted in flash,
 # this is the default setting
 CFLAGS += -DCONFIG_DEFAULT_VOUT=5000 -DCONFIG_DEFAULT_ILIMIT=500 -DCOLORSPACE=$(COLORSPACE)
 
@@ -34,7 +34,9 @@ OBJS = \
     flashlock.o \
     bootcom.o \
     crc16.o \
-    ui.o \
+	uui.o \
+	uui_number.o \
+	func_cv.o \
     hw.o \
     pwrctl.o \
     event.o \

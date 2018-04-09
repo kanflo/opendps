@@ -77,6 +77,9 @@ const uint8_t channels[adc_cha_max] = { ADC_CHA_IOUT, ADC_CHA_VIN, ADC_CHA_VOUT 
 static event_t longpress_event;
 static uint64_t longpress_start;
 static bool longpress_detected;
+/** Used to filter SET press from SET + ROT */
+static bool set_pressed = false;
+static bool set_skip = false;
 
 /** We skip the first 40 samples. For a connected ESP8266 the first sample
   * will read a current draw of ~3A which will trigger the OCP.
@@ -196,7 +199,7 @@ void hw_longpress_check(void)
 void hw_print_ticks(void)
 {
     uint32_t temp = (uint32_t) get_ticks() - adc_tick_start;
-    printf("%u ADC ticks in %u ms (%u Hz)\n", adc_counter, temp, adc_counter/(temp/1000));
+    dbg_printf("%u ADC ticks in %u ms (%u Hz)\n", adc_counter, temp, adc_counter/(temp/1000));
 }
 #endif // CONFIG_ADC_BENCHMARK
 
@@ -377,6 +380,7 @@ static void usart_init(void)
   */
 static void gpio_init(void)
 {
+    /** @todo: replace all gpio_set_mode with a struct (uint32_t gpioport, uint8_t mode, uint8_t cnf, uint16_t gpios)*/
     // PA0  O 1 OD     (50 Mhz)                       U7
     gpio_set_mode(GPIOA, GPIO_MODE_OUTPUT_50_MHZ, GPIO_CNF_OUTPUT_OPENDRAIN, GPIO0);
 
@@ -664,12 +668,17 @@ void BUTTON_SEL_isr(void)
     static bool falling = true;
     exti_reset_request(BUTTON_SEL_EXTI);
     if (falling) {
+        set_pressed = true;
+        set_skip = false;
         longpress_begin(event_button_sel);
         exti_set_trigger(BUTTON_SEL_EXTI, EXTI_TRIGGER_RISING);
     } else {
-        if (!longpress_end()) {
-            // Not a long press, send short press
-            event_put(event_button_sel, press_short);
+        set_pressed = false;
+        if (!set_skip) {
+            if (!longpress_end()) {
+                // Not a long press, send short press
+                event_put(event_button_sel, press_short);
+            }
         }
         exti_set_trigger(BUTTON_SEL_EXTI, EXTI_TRIGGER_FALLING);
     }
@@ -754,9 +763,21 @@ void BUTTON_ROTARY_isr(void)
         bool a = (((uint16_t) GPIO_IDR(BUTTON_ROT_A_PORT)) & BUTTON_ROT_A_PIN) ? 1 : 0; // Slightly faster than gpio_get(...)
         bool b = (((uint16_t) GPIO_IDR(BUTTON_ROT_B_PORT)) & BUTTON_ROT_B_PIN) ? 1 : 0;
         if (a == b) {
-            event_put(event_rot_left, press_short);
+            if (set_pressed) {
+                set_skip = true;
+                (void) longpress_end();
+                event_put(event_rot_left_set, press_short);
+            } else {
+                event_put(event_rot_left, press_short);
+            }
         } else {
-            event_put(event_rot_right, press_short);
+            if (set_pressed) {
+                set_skip = true;
+                (void) longpress_end();
+                event_put(event_rot_right_set, press_short);
+            } else {
+                event_put(event_rot_right, press_short);
+            }
         }
     }
 

@@ -29,13 +29,18 @@
 #include <stdlib.h>
 #include <scb.h>
 #include "dbg_printf.h"
-#include "ui.h"
 #include "hw.h"
 #include "pwrctl.h"
 #include "uframe.h"
 #include "protocol.h"
 #include "serialhandler.h"
 #include "bootcom.h"
+
+// From opendps.c
+void ui_update_power_status(bool enabled);
+void ui_update_wifi_status(wifi_status_t status);
+void ui_handle_ping(void);
+void ui_lock(bool lock);
 
 static uint8_t frame_buffer[FRAME_OVERHEAD(MAX_FRAME_LENGTH)];
 static uint32_t rx_idx = 0;

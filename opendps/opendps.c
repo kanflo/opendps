@@ -35,23 +35,266 @@
 #include "tick.h"
 #include "tft.h"
 #include "event.h"
-#include "ui.h"
 #include "hw.h"
 #include "pwrctl.h"
+#include "protocol.h"
 #include "serialhandler.h"
+#include "ili9163c.h"
+#include "graphics.h"
+#include "font-0.h"
+#include "font-1.h"
+#include "gpio.h"
+#include "past.h"
+#include "pastunits.h"
+#include "uui.h"
+#include "uui_number.h"
+#include "func_cv.h"
 
 #define TFT_HEIGHT  (128)
 #define TFT_WIDTH   (128)
 
+/** How ofter we update the measurements in the UI (ms) */
+#define UI_UPDATE_INTERVAL_MS  (250)
 
-static void update_measurements(void)
+/** Timeout for waiting for wifi connction (ms) */
+#define WIFI_CONNECT_TIMEOUT  (10000)
+
+/** Blit positions */
+#define XPOS_WIFI     (4)
+#define XPOS_LOCK    (34)
+
+/** Constants describing how certain things on the screen flash when needed */
+#define WIFI_CONNECTING_FLASHING_PERIOD  (1000)
+#define WIFI_ERROR_FLASHING_PERIOD        (500)
+#define WIFI_UPGRADING_FLASHING_PERIOD    (250)
+#define LOCK_FLASHING_PERIOD              (250)
+#define LOCK_FLASHING_COUNTER               (4)
+#define TFT_FLASHING_PERIOD               (100)
+#define TFT_FLASHING_COUNTER                (2)
+
+static void ui_flash(void);
+static void read_past_settings(void);
+static void write_past_settings(void);
+static void check_master_reset(void);
+
+/** UI settings */
+static uint16_t bg_color;
+static uint32_t ui_width;
+static uint32_t ui_height;
+
+/** Maximum i_limit setting is depends on your DPS model, eg 5A for the DPS5005 */
+static uint32_t max_i_limit;
+
+/** Used to make the screen flash */
+static uint32_t tft_flashing_period;
+static uint32_t tft_flash_counter;
+
+/** Used for flashing the wifi icon */
+static uint32_t wifi_status_flashing_period;
+static bool wifi_status_visible;
+
+/** Used for flashing the lock icon */
+static uint32_t lock_flashing_period;
+static bool lock_visible;
+static uint32_t lock_flash_counter;
+
+/** Current icon settings */
+static wifi_status_t wifi_status;
+static bool is_locked;
+static bool is_enabled;
+
+/** Last settings written to past */
+static uint32_t last_vout_setting;
+static uint32_t last_ilimit_setting;
+static bool     last_tft_inv_setting;
+
+/** Our parameter storage */
+static past_t g_past = {
+    .blocks = {0x0800f800, 0x0800fc00}
+};
+
+/** The UI */
+static uui_t func_ui;
+static uui_t main_ui;
+
+
+static void main_ui_tick(void);
+void ui_update_power_status(bool enabled);
+void ui_update_wifi_status(wifi_status_t status);
+void ui_handle_ping(void);
+void ui_lock(bool lock);
+
+/* This is the definition of the voltage item in the UI */
+ui_number_t input_voltage = {
+    {
+        .type = ui_item_number,
+        .id = 10,
+        .x = 0,
+        .y = 0,
+        .can_focus = false,
+    },
+    .font_size = 0,
+    .value = 0,
+    .min = 0,
+    .max = 0,
+    .num_digits = 2,
+    .num_decimals = 1, /** 2 decimals => value is in decivolts */
+    .unit = unit_volt,
+};
+
+/* This is the screen definition */
+ui_screen_t main_screen = {
+    .name = "main",
+    .tick = &main_ui_tick,
+    .num_items = 1,
+    .items = { (ui_item_t*) &input_voltage }
+};
+
+/**
+ * @brief      Main UI UUI tick handler :)
+ */
+static void main_ui_tick(void)
 {
     uint16_t i_out_raw, v_in_raw, v_out_raw;
     hw_get_adc_values(&i_out_raw, &v_in_raw, &v_out_raw);
-    uint32_t v_in = pwrctl_calc_vin(v_in_raw);
-    uint32_t v_out = pwrctl_calc_vout(v_out_raw);
-    uint32_t i_out = pwrctl_calc_iout(i_out_raw);
-    ui_update_values(v_in, v_out, i_out);
+    (void) i_out_raw;
+    (void) v_out_raw;
+    input_voltage.value = pwrctl_calc_vin(v_in_raw) / 100;
+    input_voltage.ui.draw(&input_voltage.ui);
+}
+
+/**
+  * @brief Initialize the UI
+  * @retval none
+  */
+static void ui_init(void)
+{
+    bg_color = BLACK;
+    ui_width = TFT_WIDTH;
+    ui_height = TFT_HEIGHT;
+    max_i_limit = CONFIG_DPS_MAX_CURRENT;
+
+    uui_init(&func_ui);
+    func_cv_init(&func_ui);
+    uui_activate(&func_ui);
+
+    uui_init(&main_ui);
+    number_init(&input_voltage);
+    input_voltage.ui.x = 89;
+    input_voltage.ui.y = ui_height - font_0_height;
+    uui_add_screen(&main_ui, &main_screen);
+    uui_activate(&main_ui);
+}
+
+/**
+  * @brief Handle event
+  * @param event the received event
+  * @param data optional extra data
+  * @retval none
+  */
+static void ui_hande_event(event_t event, uint8_t data)
+{
+    if (event == event_rot_press && data == press_long) {
+        ui_lock(!is_locked);
+        return;
+    } else if (event == event_button_sel && data == press_long) {
+        tft_invert(!tft_is_inverted());
+        write_past_settings();
+        return;
+    }
+
+    if (is_locked) {
+        switch(event) {
+            case event_button_m1:
+            case event_button_m2:
+            case event_button_sel:
+            case event_rot_press:
+            case event_rot_left:
+            case event_rot_right:
+            case event_button_enable:
+                lock_flashing_period = LOCK_FLASHING_PERIOD;
+                lock_flash_counter = LOCK_FLASHING_COUNTER;
+                return;
+            default:
+                break;
+        }
+    }
+
+    switch(event) {
+        case event_ocp:
+            {
+#ifdef CONFIG_OCP_DEBUGGING
+                uint16_t i_out_raw, v_in_raw, v_out_raw;
+                hw_get_adc_values(&i_out_raw, &v_in_raw, &v_out_raw);
+                (void) v_in_raw;
+                (void) v_out_raw;
+                uint16_t trig = hw_get_itrig_ma();
+                dbg_printf("%10u OCP: trig:%umA limit:%umA cur:%umA\n", (uint32_t) (get_ticks()), pwrctl_calc_iout(trig), pwrctl_calc_iout(pwrctl_i_limit_raw), pwrctl_calc_iout(i_out_raw));
+#endif // CONFIG_OCP_DEBUGGING
+                ui_flash(); /** @todo When OCP kicks in, show last I_out on screen */
+                ui_update_power_status(false);
+                uui_handle_screen_event(&func_ui, event);
+            }
+            break;
+        case event_button_enable:
+            write_past_settings();
+            /** Deliberate fallthrough */
+
+        case event_button_m1:
+        case event_button_m2:
+        case event_button_sel:
+        case event_rot_press:
+        case event_rot_left:
+        case event_rot_right:
+        case event_rot_left_set:
+        case event_rot_right_set:
+            uui_handle_screen_event(&func_ui, event);
+            uui_refresh(&func_ui, false);
+            break;
+        default:
+            break;
+    }
+}
+
+/**
+  * @brief Lock or unlock the UI
+  * @param lock true for lock, false for unlock
+  * @retval none
+  */
+void ui_lock(bool lock)
+{
+    if (is_locked != lock) {
+        is_locked = lock;
+        lock_flashing_period = 0;
+        if (is_locked) {
+            lock_visible = true;
+            tft_blit((uint16_t*) padlock, padlock_width, padlock_height, XPOS_LOCK, ui_height-padlock_height);
+        } else {
+            lock_visible = false;
+            tft_fill(XPOS_LOCK, ui_height-padlock_height, padlock_width, padlock_height, bg_color);
+        }
+    }
+}
+
+/**
+  * @brief Do periodical updates in the UI
+  * @retval none
+  */
+static void ui_tick(void)
+{
+    static uint64_t last_wifi_update = 0;
+    static uint64_t last_tft_flash = 0;
+    static uint64_t last_lock_flash = 0;
+
+    static uint64_t last = 0;
+    /** Update on the first call and every UI_UPDATE_INTERVAL_MS ms */
+    if (last > 0 && get_ticks() - last < UI_UPDATE_INTERVAL_MS) {
+        return;
+    }
+
+    last = get_ticks();
+    uui_tick(&func_ui);
+    uui_tick(&main_ui);
 
 #ifndef CONFIG_SPLASH_SCREEN
     {
@@ -63,6 +306,230 @@ static void update_measurements(void)
         }
     }
 #endif // CONFIG_SPLASH_SCREEN
+
+    if (wifi_status_flashing_period > 0 && get_ticks() - last_wifi_update > wifi_status_flashing_period) {
+        last_wifi_update = get_ticks();
+        if (wifi_status_visible) {
+            tft_fill(XPOS_WIFI, ui_height-wifi_height, wifi_width, wifi_height, bg_color);
+        } else {
+            tft_blit((uint16_t*) wifi, wifi_width, wifi_height, XPOS_WIFI, ui_height-wifi_height);
+        }
+        wifi_status_visible = !wifi_status_visible;
+    }
+
+    if (lock_flashing_period > 0 && get_ticks() - last_lock_flash > lock_flashing_period) {
+        last_lock_flash = get_ticks();
+        lock_visible = !lock_visible;
+        if (lock_visible) {
+            tft_blit((uint16_t*) padlock, padlock_width, padlock_height, XPOS_LOCK, ui_height-padlock_height);
+        } else {
+            tft_fill(XPOS_LOCK, ui_height-padlock_height, padlock_width, padlock_height, bg_color);
+        }
+        lock_flash_counter--;
+        if (lock_flash_counter == 0) {
+            lock_visible = true;
+            /** If the user hammers the locked buttons we might end up with an
+                invisible locking symbol at the end of the flashing */
+            tft_blit((uint16_t*) padlock, padlock_width, padlock_height, XPOS_LOCK, ui_height-padlock_height);
+            lock_flashing_period = 0;
+        }
+    }
+
+    if (tft_flashing_period > 0 && get_ticks() - last_tft_flash > tft_flashing_period) {
+        last_tft_flash = get_ticks();
+        tft_flash_counter--;
+        tft_invert(!tft_is_inverted());
+        if (tft_flash_counter == 0) {
+            tft_flashing_period = 0;
+        }
+    }
+
+    if (wifi_status == wifi_connecting && get_ticks() > WIFI_CONNECT_TIMEOUT) {
+        ui_update_wifi_status(wifi_off);
+    }
+}
+
+/**
+  * @brief Handle ping
+  * @retval none
+  */
+void ui_handle_ping(void)
+{
+    ui_flash();
+}
+
+/**
+  * @brief Update wifi status icon
+  * @param status new wifi status
+  * @retval none
+  */
+void ui_update_wifi_status(wifi_status_t status)
+{
+    if (wifi_status != status) {
+        wifi_status = status;
+        switch(wifi_status) {
+            case wifi_off:
+                wifi_status_flashing_period = 0;
+                wifi_status_visible = true;
+                tft_fill(XPOS_WIFI, ui_height-wifi_height, wifi_width, wifi_height, bg_color);
+                break;
+            case wifi_connecting:
+                wifi_status_flashing_period = WIFI_CONNECTING_FLASHING_PERIOD;
+                break;
+            case wifi_connected:
+                wifi_status_flashing_period = 0;
+                wifi_status_visible = false;
+                tft_blit((uint16_t*) wifi, wifi_width, wifi_height, XPOS_WIFI, ui_height-wifi_height);
+                break;
+            case wifi_error:
+                wifi_status_flashing_period = WIFI_ERROR_FLASHING_PERIOD;
+                break;
+            case wifi_upgrading:
+                wifi_status_flashing_period = WIFI_UPGRADING_FLASHING_PERIOD;
+                break;
+        }
+    }
+}
+
+/**
+  * @brief Update power enable status icon
+  * @param enabled new power status
+  * @retval none
+  */
+void ui_update_power_status(bool enabled)
+{
+    if (is_enabled != enabled) {
+        is_enabled = enabled;
+        if (is_enabled) {
+            tft_blit((uint16_t*) power, power_width, power_height, ui_width-power_width, ui_height-power_height);
+        } else {
+            tft_fill(ui_width-power_width, ui_height-power_height, power_width, power_height, bg_color);
+        }
+    }
+}
+
+#ifdef CONFIG_SPLASH_SCREEN
+/**
+  * @brief Draw splash screen
+  * @retval none
+  */
+static void ui_draw_splash_screen(void)
+{
+    tft_blit((uint16_t*) logo, logo_width, logo_height, (ui_width-logo_width)/2, (ui_height-logo_height)/2);
+}
+#endif // CONFIG_SPLASH_SCREEN
+
+/**
+  * @brief Flash the TFT once
+  * @retval none
+  */
+static void ui_flash(void)
+{
+    tft_flashing_period = TFT_FLASHING_PERIOD;
+    tft_flash_counter = TFT_FLASHING_COUNTER;
+}
+
+/**
+  * @brief Read settings from past
+  * @retval none
+  */
+static void read_past_settings(void)
+{
+    uint32_t *p;
+    uint32_t v_setting = 0;
+    uint32_t i_setting = 0;
+    bool     inverse_setting = false;
+    uint32_t length;
+    if (past_read_unit(&g_past, past_power, (const void**) &p, &length)) {
+        if (p) {
+            v_setting = *p & 0xffff;
+            i_setting = (*p >> 16) & 0xffff;
+        }
+    }
+    if (!v_setting || !i_setting) {
+#if !defined(CONFIG_DEFAULT_VOUT) || !defined(CONFIG_DEFAULT_ILIMIT)
+        #error "Please define CONFIG_DEFAULT_VOUT and CONFIG_DEFAULT_ILIMIT (in mV/mA)"
+#endif
+        v_setting = CONFIG_DEFAULT_VOUT;
+        i_setting = CONFIG_DEFAULT_ILIMIT;
+    }
+
+    // Set limits, with sanity check
+    if (!pwrctl_set_vout(v_setting)) {
+        v_setting = CONFIG_DEFAULT_VOUT;
+        (void) pwrctl_set_vout(v_setting);
+    }
+    if (!pwrctl_set_ilimit(i_setting)) {
+        i_setting = CONFIG_DEFAULT_ILIMIT;
+        (void) pwrctl_set_ilimit(i_setting);
+    }
+
+#if 0
+    if (past_read_unit(&g_past, past_tft_inversion, (const void**) &p, &length)) {
+        if (p) {
+            inverse_setting = !!(*p);
+        }
+    }
+    tft_invert(inverse_setting);
+#endif
+
+    last_vout_setting = v_setting;
+    last_ilimit_setting = i_setting;
+    last_tft_inv_setting = inverse_setting;
+
+#ifdef GIT_VERSION
+    /** Update app git hash in past if needed */
+    char *ver = 0;
+    bool exists = past_read_unit(&g_past, past_app_git_hash, (const void**) &ver, &length);
+    if (!exists || strncmp((char*) ver, GIT_VERSION, 32 /* probably never longer than 32 bytes */) != 0) {
+        if (!past_write_unit(&g_past, past_app_git_hash, (void*) &GIT_VERSION, strlen(GIT_VERSION))) {
+            /** @todo Handle past write errors */
+            dbg_printf("Error: past write app git hash failed!\n");
+        }
+    }
+#endif // GIT_VERSION
+}
+
+/**
+  * @brief Write changed settings to past. Checked when exiting edit mode,
+  *        enabling power out or inverting the display.
+  * @retval none
+  */
+static void write_past_settings(void)
+{
+    if (pwrctl_get_vout() != last_vout_setting || pwrctl_get_ilimit() != last_ilimit_setting) {
+        last_vout_setting = pwrctl_get_vout();
+        last_ilimit_setting = pwrctl_get_ilimit();
+        uint32_t setting = (last_ilimit_setting & 0xffff) << 16 | (last_vout_setting & 0xffff);
+        if (!past_write_unit(&g_past, past_power, (void*) &setting, sizeof(setting))) {
+            /** @todo Handle past write errors */
+            dbg_printf("Error: past write pwr failed!\n");
+        }
+    }
+
+    if (tft_is_inverted() != last_tft_inv_setting) {
+        last_tft_inv_setting = tft_is_inverted();
+        uint32_t setting = last_tft_inv_setting;
+        if (!past_write_unit(&g_past, past_tft_inversion, (void*) &setting, sizeof(setting))) {
+            /** @todo Handle past write errors */
+            dbg_printf("Error: past write inv failed!\n");
+        }
+    }
+}
+
+/**
+  * @brief Check if user wants master reset, resetting the past area
+  * @retval none
+  */
+static void check_master_reset(void)
+{
+    if (hw_sel_button_pressed()) {
+        dbg_printf("Master reset\n");
+        if (!past_format(&g_past)) {
+            /** @todo Handle past format errors */
+            dbg_printf("Error: past formatting failed!\n");
+        }
+    }
 }
 
 /**
@@ -77,7 +544,6 @@ static void event_handler(void)
         uint8_t data = 0;
         if (!event_get(&event, &data)) {
             hw_longpress_check();
-            update_measurements();
             ui_tick();
         } else {
             switch(event) {
@@ -115,7 +581,15 @@ int main(void)
     tft_init();
     delay_ms(50); // Without this delay we will observe some flickering
     tft_clear();
-    ui_init(TFT_WIDTH, TFT_HEIGHT);
+    g_past.blocks[0] = 0x0800f800;
+    g_past.blocks[1] = 0x0800fc00;
+    if (!past_init(&g_past)) {
+        dbg_printf("Error: past init failed!\n");
+        /** @todo Handle past init failure */
+    }
+    check_master_reset();
+    read_past_settings();
+    ui_init();
 
 #ifdef CONFIG_WIFI
     /** Rationale: the ESP8266 could send this message when it starts up but
