@@ -30,6 +30,9 @@
 #include "flashlock.h"
 
 /*
+ * Friday the 13th of April: just discovered past gets corrupted when writing
+ * units smaller that 4 bytes. How becoming...
+ *
  * Past - parameter storage
  * The Past module enables parameter storage in the internal flash of the STM32
  * Parameters are identified by an 32 bit integer id (0 and 0xffffffff are
@@ -122,7 +125,7 @@
 #define UNIT_SIZE_OFFSET  (4)
 #define UNIT_DATA_OFFSET  (8)
 
-static uint32_t past_find_unit(past_t *past, past_id_t id);
+static int32_t past_find_unit(past_t *past, past_id_t id);
 static bool past_erase_unit_at(uint32_t address);
 static bool past_garbage_collect(past_t *past);
 static inline bool flash_write32(uint32_t address, uint32_t data);
@@ -162,8 +165,13 @@ bool past_init(past_t *past)
             success &= past_format(past);
         }
         if (success) {
-            past->_end_addr = past_find_unit(past, PAST_UNIT_ID_END);
-            past->_valid = true;
+            int32_t addr = past_find_unit(past, PAST_UNIT_ID_END);
+            if (addr < 0) {
+                past->_valid = success = past_garbage_collect(past);
+            } else {
+                past->_end_addr = (uint32_t) addr;
+                past->_valid = true;
+            }
         }
 
         /** Now check all space following the end address is erased space, if not
@@ -195,12 +203,13 @@ bool past_read_unit(past_t *past, past_id_t id, const void **data, uint32_t *len
     if (!past || !past->_valid || !data || !length) {
         return false;
     }
-    uint32_t address = past_find_unit(past, id);
-    if (address) {
+    *length = 0;
+    int32_t address = past_find_unit(past, id);
+    if (address > 0) {
         *length = flash_read32(address + UNIT_SIZE_OFFSET);
         *data = (const void*) address + UNIT_DATA_OFFSET;
     }
-    return address ? true : false;
+    return address > 0 ? true : false;
 }
 
 /**
@@ -234,7 +243,10 @@ bool past_write_unit(past_t *past, past_id_t id, void *data, uint32_t length)
     end_address = past->_end_addr;
     do {
         /** Check if there is an old version of the unit */
-        uint32_t old_addr = past_find_unit(past, id);
+        int32_t old_addr = past_find_unit(past, id);
+        if (old_addr < 0) {
+            /** @todo: format past */
+        }
         /** Write the new unit */
         if (!flash_write32(end_address+UNIT_SIZE_OFFSET, length)) {
             break;
@@ -297,11 +309,13 @@ bool past_erase_unit(past_t *past, past_id_t id)
     }
     bool success = false;
     do {
-        uint32_t address = past_find_unit(past, id);
-        if (!address) {
+        int32_t address = past_find_unit(past, id);
+        if (address == 0) {
             break;
+        } else if (address < 0) {
+            /** @todo: format past */
         }
-        if (!past_erase_unit_at(address)) {
+        if (!past_erase_unit_at((uint32_t) address)) {
             break;
         }
         success = true;
@@ -394,9 +408,9 @@ static bool past_erase_unit_at(uint32_t address)
   * @brief Find unit and return address
   * @param past pointer to an initialized past structure
   * @param id id of unit to search for
-  * @retval address of unit or 0 if not found/an error occured
+  * @retval address of unit or 0 if not found or -1 if an error occured
   */
-static uint32_t past_find_unit(past_t *past, past_id_t id)
+static int32_t past_find_unit(past_t *past, past_id_t id)
 {
     uint32_t base = past->blocks[past->_cur_block];
     uint32_t cur_address = base + HEADER_FIRST_UNIT_OFFSET;
@@ -410,11 +424,11 @@ static uint32_t past_find_unit(past_t *past, past_id_t id)
             break;
         } else { /** Move on */
             cur_size = flash_read32(cur_address + UNIT_SIZE_OFFSET);
-            if (cur_size == 0) {
-                cur_address = 0; /** Fatal error */
+            if (cur_size == 0 || cur_size == 0xffffffff) {
+                cur_address = -1; /** Fatal error */
                 break;
             }
-            if (cur_size % 4 ) {
+            if (cur_size % 4) {
                 cur_size += 4 - (cur_size % 4); // Word align
             }
             if (cur_size == 0) {
@@ -517,7 +531,10 @@ static bool copy_parameters(past_t *past, uint32_t src_base, uint32_t dst_base)
         if (id == PAST_UNIT_ID_END) {
             break;
         }
-        uint32_t size = flash_read32(src + UNIT_SIZE_OFFSET);
+        int32_t size = flash_read32(src + UNIT_SIZE_OFFSET);
+        if (size <= 0) {
+            break;
+        }
         uint32_t aligned_size = size;
         if (aligned_size % 4) {
             aligned_size += 4 - aligned_size % 4;
