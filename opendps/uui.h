@@ -31,6 +31,7 @@
 #include "event.h"
 #include "tick.h"
 #include "pwrctl.h"
+#include "past.h"
 
 #ifdef CONFIG_UI_MAX_SCREENS
  #define MAX_SCREENS (CONFIG_UI_MAX_SCREENS)
@@ -89,13 +90,19 @@ typedef struct ui_item_t {
  * A screen has a name and holds num_items UI items
  */
 struct ui_screen {
+    uint8_t id; /** must be unique */
     char *name;
+    uint8_t *icon_data;
+    uint32_t icon_data_len;
+    uint32_t icon_width;
+    uint32_t icon_height;
     bool is_enabled;
     uint8_t num_items;
     uint8_t cur_item;
     void (*enable)(bool _enable); /** Called when the enable button is pressed */
     void (*tick)(void); /** Called periodically allowing the UI to do house keeping */
-//    void (*update)(uint32_t v_in, uint32_t v_out, uint32_t i_out);
+    void (*past_save)(past_t *past);
+    void (*past_restore)(past_t *past);
     ui_item_t *items[];
 };
 
@@ -106,6 +113,7 @@ typedef struct {
     uint8_t num_screens;
     uint8_t cur_screen;
     ui_screen_t *screens[MAX_SCREENS];
+    past_t *past;
 } uui_t;
 
 /**
@@ -113,7 +121,7 @@ typedef struct {
  *
  * @param      ui    The user interface
  */
-void uui_init(uui_t *ui);
+void uui_init(uui_t *ui, past_t *past);
 
 /**
  * @brief      Refresh all items on current screen in need of redrawing

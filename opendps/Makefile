@@ -3,6 +3,9 @@ BINARY = opendps
 # Build with commandline interface rather than serial interface
 COMMANDLINE := 0
 
+# Set build model, defaults to DPS5005
+MODEL := DPS5005
+
 # Include splash screen
 SPLASH_SCREEN := 0
 
@@ -20,12 +23,15 @@ COLORSPACE ?= 0
 # Optional tinting for UI elements
 TINT ?= ffffff
 
+# Enable CC mode
+CC_ENABLE ?= 1
+
 GIT_VERSION := $(shell git describe --abbrev=4 --dirty --always --tags)
 CFLAGS = -I. -DCONFIG_DPS_MAX_CURRENT=$(MAX_CURRENT) -DGIT_VERSION=\"$(GIT_VERSION)\"
 
 # Output voltage and current limit are persisted in flash,
 # this is the default setting
-CFLAGS += -DCONFIG_DEFAULT_VOUT=5000 -DCONFIG_DEFAULT_ILIMIT=500 -DCOLORSPACE=$(COLORSPACE)
+CFLAGS += -DCONFIG_DEFAULT_VOUT=5000 -DCONFIG_DEFAULT_ILIMIT=500 -DCOLORSPACE=$(COLORSPACE) -D$(MODEL)
 
 # Application linker script
 LDSCRIPT = stm32f100_app.ld
@@ -34,9 +40,9 @@ OBJS = \
     flashlock.o \
     bootcom.o \
     crc16.o \
-	uui.o \
-	uui_number.o \
-	func_cv.o \
+    uui.o \
+    uui_number.o \
+    func_cv.o \
     hw.o \
     pwrctl.o \
     event.o \
@@ -51,6 +57,10 @@ OBJS = \
     font-0.o \
     font-1.o
 
+ifeq ($(CC_ENABLE),1)
+	CFLAGS +=-DCONFIG_CC_ENABLE
+	OBJS += func_cc.o
+endif
 
 ifeq ($(SPLASH_SCREEN),1)
 	CFLAGS +=-DCONFIG_SPLASH_SCREEN

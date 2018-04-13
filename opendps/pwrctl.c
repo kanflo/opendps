@@ -27,12 +27,12 @@
 #include <gpio.h>
 #include <dac.h>
 
-/** This module handles cultage and currrent calculations.
+/** This module handles voltage and current calculations
   * Calculations based on measurements found at
   * https://docs.google.com/spreadsheets/d/1AhGsU_gvZjqZyr2ZYrnkz6BeUqMquzh9UNYoTqy_Zp4/edit?usp=sharing
   */
 
-static uint32_t v_out, i_limit;
+static uint32_t i_out, v_out, i_limit;
 static bool v_out_enabled;
 
 /** not static as it is referred to from hw.c for performance reasons */
@@ -49,7 +49,7 @@ void pwrctl_init(void)
 
 /**
   * @brief Set voltage output
-  * @param value_mv voltage in millivolt
+  * @param value_mv voltage in milli volt
   * @retval true requested voltage was within specs
   */
 bool pwrctl_set_vout(uint32_t value_mv)
@@ -59,15 +59,34 @@ bool pwrctl_set_vout(uint32_t value_mv)
     if (v_out_enabled) {
         /** Needed for the DPS5005 "communications version" (the one with BT/USB) */
         DAC_DHR12R1 = pwrctl_calc_vout_dac(v_out);
-        /** @todo Check how the stock FW uses DAC1_OUT and DAC2_OUT to hold the voltage at high loads */
-        DAC_DHR12R2 = 0xda2;
     }
     return true;
 }
 
 /**
+  * @brief Set current output
+  * @param current_ma current in milli ampere
+  * @retval true requested current was within specs
+  */
+bool pwrctl_set_iout(uint32_t value_ma)
+{
+    i_out = value_ma;
+    DAC_DHR12R2 = pwrctl_calc_iout_dac(value_ma);
+    return true;
+}
+
+/**
+  * @brief Get current output setting
+  * @retval current setting in milli amps
+  */
+uint32_t pwrctl_get_iout(void)
+{
+    return i_out;
+}
+
+/**
   * @brief Get voltage output setting
-  * @retval current setting in millivolt
+  * @retval current setting in milli volt
   */
 uint32_t pwrctl_get_vout(void)
 {
@@ -103,27 +122,25 @@ uint32_t pwrctl_get_ilimit(void)
   */
 void pwrctl_enable_vout(bool enable)
 {
-  v_out_enabled = enable;
-  if (v_out_enabled) {
+    v_out_enabled = enable;
+    if (v_out_enabled) {
+      (void) pwrctl_set_vout(v_out);
 #ifdef DPS5015
-    gpio_set(GPIOB, GPIO11);    // B11 is fan control on '5015
-    gpio_clear(GPIOC, GPIO13);  // C13 is power control on '5015
-#else // DPS5015
-    DAC_DHR12R1 = pwrctl_calc_vout_dac(v_out);
-    DAC_DHR12R2 = 0xda2;
-    gpio_clear(GPIOB, GPIO11);  // B11 is power control on '5005
-#endif // DPS5015
-  } else {
+        //gpio_clear(GPIOA, GPIO9); // this is power control on '5015
+        gpio_set(GPIOB, GPIO11);    // B11 is fan control on '5015
+        gpio_clear(GPIOC, GPIO13);  // C13 is power control on '5015
+#else
+        gpio_clear(GPIOB, GPIO11);  // B11 is power control on '5005
+#endif
+    } else {
 #ifdef DPS5015
-    gpio_clear(GPIOB, GPIO11); // B11 is fan control on '5015
-    gpio_set(GPIOC, GPIO13);   // C13 is power control on '5015
-#else // DPS5015
-    /** Needed for the DPS5005 "communications version" (the one with BT/USB) */
-    DAC_DHR12R1 = 0;
-    DAC_DHR12R2 = 0;
-    gpio_set(GPIOB, GPIO11);  // B11 is power control on '5005
-#endif // DPS5015
-  }
+        //gpio_set(GPIOA, GPIO9);    // gpio_set(GPIOB, GPIO11);
+        gpio_clear(GPIOB, GPIO11); // B11 is fan control on '5015
+        gpio_set(GPIOC, GPIO13);   // C13 is power control on '5015
+#else
+        gpio_set(GPIOB, GPIO11);  // B11 is power control on '5005
+#endif
+    }
 }
 
 /**
@@ -138,7 +155,7 @@ bool pwrctl_vout_enabled(void)
 /**
   * @brief Calculate V_in based on raw ADC measurement
   * @param raw value from ADC
-  * @retval corresponding voltage in millivolt
+  * @retval corresponding voltage in milli volt
   */
 uint32_t pwrctl_calc_vin(uint16_t raw)
 {
@@ -148,21 +165,22 @@ uint32_t pwrctl_calc_vin(uint16_t raw)
 /**
   * @brief Calculate V_out based on raw ADC measurement
   * @param raw value from ADC
-  * @retval corresponding voltage in millivolt
+  * @retval corresponding voltage in milli volt
   */
 uint32_t pwrctl_calc_vout(uint16_t raw)
 {
-    return 13.164*raw - 100.751;
+    return V_ADC_K*raw + V_ADC_C;
 }
 
 /**
   * @brief Calculate DAC setting for requested V_out
   * @param v_out_mv requested output voltage
-  * @retval corresponding voltage in millivolt
+  * @retval corresponding voltage in milli volt
   */
 uint16_t pwrctl_calc_vout_dac(uint32_t v_out_mv)
 {
-    return 0.072*v_out_mv + 1.85;
+    uint32_t dac = V_DAC_K*v_out_mv + V_DAC_C;
+    return dac & 0xfff; /** 12 bits */
 }
 
 /**
@@ -172,7 +190,7 @@ uint16_t pwrctl_calc_vout_dac(uint32_t v_out_mv)
   */
 uint32_t pwrctl_calc_iout(uint16_t raw)
 {
-    return 1.713*raw - 118.51;
+    return A_ADC_K*raw + A_ADC_C;
 }
 
 /**
@@ -182,5 +200,18 @@ uint32_t pwrctl_calc_iout(uint16_t raw)
   */
 uint16_t pwrctl_calc_ilimit_adc(uint16_t i_limit_ma)
 {
-    return (i_limit_ma + 118.51) / 1.713 + 1;
+    return (i_limit_ma - A_ADC_C) / A_ADC_K + 1;
+}
+
+/**
+  * @brief Calculate DAC setting for constant current mode
+  * @param i_out_ma requested constant current
+  * @retval corresponding DAC value
+  * @note this formula is valid for the DPS5005 and would probably need changes
+  *       for DPS:es capable of higher current output.
+  */
+uint16_t pwrctl_calc_iout_dac(uint32_t i_out_ma)
+{
+    uint32_t dac = A_DAC_K * i_out_ma + A_DAC_C;
+    return dac & 0xfff; /** 12 bits */
 }

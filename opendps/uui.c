@@ -26,6 +26,7 @@
 #include <stdbool.h>
 #include "my_assert.h"
 #include "uui.h"
+#include "tft.h"
 
 /** @todo: move */
 void ui_update_power_status(bool enabled);
@@ -56,9 +57,10 @@ static void item_lost_focus(ui_item_t *item)
     item->needs_redraw = true;
 }
 
-void uui_init(uui_t *ui)
+void uui_init(uui_t *ui, past_t *past)
 {
     assert(ui);
+    ui->past = past;
     ui->num_screens = ui->cur_screen = 0;
 }
 
@@ -66,6 +68,9 @@ void uui_add_screen(uui_t *ui, ui_screen_t *screen)
 {
     assert(ui);
     assert(screen);
+    if (screen->past_restore) {
+        screen->past_restore(ui->past);
+    }
     if (ui->num_screens < MAX_SCREENS) {
         ui->screens[ui->num_screens++] = screen;
         screen->cur_item = 0;
@@ -107,6 +112,7 @@ void uui_activate(uui_t *ui)
         }
         /** @todo: add activation callback for each screen allowing for updating of U/I settings */
         uui_refresh(ui, true);
+        tft_blit((uint16_t*) screen->icon_data, screen->icon_width, screen->icon_height, 48, 128-screen->icon_height);
     }
 }
 
@@ -181,6 +187,9 @@ void uui_handle_screen_event(uui_t *ui, event_t event)
         case event_button_enable:
         case event_ocp:
             screen->is_enabled = !screen->is_enabled;
+            if (screen->is_enabled && screen->past_save) {
+                screen->past_save(ui->past);
+            }
             screen->enable(screen->is_enabled);
             ui_update_power_status(screen->is_enabled); /** @todo: move */
             break;

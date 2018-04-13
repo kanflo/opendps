@@ -40,7 +40,9 @@
 #include "protocol.h"
 #include "serialhandler.h"
 #include "ili9163c.h"
-#include "graphics.h"
+#include "padlock.h"
+#include "power.h"
+#include "wifi.h"
 #include "font-0.h"
 #include "font-1.h"
 #include "gpio.h"
@@ -49,6 +51,9 @@
 #include "uui.h"
 #include "uui_number.h"
 #include "func_cv.h"
+#ifdef CONFIG_CC_ENABLE
+#include "func_cc.h"
+#endif // CONFIG_CC_ENABLE
 
 #define TFT_HEIGHT  (128)
 #define TFT_WIDTH   (128)
@@ -61,7 +66,7 @@
 
 /** Blit positions */
 #define XPOS_WIFI     (4)
-#define XPOS_LOCK    (34)
+#define XPOS_LOCK    (30)
 
 /** Constants describing how certain things on the screen flash when needed */
 #define WIFI_CONNECTING_FLASHING_PERIOD  (1000)
@@ -104,8 +109,6 @@ static bool is_locked;
 static bool is_enabled;
 
 /** Last settings written to past */
-static uint32_t last_vout_setting;
-static uint32_t last_ilimit_setting;
 static bool     last_tft_inv_setting;
 
 /** Our parameter storage */
@@ -174,13 +177,16 @@ static void ui_init(void)
     ui_height = TFT_HEIGHT;
     max_i_limit = CONFIG_DPS_MAX_CURRENT;
 
-    uui_init(&func_ui);
+    uui_init(&func_ui, &g_past);
     func_cv_init(&func_ui);
+#ifdef CONFIG_CC_ENABLE
+    func_cc_init(&func_ui);
+#endif // CONFIG_CC_ENABLE
     uui_activate(&func_ui);
 
-    uui_init(&main_ui);
+    uui_init(&main_ui, &g_past);
     number_init(&input_voltage);
-    input_voltage.ui.x = 89;
+    input_voltage.ui.x = 105;
     input_voltage.ui.y = ui_height - font_0_height;
     uui_add_screen(&main_ui, &main_screen);
     uui_activate(&main_ui);
@@ -435,47 +441,15 @@ static void ui_flash(void)
   */
 static void read_past_settings(void)
 {
-    uint32_t *p;
-    uint32_t v_setting = 0;
-    uint32_t i_setting = 0;
     bool     inverse_setting = false;
     uint32_t length;
-    if (past_read_unit(&g_past, past_power, (const void**) &p, &length)) {
-        if (p) {
-            v_setting = *p & 0xffff;
-            i_setting = (*p >> 16) & 0xffff;
-        }
-    }
-    if (!v_setting || !i_setting) {
-#if !defined(CONFIG_DEFAULT_VOUT) || !defined(CONFIG_DEFAULT_ILIMIT)
-        #error "Please define CONFIG_DEFAULT_VOUT and CONFIG_DEFAULT_ILIMIT (in mV/mA)"
-#endif
-        v_setting = CONFIG_DEFAULT_VOUT;
-        i_setting = CONFIG_DEFAULT_ILIMIT;
-    }
-
-    // Set limits, with sanity check
-    if (!pwrctl_set_vout(v_setting)) {
-        v_setting = CONFIG_DEFAULT_VOUT;
-        (void) pwrctl_set_vout(v_setting);
-    }
-    if (!pwrctl_set_ilimit(i_setting)) {
-        i_setting = CONFIG_DEFAULT_ILIMIT;
-        (void) pwrctl_set_ilimit(i_setting);
-    }
-
-#if 0
+    uint32_t *p = 0;
     if (past_read_unit(&g_past, past_tft_inversion, (const void**) &p, &length)) {
         if (p) {
             inverse_setting = !!(*p);
         }
     }
     tft_invert(inverse_setting);
-#endif
-
-    last_vout_setting = v_setting;
-    last_ilimit_setting = i_setting;
-    last_tft_inv_setting = inverse_setting;
 
 #ifdef GIT_VERSION
     /** Update app git hash in past if needed */
@@ -497,15 +471,6 @@ static void read_past_settings(void)
   */
 static void write_past_settings(void)
 {
-    if (pwrctl_get_vout() != last_vout_setting || pwrctl_get_ilimit() != last_ilimit_setting) {
-        last_vout_setting = pwrctl_get_vout();
-        last_ilimit_setting = pwrctl_get_ilimit();
-        uint32_t setting = (last_ilimit_setting & 0xffff) << 16 | (last_vout_setting & 0xffff);
-        if (!past_write_unit(&g_past, past_power, (void*) &setting, sizeof(setting))) {
-            /** @todo Handle past write errors */
-            dbg_printf("Error: past write pwr failed!\n");
-        }
-    }
 
     if (tft_is_inverted() != last_tft_inv_setting) {
         last_tft_inv_setting = tft_is_inverted();

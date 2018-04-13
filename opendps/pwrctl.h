@@ -44,6 +44,19 @@ void pwrctl_init(void);
 bool pwrctl_set_vout(uint32_t value_mv);
 
 /**
+  * @brief Set current output
+  * @param current_ma current in milli ampere
+  * @retval true requested current was within specs
+  */
+bool pwrctl_set_iout(uint32_t value_mv);
+
+/**
+  * @brief Get current output setting
+  * @retval current setting in milli amps
+  */
+uint32_t pwrctl_get_iout(void);
+
+/**
   * @brief Get voltage output setting
   * @retval current setting in millivolt
   */
@@ -92,7 +105,7 @@ uint32_t pwrctl_calc_vout(uint16_t raw);
 /**
   * @brief Calculate DAC setting for requested V_out
   * @param v_out_mv requested output voltage
-  * @retval corresponding voltage in millivolt
+  * @retval corresponding DAC value
   */
 uint16_t pwrctl_calc_vout_dac(uint32_t v_out_mv);
 
@@ -109,5 +122,12 @@ uint32_t pwrctl_calc_iout(uint16_t raw);
   * @retval expected raw ADC value
   */
 uint16_t pwrctl_calc_ilimit_adc(uint16_t i_limit_ma);
+
+/**
+  * @brief Calculate DAC setting for constant current mode
+  * @param i_out_ma requested constant current
+  * @retval corresponding DAC value
+  */
+uint16_t pwrctl_calc_iout_dac(uint32_t i_out_ma);
 
 #endif // __PWRCTL_H__
