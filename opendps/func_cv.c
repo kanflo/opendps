@@ -223,10 +223,10 @@ static void cv_tick(void)
         }
 
         if (cv_current.ui.has_focus) {
-            /** If the currelt setting has focus, make sure we're displaying
+            /** If the current setting has focus, make sure we're displaying
               * the desired setting and not the current output value. */
-            if (cv_current.value != saved_i) { // (int32_t) pwrctl_get_ilimit()) {
-                cv_current.value = saved_i; // pwrctl_get_ilimit();
+            if (cv_current.value != saved_i) {
+                cv_current.value = saved_i;
                 cv_current.ui.draw(&cv_current.ui);
             }
         } else {
