@@ -29,10 +29,11 @@
 #include <stdlib.h>
 #include "dbg_printf.h"
 #include "cli.h"
-#include "ui.h"
 #include "hw.h"
 #include "pwrctl.h"
 #include "serialhandler.h"
+
+extern void ui_update_power_status(bool enabled); // opendps.c
 
 static void stat_cmd(uint32_t argc, char *argv[]);
 static void on_cmd(uint32_t argc, char *argv[]);
