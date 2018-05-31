@@ -13,3 +13,5 @@ build/
 firmware/
 html/
 .gdb_history
+.DS_Store
+xcuserdata/
