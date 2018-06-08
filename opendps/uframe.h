@@ -26,6 +26,7 @@
 #define __UFRAME_H__
 
 #include "crc16.h"
+#include "dbg_printf.h"
 
 #define _SOF 0x7e
 #define _DLE 0x7d
@@ -61,7 +62,20 @@
         } else { \
             _buffer[_length++] = _byte; \
         } \
+    } else { \
+        dbg_printf("uFrame overflow at %s:%d\n", __FILE__, __LINE__); \
     }
+
+/** Pack a c string with null terminator */
+#define PACK_CSTR(s) \
+{ \
+    uint8_t *_tmp = (uint8_t*) (s); \
+    while(*_tmp) { \
+        PACK8(*_tmp); \
+        _tmp++; \
+    } \
+    PACK8(0); \
+}
 
 #define PACK16(h) \
     PACK8((h) >> 8); \
@@ -83,6 +97,8 @@
         } else { \
             _buffer[_length++] = _byte; \
         } \
+    } else { \
+        dbg_printf("uFrame overflow at %s:%d\n", __FILE__, __LINE__); \
     }
 
 /** Finish frame. Store crc and EOF. You now have the frame in _buffer of length _length */
