@@ -1,7 +1,7 @@
 /* 
  * The MIT License (MIT)
  * 
- * Copyright (c) 2017 Johan Kanflo (github.com/kanflo)
+ * Copyright (c) 2018 Johan Kanflo (github.com/kanflo)
  * 
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -22,19 +22,10 @@
  * THE SOFTWARE.
  */
 
-#ifndef __DBG_PRINTF_H__
-#define __DBG_PRINTF_H__
+#ifndef __DPSEMUL_H__
+#define __DPSEMUL_H__
+#include "past.h"
 
-#include <stdarg.h>
+void dps_emul_init(past_t *past, int argc, char const *argv[]);
 
-#ifdef DPS_EMULATOR
- #include <stdio.h>
- #define dbg_printf printf
- /** emu_printf allows for prints only visible when running in the emulator */
- #define emu_printf printf
-#else // DPS_EMULATOR
- int dbg_printf(const char *fmt, ...);
- #define emu_printf(...)
-#endif // DPS_EMULATOR
-
-#endif // __DBG_PRINTF_H__
+#endif // __DPSEMUL_H__

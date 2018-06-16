@@ -69,6 +69,11 @@ class uFrame(object):
         else:
             self._frame.append(byte)
 
+    def pack_cstr(self, str):
+        for ch in str:
+            self.pack8(ord(ch))
+        self.pack8(0)
+
     def pack16(self, halfword):
         halfword &= 0xffff
         h1 = (halfword >> 8) & 0xff
@@ -160,6 +165,12 @@ class uFrame(object):
         self._unpack_pos += 1
         return b
 
+    # Unpack signed 8 bit
+    def unpacks8(self):
+        b = self._frame[self._unpack_pos]
+        self._unpack_pos += 1
+        return b - 256
+
     def unpack16(self):
         h = self.unpack8() << 8 | self.unpack8()
         return h
@@ -167,4 +178,18 @@ class uFrame(object):
     def unpack32(self):
         h = self.unpack8() << 24 | self.unpack8() << 16 | self.unpack8() << 8 | self.unpack8()
         return h
+
+    def unpack_cstr(self):
+        string = ""
+        if self._unpack_pos < len(self._frame):
+            b = self._frame[self._unpack_pos]
+            self._unpack_pos += 1
+            while self._unpack_pos < len(self._frame) and b != 0:
+                string += '%c' % b
+                b = self._frame[self._unpack_pos]
+                self._unpack_pos += 1
+        return string
+
+    def eof(self):
+        return self._unpack_pos >= len(self._frame) 
 

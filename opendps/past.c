@@ -25,7 +25,8 @@
 #include <stdint.h>
 #include <stdbool.h>
 #include <string.h>
-#include <past.h>
+#include "dbg_printf.h"
+#include "past.h"
 #include <flash.h>
 #include "flashlock.h"
 
@@ -112,7 +113,7 @@
  *
  */
 
-#define PAST_MAGIC 0x50617374 // "past"
+#define PAST_MAGIC 0x50617374 // "Past"
 
 #define PAST_UNIT_ID_INVALID           (0)
 #define PAST_UNIT_ID_END      (0xffffffff)
@@ -174,10 +175,11 @@ bool past_init(past_t *past)
             }
         }
 
-        /** Now check all space following the end address is erased space, if not
-          * we have a half completed write operation we need to clear */
+        /** Now check all space following the end address is erased space.
+          * If not we have a half completed write operation we need to clear
+          * by a garbage collect */
         uint32_t check_addr = past->_end_addr;
-        while (check_addr < past->blocks[ past->_cur_block ] + PAST_BLOCK_SIZE) {
+        while (check_addr < past->blocks[past->_cur_block] + PAST_BLOCK_SIZE) {
             if (flash_read32(check_addr) != PAST_UNIT_ID_END) {
                 success &= past_garbage_collect(past);
                 break;
@@ -207,7 +209,12 @@ bool past_read_unit(past_t *past, past_id_t id, const void **data, uint32_t *len
     int32_t address = past_find_unit(past, id);
     if (address > 0) {
         *length = flash_read32(address + UNIT_SIZE_OFFSET);
+#ifdef DPS_EMULATOR
+        uint32_t temp = flash_read32(address + UNIT_DATA_OFFSET);
+        *data = (const void*) &temp;
+#else // DPS_EMULATOR
         *data = (const void*) address + UNIT_DATA_OFFSET;
+#endif // DPS_EMULATOR
     }
     return address > 0 ? true : false;
 }
@@ -224,6 +231,26 @@ bool past_read_unit(past_t *past, past_id_t id, const void **data, uint32_t *len
 bool past_write_unit(past_t *past, past_id_t id, void *data, uint32_t length)
 {
     if (!past || !past->_valid || !data || !length || id == PAST_UNIT_ID_INVALID || id == PAST_UNIT_ID_END) {
+#ifdef DPS_EMULATOR
+        if (!past) {
+            emu_printf("Past is NULL\n");
+        }
+        if (!past->_valid) {
+            emu_printf("Past is invalid\n");
+        }
+        if (!data) {
+            emu_printf("Data is NULL\n");
+        }
+        if (!length) {
+            emu_printf("length is zero\n");
+        }
+        if (id == PAST_UNIT_ID_INVALID) {
+            emu_printf("Id is invalid\n");
+        }
+        if (id == PAST_UNIT_ID_END) {
+            emu_printf("Id is equal to end\n");
+        }
+#endif // DPS_EMULATOR
         return false;
     }
     uint32_t end_address;
@@ -332,7 +359,7 @@ bool past_erase_unit(past_t *past, past_id_t id)
 bool past_format(past_t *past)
 {
     bool success = false;
-    if (!past || !past->blocks[0] || !past->blocks[1]) {
+    if (!past || /* !past->blocks[0] || */ !past->blocks[1]) {
         return success;
     }
     unlock_flash();
@@ -379,7 +406,7 @@ static uint32_t past_remaining_size(past_t *past)
 
 /**
   * @brief Erase past unit at given address (points to id)
-  * @param past pointer to an initialized past structure
+  * @param address address of unit to be erased
   * @retval True if erasing was successful
   *         False in case of unrecoverable errors
   */
@@ -495,10 +522,12 @@ static inline bool flash_write32(uint32_t address, uint32_t data)
 {
     bool success = false;
     if (address % 4 == 0) {
-        uint32_t *p = (uint32_t*) address;
         flash_program_word(address, data);
         success = FLASH_SR_EOP & flash_get_status_flags();
+#ifndef DPS_EMULATOR
+        uint32_t *p = (uint32_t*) address;
         success &= *p == data; // Verify write
+#endif // DPS_EMULATOR
     }
     return success;
 }
@@ -510,8 +539,12 @@ static inline bool flash_write32(uint32_t address, uint32_t data)
   */
 static inline uint32_t flash_read32(uint32_t address)
 {
+#ifdef DPS_EMULATOR
+    return flash_read_word(address);
+#else // DPS_EMULATOR
     uint32_t *p = (uint32_t*) address;
     return *p;
+#endif // DPS_EMULATOR
 }
 
 /**
@@ -540,7 +573,7 @@ static bool copy_parameters(past_t *past, uint32_t src_base, uint32_t dst_base)
             aligned_size += 4 - aligned_size % 4;
         }
         if (id != 0) {
-            for (uint32_t i = 0 && success; i < aligned_size / 4; i++) {
+            for (uint32_t i = 0; i < aligned_size / 4 && success; i++) {
                 success &= flash_write32(dst + UNIT_DATA_OFFSET + 4*i, flash_read32(src + UNIT_DATA_OFFSET + 4*i));
             }
             success &= flash_write32(dst + UNIT_SIZE_OFFSET, size);

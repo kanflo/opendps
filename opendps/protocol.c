@@ -55,52 +55,10 @@ uint32_t protocol_create_ping(uint8_t *frame, uint32_t length)
 	COPY_FRAME_RETURN();
 }
 
-uint32_t protocol_create_power_enable(uint8_t *frame, uint32_t length, uint8_t enable)
-{
-	DECLARE_FRAME(MAX_FRAME_LENGTH);
-	PACK8(cmd_power_enable);
-	PACK8(enable);
-	FINISH_FRAME();
-	COPY_FRAME_RETURN();
-}
-
-uint32_t protocol_create_vout(uint8_t *frame, uint32_t length, uint16_t vout_mv)
-{
-	DECLARE_FRAME(MAX_FRAME_LENGTH);
-	PACK8(cmd_set_vout);
-	PACK16(vout_mv);
-	FINISH_FRAME();
-	COPY_FRAME_RETURN();
-}
-
-uint32_t protocol_create_ilimit(uint8_t *frame, uint32_t length, uint16_t ilimit_ma)
-{
-	DECLARE_FRAME(MAX_FRAME_LENGTH);
-	PACK8(cmd_set_ilimit);
-	PACK16(ilimit_ma);
-	FINISH_FRAME();
-	COPY_FRAME_RETURN();
-}
-
 uint32_t protocol_create_status(uint8_t *frame, uint32_t length)
 {
 	DECLARE_FRAME(MAX_FRAME_LENGTH);
-	PACK8(cmd_status);
-	FINISH_FRAME();
-	COPY_FRAME_RETURN();
-}
-
-uint32_t protocol_create_status_response(uint8_t *frame, uint32_t length, uint16_t v_in, uint16_t v_out_setting, uint16_t v_out, uint16_t i_out, uint16_t i_limit, uint8_t power_enabled)
-{
-	DECLARE_FRAME(MAX_FRAME_LENGTH);
-	PACK8(cmd_response | cmd_status);
-	PACK8(1); // Always success
-	PACK16(v_in);
-	PACK16(v_out_setting);
-	PACK16(v_out);
-	PACK16(i_out);
-	PACK16(i_limit);
-	PACK8(!!power_enabled);
+	PACK8(cmd_query);
 	FINISH_FRAME();
 	COPY_FRAME_RETURN();
 }
@@ -140,14 +98,15 @@ bool protocol_unpack_response(uint8_t *payload, uint32_t length, command_t *cmd,
 	return _remain == 0;
 }
 
+#if 0
 bool protocol_unpack_power_enable(uint8_t *payload, uint32_t length, uint8_t *enable)
 {
-	command_t cmd;
-	DECLARE_UNPACK(payload, length);
-	UNPACK8(cmd);
-	UNPACK8(*enable);
-	*enable = !!(*enable);
-	return _remain == 0 && cmd == cmd_power_enable;
+    command_t cmd;
+    DECLARE_UNPACK(payload, length);
+    UNPACK8(cmd);
+    UNPACK8(*enable);
+    *enable = !!(*enable);
+    return _remain == 0 && cmd == cmd_power_enable;
 }
 
 bool protocol_unpack_vout(uint8_t *payload, uint32_t length, uint16_t *vout_mv)
@@ -159,16 +118,9 @@ bool protocol_unpack_vout(uint8_t *payload, uint32_t length, uint16_t *vout_mv)
 	return _remain == 0 && cmd == cmd_set_vout;
 }
 
-bool protocol_unpack_ilimit(uint8_t *payload, uint32_t length, uint16_t *ilimit_ma)
-{
-	command_t cmd;
-	DECLARE_UNPACK(payload, length);
-	UNPACK8(cmd);
-	UNPACK16(*ilimit_ma);
-	return _remain == 0 && cmd == cmd_set_ilimit;
-}
+#endif
 
-bool protocol_unpack_status_response(uint8_t *payload, uint32_t length, uint16_t *v_in, uint16_t *v_out_setting, uint16_t *v_out, uint16_t *i_out, uint16_t *i_limit, uint8_t *power_enabled)
+bool protocol_unpack_query_response(uint8_t *payload, uint32_t length, uint16_t *v_in, uint16_t *v_out_setting, uint16_t *v_out, uint16_t *i_out, uint16_t *i_limit, uint8_t *power_enabled)
 {
 	command_t cmd;
 	uint8_t status;
@@ -183,7 +135,7 @@ bool protocol_unpack_status_response(uint8_t *payload, uint32_t length, uint16_t
 	UNPACK8(*power_enabled);
 	*power_enabled = !!(*power_enabled);
 	(void) status;
-	return _remain == 0 && cmd == (cmd_response | cmd_status);
+	return _remain == 0 && cmd == (cmd_response | cmd_query);
 }
 
 bool protocol_unpack_wifi_status(uint8_t *payload, uint32_t length, wifi_status_t *status)

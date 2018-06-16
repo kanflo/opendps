@@ -27,7 +27,7 @@ TINT ?= ffffff
 CC_ENABLE ?= 1
 
 GIT_VERSION := $(shell git describe --abbrev=4 --dirty --always --tags)
-CFLAGS = -I. -DCONFIG_DPS_MAX_CURRENT=$(MAX_CURRENT) -DGIT_VERSION=\"$(GIT_VERSION)\"
+CFLAGS = -I. -DCONFIG_DPS_MAX_CURRENT=$(MAX_CURRENT) -DGIT_VERSION=\"$(GIT_VERSION)\" -Wno-missing-braces
 
 # Output voltage and current limit are persisted in flash,
 # this is the default setting

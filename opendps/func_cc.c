@@ -24,18 +24,18 @@
 
 #include <stdint.h>
 #include <stdbool.h>
+#include <stdlib.h>
+#include <string.h>
 #include "hw.h"
 #include "func_cc.h"
 #include "uui.h"
 #include "uui_number.h"
 #include "cc.h"
+#include "dbg_printf.h"
+#include "mini-printf.h"
 
 /*
  * This is the implementation of the CC screen. 
- * 
- * 
- * yadi yadi yadi yadi
- * 
  * 
  * It has one editable value, 
  * constant voltage and current limit. When power is enabled it will continously
@@ -49,6 +49,8 @@ static void current_changed(ui_number_t *item);
 static void cc_tick(void);
 static void past_save(past_t *past);
 static void past_restore(past_t *past);
+static set_param_status_t set_parameter(char *name, char *value);
+static set_param_status_t get_parameter(char *name, char *value, uint32_t value_len);
 
 /* We need to keep copies of the user settings as the value in the UI will 
  * be replaced with measurements when output is active
@@ -106,10 +108,64 @@ ui_screen_t cc_screen = {
     .enable = &cc_enable,
     .past_save = &past_save,
     .past_restore = &past_restore,
+    .set_parameter = &set_parameter,
+    .get_parameter = &get_parameter,
     .tick = &cc_tick,
     .num_items = 2,
+    .parameters = {
+        {
+            .name = "current",
+            .unit = unit_ampere,
+            .prefix = si_milli
+        },
+        {
+            .name = '\0' /** Terminator */
+        },
+    },
     .items = { (ui_item_t*) &cc_voltage, (ui_item_t*) &cc_current }
 };
+
+/**
+ * @brief      Set function parameter
+ *
+ * @param[in]  name   name of parameter
+ * @param[in]  value  value of parameter as a string - always in SI units
+ *
+ * @retval     set_param_status_t status code 
+ */
+static set_param_status_t set_parameter(char *name, char *value)
+{
+    int32_t ivalue = atoi(value);
+    if (strcmp("current", name) == 0 || strcmp("i", name) == 0) {
+        if (ivalue < cc_current.min || ivalue > cc_current.max) {
+            emu_printf("[CC] Current %d is out of range (min:%d max:%d)\n", ivalue, cc_current.min, cc_current.max);
+            return ps_range_error;
+        }
+        emu_printf("[CC] Setting current to %d\n", ivalue);
+        cc_current.value = ivalue;
+        current_changed(&cc_current);
+        return ps_ok;
+    }
+    return ps_unknown_name;
+}
+
+/**
+ * @brief      Get function parameter
+ *
+ * @param[in]  name       name of parameter
+ * @param[in]  value      value of parameter as a string - always in SI units
+ * @param[in]  value_len  length of value buffer
+ *
+ * @retval     set_param_status_t status code 
+ */
+static set_param_status_t get_parameter(char *name, char *value, uint32_t value_len)
+{
+    if (strcmp("current", name) == 0 || strcmp("i", name) == 0) {
+        (void) mini_snprintf(value, value_len, "%d", pwrctl_vout_enabled() ? saved_i : cc_current.value);
+        return ps_ok;
+    }
+    return ps_unknown_name;
+}
 
 /**
  * @brief      Callback for when the function is enabled

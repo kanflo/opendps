@@ -37,14 +37,19 @@ extern "C" {
 
 #include <stdarg.h>
 
+#ifdef DPS_EMULATOR
+#define mini_vsnprintf vsnprintf
+#define mini_snprintf  snprintf
+#else // DPS_EMULATOR
 int mini_vsnprintf(char* buffer, unsigned int buffer_len, const char *fmt, va_list va);
 int mini_snprintf(char* buffer, unsigned int buffer_len, const char *fmt, ...);
+
+#define vsnprintf mini_vsnprintf
+#define snprintf mini_snprintf
 
 #ifdef __cplusplus
 }
 #endif
 
-#define vsnprintf mini_vsnprintf
-#define snprintf mini_snprintf
-
-#endif
+#endif // DPS_EMULATOR
+#endif // __MINI_PRINTF__

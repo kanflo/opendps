@@ -39,16 +39,46 @@
  #define MAX_SCREENS (5)
 #endif // CONFIG_UI_MAX_SCREENS
 
+#ifdef CONFIG_UI_MAX_PARAMETERS
+ #define MAX_PARAMETERS (CONFIG_UI_MAX_PARAMETERS)
+#else // CONFIG_UI_MAX_PARAMETERS
+ #define MAX_PARAMETERS (5)
+#endif // CONFIG_UI_MAX_PARAMETERS
+
+#ifdef CONFIG_UI_MAX_PARAMETER_NAME
+ #define MAX_PARAMETER_NAME (CONFIG_UI_MAX_PARAMETER_NAME)
+#else // CONFIG_UI_MAX_PARAMETER_NAME
+ #define MAX_PARAMETER_NAME (10)
+#endif // CONFIG_UI_MAX_PARAMETER_NAME
+
 /**
  * Describes units in the user interface
+ * Please keep in sync with dpsctl/dpsctl.py: def unit_name(unit)
  */
 typedef enum {
-    unit_ampere,
+    unit_ampere = 0,
     unit_volt,
-    unit_watts,
-    unit_seconds,
+    unit_watt,
+    unit_second,
+    unit_hertz,
+    unit_furlong,
     unit_last = 0xff
 } unit_t;
+
+/**
+ * Describes SI prefixes to units
+ */
+typedef enum {
+    si_micro = -6,
+    si_milli = -3,
+    si_centi = -2,
+    si_deci = -1,
+    si_none = 0,
+    si_deca = 1,
+    si_hecto = 2,
+    si_kilo = 3,
+    si_mega = 4,
+} si_prefix_t;
 
 /**
  * UI item types
@@ -59,9 +89,27 @@ typedef enum {
 } ui_item_type_t;
 
 /**
+ * Return values to set_parameter
+ */
+typedef enum {
+    ps_ok = 0,
+    ps_unknown_name,
+    ps_range_error,
+    ps_not_supported,
+} set_param_status_t;
+
+/**
+ * Base class for a parameter
+ */
+typedef struct ui_parameter_t {
+    char name[MAX_PARAMETER_NAME];
+    unit_t unit;
+    si_prefix_t prefix;
+} ui_parameter_t;
+
+/**
  * Base class for a UI item
  */
-
 typedef struct ui_screen ui_screen_t;
 
 typedef struct ui_item_t {
@@ -99,10 +147,13 @@ struct ui_screen {
     bool is_enabled;
     uint8_t num_items;
     uint8_t cur_item;
+    ui_parameter_t parameters[MAX_PARAMETERS];
     void (*enable)(bool _enable); /** Called when the enable button is pressed */
     void (*tick)(void); /** Called periodically allowing the UI to do house keeping */
     void (*past_save)(past_t *past);
     void (*past_restore)(past_t *past);
+    set_param_status_t (*set_parameter)(char *name, char *value);
+    set_param_status_t (*get_parameter)(char *name, char *value, uint32_t value_len);
     ui_item_t *items[];
 };
 
@@ -126,7 +177,7 @@ void uui_init(uui_t *ui, past_t *past);
 /**
  * @brief      Refresh all items on current screen in need of redrawing
  *
- * @param      screen  The UI
+ * @param      ui      The UI
  * @param      force   If true, all items will be updated
  */
 void uui_refresh(uui_t *ui, bool force);
@@ -167,6 +218,13 @@ void uui_next_screen(uui_t *ui);
  * @param      ui    The user interface
  */
 void uui_prev_screen(uui_t *ui);
+
+/**
+ * @brief      Switch to  screen index
+ *
+ * @param      ui    The user interface
+ */
+void uui_set_screen(uui_t *ui, uint32_t screen_idx);
 
 /**
  * @brief      Initialize UI item

@@ -1,18 +1,18 @@
-/* 
+/*
  * The MIT License (MIT)
- * 
+ *
  * Copyright (c) 2017 Johan Kanflo (github.com/kanflo)
- * 
+ *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
  * in the Software without restriction, including without limitation the rights
  * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
  * copies of the Software, and to permit persons to whom the Software is
  * furnished to do so, subject to the following conditions:
- * 
+ *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
  * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
  * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
@@ -24,56 +24,60 @@
 
 #include <stdint.h>
 #include <stdbool.h>
-#include <stdlib.h>
 #include <string.h>
-#include "ringbuf.h"
-#include "event.h"
-
-#define MAX_EVENTS	(64)
-
-static ringbuf_t events;
-static uint8_t buffer[2*MAX_EVENTS];
-
 
 /**
-  * @brief Initialize the event module
+  * @brief Initialize the hardware
   * @retval None
   */
-void event_init(void)
+void hw_init(void)
 {
-	ringbuf_init(&events, (uint8_t*) buffer, sizeof(buffer));
-	memset(buffer, 0, sizeof(buffer));
 }
 
 /**
-  * @brief Fetch next event in queue
-  * @param event the type of event received or 'event_none' if no events in queue
-  * @param data additional event data
-  * @retval true if an event was found
+  * @brief Read latest ADC mesurements
+  * @param i_out_raw latest I_out raw value
+  * @param v_in_raw latest V_in raw value
+  * @param v_out_raw latest V_out raw value
+  * @retval none
   */
-bool event_get(event_t *event, uint8_t *data)
+void hw_get_adc_values(uint16_t *i_out_raw, uint16_t *v_in_raw, uint16_t *v_out_raw)
 {
-	bool got_event = true;
-	uint16_t e;
-	if (!ringbuf_get(&events, &e)) {
-		*event = event_none;
-		*data = 0;
-		got_event = false;
-	} else {
-		*event = e >> 8;
-		*data = e & 0xff;
-
-	}
-	return got_event;
+    *i_out_raw = 0;
+    *v_in_raw = 0;
+    *v_out_raw = 0;
 }
 
 /**
-  * @brief Place event in event fifo
-  * @param event event type
-  * @param data additional event data
+  * @brief Initialize TIM4 that drives the backlight of the TFT
   * @retval None
   */
-bool event_put(event_t event, uint8_t data)
+void hw_enable_backlight(void)
 {
-	return ringbuf_put(&events, (uint16_t) (event << 8 | data));
+}
+
+/**
+  * @brief Get the ADC valut that triggered the OCP
+  * @retval Trivver value in mA
+  */
+uint16_t hw_get_itrig_ma(void)
+{
+    return 0;
+}
+
+/**
+  * @brief Check if it current press is a long press, inject event if so
+  * @retval None
+  */
+void hw_longpress_check(void)
+{
+}
+
+/**
+  * @brief Check if SEL button is pressed
+  * @retval true if SEL button is pressed, false otherwise
+  */
+bool hw_sel_button_pressed(void)
+{
+    return false;
 }

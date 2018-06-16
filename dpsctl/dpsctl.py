@@ -43,7 +43,7 @@ try:
     import serial
 except:
     print("Missing dependency pyserial:")
-    print(" sudo pip install pyserial")
+    print(" sudo pip%s install pyserial" % ("3" if sys.version_info.major == 3 else ""))
     raise SystemExit()
 import threading
 import time
@@ -55,12 +55,14 @@ try:
     from PyCRC.CRCCCITT import CRCCCITT
 except:
     print("Missing dependency pycrc:")
-    print(" sudo pip install pycrc")
+    print(" sudo pip%s install pycrc" % ("3" if sys.version_info.major == 3 else ""))
     raise SystemExit()
 import json
 
+parameters = []
+
 """
-A abstract class that describes a comminucation interface
+An abstract class that describes a communication interface
 """
 class comm_interface(object):
 
@@ -177,6 +179,32 @@ def fail(message):
 
 
 """
+Return name of unit (must of course match unit_t in opendps/uui.h)
+"""
+def unit_name(unit):
+    if unit == 0: return "A"
+    if unit == 1: return "V"
+    if unit == 2: return "W"
+    if unit == 3: return "s"
+    if unit == 4: return "Hz"
+    return "unknown"
+
+"""
+Return SI prefix
+"""
+def prefix_name(prefix):
+    if prefix == -6: return "u"
+    if prefix == -3: return "m"
+    if prefix == -2: return "c"
+    if prefix == -1: return "d" # TODO: is this correct (deci?
+    if prefix ==  0: return ""
+    if prefix ==  1: return "D" # TODO: is this correct (deca)?
+    if prefix ==  2: return "hg"
+    if prefix ==  3: return "k"
+    if prefix ==  4: return "M"
+    return "e%d" % prefix
+
+"""
 Handle a response frame from the device.
 Return a dictionaty of interesting information.
 """
@@ -188,7 +216,7 @@ def handle_response(command, frame, args):
         success = frame.get_frame()[1]
         if resp_command != command:
             print("Warning: sent command %02x, response was %02x." % (command, resp_command))
-        if resp_command !=  cmd_upgrade_start and resp_command !=  cmd_upgrade_data and not success:
+        if resp_command !=  cmd_upgrade_start and resp_command != cmd_upgrade_data and not success:
             fail("command failed according to device")
 
     if args.json:
@@ -196,30 +224,23 @@ def handle_response(command, frame, args):
         _json["cmd"] = resp_command;
         _json["status"] = 1; # we're here aren't we?
 
-    if resp_command == cmd_status:
-        v_in, v_out_setting, v_out, i_out, i_limit, power_enabled = unpack_status_response(frame)
-        if power_enabled:
-            enable_str = "on"
-        else:
-            enable_str = "off"
-        v_in_str = "%d.%02d" % (v_in/1000, (v_in%1000)/10)
-        v_out_str = "%d.%02d" % (v_out/1000, (v_out%1000)/10)
-        v_set_str = "%d.%02d" % (v_out_setting/1000, (v_out_setting%1000)/10)
-        i_lim_str = "%d.%03d" % (i_limit/1000, i_limit%1000)
-        i_out_str = "%d.%03d" % (i_out/1000, i_out%1000)
+    if resp_command == cmd_ping:
+        print("Got pong from device")
+    elif resp_command == cmd_query:
+        data = unpack_query_response(frame)
+        enable_str = "on" if data['output_enabled'] else "off"
+        v_in_str = "%d.%02d" % (data['v_in']/1000, (data['v_in']%1000)/10)
+        v_out_str = "%d.%02d" % (data['v_out']/1000, (data['v_out']%1000)/10)
+        i_out_str = "%d.%03d" % (data['i_out']/1000, data['i_out']%1000)
         if args.json:
-            _json["V_in"] = v_in_str;
-            _json["V_out"] = v_out_str;
-            _json["V_set"] = v_set_str;
-            _json["I_lim"] = i_lim_str;
-            _json["I_out"] = i_out_str;
-            _json["enable"] = power_enabled;
+            _json = data
         else:
-            print("V_in  : %s V" % (v_in_str))
-            print("V_set : %s V" % (v_set_str))
-            print("V_out : %s V (%s)" % (v_out_str, enable_str))
-            print("I_lim : %s A" % (i_lim_str))
-            print("I_out : %s A" % (i_out_str))
+            print("%-10s : %s (%s)" % ('Func', data['cur_func'], enable_str))
+            for key, value in data['params'].iteritems():
+                print("  %-8s : %s" % (key, value))
+            print("%-10s : %s V" % ('V_in', v_in_str))
+            print("%-10s : %s V" % ('V_out', v_out_str))
+            print("%-10s : %s A" % ('I_out', i_out_str))
     elif resp_command == cmd_upgrade_start:
     #  *  DPS BL: [cmd_response | cmd_upgrade_start] [<upgrade_status_t>] [<chunk_size:16>]
         cmd = frame.unpack8()
@@ -231,6 +252,77 @@ def handle_response(command, frame, args):
         cmd = frame.unpack8()
         status = frame.unpack8()
         ret_dict["status"] = status
+    elif resp_command == cmd_set_function:
+        cmd = frame.unpack8()
+        status = frame.unpack8()
+        if not status:
+            print("Function does not exist.") # Never reached due to status == 0
+        else:
+            print("Changed function.")
+    elif resp_command == cmd_list_functions:
+        cmd = frame.unpack8()
+        status = frame.unpack8()
+        if status == 0:
+            print("Error, failed to list available functions")
+        else:
+            functions = []
+            name = frame.unpack_cstr()
+            while name != "":
+                functions.append(name)
+                name = frame.unpack_cstr()
+            if args.json:
+                _json["functions"] = functions;
+            else:
+                if len(functions) == 0:
+                    print("Selected OpenDPS supports no functions at all, which is quite weird when you think about it...")
+                elif len(functions) == 1:
+                    print("Selected OpenDPS supports the %s function." % functions[0])
+                else:
+                    temp = ", ".join(functions[:-1])
+                    temp = "%s and %s" % (temp, functions[-1])
+                    print("Selected OpenDPS supports the %s functions." % temp)
+    elif resp_command == cmd_set_parameters:
+        cmd = frame.unpack8()
+        status = frame.unpack8()
+        for p in args.parameter:
+            status = frame.unpack8()
+            parts = p.split("=")
+            # TODO: handle json output
+            print("%s: %s" % (parts[0], "ok" if status == 0 else "unknown parameter" if status == 1 else "out of range" if status == 2 else "unsupported parameter" if status == 3 else "unknown error %d" % (status)))
+    elif resp_command == cmd_list_parameters:
+        cmd = frame.unpack8()
+        status = frame.unpack8()
+        if status == 0:
+            print("Error, failed to list available parameters")
+        else:
+            cur_func = frame.unpack_cstr()
+            parameters = []
+            while not frame.eof():
+                parameter = {}
+                parameter['name'] = frame.unpack_cstr()
+                parameter['unit'] = unit_name(frame.unpack8())
+                parameter['prefix'] = prefix_name(frame.unpacks8())
+                parameters.append(parameter)
+            if args.json:
+                _json["current_function"] = cur_func;
+                _json["parameters"] = parameters
+            else:
+                if len(parameters) == 0:
+                    print("Selected OpenDPS supports no parameters at all for the %s function" % (cur_func))
+                elif len(parameters) == 1:
+                    print("Selected OpenDPS supports the %s parameter (%s%s) for the %s function." % (parameters[0]['name'], parameters[0]['prefix'], parameters[0]['unit'], cur_func))
+                else:
+                    temp = ""
+                    for p in parameters:
+                        temp += p['name'] + ' (%s%s)' % (p['prefix'], p['unit']) + " "
+                    print("Selected OpenDPS supports the %sparameters for the %s function." % (temp, cur_func))
+    elif resp_command == cmd_enable_output:
+        cmd = frame.unpack8()
+        status = frame.unpack8()
+        if status == 0:
+            print("Error, failed to enable/disable output.")
+    else:
+        print("Unknown response %d from device." % (resp_command))
 
     if args.json:
         print(json.dumps(_json, indent=4, sort_keys=True))
@@ -256,7 +348,7 @@ def communicate(comms, frame, args):
     if len(resp) == 0:
         fail("timeout talking to device %s" % (comms._if_name))
     elif args.verbose:
-        print("RX %d bytes [%s]\n" % (len(resp), " ".join("%02x" % b for b in resp)))
+        print("RX %2d bytes [%s]\n" % (len(resp), " ".join("%02x" % b for b in resp)))
     if not comms.close:
         print("Warning: could not close %s" % (comms.name()))
 
@@ -279,7 +371,7 @@ def handle_commands(args):
 
     # The ping command
     if args.ping:
-        communicate(comms, create_ping(), args)
+        communicate(comms, create_cmd(cmd_ping), args)
 
     # The upgrade
     if args.firmware:
@@ -291,32 +383,31 @@ def handle_commands(args):
     if args.unlock:
         communicate(comms, create_lock(0), args)
 
-    # The V_out set command
-    if args.voltage != None:
-        v_out = int(args.voltage)
-        communicate(comms, create_vout(v_out), args)
+    if args.list_functions:
+        communicate(comms, create_cmd(cmd_list_functions), args)
 
-    # The I_max set command
-    if args.current != None:
-        i_limit = int(args.current)
-        communicate(comms, create_ilimit(i_limit), args)
+    if args.list_parameters:
+        communicate(comms, create_cmd(cmd_list_parameters), args)
 
-    # The power enable command
-    if args.power != None:
-        if args.power == "on" or args.power == "1":
-            pwr = 1
-        elif args.power == "off" or args.power == "0":
-            pwr = 0
+    if args.function:
+        communicate(comms, create_set_function(args.function), args)
+
+    if args.enable:
+        if args.enable == 'on' or args.enable == 'off':
+            communicate(comms, create_enable_output(args.enable), args)
         else:
-            pwr = None
-        if pwr == None:
-            fail("please say on/off or 1/0")
+            fail("enable is 'on' or 'off'")
+
+    if args.parameter:
+        payload = create_set_parameter(args.parameter)
+        if payload:
+            communicate(comms, payload, args)
         else:
-            communicate(comms, create_power_enable(pwr), args)
+            fail("malformatted parameters")
 
     # The status set command
-    if args.status:
-        communicate(comms, create_status(), args)
+    if args.query:
+        communicate(comms, create_cmd(cmd_query), args)
 
 """
 Return True if the parameter if_name is an IP address.
@@ -490,17 +581,19 @@ def main():
 
     parser.add_argument('-d', '--device', help="OpenDPS device to connect to. Can be a /dev/tty device or an IP number. If omitted, dpsctl.py will try the environment variable DPSIF", default='')
     parser.add_argument('-S', '--scan', action="store_true", help="Scan for OpenDPS wifi devices")
-    parser.add_argument('-u', '--voltage', type=int, help="Set voltage (millivolt)")
-    parser.add_argument('-i', '--current', type=int, help="Set maximum current (milliampere)")
-    parser.add_argument('-p', '--power', help="Power 'on' or 'off'")
-    parser.add_argument('-P', '--ping', action='store_true', help="Ping device")
+    parser.add_argument('-f', '--function', nargs='?', help="Set active function")
+    parser.add_argument('-F', '--list-functions', action='store_true', help="List available functions")
+    parser.add_argument('-p', '--parameter', nargs='+', help="Set function parameter <name>=<value>")
+    parser.add_argument('-P', '--list-parameters', action='store_true', help="List function parameters of active function")
+    parser.add_argument('-o', '--enable', help="Enable output ('on' or 'off')")
+    parser.add_argument(      '--ping', action='store_true', help="Ping device (causes screen to flash)")
     parser.add_argument('-L', '--lock', action='store_true', help="Lock device keys")
     parser.add_argument('-l', '--unlock', action='store_true', help="Unlock device keys")
-    parser.add_argument('-s', '--status', action='store_true', help="Read voltage/current settings and measurements")
-    parser.add_argument('-j', '--json', action='store_true', help="Output status as JSON")
+    parser.add_argument('-q', '--query', action='store_true', help="Query device settings and measurements")
+    parser.add_argument('-j', '--json', action='store_true', help="Output parameters as JSON")
     parser.add_argument('-v', '--verbose', action='store_true', help="Verbose communications")
     parser.add_argument('-U', '--upgrade', type=str, dest="firmware", help="Perform upgrade of OpenDPS firmware")
-    parser.add_argument('-f', '--force', action='store_true', help="Force upgrade even if dpsctl complains about the firmware")
+    parser.add_argument(      '--force', action='store_true', help="Force upgrade even if dpsctl complains about the firmware")
 
     args, unknown = parser.parse_known_args()
 

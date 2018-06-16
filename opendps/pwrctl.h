@@ -45,7 +45,7 @@ bool pwrctl_set_vout(uint32_t value_mv);
 
 /**
   * @brief Set current output
-  * @param current_ma current in milli ampere
+ * @param value_ma current in milli ampere
   * @retval true requested current was within specs
   */
 bool pwrctl_set_iout(uint32_t value_ma);

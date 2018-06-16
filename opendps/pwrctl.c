@@ -159,7 +159,7 @@ bool pwrctl_vout_enabled(void)
   */
 uint32_t pwrctl_calc_vin(uint16_t raw)
 {
-    return 16.746*(raw-1) + 64.112; // -1 becuse the value needed trimming
+    return 16.746*(raw-1) + 64.112; /** @todo: -1 becuse the value needed trimming */
 }
 
 /**

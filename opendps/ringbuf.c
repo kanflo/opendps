@@ -37,6 +37,9 @@ void ringbuf_init(ringbuf_t *ring, uint8_t *buf, uint32_t size)
 	ring->size = size/2;
 	ring->read = 0;
 	ring->write = 0;
+#ifdef DPS_EMULATOR
+	pthread_mutex_init(&ring->mutex, NULL);
+#endif // DPS_EMULATOR
 }
 
 /**
@@ -47,12 +50,19 @@ void ringbuf_init(ringbuf_t *ring, uint8_t *buf, uint32_t size)
   */
 bool ringbuf_put(ringbuf_t *ring, uint16_t word)
 {
+    bool success = false;
+#ifdef DPS_EMULATOR
+	pthread_mutex_lock(&ring->mutex);
+#endif // DPS_EMULATOR
 	if (((ring->write + 1) % ring->size) != ring->read) {
 		ring->buf[ring->write++] = word;
 		ring->write %= ring->size;
-		return true;
+		success = true;
 	}
-	return false;
+#ifdef DPS_EMULATOR
+	pthread_mutex_unlock(&ring->mutex);
+#endif // DPS_EMULATOR
+	return success;
 }
 
 /**
@@ -63,10 +73,17 @@ bool ringbuf_put(ringbuf_t *ring, uint16_t word)
   */
 bool ringbuf_get(ringbuf_t *ring, uint16_t *word)
 {
+    bool success = false;
+#ifdef DPS_EMULATOR
+	pthread_mutex_lock(&ring->mutex);
+#endif // DPS_EMULATOR
 	if (ring->read != ring->write) {
 		*word = ring->buf[ring->read++];
 		ring->read %= ring->size;
-		return true;
+		success = true;
 	}
-	return false;
+#ifdef DPS_EMULATOR
+	pthread_mutex_unlock(&ring->mutex);
+#endif // DPS_EMULATOR
+	return success;
 }

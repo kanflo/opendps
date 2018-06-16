@@ -24,10 +24,14 @@
 
 #include <stdint.h>
 #include <stdbool.h>
+#include <stdlib.h>
+#include <string.h>
 #include "hw.h"
 #include "func_cv.h"
 #include "uui.h"
 #include "uui_number.h"
+#include "dbg_printf.h"
+#include "mini-printf.h"
 #include "cv.h"
 
 /*
@@ -44,6 +48,8 @@ static void current_changed(ui_number_t *item);
 static void cv_tick(void);
 static void past_save(past_t *past);
 static void past_restore(past_t *past);
+static set_param_status_t set_parameter(char *name, char *value);
+static set_param_status_t get_parameter(char *name, char *value, uint32_t value_len);
 
 /* We need to keep copies of the user settings as the value in the UI will
  * be replaced with measurements when output is active
@@ -104,9 +110,82 @@ ui_screen_t cv_screen = {
     .past_save = &past_save,
     .past_restore = &past_restore,
     .tick = &cv_tick,
+    .set_parameter = &set_parameter,
+    .get_parameter = &get_parameter,
     .num_items = 2,
+    .parameters = {
+        {
+            .name = "voltage",
+            .unit = unit_volt,
+            .prefix = si_milli
+        },
+        {
+            .name = "current",
+            .unit = unit_ampere,
+            .prefix = si_milli
+        },
+        {
+            .name = '\0' /** Terminator */
+        },
+    },
     .items = { (ui_item_t*) &cv_voltage, (ui_item_t*) &cv_current }
 };
+
+/**
+ * @brief      Set function parameter
+ *
+ * @param[in]  name   name of parameter
+ * @param[in]  value  value of parameter as a string - always in SI units
+ *
+ * @retval     set_param_status_t status code 
+ */
+static set_param_status_t set_parameter(char *name, char *value)
+{
+    int32_t ivalue = atoi(value);
+    if (strcmp("voltage", name) == 0 || strcmp("u", name) == 0) {
+        if (ivalue < cv_voltage.min || ivalue > cv_voltage.max) {
+            emu_printf("[CV] Voltage %d is out of range (min:%d max:%d)\n", ivalue, cv_voltage.min, cv_voltage.max);
+            return ps_range_error;
+        }
+        emu_printf("[CV] Setting voltage to %d\n", ivalue);
+        /** value received in millivolt, module internal representation is centivolt */
+        cv_voltage.value = ivalue / 10;
+        voltage_changed(&cv_voltage);
+        return ps_ok;
+    } else if (strcmp("current", name) == 0 || strcmp("i", name) == 0) {
+        if (ivalue < cv_current.min || ivalue > cv_current.max) {
+            emu_printf("[CV] Current %d is out of range (min:%d max:%d)\n", ivalue, cv_current.min, cv_current.max);
+            return ps_range_error;
+        }
+        emu_printf("[CV] Setting current to %d\n", ivalue);
+        cv_current.value = ivalue;
+        current_changed(&cv_current);
+        return ps_ok;
+    }
+    return ps_unknown_name;
+}
+
+/**
+ * @brief      Get function parameter
+ *
+ * @param[in]  name       name of parameter
+ * @param[in]  value      value of parameter as a string - always in SI units
+ * @param[in]  value_len  length of value buffer
+ *
+ * @retval     set_param_status_t status code 
+ */
+static set_param_status_t get_parameter(char *name, char *value, uint32_t value_len)
+{
+    if (strcmp("voltage", name) == 0 || strcmp("u", name) == 0) {
+        /** value returned in millivolt, module internal representation is centivolt */
+        (void) mini_snprintf(value, value_len, "%d", 10 * (pwrctl_vout_enabled() ? saved_u : cv_voltage.value));
+        return ps_ok;
+    } else if (strcmp("current", name) == 0 || strcmp("i", name) == 0) {
+        (void) mini_snprintf(value, value_len, "%d", pwrctl_vout_enabled() ? saved_i : cv_current.value);
+        return ps_ok;
+    }
+    return ps_unknown_name;
+}
 
 /**
  * @brief      Callback for when the function is enabled
@@ -115,6 +194,7 @@ ui_screen_t cv_screen = {
  */
 static void cv_enable(bool enabled)
 {
+    emu_printf("[CV] %s output\n", enabled ? "Enable" : "Disable");
     if (enabled) {
         /** Display will now show the current values, keep the user setting saved */
         saved_u = cv_voltage.value;
@@ -201,11 +281,11 @@ static void past_restore(past_t *past)
  */
 static void cv_tick(void)
 {
+    uint16_t i_out_raw, v_in_raw, v_out_raw;
+    hw_get_adc_values(&i_out_raw, &v_in_raw, &v_out_raw);
+    /** Continously update max voltage output value */
+    cv_voltage.max = pwrctl_calc_vin(v_in_raw);
     if (pwrctl_vout_enabled()) {
-        uint16_t i_out_raw, v_in_raw, v_out_raw;
-        hw_get_adc_values(&i_out_raw, &v_in_raw, &v_out_raw);
-        /** Continously update max voltage output value */
-        cv_voltage.max = pwrctl_calc_vin(v_in_raw) / 10;
         if (cv_voltage.ui.has_focus) {
             /** If the voltage setting has focus, make sure we're displaying
               * the desired setting and not the current output value. */

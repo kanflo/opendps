@@ -50,10 +50,15 @@
 #include "pastunits.h"
 #include "uui.h"
 #include "uui_number.h"
+#include "opendps.h"
 #include "func_cv.h"
 #ifdef CONFIG_CC_ENABLE
 #include "func_cc.h"
 #endif // CONFIG_CC_ENABLE
+
+#ifdef DPS_EMULATOR
+#include "dpsemul.h"
+#endif // DPS_EMULATOR
 
 #define TFT_HEIGHT  (128)
 #define TFT_WIDTH   (128)
@@ -87,9 +92,6 @@ static uint16_t bg_color;
 static uint32_t ui_width;
 static uint32_t ui_height;
 
-/** Maximum i_limit setting is depends on your DPS model, eg 5A for the DPS5005 */
-static uint32_t max_i_limit;
-
 /** Used to make the screen flash */
 static uint32_t tft_flashing_period;
 static uint32_t tft_flash_counter;
@@ -116,16 +118,13 @@ static past_t g_past = {
     .blocks = {0x0800f800, 0x0800fc00}
 };
 
-/** The UI */
+/** The function UI displaying the current active function */
 static uui_t func_ui;
+/** The main UI displaying input voltage and such */
 static uui_t main_ui;
 
 
 static void main_ui_tick(void);
-void ui_update_power_status(bool enabled);
-void ui_update_wifi_status(wifi_status_t status);
-void ui_handle_ping(void);
-void ui_lock(bool lock);
 
 /* This is the definition of the voltage item in the UI */
 ui_number_t input_voltage = {
@@ -154,6 +153,112 @@ ui_screen_t main_screen = {
 };
 
 /**
+ * @brief      List function names of device
+ *
+ * @param      names  Output vector holding pointers to the names
+ * @param[in]  size   Number of items in the output array
+ *
+ * @return     Number of items returned
+ */
+uint32_t opendps_get_function_names(char* names[], size_t size)
+{
+    uint32_t i;
+    for (i = 0; i < func_ui.num_screens && i < size; i++) {
+        names[i] = func_ui.screens[i]->name;
+    }
+    return i;
+}
+
+/**
+ * @brief      Get current function name
+ *
+ * @return     Current function name :)
+ */
+const char* opendps_get_curr_function_name(void)
+{
+    return (const char*) func_ui.screens[func_ui.cur_screen]->name;
+}
+
+/**
+ * @brief      List parameter names of current function
+ *
+ * @param      parameters  Output vector holding pointers to the parameters
+ *
+ * @return     Number of items returned
+ */
+uint32_t opendps_get_curr_function_params(ui_parameter_t **parameters)
+{
+    uint32_t i = 0;
+    *parameters = (ui_parameter_t*) &func_ui.screens[func_ui.cur_screen]->parameters;
+    while ((*parameters)[i].name[0] != 0) {
+        i++;
+    }
+    return i;
+}
+
+/**
+ * @brief      Return value of named parameter for current function
+ *
+ * @param      name       Parameter name
+ * @param[in]  value      String representation of parameter value
+ * @param      value_len  Length of value buffer
+ *
+ * @return     true if param exists
+ */
+bool opendps_get_curr_function_param_value(char *name, char *value, uint32_t value_len)
+{
+    if (func_ui.screens[func_ui.cur_screen]->get_parameter) {
+        return ps_ok == func_ui.screens[func_ui.cur_screen]->get_parameter(name, value, value_len);
+    }
+    return false;
+}
+
+/**
+ * @brief      Set parameter to value
+ *
+ * @param      name   Name of parameter
+ * @param      value  Value as a string
+ *
+ * @return     Status of the operation
+ */
+set_param_status_t opendps_set_parameter(char *name, char *value)
+{
+    set_param_status_t status = ps_not_supported;
+    if (func_ui.screens[func_ui.cur_screen]->set_parameter) {
+        status = func_ui.screens[func_ui.cur_screen]->set_parameter(name, value);
+        if (status == ps_ok) {
+            uui_refresh(&func_ui, true);
+        }
+    }
+    return status;
+}
+
+/**
+ * @brief      Enable output of current function
+ *
+ * @param[in]  enable  Enable or disable
+ *
+ * @return     True if enable was successul
+ */
+bool opendps_enable_output(bool enable)
+{
+    if (func_ui.screens[func_ui.cur_screen]->enable) {
+        if (func_ui.screens[func_ui.cur_screen]->is_enabled != enable) {
+            event_put(event_button_enable, press_short); /** @todo: call directly */
+        }
+    } else {
+        return false;
+    }
+    return true;
+}
+
+bool opendps_enable_function_idx(uint32_t index)
+{
+    uui_set_screen(&func_ui, index);
+    return true; /** @todo: handle failure */
+}
+
+/**
  * @brief      Main UI UUI tick handler :)
  */
 static void main_ui_tick(void)
@@ -175,7 +280,6 @@ static void ui_init(void)
     bg_color = BLACK;
     ui_width = TFT_WIDTH;
     ui_height = TFT_HEIGHT;
-    max_i_limit = CONFIG_DPS_MAX_CURRENT;
 
     uui_init(&func_ui, &g_past);
     func_cv_init(&func_ui);
@@ -201,7 +305,7 @@ static void ui_init(void)
 static void ui_hande_event(event_t event, uint8_t data)
 {
     if (event == event_rot_press && data == press_long) {
-        ui_lock(!is_locked);
+        opendps_lock(!is_locked);
         return;
     } else if (event == event_button_sel && data == press_long) {
         tft_invert(!tft_is_inverted());
@@ -238,7 +342,7 @@ static void ui_hande_event(event_t event, uint8_t data)
                 dbg_printf("%10u OCP: trig:%umA limit:%umA cur:%umA\n", (uint32_t) (get_ticks()), pwrctl_calc_iout(trig), pwrctl_calc_iout(pwrctl_i_limit_raw), pwrctl_calc_iout(i_out_raw));
 #endif // CONFIG_OCP_DEBUGGING
                 ui_flash(); /** @todo When OCP kicks in, show last I_out on screen */
-                ui_update_power_status(false);
+                opendps_update_power_status(false);
                 uui_handle_screen_event(&func_ui, event);
             }
             break;
@@ -267,7 +371,7 @@ static void ui_hande_event(event_t event, uint8_t data)
   * @param lock true for lock, false for unlock
   * @retval none
   */
-void ui_lock(bool lock)
+void opendps_lock(bool lock)
 {
     if (is_locked != lock) {
         is_locked = lock;
@@ -351,7 +455,7 @@ static void ui_tick(void)
     }
 
     if (wifi_status == wifi_connecting && get_ticks() > WIFI_CONNECT_TIMEOUT) {
-        ui_update_wifi_status(wifi_off);
+        opendps_update_wifi_status(wifi_off);
     }
 }
 
@@ -359,7 +463,7 @@ static void ui_tick(void)
   * @brief Handle ping
   * @retval none
   */
-void ui_handle_ping(void)
+void opendps_handle_ping(void)
 {
     ui_flash();
 }
@@ -369,7 +473,7 @@ void ui_handle_ping(void)
   * @param status new wifi status
   * @retval none
   */
-void ui_update_wifi_status(wifi_status_t status)
+void opendps_update_wifi_status(wifi_status_t status)
 {
     if (wifi_status != status) {
         wifi_status = status;
@@ -402,7 +506,7 @@ void ui_update_wifi_status(wifi_status_t status)
   * @param enabled new power status
   * @retval none
   */
-void ui_update_power_status(bool enabled)
+void opendps_update_power_status(bool enabled)
 {
     if (is_enabled != enabled) {
         is_enabled = enabled;
@@ -511,6 +615,9 @@ static void event_handler(void)
             hw_longpress_check();
             ui_tick();
         } else {
+            if (event) {
+                emu_printf(" Event %d 0x%02x\n", event, data);
+            }
             switch(event) {
                 case event_none:
                     dbg_printf("Weird, should not receive 'none events'\n");
@@ -532,7 +639,7 @@ static void event_handler(void)
   * @brief Ye olde main
   * @retval preferably none
   */
-int main(void)
+int main(int argc, char const *argv[])
 {
     hw_init();
     pwrctl_init(); // Must be after DAC init
@@ -546,12 +653,19 @@ int main(void)
     tft_init();
     delay_ms(50); // Without this delay we will observe some flickering
     tft_clear();
+#ifdef DPS_EMULATOR
+    dps_emul_init(&g_past, argc, argv);
+#else // DPS_EMULATOR
+    (void) argc;
+    (void) argv;
     g_past.blocks[0] = 0x0800f800;
     g_past.blocks[1] = 0x0800fc00;
+#endif // DPS_EMULATOR
     if (!past_init(&g_past)) {
         dbg_printf("Error: past init failed!\n");
         /** @todo Handle past init failure */
     }
+
     check_master_reset();
     read_past_settings();
     ui_init();
@@ -564,7 +678,7 @@ int main(void)
       * ui module will turn off the wifi icon after 10s to save the user's
       * sanity
       */
-    ui_update_wifi_status(wifi_connecting);
+    opendps_update_wifi_status(wifi_connecting);
 #endif // CONFIG_WIFI
 
 #ifdef CONFIG_SPLASH_SCREEN

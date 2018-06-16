@@ -38,15 +38,20 @@
 
 typedef enum {
     cmd_ping = 1,
-    cmd_set_vout,
-    cmd_set_ilimit,
-    cmd_status,
-    cmd_power_enable,
+    __obsolete_cmd_set_vout, /** Kept for keeping enum and Python code in sync */
+    __obsolete_cmd_set_ilimit,
+    cmd_query,
+    __obsolete_cmd_power_enable,
     cmd_wifi_status,
     cmd_lock,
     cmd_ocp_event,
     cmd_upgrade_start,
     cmd_upgrade_data,
+    cmd_set_function,
+    cmd_enable_output,
+    cmd_list_functions,
+    cmd_set_parameters,
+    cmd_list_parameters,
     cmd_response = 0x80
 } command_t;
 
@@ -79,6 +84,14 @@ typedef enum {
     reason_app_start_failed /** App returned */
 } upgrade_reason_t;
 
+/** Used in cmd_set_parameters responses */
+typedef enum {
+    sp_ok = 1,
+    sp_unknown_parameter,
+    sp_illegal_value
+} set_parameter_status_t;
+
+
 #define MAX_FRAME_LENGTH (2*16) // Based on the cmd_status reponse frame (fully escaped)
 
 /*
@@ -95,7 +108,7 @@ uint32_t protocol_create_power_enable(uint8_t *frame, uint32_t length, uint8_t e
 uint32_t protocol_create_vout(uint8_t *frame, uint32_t length, uint16_t vout_mv);
 uint32_t protocol_create_ilimit(uint8_t *frame, uint32_t length, uint16_t ilimit_ma);
 uint32_t protocol_create_status(uint8_t *frame, uint32_t length);
-uint32_t protocol_create_status_response(uint8_t *frame, uint32_t length, uint16_t v_in, uint16_t v_out_setting, uint16_t v_out, uint16_t i_out, uint16_t i_limit, uint8_t power_enabled);
+uint32_t protocol_create_query_response(uint8_t *frame, uint32_t length, uint16_t v_in, uint16_t v_out_setting, uint16_t v_out, uint16_t i_out, uint16_t i_limit, uint8_t power_enabled);
 uint32_t protocol_create_wifi_status(uint8_t *frame, uint32_t length, wifi_status_t status);
 uint32_t protocol_create_lock(uint8_t *frame, uint32_t length, uint8_t locked);
 uint32_t protocol_create_ocp(uint8_t *frame, uint32_t length, uint16_t i_cut);
@@ -111,7 +124,7 @@ bool protocol_unpack_response(uint8_t *payload, uint32_t length, command_t *cmd,
 bool protocol_unpack_power_enable(uint8_t *payload, uint32_t length, uint8_t *enable);
 bool protocol_unpack_vout(uint8_t *payload, uint32_t length, uint16_t *vout_mv);
 bool protocol_unpack_ilimit(uint8_t *payload, uint32_t length, uint16_t *ilimit_ma);
-bool protocol_unpack_status_response(uint8_t *payload, uint32_t length, uint16_t *v_in, uint16_t *v_out_setting, uint16_t *v_out, uint16_t *i_out, uint16_t *i_limit, uint8_t *power_enabled);
+bool protocol_unpack_query_response(uint8_t *payload, uint32_t length, uint16_t *v_in, uint16_t *v_out_setting, uint16_t *v_out, uint16_t *i_out, uint16_t *i_limit, uint8_t *power_enabled);
 bool protocol_unpack_wifi_status(uint8_t *payload, uint32_t length, wifi_status_t *status);
 bool protocol_unpack_lock(uint8_t *payload, uint32_t length, uint8_t *locked);
 bool protocol_unpack_ocp(uint8_t *payload, uint32_t length, uint16_t *i_cut);
@@ -128,22 +141,6 @@ bool protocol_unpack_upgrade_start(uint8_t *payload, uint32_t length, uint16_t *
  *  DPS:    [cmd_response | cmd_ping] [1]
  *
  *
- * === Setting desired out voltage ===
- * The voltage is specified in millivolts. The success response field will be
- * 0 if the requested voltage was outside of what the DPS can provide.
- *
- *  HOST:   [cmd_set_vout] [vout_mv(15:8)] [vout_mv(7:0)]
- *  DPS:    [cmd_response | cmd_set_vout] [<success>]
- *
- *
- * === Setting maximum current limit ===
- * The current is specified in milliampere. The success response field will be
- * 0 if the requested current was outside of what the DPS can provide.
- *
- *  HOST:   [cmd_set_ilimit] [ilimit_ma(15:8)] [ilimit_ma(7:0)]
- *  DPS:    [cmd_response | cmd_set_ilimit] [<success>]
- *
- *
  * === Reading the status of the DPS ===
  * This command retrieves V_in, V_out, I_out, I_limit, power enable. Voltage
  * and currents are all in the 'milli' range.
@@ -152,12 +149,53 @@ bool protocol_unpack_upgrade_start(uint8_t *payload, uint32_t length, uint16_t *
  *  DPS:    [cmd_response | cmd_status] [1] [V_in(15:8)] [V_in(7:0)] [V_out_setting(15:8)] [V_out_setting(7:0)] [V_out(15:8)] [V_out(7:0)] [I_out(15:8)] [I_out(7:0)] [I_limit(15:8)] [I_limit(7:0)] [<power enable>]
  *
  *
- * === Enabling/disabling power output ===
- * This command is used to enable or disable power output. Enable = 1 will
- * obviously enable :)
+ * === Changing active function ===
+ * Remember functions are the generic term for the functions your OpenDPS suports
+ * (constant voltage, constant current, ...) and the cmd_set_function command
+ * sets the active function. The change will be reflected on the display and
+ * the current function will be turned off. The function name is sent in ascii
+ * and must match a function of one of the registered screens.
  *
- *  HOST:   [cmd_power_enable] [<enable>]
- *  DPS:    [cmd_response | cmd_power_enable] [1]
+ *  HOST:   [cmd_set_function] [<function name>]
+ *  DPS:    [cmd_response | cmd_set_function] [<status>]
+ *
+ * <status> will be 1 or 0 depending on if the function is available or not
+ *
+ *
+ * === Listing available functions ===
+ * This command is used to list the available functions on the OpenDPS.
+ * <status> is always 1.
+ *
+ *  HOST:   [cmd_list_functions]
+ *  DPS:    [cmd_response | cmd_list_functions]  [<status>] <func name 1> \0 <func name 2> \0 ...
+ *
+ *
+ * === Setting function parameters ===
+ * Each function can be controlled using a set of named parameters. The set
+ * parameter command supports piggybacking of several parameters sent to the
+ * current active function. Both names and values are sent in ascii.
+ * The reponse will contain as many statuses as parmeters received informing
+ * the host of whether the parameter was successfully set, was out of bounds
+ * or did not exist at all. The notation of named parametes decouples dpsctl
+ * from the OpenDPS device; you may add any functions and parameters without
+ * the need for updating dpsctl.
+ *
+ *  HOST:   [cmd_set_parameters <param 1> \0 <value 1> \0 <param 2> \0 <value 2> ... ]
+ *  DPS:    [cmd_response | cmd_set_parameters] <param 1 > <set_parameter_status_t 1> <param 2> <set_parameter_status_t 2> ...
+ *
+ *
+ * === Listing function parameters ===
+ * This command replaces the old cmd_status command and returns a list of
+ * parameters associated with the current active function, their values and a
+ * list of system parameters:
+ *
+ *   - Power out status (1/0)
+ *   - Input voltage (V.VV)
+ *   - Output voltage (V.VV)
+ *   - Output current (A.AAA)
+ *
+ *  HOST:   [cmd_list_parameters]
+ *  DPS:    [cmd_response | cmd_list_parameters] <param 1> \0 <value 1> \0 <param 2> \0 <value 2> ... ]
  *
  *
  * === Setting wifi status ===

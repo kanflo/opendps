@@ -28,11 +28,18 @@
 #include <stdint.h>
 #include <stdbool.h>
 
+#ifdef DPS_EMULATOR
+ #include <pthread.h>
+#endif // DPS_EMULATOR
+
 typedef struct {
 	uint16_t *buf;
 	uint32_t size;
 	uint32_t read;
 	uint32_t write;
+#ifdef DPS_EMULATOR
+ pthread_mutex_t mutex;
+#endif // DPS_EMULATOR
 } ringbuf_t;
 
 /**
