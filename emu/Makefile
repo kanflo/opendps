@@ -1,7 +1,16 @@
 TARGET = dpsemu
 LIBS = -lm -lpthread
+
+
 CC = gcc
 CFLAGS = -m32 -g -Wall -I. -I../opendps -DCONFIG_DPS_MAX_CURRENT=5000 -Ddbg_printf=printf -DDPS5005 -DDPS_EMULATOR -Wmissing-braces
+
+ifeq ($(OS),Windows_NT)  #Changes required to build on windows with MinGW
+	TARGET = dpsemu.exe
+	LIBS = -lm -lpthreadGC2 -lWs2_32
+	CFLAGS += -DHAVE_STRUCT_TIMESPEC
+endif
+
 
 .PHONY: default all clean
 

@@ -27,11 +27,22 @@
 #include <stdbool.h>
 #include <stdlib.h>
 #include <string.h>
+#ifdef __MINGW32__
+  #if !(__has_include(<pthread.h>))
+    #error MinGW users. Please install Pthreads-w32 from www.sourceware.org/pthreads-win32/
+  #endif
+#endif
 #include <pthread.h>
 #include <unistd.h>
 #include <semaphore.h>
-#include <sys/socket.h>
-#include <arpa/inet.h>
+#ifdef __MINGW32__
+  #include <Winsock2.h>  //MinGW needs to use Winsocks
+  #include <ws2tcpip.h>
+#else
+  #include <sys/socket.h>
+  #include <arpa/inet.h>
+#endif
+
 #include "dpsemul.h"
 #include "flash.h"
 #include "event.h"
@@ -167,6 +178,21 @@ void* event_thread(void *arg)
 void dps_emul_init(past_t *past, int argc, char const *argv[])
 {
 	printf("OpenDPS Emulator\n");
+
+#ifdef __MINGW32__
+
+  setbuf(stdout, NULL); //Fix for No Console Output in Eclipse with CDT in Windows
+
+  WSADATA wsaData;
+  int iResult;
+
+  //MinGW needs to use Winsocks and they need to be initialized
+  iResult = WSAStartup(MAKEWORD(2,2), &wsaData);
+  if (iResult != 0) {
+    printf("Error! WSAStartup failed: %d\n", iResult);
+    }
+
+#endif
 
     pthread_create(&udp_th, NULL, comm_thread, "UDP comms thread");
     pthread_create(&event_th, NULL, event_thread, "UDP event thread");
