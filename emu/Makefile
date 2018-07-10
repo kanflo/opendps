@@ -1,7 +1,7 @@
 TARGET = dpsemu
 LIBS = -lm -lpthread
 CC = gcc
-CFLAGS = -m32 -g -Wall -I. -I../opendps -DCONFIG_DPS_MAX_CURRENT=5000 -Ddbg_printf=printf -DDPS5005 -DDPS_EMULATOR -Wmissing-braces
+CFLAGS = -m32 -g -Wall -I. -I../opendps -DCONFIG_DPS_MAX_CURRENT=5000 -Ddbg_printf=printf -DDPS5005 -DDPS_EMULATOR -DCONFIG_CC_ENABLE -Wmissing-braces
 
 .PHONY: default all clean
 
@@ -30,6 +30,7 @@ SRCS = opendps.c \
 	font-0.c \
 	font-1.c \
 	func_cv.c \
+	func_cc.c \
 	misc.c \
 
 #OBJECTS = $(patsubst ../%, %, $(patsubst %.c, %.o, $(SRCS)))
