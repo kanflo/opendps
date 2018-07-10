@@ -15,3 +15,5 @@ html/
 .gdb_history
 .DS_Store
 xcuserdata/
+emu/dpsemu
+emu/dpsemu.exe
