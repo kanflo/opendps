@@ -41,6 +41,7 @@
 #include "serialhandler.h"
 #include "ili9163c.h"
 #include "padlock.h"
+#include "thermometer.h"
 #include "power.h"
 #include "wifi.h"
 #include "font-0.h"
@@ -52,6 +53,7 @@
 #include "uui_number.h"
 #include "opendps.h"
 #include "func_cv.h"
+#include "my_assert.h"
 #ifdef CONFIG_CC_ENABLE
 #include "func_cc.h"
 #endif // CONFIG_CC_ENABLE
@@ -108,10 +110,23 @@ static uint32_t lock_flash_counter;
 /** Current icon settings */
 static wifi_status_t wifi_status;
 static bool is_locked;
+static bool is_temperature_locked;
 static bool is_enabled;
 
 /** Last settings written to past */
 static bool     last_tft_inv_setting;
+
+/** Temperature readings, invalid at start */
+static int16_t temp1 = INVALID_TEMPERATURE;
+static int16_t temp2 = INVALID_TEMPERATURE;
+
+#ifndef CONFIG_TEMPERATURE_ALERT_LEVEL
+ #define CONFIG_TEMPERATURE_ALERT_LEVEL  (500)
+#endif // CONFIG_TEMPERATURE_ALERT_LEVEL
+
+/** Temperature when the DPS goes into shutdown mode,
+    in x10 degrees whatever-temperature-unit-you-prefer */
+static int16_t shutdown_temperature = CONFIG_TEMPERATURE_ALERT_LEVEL;
 
 /** Our parameter storage */
 static past_t g_past = {
@@ -242,11 +257,12 @@ set_param_status_t opendps_set_parameter(char *name, char *value)
  */
 bool opendps_enable_output(bool enable)
 {
-    if (func_ui.screens[func_ui.cur_screen]->enable) {
+    if (!is_temperature_locked && func_ui.screens[func_ui.cur_screen]->enable) {
         if (func_ui.screens[func_ui.cur_screen]->is_enabled != enable) {
-            event_put(event_button_enable, press_short); /** @todo: call directly */
+            event_put(event_button_enable, press_short); /** @todo: call directly as this will not work for temperature alarm */
         }
     } else {
+        emu_printf("Output enable failed %s\n", is_temperature_locked ? "due to high temperature" : "");
         return false;
     }
     return true;
@@ -254,8 +270,12 @@ bool opendps_enable_output(bool enable)
 
 bool opendps_enable_function_idx(uint32_t index)
 {
-    uui_set_screen(&func_ui, index);
-    return true; /** @todo: handle failure */
+    if (is_temperature_locked) {
+        return false;
+    } else {
+        uui_set_screen(&func_ui, index);
+        return true; /** @todo: handle failure */
+    }
 }
 
 /**
@@ -382,6 +402,34 @@ void opendps_lock(bool lock)
         } else {
             lock_visible = false;
             tft_fill(XPOS_LOCK, ui_height-padlock_height, padlock_width, padlock_height, bg_color);
+        }
+    }
+}
+
+/**
+  * @brief Lock or unlock the UI due to a temperature alarm
+  * @param lock true for lock, false for unlock
+  * @retval none
+  */
+void opendps_temperature_lock(bool lock)
+{
+    if (is_temperature_locked != lock) {
+        is_temperature_locked = lock;
+        if (is_temperature_locked) {
+            emu_printf("DPS disabled due to temperature\n");
+            /** @todo Right now we cannot use opendps_enable_output here */
+            uui_disable_cur_screen(&func_ui);
+            tft_clear();
+            uui_show(&func_ui, false);
+            uui_show(&main_ui, false);
+            tft_blit((uint16_t*) thermometer, thermometer_width, thermometer_height, 1+(ui_width-thermometer_width)/2, 30);
+        } else {
+            emu_printf("DPS enabled due to temperature\n");
+            tft_clear();
+            uui_show(&func_ui, true);
+            uui_show(&main_ui, true);
+            uui_refresh(&func_ui, true);
+            uui_refresh(&main_ui, true);
         }
     }
 }
@@ -516,6 +564,37 @@ void opendps_update_power_status(bool enabled)
             tft_fill(ui_width-power_width, ui_height-power_height, power_width, power_height, bg_color);
         }
     }
+}
+
+/**
+  * @brief Set temperatures
+  * @param temp1 first temperature we can deal with
+  * @param temp2 second temperature we can deal with
+  * @retval none
+  */
+void opendps_set_temperature(int16_t _temp1, int16_t _temp2)
+{
+    temp1 = _temp1;
+    temp2 = _temp2;
+    bool alert = temp1 > shutdown_temperature || temp2 > shutdown_temperature;
+    opendps_temperature_lock(alert);
+    emu_printf("Got temperature %d and %d %s\n", temp1, temp2, alert ? "[ALERT]" : "");
+}
+
+/**
+  * @brief Get temperatures
+  * @param temp1 first temperature we can deal with
+  * @param temp2 second temperature we can deal with
+  * @retval none
+  */
+void opendps_get_temperature(int16_t *_temp1, int16_t *_temp2, bool *temp_shutdown)
+{
+    assert(_temp1);
+    assert(_temp2);
+    assert(temp_shutdown);
+    *_temp1 = temp1;
+    *_temp2 = temp2;
+    *temp_shutdown = is_temperature_locked;
 }
 
 #ifdef CONFIG_SPLASH_SCREEN

@@ -40,6 +40,7 @@ cmd_enable_output = 12
 cmd_list_functions = 13
 cmd_set_parameters = 14
 cmd_list_parameters = 15
+cmd_temperature_report = 16
 cmd_response = 0x80
 
 # wifi_status_t
@@ -153,6 +154,16 @@ def create_upgrade_data(data):
     f.end()
     return f
 
+def create_temperature(temperature):
+    print("Sending temperature %.1f and %.1f" % (temperature, -temperature))
+    temperature = int(10 * temperature)
+    f = uFrame()
+    f.pack8(cmd_temperature_report)
+    f.pack16(temperature)
+    f.pack16(-temperature)
+    f.end()
+    return f
+
 """
 Helpers for unpacking frames.
 
@@ -186,6 +197,17 @@ def unpack_query_response(uframe):
     data['v_out'] = uframe.unpack16()
     data['i_out'] = uframe.unpack16()
     data['output_enabled'] = uframe.unpack8()
+    temp1 = int(uframe.unpack16())
+    if temp1 != 0xffff:
+        if temp1 & 0x8000:
+            temp1 -= 0x10000
+        data['temp1'] = float(temp1)/10
+    temp2 = int(uframe.unpack16())
+    if temp2 != 0xffff:
+        if temp2 & 0x8000:
+            temp2 -= 0x10000
+        data['temp2'] = float(temp2)/10
+    data['temp_shutdown'] = uframe.unpack8()
     data['cur_func'] = uframe.unpack_cstr()
     data['params'] = {}
     while not uframe.eof():
@@ -205,4 +227,21 @@ def unpack_lock(uframe):
 # Returns i_cut
 def unpack_ocp(uframe):
     return uframe.unpack16()
+
+# Returns a dictionary of the frame contents
+def unpack_temperature_report(uframe):
+    data = {}
+    data['command'] = uframe.unpack8()
+    data['status'] = uframe.unpack8()
+    data['v_in'] = uframe.unpack16()
+    data['v_out'] = uframe.unpack16()
+    data['i_out'] = uframe.unpack16()
+    data['output_enabled'] = uframe.unpack8()
+    data['cur_func'] = uframe.unpack_cstr()
+    data['params'] = {}
+    while not uframe.eof():
+        key = uframe.unpack_cstr()
+        value = uframe.unpack_cstr()
+        data['params'][key] = value
+    return data
 

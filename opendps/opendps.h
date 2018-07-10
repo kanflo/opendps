@@ -27,6 +27,7 @@
 
 #include <stdint.h>
 #include <stdbool.h>
+#include "protocol.h"
 
 /** Max number of parameters to a function */
 #define OPENDPS_MAX_PARAMETERS  (8)
@@ -122,5 +123,30 @@ void opendps_handle_ping(void);
   * @retval none
   */
 void opendps_lock(bool lock);
+
+/**
+  * @brief Lock or unlock the UI due to a temperature alarm
+  * @param lock true for lock, false for unlock
+  * @retval none
+  */
+void opendps_temperature_lock(bool lock);
+
+/**
+  * @brief Set temperatures
+  * @param temp1 first temperature we can deal with
+  * @param temp2 second temperature we can deal with
+  * @retval none
+  */
+void opendps_set_temperature(int16_t temp1, int16_t temp2);
+
+
+/**
+  * @brief Get temperatures
+  * @param temp1 first temperature we can deal with
+  * @param temp2 second temperature we can deal with
+  * @param temp_shutdown true if shutdown due to high temperature
+  * @retval none
+  */
+void opendps_get_temperature(int16_t *temp1, int16_t *temp2, bool *temp_shutdown);
 
 #endif // __OPENDPS_H__

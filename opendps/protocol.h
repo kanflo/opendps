@@ -52,6 +52,7 @@ typedef enum {
     cmd_list_functions,
     cmd_set_parameters,
     cmd_list_parameters,
+    cmd_temperature_report,
     cmd_response = 0x80
 } command_t;
 
@@ -93,6 +94,8 @@ typedef enum {
 
 
 #define MAX_FRAME_LENGTH (2*16) // Based on the cmd_status reponse frame (fully escaped)
+
+#define INVALID_TEMPERATURE (0xffff)
 
 /*
  * Helpers for creating frames.
@@ -142,11 +145,13 @@ bool protocol_unpack_upgrade_start(uint8_t *payload, uint32_t length, uint16_t *
  *
  *
  * === Reading the status of the DPS ===
+ * @todo this description is obsolete...
+ *
  * This command retrieves V_in, V_out, I_out, I_limit, power enable. Voltage
  * and currents are all in the 'milli' range.
  *
- *  HOST:   [cmd_status]
- *  DPS:    [cmd_response | cmd_status] [1] [V_in(15:8)] [V_in(7:0)] [V_out_setting(15:8)] [V_out_setting(7:0)] [V_out(15:8)] [V_out(7:0)] [I_out(15:8)] [I_out(7:0)] [I_limit(15:8)] [I_limit(7:0)] [<power enable>]
+ *  HOST:   [cmd_query]
+ *  DPS:    [cmd_response | ccmd_query] [1] [V_in(15:8)] [V_in(7:0)] [V_out_setting(15:8)] [V_out_setting(7:0)] [V_out(15:8)] [V_out(7:0)] [I_out(15:8)] [I_out(7:0)] [I_limit(15:8)] [I_limit(7:0)] [<power enable>]
  *
  *
  * === Changing active function ===
@@ -198,6 +203,17 @@ bool protocol_unpack_upgrade_start(uint8_t *payload, uint32_t length, uint16_t *
  *  DPS:    [cmd_response | cmd_list_parameters] <param 1> \0 <value 1> \0 <param 2> \0 <value 2> ... ]
  *
  *
+ * === Receiving a temperature report ===
+ * This command is used by a wifi companion with the ability to measure
+ * temperature. Two temperatures are included as signed 16 bit integers x10
+ * and 0xffff indicates an illegal temperature. You can decide for yourself
+ * if your temperature unit is Celcius, Farenheit, Kelvin or one you just made
+ * up for fun.
+ *
+ *  HOST:   [cmd_temperature_report <temp1[15:8]> <temp1[7:0]> <temp2[15:8]> <temp2[7:0]> ]
+ *  DPS:    [cmd_response | cmd_temperature_report] ]
+ *
+ *
  * === Setting wifi status ===
  * This command is used to set the wifi indicator on the screen. Status will be
  * one of the wifi_status_t enums
@@ -221,6 +237,7 @@ bool protocol_unpack_upgrade_start(uint8_t *payload, uint32_t length, uint16_t *
  *
  *  DPS:    [cmd_ocp_event] [I_cut(7:0)] [I_cut(15:8)]
  *  HOST:   none
+ *
  *
  * === DPS upgrade sessions ===
  * When the cmd_upgrade_start packet is received, the device prepares for

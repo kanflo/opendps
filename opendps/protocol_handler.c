@@ -90,6 +90,9 @@ static command_status_t handle_query(void)
     uint16_t v_out = pwrctl_calc_vout(v_out_raw);
     uint16_t i_out = pwrctl_calc_iout(i_out_raw);
     uint8_t output_enabled = pwrctl_vout_enabled();
+    int16_t temp1, temp2;
+    bool temp_shutdown;
+    opendps_get_temperature(&temp1, &temp2, &temp_shutdown);
 //    uint32_t len = protocol_create_query_response(frame_buffer, sizeof(frame_buffer), v_in, v_out_setting, v_out, i_out, i_limit, power_enabled);
     DECLARE_FRAME(64);
     PACK8(cmd_response | cmd_query);
@@ -102,6 +105,9 @@ static command_status_t handle_query(void)
     emu_printf("i_out = %d\n", i_out);
     PACK8(output_enabled);
     emu_printf("output_enabled = %d\n", output_enabled);
+    PACK16(temp1);
+    PACK16(temp2);
+    PACK8(temp_shutdown);
     PACK_CSTR(curr_func);
     emu_printf("%s:\n", curr_func);
     for (uint32_t i=0; i < num_param; i++) {
@@ -260,6 +266,20 @@ static command_status_t handle_enable_output(uint8_t *payload, uint32_t payload_
     }
 }
 
+static command_status_t handle_temperature(uint8_t *payload, uint32_t payload_len)
+{
+    emu_printf("%s\n", __FUNCTION__);
+    command_t cmd;
+    int16_t temp1, temp2;
+    DECLARE_UNPACK(payload, payload_len);
+    UNPACK8(cmd);
+    (void) cmd;
+    UNPACK16(temp1);
+    UNPACK16(temp2);
+    opendps_set_temperature(temp1, temp2);
+    return cmd_success;
+}
+
 /**
   * @brief Handle a wifi status command
   * @param payload payload of command frame
@@ -363,6 +383,9 @@ static void handle_frame(uint8_t *frame, uint32_t length)
                 break;
             case cmd_enable_output:
                 success = handle_enable_output(payload, payload_len);
+                break;
+            case cmd_temperature_report:
+                success = handle_temperature(payload, payload_len);
                 break;
             default:
                 emu_printf("Got unknown command %d (0x%02x)\n", cmd, cmd);

@@ -163,6 +163,7 @@ struct ui_screen {
 typedef struct {
     uint8_t num_screens;
     uint8_t cur_screen;
+    bool is_visible;
     ui_screen_t *screens[MAX_SCREENS];
     past_t *past;
 } uui_t;
@@ -240,5 +241,19 @@ void ui_item_init(ui_item_t *item);
  */
 void uui_tick(uui_t *ui);
 
+/**
+ * @brief      Show or hide UUI
+ *
+ * @param      ui    The user interface
+ * @param      show  true for show, false for hide
+ */
+void uui_show(uui_t *ui, bool show);
+
+/**
+ * @brief      Disable current screen of user interface
+ *
+ * @param      ui    The user interface
+ */
+void uui_disable_cur_screen(uui_t *ui);
 
 #endif // __UUI_H__

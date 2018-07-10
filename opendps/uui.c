@@ -27,9 +27,8 @@
 #include "my_assert.h"
 #include "uui.h"
 #include "tft.h"
+#include "opendps.h"
 
-/** @todo: move */
-void opendps_update_power_status(bool enabled);
 
 /**
  * @brief      Callback for got focus because of M1/M2 presses
@@ -62,6 +61,7 @@ void uui_init(uui_t *ui, past_t *past)
     assert(ui);
     ui->past = past;
     ui->num_screens = ui->cur_screen = 0;
+    ui->is_visible = true;
 }
 
 void uui_add_screen(uui_t *ui, ui_screen_t *screen)
@@ -95,6 +95,7 @@ void uui_refresh(uui_t *ui, bool force)
             item->needs_redraw = false;
         }
     }
+    tft_blit((uint16_t*) screen->icon_data, screen->icon_width, screen->icon_height, 48, 128-screen->icon_height);
 }
 
 void uui_activate(uui_t *ui)
@@ -132,6 +133,10 @@ void uui_handle_screen_event(uui_t *ui, event_t event)
     assert(screen);
     ui_item_t *item = screen->items[screen->cur_item];
     assert(item);
+
+    if (!ui->is_visible) {
+        return;
+    }
 
     switch(event) {
         case event_rot_left_set:
@@ -249,4 +254,18 @@ void ui_item_init(ui_item_t *item)
 void uui_tick(uui_t *ui)
 {
     ui->screens[ui->cur_screen]->tick();
+}
+
+void uui_show(uui_t *ui, bool show)
+{
+    ui->is_visible = show;
+}
+
+void uui_disable_cur_screen(uui_t *ui)
+{
+    ui_screen_t *screen = ui->screens[ui->cur_screen];
+    if (screen->enable && screen->is_enabled) {
+        screen->is_enabled = false;
+        screen->enable(screen->is_enabled);
+    }
 }

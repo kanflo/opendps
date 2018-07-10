@@ -228,7 +228,7 @@ def handle_response(command, frame, args):
         print("Got pong from device")
     elif resp_command == cmd_query:
         data = unpack_query_response(frame)
-        enable_str = "on" if data['output_enabled'] else "off"
+        enable_str = "on" if data['output_enabled'] else "temperature shutdown" if data['temp_shutdown'] == 1 else "off"
         v_in_str = "%d.%02d" % (data['v_in']/1000, (data['v_in']%1000)/10)
         v_out_str = "%d.%02d" % (data['v_out']/1000, (data['v_out']%1000)/10)
         i_out_str = "%d.%03d" % (data['i_out']/1000, data['i_out']%1000)
@@ -241,6 +241,11 @@ def handle_response(command, frame, args):
             print("%-10s : %s V" % ('V_in', v_in_str))
             print("%-10s : %s V" % ('V_out', v_out_str))
             print("%-10s : %s A" % ('I_out', i_out_str))
+            if 'temp1' in data:
+                print("%-10s : %.1f" % ('temp1', data['temp1']))
+            if 'temp2' in data:
+                print("%-10s : %.1f" % ('temp2', data['temp2']))
+
     elif resp_command == cmd_upgrade_start:
     #  *  DPS BL: [cmd_response | cmd_upgrade_start] [<upgrade_status_t>] [<chunk_size:16>]
         cmd = frame.unpack8()
@@ -321,6 +326,10 @@ def handle_response(command, frame, args):
         status = frame.unpack8()
         if status == 0:
             print("Error, failed to enable/disable output.")
+    elif resp_command == cmd_temperature_report:
+        pass
+    elif resp_command == cmd_lock:
+        pass
     else:
         print("Unknown response %d from device." % (resp_command))
 
@@ -369,15 +378,12 @@ def handle_commands(args):
 
     comms = create_comms(args)
 
-    # The ping command
     if args.ping:
         communicate(comms, create_cmd(cmd_ping), args)
 
-    # The upgrade
     if args.firmware:
         run_upgrade(comms, args.firmware, args)
 
-    # The lock and unlock commands
     if args.lock:
         communicate(comms, create_lock(1), args)
     if args.unlock:
@@ -405,9 +411,11 @@ def handle_commands(args):
         else:
             fail("malformatted parameters")
 
-    # The status set command
     if args.query:
         communicate(comms, create_cmd(cmd_query), args)
+
+    if hasattr(args, 'temperature') and args.temperature:
+        communicate(comms, create_temperature(float(args.temperature)), args)
 
 """
 Return True if the parameter if_name is an IP address.
@@ -577,6 +585,7 @@ Ye olde main
 """
 def main():
     global args
+    testing = '--testing' in sys.argv
     parser = argparse.ArgumentParser(description='Instrument an OpenDPS device')
 
     parser.add_argument('-d', '--device', help="OpenDPS device to connect to. Can be a /dev/tty device or an IP number. If omitted, dpsctl.py will try the environment variable DPSIF", default='')
@@ -594,6 +603,8 @@ def main():
     parser.add_argument('-v', '--verbose', action='store_true', help="Verbose communications")
     parser.add_argument('-U', '--upgrade', type=str, dest="firmware", help="Perform upgrade of OpenDPS firmware")
     parser.add_argument(      '--force', action='store_true', help="Force upgrade even if dpsctl complains about the firmware")
+    if testing:
+        parser.add_argument('-t', '--temperature', type=str, dest="temperature", help="Send temperature report (for testing)")
 
     args, unknown = parser.parse_known_args()
 
