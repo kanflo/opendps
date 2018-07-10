@@ -125,7 +125,7 @@ ui_screen_t cv_screen = {
             .prefix = si_milli
         },
         {
-            .name = '\0' /** Terminator */
+            .name = {'\0'} /** Terminator */
         },
     },
     .items = { (ui_item_t*) &cv_voltage, (ui_item_t*) &cv_current }

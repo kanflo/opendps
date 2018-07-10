@@ -119,7 +119,7 @@ ui_screen_t cc_screen = {
             .prefix = si_milli
         },
         {
-            .name = '\0' /** Terminator */
+            .name = {'\0'} /** Terminator */
         },
     },
     .items = { (ui_item_t*) &cc_voltage, (ui_item_t*) &cc_current }
