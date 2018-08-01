@@ -349,7 +349,7 @@ def communicate(comms, frame, args):
         fail("timeout talking to device %s" % (comms._if_name))
     elif args.verbose:
         print("RX %2d bytes [%s]\n" % (len(resp), " ".join("%02x" % b for b in resp)))
-    if not comms.close:
+    if not comms.close():
         print("Warning: could not close %s" % (comms.name()))
 
     f = uFrame()
