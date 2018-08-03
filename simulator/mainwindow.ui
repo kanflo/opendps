@@ -1,0 +1,212 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>MainWindow</class>
+ <widget class="QMainWindow" name="MainWindow">
+  <property name="windowModality">
+   <enum>Qt::ApplicationModal</enum>
+  </property>
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>383</width>
+    <height>492</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>MainWindow</string>
+  </property>
+  <widget class="QWidget" name="centralWidget">
+   <widget class="QWidget" name="layoutWidget">
+    <property name="geometry">
+     <rect>
+      <x>9</x>
+      <y>9</y>
+      <width>258</width>
+      <height>471</height>
+     </rect>
+    </property>
+    <layout class="QVBoxLayout" name="LHS_Layout">
+     <item>
+      <widget class="ili9163c_Widget" name="widget" native="true">
+       <property name="sizePolicy">
+        <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+         <horstretch>0</horstretch>
+         <verstretch>0</verstretch>
+        </sizepolicy>
+       </property>
+       <property name="minimumSize">
+        <size>
+         <width>256</width>
+         <height>256</height>
+        </size>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QPlainTextEdit" name="eb_Debug"/>
+     </item>
+    </layout>
+   </widget>
+   <widget class="QWidget" name="layoutWidget1">
+    <property name="geometry">
+     <rect>
+      <x>278</x>
+      <y>10</y>
+      <width>91</width>
+      <height>201</height>
+     </rect>
+    </property>
+    <layout class="QVBoxLayout" name="RHS_Layout">
+     <item>
+      <widget class="QPushButton" name="bt_M1">
+       <property name="text">
+        <string>M1</string>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QPushButton" name="bt_Set">
+       <property name="text">
+        <string>Set</string>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QPushButton" name="bt_M2">
+       <property name="text">
+        <string>M2</string>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="DialPlus" name="dial">
+       <property name="maximum">
+        <number>29</number>
+       </property>
+       <property name="wrapping">
+        <bool>true</bool>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QPushButton" name="bt_On_Off">
+       <property name="text">
+        <string>On Off</string>
+       </property>
+      </widget>
+     </item>
+    </layout>
+   </widget>
+   <widget class="QWidget" name="verticalLayoutWidget">
+    <property name="geometry">
+     <rect>
+      <x>280</x>
+      <y>220</y>
+      <width>91</width>
+      <height>261</height>
+     </rect>
+    </property>
+    <layout class="QVBoxLayout" name="verticalLayout">
+     <item>
+      <widget class="QGroupBox" name="groupBox">
+       <property name="title">
+        <string>Simulator</string>
+       </property>
+       <widget class="QLabel" name="lb_V_in">
+        <property name="geometry">
+         <rect>
+          <x>0</x>
+          <y>20</y>
+          <width>89</width>
+          <height>13</height>
+         </rect>
+        </property>
+        <property name="text">
+         <string>V In: </string>
+        </property>
+       </widget>
+       <widget class="QDial" name="dial_V_In">
+        <property name="geometry">
+         <rect>
+          <x>0</x>
+          <y>30</y>
+          <width>89</width>
+          <height>81</height>
+         </rect>
+        </property>
+        <property name="maximum">
+         <number>40000</number>
+        </property>
+        <property name="value">
+         <number>24000</number>
+        </property>
+       </widget>
+       <widget class="QLabel" name="lb_Load">
+        <property name="geometry">
+         <rect>
+          <x>0</x>
+          <y>130</y>
+          <width>91</width>
+          <height>16</height>
+         </rect>
+        </property>
+        <property name="text">
+         <string>Load:</string>
+        </property>
+       </widget>
+       <widget class="QDial" name="dial_Load">
+        <property name="geometry">
+         <rect>
+          <x>0</x>
+          <y>150</y>
+          <width>89</width>
+          <height>81</height>
+         </rect>
+        </property>
+        <property name="minimum">
+         <number>0</number>
+        </property>
+        <property name="maximum">
+         <number>500</number>
+        </property>
+        <property name="value">
+         <number>250</number>
+        </property>
+       </widget>
+       <widget class="QPushButton" name="bt_Doit">
+        <property name="geometry">
+         <rect>
+          <x>10</x>
+          <y>230</y>
+          <width>75</width>
+          <height>23</height>
+         </rect>
+        </property>
+        <property name="text">
+         <string>Do It</string>
+        </property>
+       </widget>
+      </widget>
+     </item>
+    </layout>
+   </widget>
+  </widget>
+ </widget>
+ <layoutdefault spacing="6" margin="11"/>
+ <customwidgets>
+  <customwidget>
+   <class>ili9163c_Widget</class>
+   <extends>QWidget</extends>
+   <header>ili9163c_widget.h</header>
+   <container>1</container>
+  </customwidget>
+  <customwidget>
+   <class>DialPlus</class>
+   <extends>QDial</extends>
+   <header>dialplus.h</header>
+  </customwidget>
+ </customwidgets>
+ <resources/>
+ <connections/>
+</ui>
