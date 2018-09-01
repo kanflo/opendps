@@ -54,8 +54,9 @@ OBJS = \
     ili9163c.o \
     dbg_printf.o \
     mini-printf.o \
-    font-0.o \
-    font-1.o
+    font-18.o \
+    font-24.o \
+    font-48.o 
 
 ifeq ($(CC_ENABLE),1)
 	CFLAGS +=-DCONFIG_CC_ENABLE

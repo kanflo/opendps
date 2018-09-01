@@ -27,8 +27,9 @@
 #include "my_assert.h"
 #include "uui_number.h"
 #include "tft.h"
-#include "font-0.h"
-#include "font-1.h"
+#include "font-18.h"
+#include "font-24.h"
+#include "font-48.h"
 
 /** @todo: why is pow missing from my -lm ? */
 static uint32_t my_pow(uint32_t a, uint32_t b)
@@ -113,12 +114,19 @@ static void number_draw(ui_item_t *_item)
     ui_number_t *item = (ui_number_t*) _item;
     uint32_t value = item->value;
     uint32_t w, h;
-    if (item->font_size == 0) {
-        w = font_0_widths[4]; /** @todo: Find the widest glyph */
-        h = font_0_height;
-    } else {
-        w = font_1_widths[4] + 2; /** @todo: Find the widest glyph */
-        h = font_1_height + 2;
+    switch (item->font_size) {
+      case 18:
+        w = font_18_widths[4]; /** @todo: Find the widest glyph */
+        h = font_18_height;
+        break;
+      case 24:
+        w = font_24_widths[4] + 2; /** @todo: Find the widest glyph */
+        h = font_24_height + 2;
+        break;
+      case 48:
+        w = font_48_widths[4] + 2; /** @todo: Find the widest glyph */
+        h = font_48_height + 2;
+        break;
     }
     uint16_t xpos = _item->x - w;
     switch(item->unit) {
@@ -131,7 +139,7 @@ static void number_draw(ui_item_t *_item)
         default:
             assert(0);
     }
-    xpos -= item->font_size == 0 ? 2 : 4;
+    xpos -= item->font_size == 18 ? 2 : 4;
     for (uint32_t i = 0; i < item->num_decimals; i++) {
         bool highlight = _item->has_focus && item->cur_digit == cur_digit;
         xpos -= w;
@@ -139,7 +147,7 @@ static void number_draw(ui_item_t *_item)
         value /= 10;
         cur_digit++;
     }
-    xpos -= item->font_size == 0 ? 4 : 10;
+    xpos -= item->font_size == 18 ? 4 : 10;
     tft_putch(item->font_size, '.', xpos, _item->y, item->font_size == 0 ? 4 : 10, h, false);
     for (uint32_t i = 0; i < item->num_digits; i++) {
         bool highlight = _item->has_focus && item->cur_digit == cur_digit;

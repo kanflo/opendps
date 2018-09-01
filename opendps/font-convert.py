@@ -96,8 +96,9 @@ def main():
 	else:
 		tint = "ffffff"
 	characters = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'dot', 'v', 'a']
-	convert_font("gfx/fonts/ubuntu_condensed_18.png", "gfx/fonts/ubuntu_condensed_18_width.png", characters, 0, tint)
-	convert_font("gfx/fonts/ubuntu_condensed_48.png", "gfx/fonts/ubuntu_condensed_48_width.png", characters, 1, tint)
+	convert_font("gfx/fonts/ubuntu_condensed_18.png", "gfx/fonts/ubuntu_condensed_18_width.png", characters, 18, tint)
+	convert_font("gfx/fonts/ubuntu_condensed_24.png", "gfx/fonts/ubuntu_condensed_24_width.png", characters, 24, tint)
+	convert_font("gfx/fonts/ubuntu_condensed_48.png", "gfx/fonts/ubuntu_condensed_48_width.png", characters, 48, tint)
 
 
 if __name__ == "__main__":
