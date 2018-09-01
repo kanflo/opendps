@@ -37,8 +37,9 @@
 #include "hw.h"
 #include "tft.h"
 #include "ili9163c.h"
-#include "font-0.h"
-#include "font-1.h"
+#include "font-18.h"
+#include "font-24.h"
+#include "font-48.h"
 #include "dbg_printf.h"
 
 static bool is_inverted;
@@ -121,17 +122,23 @@ void tft_putch(uint8_t size, char ch, uint32_t x, uint32_t y, uint32_t w, uint32
             return;
     }
     switch(size) {
-        case 0:
-            glyph_width = font_0_widths[glyph_index];
-            glyph = (uint16_t*) font_0_pix[glyph_index];
-            glyph_size = font_0_sizes[glyph_index];
-            glyph_height = font_0_height;
+        case 18:
+            glyph_width = font_18_widths[glyph_index];
+            glyph = (uint16_t*) font_18_pix[glyph_index];
+            glyph_size = font_18_sizes[glyph_index];
+            glyph_height = font_18_height;
             break;
-        case 1:
-            glyph_width = font_1_widths[glyph_index];
-            glyph = (uint16_t*) font_1_pix[glyph_index];
-            glyph_size = font_1_sizes[glyph_index];
-            glyph_height = font_1_height;
+        case 24:
+            glyph_width = font_24_widths[glyph_index];
+            glyph = (uint16_t*) font_24_pix[glyph_index];
+            glyph_size = font_24_sizes[glyph_index];
+            glyph_height = font_24_height;
+            break;
+        case 48:
+            glyph_width = font_48_widths[glyph_index];
+            glyph = (uint16_t*) font_48_pix[glyph_index];
+            glyph_size = font_48_sizes[glyph_index];
+            glyph_height = font_48_height;
             break;
         default:
             dbg_printf("Cannot print at size %d\n", (int) size);

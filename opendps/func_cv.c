@@ -69,7 +69,7 @@ ui_number_t cv_voltage = {
         .y = 15,
         .can_focus = true,
     },
-    .font_size = 1, /** The bigger one, try 0 for kicks */
+    .font_size = 48, /** The bigger one, try 0 for kicks */
     .value = 0,
     .min = 0,
     .max = 0, /** Set at init, continously updated in the tick callback */
@@ -88,7 +88,7 @@ ui_number_t cv_current = {
         .y = 60,
         .can_focus = true,
     },
-    .font_size = 1,
+    .font_size = 48,
     .value = 0,
     .min = 0,
     .max = CONFIG_DPS_MAX_CURRENT,
