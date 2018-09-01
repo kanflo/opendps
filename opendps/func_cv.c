@@ -106,7 +106,7 @@ ui_number_t cv_voltage_2 = {
         .id = 10,
         .x = 120,
         .y = LINE_Y(2),
-        .can_focus = true,
+        .can_focus = false,
     },
     .font_size = 24, /** The bigger one, try 0 for kicks */
     .value = 0,
@@ -125,7 +125,7 @@ ui_number_t cv_current_2 = {
         .id = 11,
         .x = 120,
         .y = LINE_Y(3),
-        .can_focus = true,
+        .can_focus = false,
     },
     .font_size = 24,
     .value = 0,
