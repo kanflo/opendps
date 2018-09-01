@@ -303,9 +303,10 @@ static void ui_init(void)
     ui_height = TFT_HEIGHT;
 
     uui_init(&func_ui, &g_past);
-    func_cv_init(&func_ui);
 #ifdef CONFIG_CC_ENABLE
     func_cc_init(&func_ui);
+#else
+    func_cv_init(&func_ui);
 #endif // CONFIG_CC_ENABLE
     uui_activate(&func_ui);
 
