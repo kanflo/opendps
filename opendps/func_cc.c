@@ -59,6 +59,7 @@ static int32_t saved_i;
 
 #define SCREEN_ID  (2)
 #define PAST_I     (0)
+#define LINE_Y(x) (10 + (x * 24))
 
 /* This is the definition of the voltage item in the UI */
 ui_number_t cc_voltage = {
@@ -66,10 +67,10 @@ ui_number_t cc_voltage = {
         .type = ui_item_number,
         .id = 10,
         .x = 120,
-        .y = 15,
+        .y = LINE_Y(0),
         .can_focus = false,
     },
-    .font_size = 48, /** The bigger one, try 0 for kicks */
+    .font_size = 24, /** The bigger one, try 0 for kicks */
     .value = 0,
     .min = 0,
     .max = 0, /** Set at init, continously updated in the tick callback */
@@ -84,10 +85,10 @@ ui_number_t cc_current = {
         .type = ui_item_number,
         .id = 11,
         .x = 120,
-        .y = 60,
+        .y = LINE_Y(1),
         .can_focus = true,
     },
-    .font_size = 48,
+      .font_size = 24,
     .value = 0,
     .min = 0,
     .max = CONFIG_DPS_MAX_CURRENT,
@@ -96,6 +97,44 @@ ui_number_t cc_current = {
     .unit = unit_ampere,
     .changed = &current_changed,
 };
+
+/* This is the definition of the voltage item in the UI */
+ui_number_t cc_voltage_2 = {
+    {
+        .type = ui_item_number,
+        .id = 10,
+        .x = 120,
+        .y = LINE_Y(2),
+        .can_focus = false,
+    },
+    .font_size = 24, /** The bigger one, try 0 for kicks */
+    .value = 0,
+    .min = 0,
+    .max = 0, /** Set at init, continously updated in the tick callback */
+    .num_digits = 2,
+    .num_decimals = 2, /** 2 decimals => value is in centivolts */
+    .unit = unit_volt, /** Affects the unit printed on screen */
+};
+
+/* This is the definition of the current item in the UI */
+ui_number_t cc_current_2 = {
+    {
+        .type = ui_item_number,
+        .id = 11,
+        .x = 120,
+        .y = LINE_Y(3),
+        .can_focus = false,
+    },
+      .font_size = 24,
+    .value = 0,
+    .min = 0,
+    .max = CONFIG_DPS_MAX_CURRENT,
+    .num_digits = 1,
+    .num_decimals = 3, /** 3 decimals => value is in milliapmere */
+    .unit = unit_ampere,
+    .changed = &current_changed,
+};
+
 
 /* This is the screen definition */
 ui_screen_t cc_screen = {
@@ -111,7 +150,7 @@ ui_screen_t cc_screen = {
     .set_parameter = &set_parameter,
     .get_parameter = &get_parameter,
     .tick = &cc_tick,
-    .num_items = 2,
+    .num_items = 4,
     .parameters = {
         {
             .name = "current",
@@ -122,7 +161,7 @@ ui_screen_t cc_screen = {
             .name = {'\0'} /** Terminator */
         },
     },
-    .items = { (ui_item_t*) &cc_voltage, (ui_item_t*) &cc_current }
+    .items = { (ui_item_t*) &cc_voltage, (ui_item_t*) &cc_current, (ui_item_t*) &cc_voltage_2, (ui_item_t*) &cc_current_2 }
 };
 
 /**
@@ -188,6 +227,10 @@ static void cc_enable(bool enabled)
         cc_voltage.ui.draw(&cc_voltage.ui);
         cc_current.value = saved_i;
         cc_current.ui.draw(&cc_current.ui);
+        cc_voltage_2.value = 0;
+        cc_voltage_2.ui.draw(&cc_voltage_2.ui);
+        cc_current_2.value = 0;
+        cc_current_2.ui.draw(&cc_current_2.ui);
     }
 }
 
@@ -240,32 +283,30 @@ static void past_restore(past_t *past)
  */
 static void cc_tick(void)
 {    
-    if (pwrctl_vout_enabled()) {
-        uint16_t i_out_raw, v_in_raw, v_out_raw;
-        hw_get_adc_values(&i_out_raw, &v_in_raw, &v_out_raw);
-        /** Continously update max voltage output value */
-        cc_voltage.max = pwrctl_calc_vin(v_in_raw) / 10;
-        int32_t new_u = pwrctl_calc_vout(v_out_raw) / 10;
-        if (new_u != cc_voltage.value) {
-            cc_voltage.value = new_u;
-            cc_voltage.ui.draw(&cc_voltage.ui);
-        }
+    cc_voltage.ui.draw(&cc_voltage.ui);
 
-        if (cc_current.ui.has_focus) {
-            /** If the current setting has focus, make sure we're displaying
-              * the desired setting and not the current output value. */
-            if (cc_current.value != saved_i) { // (int32_t) pwrctl_get_ilimit()) {
-                cc_current.value = saved_i; // pwrctl_get_ilimit();
-                cc_current.ui.draw(&cc_current.ui);
-            }
-        } else {
-            /** No focus, update display if necessary */
-            int32_t new_i = pwrctl_calc_iout(i_out_raw);
-            if (new_i != cc_current.value) {
-                cc_current.value = new_i;
-                cc_current.ui.draw(&cc_current.ui);
-            }
-        }
+    uint16_t i_out_raw, v_in_raw, v_out_raw;
+    hw_get_adc_values(&i_out_raw, &v_in_raw, &v_out_raw);
+    /** Continously update max voltage output value */
+    cc_voltage_2.max = pwrctl_calc_vin(v_in_raw) / 10;
+    int32_t new_u = pwrctl_calc_vout(v_out_raw) / 10;
+    if (new_u != cc_voltage_2.value) {
+        cc_voltage_2.value = new_u;
+        cc_voltage_2.ui.draw(&cc_voltage_2.ui);
+    }
+
+    /** If the current setting has focus, make sure we're displaying
+      * the desired setting and not the current output value. */
+    if (cc_current.value != saved_i) { // (int32_t) pwrctl_get_ilimit()) {
+        cc_current.value = saved_i; // pwrctl_get_ilimit();
+        cc_current.ui.draw(&cc_current.ui);
+    }
+
+    /** No focus, update display if necessary */
+    int32_t new_i = pwrctl_calc_iout(i_out_raw);
+    if (new_i != cc_current_2.value) {
+        cc_current_2.value = new_i;
+        cc_current_2.ui.draw(&cc_current_2.ui);
     }
 }
 
@@ -289,5 +330,7 @@ void func_cc_init(uui_t *ui)
         accidentally cranking up the setting 10V or more */
 //    cc_voltage.cur_digit = 2;
     number_init(&cc_current);
+    number_init(&cc_voltage_2);
+    number_init(&cc_current_2);
     uui_add_screen(ui, &cc_screen);
 }
