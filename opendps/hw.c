@@ -265,7 +265,7 @@ void adc1_2_isr(void)
     if (pwrctl_i_limit_raw) {
         if (adc_counter >= STARTUP_SKIP_COUNT) {
             i += adc_i_offset;
-            if (i > pwrctl_i_limit_raw) { /** OCP! */
+            if (i > pwrctl_i_limit_raw && pwrctl_vout_enabled()) { /** OCP! */
                 handle_ocp(i);
             }
             i_out_adc = i;
