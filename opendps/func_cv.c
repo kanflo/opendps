@@ -51,11 +51,6 @@ static void past_restore(past_t *past);
 static set_param_status_t set_parameter(char *name, char *value);
 static set_param_status_t get_parameter(char *name, char *value, uint32_t value_len);
 
-/* We need to keep copies of the user settings as the value in the UI will
- * be replaced with measurements when output is active
- */
-static int32_t saved_u, saved_i;
-
 #define SCREEN_ID  (1)
 #define PAST_U     (0)
 #define PAST_I     (1)
@@ -218,10 +213,10 @@ static set_param_status_t get_parameter(char *name, char *value, uint32_t value_
 {
     if (strcmp("voltage", name) == 0 || strcmp("u", name) == 0) {
         /** value returned in millivolt, module internal representation is centivolt */
-        (void) mini_snprintf(value, value_len, "%d", 10 * (pwrctl_vout_enabled() ? saved_u : cv_voltage.value));
+        (void) mini_snprintf(value, value_len, "%d", 10 * cv_voltage.value);
         return ps_ok;
     } else if (strcmp("current", name) == 0 || strcmp("i", name) == 0) {
-        (void) mini_snprintf(value, value_len, "%d", pwrctl_vout_enabled() ? saved_i : cv_current.value);
+        (void) mini_snprintf(value, value_len, "%d", cv_current.value);
         return ps_ok;
     }
     return ps_unknown_name;
@@ -237,8 +232,6 @@ static void cv_enable(bool enabled)
     emu_printf("[CV] %s output\n", enabled ? "Enable" : "Disable");
     if (enabled) {
         /** Display will now show the current values, keep the user setting saved */
-        saved_u = cv_voltage.value;
-        saved_i = cv_current.value;
         (void) pwrctl_set_vout(10 * cv_voltage.value);
         (void) pwrctl_set_iout(CONFIG_DPS_MAX_CURRENT);
         (void) pwrctl_set_ilimit(cv_current.value);
@@ -247,10 +240,6 @@ static void cv_enable(bool enabled)
         pwrctl_enable_vout(false);
         /** Make sure we're displaying the settings and not the current 
           * measurements when the power output is switched off */
-        cv_voltage.value = saved_u;
-        cv_voltage.ui.draw(&cv_voltage.ui);
-        cv_current.value = saved_i;
-        cv_current.ui.draw(&cv_current.ui);
         cv_voltage_2.value = 0;
         cv_voltage_2.ui.draw(&cv_voltage_2.ui);
         cv_current_2.value = 0;
@@ -265,8 +254,9 @@ static void cv_enable(bool enabled)
  */
 static void voltage_changed(ui_number_t *item)
 {
-    saved_u = item->value;
+    cv_voltage.value = item->value;
     (void) pwrctl_set_vout(10 * item->value);
+    cv_voltage.ui.draw(&cv_voltage.ui);
 }
 
 /**
@@ -276,8 +266,9 @@ static void voltage_changed(ui_number_t *item)
  */
 static void current_changed(ui_number_t *item)
 {
-    saved_i = item->value;
-    (void) pwrctl_set_ilimit(item->value);
+    cv_current.value = item->value;
+    (void) pwrctl_set_iout(item->value);
+    cv_current.ui.draw(&cv_current.ui);
 }
 
 /**
@@ -288,10 +279,10 @@ static void current_changed(ui_number_t *item)
 static void past_save(past_t *past)
 {
     /** @todo: past bug causes corruption for units smaller than 4 bytes (#27) */
-    if (!past_write_unit(past, (SCREEN_ID << 24) | PAST_U, (void*) &saved_u, 4 /* sizeof(cv_voltage.value) */ )) {
+    if (!past_write_unit(past, (SCREEN_ID << 24) | PAST_U, (void*) &cv_voltage.value, 4 /* sizeof(cv_voltage.value) */ )) {
         /** @todo: handle past write failures */
     }
-    if (!past_write_unit(past, (SCREEN_ID << 24) | PAST_I, (void*) &saved_i, 4 /* sizeof(cv_current.value) */ )) {
+    if (!past_write_unit(past, (SCREEN_ID << 24) | PAST_I, (void*) &cv_current.value, 4 /* sizeof(cv_current.value) */ )) {
         /** @todo: handle past write failures */
     }
 }
@@ -306,11 +297,11 @@ static void past_restore(past_t *past)
     uint32_t length;
     uint32_t *p = 0;
     if (past_read_unit(past, (SCREEN_ID << 24) | PAST_U, (const void**) &p, &length)) {
-        saved_u = cv_voltage.value = *p;
+        cv_voltage.value = *p;
         (void) length;
     }
     if (past_read_unit(past, (SCREEN_ID << 24) | PAST_I, (const void**) &p, &length)) {
-        saved_i = cv_current.value = *p;
+        cv_current.value = *p;
         (void) length;
     }
 }
@@ -327,14 +318,10 @@ static void cv_tick(void)
 {
     uint16_t i_out_raw, v_in_raw, v_out_raw;
     hw_get_adc_values(&i_out_raw, &v_in_raw, &v_out_raw);
+
     /** Continously update max voltage output value */
-    cv_voltage.max = pwrctl_calc_vin(v_in_raw);
-        /** If the voltage setting has focus, make sure we're displaying
-          * the desired setting and not the current output value. */
-    if (cv_voltage.value != (int32_t) pwrctl_get_vout() / 10) {
-        cv_voltage.value = pwrctl_get_vout() / 10;
-        cv_voltage.ui.draw(&cv_voltage.ui);
-    }
+    cv_voltage.max = pwrctl_calc_vin(v_in_raw) / 10;
+
     /** No focus, update display if necessary */
     int32_t new_u = pwrctl_calc_vout(v_out_raw) / 10;
     if (new_u != cv_voltage_2.value) {
@@ -342,12 +329,6 @@ static void cv_tick(void)
         cv_voltage_2.ui.draw(&cv_voltage_2.ui);
     }
 
-    /** If the current setting has focus, make sure we're displaying
-      * the desired setting and not the current output value. */
-    if (cv_current.value != saved_i) {
-        cv_current.value = saved_i;
-        cv_current.ui.draw(&cv_current.ui);
-    }
     /** No focus, update display if necessary */
     int32_t new_i = pwrctl_calc_iout(i_out_raw);
     if (new_i != cv_current_2.value) {

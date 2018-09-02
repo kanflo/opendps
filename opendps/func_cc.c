@@ -53,11 +53,6 @@ static void past_restore(past_t *past);
 static set_param_status_t set_parameter(char *name, char *value);
 static set_param_status_t get_parameter(char *name, char *value, uint32_t value_len);
 
-/* We need to keep copies of the user settings as the value in the UI will 
- * be replaced with measurements when output is active
- */
-static int32_t saved_u, saved_i;
-
 #define SCREEN_ID  (2)
 #define PAST_U     (0)
 #define PAST_I     (0)
@@ -214,10 +209,10 @@ static set_param_status_t get_parameter(char *name, char *value, uint32_t value_
 {
     if (strcmp("voltage", name) == 0 || strcmp("u", name) == 0) {
         /** value returned in millivolt, module internal representation is centivolt */
-        (void) mini_snprintf(value, value_len, "%d", 10 * (pwrctl_vout_enabled() ? saved_u : cc_voltage.value));
+        (void) mini_snprintf(value, value_len, "%d", 10 * cc_voltage.value);
         return ps_ok;
     } if (strcmp("current", name) == 0 || strcmp("i", name) == 0) {
-        (void) mini_snprintf(value, value_len, "%d", pwrctl_vout_enabled() ? saved_i : cc_current.value);
+        (void) mini_snprintf(value, value_len, "%d", cc_current.value);
         return ps_ok;
     }
     return ps_unknown_name;
@@ -231,8 +226,6 @@ static set_param_status_t get_parameter(char *name, char *value, uint32_t value_
 static void cc_enable(bool enabled)
 {
     if (enabled) {
-        saved_u = cc_voltage.value;
-        saved_i = cc_current.value;
         (void) pwrctl_set_vout(10 * cc_voltage.value);
         //(void) pwrctl_set_vout(10 * cc_voltage.max - 1000);
         (void) pwrctl_set_ilimit(CONFIG_DPS_MAX_CURRENT);
@@ -242,10 +235,6 @@ static void cc_enable(bool enabled)
         pwrctl_enable_vout(false);
         /** Make sure we're displaying the settings and not the current 
           * measurements when the power output is switched off */
-        cc_voltage.value = saved_u;
-        cc_voltage.ui.draw(&cc_voltage.ui);
-        cc_current.value = saved_i;
-        cc_current.ui.draw(&cc_current.ui);
         cc_voltage_2.value = 0;
         cc_voltage_2.ui.draw(&cc_voltage_2.ui);
         cc_current_2.value = 0;
@@ -260,8 +249,9 @@ static void cc_enable(bool enabled)
  */
 static void voltage_changed(ui_number_t *item)
 {
-    saved_u = item->value;
+    cc_voltage.value = item->value;
     (void) pwrctl_set_vout(10 * item->value);
+    cc_voltage.ui.draw(&cc_voltage.ui);
 }
 
 /**
@@ -271,8 +261,9 @@ static void voltage_changed(ui_number_t *item)
  */
 static void current_changed(ui_number_t *item)
 {
-    saved_i = item->value;
+    cc_current.value = item->value;
     (void) pwrctl_set_iout(item->value);
+    cc_current.ui.draw(&cc_current.ui);
 }
 
 /**
@@ -283,10 +274,10 @@ static void current_changed(ui_number_t *item)
 static void past_save(past_t *past)
 {
     /** @todo: past bug causes corruption for units smaller than 4 bytes (#27) */
-    if (!past_write_unit(past, (SCREEN_ID << 24) | PAST_U, (void*) &saved_u, 4 /* sizeof(cv_voltage.value) */ )) {
+    if (!past_write_unit(past, (SCREEN_ID << 24) | PAST_U, (void*) &cc_voltage.value, 4 /* sizeof(cc_voltage.value) */ )) {
         /** @todo: handle past write failures */
     }
-    if (!past_write_unit(past, (SCREEN_ID << 24) | PAST_I, (void*) &saved_i, 4 /* sizeof(cc_current.value) */)) {
+    if (!past_write_unit(past, (SCREEN_ID << 24) | PAST_I, (void*) &cc_current.value, 4 /* sizeof(cc_current.value) */)) {
         /** @todo: handle past write failures */
     }
 }
@@ -301,11 +292,11 @@ static void past_restore(past_t *past)
     uint32_t length;
     uint32_t *p = 0;
     if (past_read_unit(past, (SCREEN_ID << 24) | PAST_U, (const void**) &p, &length)) {
-        saved_u = cc_voltage.value = *p;
+        cc_voltage.value = *p;
         (void) length;
     }
     if (past_read_unit(past, (SCREEN_ID << 24) | PAST_I, (const void**) &p, &length)) {
-        saved_i = cc_current.value = *p;
+        cc_current.value = *p;
         (void) length;
     }
 }
@@ -320,25 +311,16 @@ static void past_restore(past_t *past)
  */
 static void cc_tick(void)
 {    
-    cc_voltage.ui.draw(&cc_voltage.ui);
-
     uint16_t i_out_raw, v_in_raw, v_out_raw;
     hw_get_adc_values(&i_out_raw, &v_in_raw, &v_out_raw);
-    cc_voltage.max = pwrctl_calc_vin(v_in_raw);
 
     /** Continously update max voltage output value */
-    cc_voltage_2.max = pwrctl_calc_vin(v_in_raw) / 10;
+    cc_voltage.max = pwrctl_calc_vin(v_in_raw) / 10;
+
     int32_t new_u = pwrctl_calc_vout(v_out_raw) / 10;
     if (new_u != cc_voltage_2.value) {
         cc_voltage_2.value = new_u;
         cc_voltage_2.ui.draw(&cc_voltage_2.ui);
-    }
-
-    /** If the current setting has focus, make sure we're displaying
-      * the desired setting and not the current output value. */
-    if (cc_current.value != saved_i) { // (int32_t) pwrctl_get_ilimit()) {
-        cc_current.value = saved_i; // pwrctl_get_ilimit();
-        cc_current.ui.draw(&cc_current.ui);
     }
 
     /** No focus, update display if necessary */
