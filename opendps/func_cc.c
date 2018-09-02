@@ -178,7 +178,17 @@ ui_screen_t cc_screen = {
 static set_param_status_t set_parameter(char *name, char *value)
 {
     int32_t ivalue = atoi(value);
-    if (strcmp("current", name) == 0 || strcmp("i", name) == 0) {
+    if (strcmp("voltage", name) == 0 || strcmp("u", name) == 0) {
+        if (ivalue < cc_voltage.min || ivalue > cc_voltage.max) {
+            emu_printf("[CC] Voltage %d is out of range (min:%d max:%d)\n", ivalue, cv_voltage.min, cv_voltage.max);
+            return ps_range_error;
+        }
+        emu_printf("[CC] Setting voltage to %d\n", ivalue);
+        /** value received in millivolt, module internal representation is centivolt */
+        cc_voltage.value = ivalue / 10;
+        voltage_changed(&cc_voltage);
+        return ps_ok;
+    } else if (strcmp("current", name) == 0 || strcmp("i", name) == 0) {
         if (ivalue < cc_current.min || ivalue > cc_current.max) {
             emu_printf("[CC] Current %d is out of range (min:%d max:%d)\n", ivalue, cc_current.min, cc_current.max);
             return ps_range_error;
@@ -202,7 +212,11 @@ static set_param_status_t set_parameter(char *name, char *value)
  */
 static set_param_status_t get_parameter(char *name, char *value, uint32_t value_len)
 {
-    if (strcmp("current", name) == 0 || strcmp("i", name) == 0) {
+    if (strcmp("voltage", name) == 0 || strcmp("u", name) == 0) {
+        /** value returned in millivolt, module internal representation is centivolt */
+        (void) mini_snprintf(value, value_len, "%d", 10 * (pwrctl_vout_enabled() ? saved_u : cc_voltage.value));
+        return ps_ok;
+    } if (strcmp("current", name) == 0 || strcmp("i", name) == 0) {
         (void) mini_snprintf(value, value_len, "%d", pwrctl_vout_enabled() ? saved_i : cc_current.value);
         return ps_ok;
     }
