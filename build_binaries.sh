@@ -6,7 +6,7 @@ set -e
 git rev-parse --short HEAD
 PROJECT=$(git rev-parse --short HEAD)
 echo "Building opendps git version: $PROJECT"
-docker build -t $PROJECT -f Dockerfile3 .
+docker build -t $PROJECT -f Dockerfile .
 
 CONTAINER_ID=$(docker create $PROJECT bash)
 echo "CONTAINER ID: $CONTAINER_ID"
