@@ -211,7 +211,7 @@ static set_param_status_t get_parameter(char *name, char *value, uint32_t value_
         /** value returned in millivolt, module internal representation is centivolt */
         (void) mini_snprintf(value, value_len, "%d", 10 * cc_voltage.value);
         return ps_ok;
-    } if (strcmp("current", name) == 0 || strcmp("i", name) == 0) {
+    } else if (strcmp("current", name) == 0 || strcmp("i", name) == 0) {
         (void) mini_snprintf(value, value_len, "%d", cc_current.value);
         return ps_ok;
     }
@@ -225,6 +225,7 @@ static set_param_status_t get_parameter(char *name, char *value, uint32_t value_
  */
 static void cc_enable(bool enabled)
 {
+    emu_printf("[CC] %s output\n", enabled ? "Enable" : "Disable");
     if (enabled) {
         (void) pwrctl_set_vout(10 * cc_voltage.value);
         //(void) pwrctl_set_vout(10 * cc_voltage.max - 1000);
@@ -233,12 +234,6 @@ static void cc_enable(bool enabled)
         pwrctl_enable_vout(true);
     } else {
         pwrctl_enable_vout(false);
-        /** Make sure we're displaying the settings and not the current 
-          * measurements when the power output is switched off */
-        cc_voltage_2.value = 0;
-        cc_voltage_2.ui.draw(&cc_voltage_2.ui);
-        cc_current_2.value = 0;
-        cc_current_2.ui.draw(&cc_current_2.ui);
     }
 }
 

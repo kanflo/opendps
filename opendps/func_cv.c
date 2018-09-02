@@ -231,19 +231,12 @@ static void cv_enable(bool enabled)
 {
     emu_printf("[CV] %s output\n", enabled ? "Enable" : "Disable");
     if (enabled) {
-        /** Display will now show the current values, keep the user setting saved */
         (void) pwrctl_set_vout(10 * cv_voltage.value);
         (void) pwrctl_set_iout(CONFIG_DPS_MAX_CURRENT);
         (void) pwrctl_set_ilimit(cv_current.value);
         pwrctl_enable_vout(true);
     } else {
         pwrctl_enable_vout(false);
-        /** Make sure we're displaying the settings and not the current 
-          * measurements when the power output is switched off */
-        cv_voltage_2.value = 0;
-        cv_voltage_2.ui.draw(&cv_voltage_2.ui);
-        cv_current_2.value = 0;
-        cv_current_2.ui.draw(&cv_current_2.ui);
     }
 }
 
