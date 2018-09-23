@@ -367,6 +367,7 @@ static void ui_hande_event(event_t event, uint8_t data)
             }
             break;
         case event_button_enable:
+#pragma GCC diagnostic ignored "-Wimplicit-fallthrough"
             write_past_settings();
             /** Deliberate fallthrough */
 
