@@ -1,7 +1,9 @@
 BINARY = dpsboot
 
 GIT_VERSION := $(shell git describe --abbrev=4 --dirty --always --tags)
-CFLAGS = -I. -I../opendps -DGIT_VERSION=\"$(GIT_VERSION)\"
+CFLAGS = -I. -I../opendps -DGIT_VERSION=\"$(GIT_VERSION)\" -DCONFIG_PAST_NO_GC
+# Future optimisation: saves ~600 bytes but does not work for gcc <= 7
+#CFLAGS += -flto
 
 OBJS = \
 	common.o \

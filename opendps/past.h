@@ -89,4 +89,11 @@ bool past_erase_unit(past_t *past, past_id_t id);
   */
 bool past_format(past_t *past);
 
+/**
+  * @brief Check if GC is needed
+  * @param past pointer to an initialized past structure
+  * @retval True if GC was performed
+  */
+bool past_gc_check(past_t *past);
+
 #endif // __PAST_H__

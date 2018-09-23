@@ -597,6 +597,17 @@ void opendps_get_temperature(int16_t *_temp1, int16_t *_temp2, bool *temp_shutdo
     *temp_shutdown = is_temperature_locked;
 }
 
+/**
+ * @brief      Upgrade was requested by the protocol handler
+ */
+void opendps_upgrade_start(void)
+{
+    /** Bootloader does not know how to garbage collect past, perform if needed */
+    (void) past_gc_check(&g_past);
+    scb_reset_system();
+}
+
+
 #ifdef CONFIG_SPLASH_SCREEN
 /**
   * @brief Draw splash screen

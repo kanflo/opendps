@@ -149,4 +149,10 @@ void opendps_set_temperature(int16_t temp1, int16_t temp2);
   */
 void opendps_get_temperature(int16_t *temp1, int16_t *temp2, bool *temp_shutdown);
 
+/**
+ * @brief      Upgrade was requested by the protocol handler
+  * @param chunk_size size of data chunks as requested by the remote
+ */
+void opendps_upgrade_start(void);
+
 #endif // __OPENDPS_H__

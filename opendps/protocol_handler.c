@@ -329,7 +329,7 @@ static command_status_t handle_upgrade_start(uint8_t *payload, uint32_t payload_
     uint16_t chunk_size, crc;
     if (protocol_unpack_upgrade_start(payload, payload_len, &chunk_size, &crc)) {
         bootcom_put(0xfedebeda, (chunk_size << 16) | crc);
-        scb_reset_system();
+        opendps_upgrade_start();
     }
     return success;
 }

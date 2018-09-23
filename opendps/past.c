@@ -126,12 +126,16 @@
 #define UNIT_SIZE_OFFSET  (4)
 #define UNIT_DATA_OFFSET  (8)
 
+#define PAST_GC_LIMIT    (32)
+
 static int32_t past_find_unit(past_t *past, past_id_t id);
 static bool past_erase_unit_at(uint32_t address);
 static bool past_garbage_collect(past_t *past);
 static inline bool flash_write32(uint32_t address, uint32_t data);
 static inline uint32_t flash_read32(uint32_t address); /** @todo Make a macro out of read32*/
+#ifndef CONFIG_PAST_NO_GC
 static bool copy_parameters(past_t *past, uint32_t src_base, uint32_t dst_base);
+#endif // CONFIG_PAST_NO_GC
 static uint32_t past_remaining_size(past_t *past);
 
 /**
@@ -477,6 +481,10 @@ static int32_t past_find_unit(past_t *past, past_id_t id)
   */
 static bool past_garbage_collect(past_t *past)
 {
+#ifdef CONFIG_PAST_NO_GC
+    (void) past;
+    return false;
+#else // CONFIG_PAST_NO_GC
     bool success = false;
     unlock_flash();
     do {
@@ -510,6 +518,7 @@ static bool past_garbage_collect(past_t *past)
     } while(0);
     lock_flash();
     return success;
+#endif // CONFIG_PAST_NO_GC
 }
 
 /**
@@ -554,6 +563,7 @@ static inline uint32_t flash_read32(uint32_t address)
   * @param dst_base destination base address
   * @retval true if copying was successful
   */
+#ifndef CONFIG_PAST_NO_GC
 static bool copy_parameters(past_t *past, uint32_t src_base, uint32_t dst_base)
 {
     bool success = true;
@@ -589,4 +599,22 @@ static bool copy_parameters(past_t *past, uint32_t src_base, uint32_t dst_base)
         past->_end_addr = dst;
     }
     return success;
+}
+#endif // CONFIG_PAST_NO_GC
+
+/**
+  * @brief Check if GC is needed
+  * @param past pointer to an initialized past structure
+  * @retval True if GC was performed
+  */
+bool past_gc_check(past_t *past)
+{
+#ifdef CONFIG_PAST_NO_GC
+    (void) past;
+#else // CONFIG_PAST_NO_GC
+    if (past_remaining_size(past) < PAST_GC_LIMIT) {
+        return past_garbage_collect(past);
+    }
+#endif // CONFIG_PAST_NO_GC
+    return false;
 }
