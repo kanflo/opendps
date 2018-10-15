@@ -104,18 +104,16 @@
  * As units get rewritten, Past will be filled with old unit data an at some
  * point it will be full. At this point it will perform a garbage collection,
  * copying all units to the other flash block. It will first erase that block
- * and then copy the valid data from the old block. When colpleted it will
+ * and then copy the valid data from the old block. When completed it will
  * update the block counter att offset 4 and at the very last write the past
  * magic at offset 0.
- *
- *
- *
  *
  */
 
 #define PAST_MAGIC 0x50617374 // "Past"
 
 #define PAST_UNIT_ID_INVALID           (0)
+/** The 'end' unit is the first chunk of unwritten flash */
 #define PAST_UNIT_ID_END      (0xffffffff)
 
 #define PAST_BLOCK_SIZE     (1024)  //STM32F100
@@ -172,25 +170,24 @@ bool past_init(past_t *past)
         if (success) {
             int32_t addr = past_find_unit(past, PAST_UNIT_ID_END);
             if (addr < 0) {
+                /** Past is full as current block contains no erased space */
                 past->_valid = success = past_garbage_collect(past);
             } else {
                 past->_end_addr = (uint32_t) addr;
                 past->_valid = true;
             }
-        }
-
-        /** Now check all space following the end address is erased space.
-          * If not we have a half completed write operation we need to clear
-          * by a garbage collect */
-        uint32_t check_addr = past->_end_addr;
-        while (check_addr < past->blocks[past->_cur_block] + PAST_BLOCK_SIZE) {
-            if (flash_read32(check_addr) != PAST_UNIT_ID_END) {
-                success &= past_garbage_collect(past);
-                break;
+            /** Now check all space following the end address is erased space.
+              * If not we have a half completed write operation we need to clear
+              * by a garbage collect */
+            uint32_t check_addr = past->_end_addr;
+            while (check_addr < past->blocks[past->_cur_block] + PAST_BLOCK_SIZE) {
+                if (flash_read32(check_addr) != PAST_UNIT_ID_END) {
+                    success &= past_garbage_collect(past);
+                    break;
+                }
+                check_addr += 4;
             }
-            check_addr += 4;
         }
-
     }
     return success;
 }
@@ -275,9 +272,6 @@ bool past_write_unit(past_t *past, past_id_t id, void *data, uint32_t length)
     do {
         /** Check if there is an old version of the unit */
         int32_t old_addr = past_find_unit(past, id);
-        if (old_addr < 0) {
-            /** @todo: format past */
-        }
         /** Write the new unit */
         if (!flash_write32(end_address+UNIT_SIZE_OFFSET, length)) {
             break;
@@ -315,7 +309,7 @@ bool past_write_unit(past_t *past, past_id_t id, void *data, uint32_t length)
         past->_end_addr = end_address;
 
         /** If existing, erase the old version */
-        if (old_addr) {
+        if (old_addr >= 0) {
             if (!past_erase_unit_at(old_addr)) {
                 break;
             }
@@ -323,6 +317,8 @@ bool past_write_unit(past_t *past, past_id_t id, void *data, uint32_t length)
         success = true;
     } while(0);
     lock_flash();
+    /** This serves as a workaround for #53 */
+    (void) past_gc_check(past);
     return success;
 }
 
@@ -439,16 +435,19 @@ static bool past_erase_unit_at(uint32_t address)
   * @brief Find unit and return address
   * @param past pointer to an initialized past structure
   * @param id id of unit to search for
-  * @retval address of unit or 0 if not found or -1 if an error occured
+  * @retval address of unit or -1 if not found or an error occured
   */
 static int32_t past_find_unit(past_t *past, past_id_t id)
 {
     uint32_t base = past->blocks[past->_cur_block];
     uint32_t cur_address = base + HEADER_FIRST_UNIT_OFFSET;
     uint32_t cur_id, cur_size;
+    bool found = false;
     do {
         cur_id = flash_read32(cur_address);
+        cur_size = flash_read32(cur_address + UNIT_SIZE_OFFSET);
         if (id == cur_id) {
+            found = true;
             break;
         } else if (cur_id == PAST_UNIT_ID_END) {
             cur_address = 0; /** Reached end */
@@ -471,7 +470,7 @@ static int32_t past_find_unit(past_t *past, past_id_t id)
         }
 
     } while (cur_address < base + PAST_BLOCK_SIZE);
-    return cur_address;
+    return found ? (int32_t) cur_address : -1;
 }
 
 /**
@@ -483,7 +482,7 @@ static bool past_garbage_collect(past_t *past)
 {
 #ifdef CONFIG_PAST_NO_GC
     (void) past;
-    return false;
+    return true; /** Always consider it a success if functionality is lacking */
 #else // CONFIG_PAST_NO_GC
     bool success = false;
     unlock_flash();
