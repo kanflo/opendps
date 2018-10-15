@@ -231,6 +231,9 @@ bool past_read_unit(past_t *past, past_id_t id, const void **data, uint32_t *len
   */
 bool past_write_unit(past_t *past, past_id_t id, void *data, uint32_t length)
 {
+    if (length < 4) {
+        return false; /** https://github.com/kanflo/opendps/issues/27 */
+    }
     if (!past || !past->_valid || !data || !length || id == PAST_UNIT_ID_INVALID || id == PAST_UNIT_ID_END) {
 #ifdef DPS_EMULATOR
         if (!past) {
