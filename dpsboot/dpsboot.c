@@ -137,7 +137,13 @@ static bool start_app(void)
 {
     /** Branch to the address in the reset entry of the app's exception vector */
     uint32_t *app_start = (uint32_t*) (4 + (uint32_t) &_app_start);
-    if (((*app_start) & 0xffff0000) == 0x08000000) { /** Is there something there we can branch to? */
+    /** Is there something there we can branch to? */
+    if (((*app_start) & 0xffff0000) == 0x08000000) {
+        /** Initialize stack pointer of user app */
+        volatile uint32_t *sp = (volatile uint32_t*) &_app_start;
+        __asm (
+            "mov sp, %0\n" : : "r" (*sp)
+        );
         ((void (*)(void))*app_start)();
     }
     return false;
