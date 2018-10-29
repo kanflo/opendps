@@ -105,7 +105,9 @@ static uint32_t adc_counter;
   * the current measurement was quite off, the reason being the ADC reading
   * at 0mA had an offset. For that reason, we calculate the individual offset
   * for the unit we're running on. Might work out... */
-#define ADC_CHA_IOUT_GOLDEN_VALUE  (0x45)
+#ifndef ADC_CHA_IOUT_GOLDEN_VALUE
+ #define ADC_CHA_IOUT_GOLDEN_VALUE  (0x45)
+#endif
 /** How many measurements do we take before calculating adc_i_offset */
 #define ADC_I_OFFSET_COUNT  (1000)
 /** Offset from golden value when measuring 0.00mA output current on this unit */
