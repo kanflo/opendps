@@ -62,6 +62,16 @@
  #define V_DAC_C (double)1.85
  #define V_ADC_K (double)13.164
  #define V_ADC_C (double)-100.751
+#elif defined(DPS3005)
+ #define ADC_CHA_IOUT_GOLDEN_VALUE  (0x00)
+ #define A_ADC_K (double)1.751
+ #define A_ADC_C (double)-1.101
+ #define A_DAC_K (double)0.653
+ #define A_DAC_C (double)262.5
+ #define V_DAC_K (double)0.0761
+ #define V_DAC_C (double)2.2857
+ #define V_ADC_K (double)13.131
+ #define V_ADC_C (double)-111.9
 #else
  #error "Please set MODEL to the device you want to build for"
 #endif // MODEL
