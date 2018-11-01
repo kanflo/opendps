@@ -43,9 +43,9 @@ typedef struct ui_number_t {
     uint8_t num_digits;
     uint8_t num_decimals;
     uint8_t cur_digit;
-    int16_t value;
-    int16_t min;
-    int16_t max;
+    int32_t value;
+    int32_t min;
+    int32_t max;
     void (*changed)(struct ui_number_t *item);
 } ui_number_t;
 
