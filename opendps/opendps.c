@@ -62,6 +62,10 @@
 #include "dpsemul.h"
 #endif // DPS_EMULATOR
 
+#ifdef CONFIG_SPLASH_SCREEN
+#include "logo.h"
+#endif // CONFIG_SPLASH_SCREEN
+
 #define TFT_HEIGHT  (128)
 #define TFT_WIDTH   (128)
 
@@ -773,10 +777,12 @@ int main(int argc, char const *argv[])
 #endif // CONFIG_WIFI
 
 #ifdef CONFIG_SPLASH_SCREEN
+    tft_clear();
     ui_draw_splash_screen();
     hw_enable_backlight();
     delay_ms(750);
     tft_clear();
+    uui_refresh(&func_ui, true);
 #endif // CONFIG_SPLASH_SCREEN
     event_handler();
     return 0;
