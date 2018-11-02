@@ -55,8 +55,8 @@ static void number_got_event(ui_item_t *_item, event_t event)
         case event_rot_left: {
             uint32_t diff = my_pow(10, item->cur_digit);
             item->value -= diff;
-            if (item->value < item->min) {
-                item->value = item->min;
+            if (item->value < (item->unit == unit_volt ? item->min / 10 : item->min)) {
+                item->value = (item->unit == unit_volt ? item->min / 10 : item->min);
             }
             _item->needs_redraw = true;
             value_changed = true;
@@ -65,8 +65,8 @@ static void number_got_event(ui_item_t *_item, event_t event)
         case event_rot_right: {
             uint32_t diff = my_pow(10, item->cur_digit);
             item->value += diff;
-            if (item->value > item->max) {
-                item->value = item->max;
+            if (item->value > (item->unit == unit_volt ? item->max / 10 : item->max)) {
+                item->value = (item->unit == unit_volt ? item->max / 10 : item->max);
             }
             _item->needs_redraw = true;
             value_changed = true;
