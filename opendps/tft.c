@@ -182,7 +182,7 @@ void tft_putch(uint8_t size, char ch, uint32_t x, uint32_t y, uint32_t w, uint32
     if (highlight) {
         // Add some more highlighting around the glyph
         frame_glyph(xpos, ypos, glyph_height, glyph_width, WHITE);
-    } else if (size == 1) { /** @todo Ugly hack as only size 1 can get highlighted */
+    } else if (size == 48) { /** @todo Ugly hack as only size 48 can get highlighted */
         // If not highlighted, make sure to erase the highlight (small font will never get highlighted)
         frame_glyph(xpos, ypos, glyph_height, glyph_width, BLACK);
     }

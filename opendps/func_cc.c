@@ -69,7 +69,7 @@ ui_number_t cc_voltage = {
         .y = 15,
         .can_focus = false,
     },
-    .font_size = 48, /** The bigger one, try 0 for kicks */
+    .font_size = 48, /** The bigger one, try 18 for kicks */
     .value = 0,
     .min = 0,
     .max = 0, /** Set at init, continously updated in the tick callback */
