@@ -41,9 +41,11 @@ BMP_PORT	?=
 # texane/stlink specific variables
 #STLINK_PORT	?= :4242
 
+ROOT=$(shell git rev-parse --show-toplevel)
+
 # DPS5005
 ifeq ($(strip $(OPENCM3_DIR)),)
-OPENCM3_DIR = ../libopencm3
+OPENCM3_DIR = $(ROOT)/libopencm3
 endif
 
 #LDSCRIPT = $(OPENCM3_DIR)/lib/stm32/f1/stm32f100x8.ld
@@ -51,4 +53,4 @@ endif
 # Blue pill
 #LDSCRIPT = $(OPENCM3_DIR)/lib/stm32/f1/stm32f103x8.ld
 
-include ../libopencm3.rules.mk 
+include $(ROOT)/libopencm3.rules.mk
