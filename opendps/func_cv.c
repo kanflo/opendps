@@ -33,6 +33,7 @@
 #include "dbg_printf.h"
 #include "mini-printf.h"
 #include "cv.h"
+#include "dps-model.h"
 
 /*
  * This is the implementation of the CV screen. It has two editable values, 
