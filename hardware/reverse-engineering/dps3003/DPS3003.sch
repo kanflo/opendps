@@ -37,17 +37,17 @@ LIBS:my_rcld
 LIBS:my_switches
 LIBS:my_sensors
 LIBS:my_transistors
-LIBS:DPS3203-cache
+LIBS:DPS3003-cache
 EELAYER 25 0
 EELAYER END
 $Descr A4 11693 8268
 encoding utf-8
 Sheet 1 3
 Title ""
-Date ""
-Rev ""
+Date "2017-11-16"
+Rev "v0.2"
 Comp ""
-Comment1 ""
+Comment1 "v0.2: Optical Changes, Renamed, R36, R20 added"
 Comment2 ""
 Comment3 ""
 Comment4 ""
@@ -218,7 +218,7 @@ F 1 "10A" H 3750 1285 50  0000 C CNN
 F 2 "" H 3750 1225 50  0001 C CNN
 F 3 "" H 3750 1225 50  0001 C CNN
 	1    3750 1225
-	1    0    0    -1  
+	1    0    0    1   
 $EndComp
 Connection ~ 3975 1225
 $Comp
@@ -379,7 +379,7 @@ $EndComp
 Wire Wire Line
 	4775 2575 4475 2575
 Wire Wire Line
-	4475 2575 4475 3250
+	4475 2575 4475 3275
 Wire Wire Line
 	4475 3250 4550 3250
 Wire Wire Line
@@ -414,26 +414,26 @@ Wire Wire Line
 $Comp
 L GND #PWR?
 U 1 1 5969443D
-P 4750 3500
-F 0 "#PWR?" H 4750 3250 50  0001 C CNN
-F 1 "GND" H 4750 3350 50  0000 C CNN
-F 2 "" H 4750 3500 50  0001 C CNN
-F 3 "" H 4750 3500 50  0001 C CNN
-	1    4750 3500
+P 4750 3525
+F 0 "#PWR?" H 4750 3275 50  0001 C CNN
+F 1 "GND" H 4750 3375 50  0000 C CNN
+F 2 "" H 4750 3525 50  0001 C CNN
+F 3 "" H 4750 3525 50  0001 C CNN
+	1    4750 3525
 	1    0    0    -1  
 $EndComp
 Wire Wire Line
-	4750 3450 4750 3500
+	4750 3450 4750 3525
 Wire Wire Line
 	4750 2775 4750 2850
 Wire Wire Line
 	4750 2800 4925 2800
 Connection ~ 4750 2800
 Wire Wire Line
-	4750 3475 4925 3475
+	4475 3500 4925 3500
 Wire Wire Line
-	4925 3475 4925 3000
-Connection ~ 4750 3475
+	4925 3500 4925 3000
+Connection ~ 4750 3500
 $Sheet
 S 3775 5400 2150 1400
 U 59695E07
@@ -601,7 +601,7 @@ F 1 "?" H 6960 3570 50  0000 L CNN
 F 2 "" H 6950 3650 50  0001 C CNN
 F 3 "" H 6950 3650 50  0001 C CNN
 	1    6950 3650
-	0    1    1    0   
+	0    -1   1    0   
 $EndComp
 Wire Wire Line
 	7225 3650 7050 3650
@@ -646,7 +646,7 @@ F 1 "?" H 7985 3745 50  0000 L CNN
 F 2 "" H 7975 3825 50  0001 C CNN
 F 3 "" H 7975 3825 50  0001 C CNN
 	1    7975 3825
-	-1   0    0    1   
+	-1   0    0    -1  
 $EndComp
 Wire Wire Line
 	8175 3550 7975 3550
@@ -688,10 +688,10 @@ F 3 "" H 6450 3250 50  0001 C CNN
 $EndComp
 Connection ~ 6675 3250
 $Comp
-L C_Small C121
+L C_Small C12
 U 1 1 596A3BFB
 P 6300 3700
-F 0 "C121" H 6310 3770 50  0000 L CNN
+F 0 "C12" H 6310 3770 50  0000 L CNN
 F 1 "?" H 6310 3620 50  0000 L CNN
 F 2 "" H 6300 3700 50  0001 C CNN
 F 3 "" H 6300 3700 50  0001 C CNN
@@ -782,7 +782,7 @@ F 1 "?" H 9385 2845 50  0000 L CNN
 F 2 "" H 9375 2925 50  0001 C CNN
 F 3 "" H 9375 2925 50  0001 C CNN
 	1    9375 2925
-	-1   0    0    1   
+	-1   0    0    -1  
 $EndComp
 Wire Wire Line
 	9375 2825 9375 2700
@@ -809,7 +809,7 @@ F 1 "?" H 9710 2745 50  0000 L CNN
 F 2 "" H 9700 2825 50  0001 C CNN
 F 3 "" H 9700 2825 50  0001 C CNN
 	1    9700 2825
-	-1   0    0    1   
+	-1   0    0    -1  
 $EndComp
 Wire Wire Line
 	9300 3250 9700 3250
@@ -844,7 +844,7 @@ F 1 "?" H 7810 2620 50  0000 L CNN
 F 2 "" H 7800 2700 50  0001 C CNN
 F 3 "" H 7800 2700 50  0001 C CNN
 	1    7800 2700
-	-1   0    0    1   
+	-1   0    0    -1  
 $EndComp
 $Comp
 L +Vref #PWR?
@@ -869,7 +869,7 @@ F 1 "1k(01B)" H 7980 2910 50  0000 L CNN
 F 2 "" H 7950 2950 50  0001 C CNN
 F 3 "" H 7950 2950 50  0001 C CNN
 	1    7950 2950
-	0    1    -1   0   
+	0    -1   -1   0   
 $EndComp
 Wire Wire Line
 	8050 2950 8175 2950
@@ -882,7 +882,7 @@ F 1 "?" H 7060 2720 50  0000 L CNN
 F 2 "" H 7050 2800 50  0001 C CNN
 F 3 "" H 7050 2800 50  0001 C CNN
 	1    7050 2800
-	0    1    -1   0   
+	0    -1   -1   0   
 $EndComp
 $Comp
 L C_Small C8
@@ -893,7 +893,7 @@ F 1 "?" H 7060 2870 50  0000 L CNN
 F 2 "" H 7050 2950 50  0001 C CNN
 F 3 "" H 7050 2950 50  0001 C CNN
 	1    7050 2950
-	0    1    -1   0   
+	0    -1   -1   0   
 $EndComp
 Wire Wire Line
 	7225 2950 7150 2950
@@ -912,7 +912,7 @@ F 1 "20k(30C)" H 6855 2760 50  0000 L CNN
 F 2 "" H 6825 2800 50  0001 C CNN
 F 3 "" H 6825 2800 50  0001 C CNN
 	1    6825 2800
-	0    1    -1   0   
+	0    -1   -1   0   
 $EndComp
 Wire Wire Line
 	6925 2800 6950 2800
@@ -954,7 +954,7 @@ F 1 "100k" H 3705 2860 50  0000 L CNN
 F 2 "" H 3675 2900 50  0001 C CNN
 F 3 "" H 3675 2900 50  0001 C CNN
 	1    3675 2900
-	-1   0    0    1   
+	-1   0    0    -1  
 $EndComp
 $Comp
 L R_Small R4
@@ -965,7 +965,7 @@ F 1 "10k" H 3705 3135 50  0000 L CNN
 F 2 "" H 3675 3175 50  0001 C CNN
 F 3 "" H 3675 3175 50  0001 C CNN
 	1    3675 3175
-	-1   0    0    1   
+	-1   0    0    -1  
 $EndComp
 $Comp
 L GND #PWR?
@@ -1012,7 +1012,7 @@ F 1 "3M3" H 3980 2885 50  0000 L CNN
 F 2 "" H 3950 2925 50  0001 C CNN
 F 3 "" H 3950 2925 50  0001 C CNN
 	1    3950 2925
-	-1   0    0    1   
+	-1   0    0    -1  
 $EndComp
 Wire Wire Line
 	3950 3025 3950 3050
@@ -1039,7 +1039,7 @@ F 1 "1M" H 8130 2585 50  0000 L CNN
 F 2 "" H 8100 2625 50  0001 C CNN
 F 3 "" H 8100 2625 50  0001 C CNN
 	1    8100 2625
-	1    0    0    1   
+	1    0    0    -1  
 $EndComp
 $Comp
 L +3.3VP #PWR?
@@ -1103,7 +1103,7 @@ F 1 "?" H 1310 3620 50  0000 L CNN
 F 2 "" H 1300 3700 50  0001 C CNN
 F 3 "" H 1300 3700 50  0001 C CNN
 	1    1300 3700
-	1    0    0    1   
+	1    0    0    -1  
 $EndComp
 $Comp
 L GND #PWR?
@@ -1130,7 +1130,7 @@ F 1 "3M3" H 1455 2960 50  0000 L CNN
 F 2 "" H 1425 3000 50  0001 C CNN
 F 3 "" H 1425 3000 50  0001 C CNN
 	1    1425 3000
-	1    0    0    1   
+	1    0    0    -1  
 $EndComp
 $Comp
 L +3.3VP #PWR?
@@ -1162,7 +1162,7 @@ $EndComp
 Wire Wire Line
 	2000 3150 1675 3150
 Wire Wire Line
-	1675 3150 1675 3675
+	1675 3150 1675 3700
 Wire Wire Line
 	1675 3675 1725 3675
 Wire Wire Line
@@ -1206,16 +1206,16 @@ Wire Wire Line
 $Comp
 L GND #PWR?
 U 1 1 596B46D3
-P 1300 3850
-F 0 "#PWR?" H 1300 3600 50  0001 C CNN
-F 1 "GND" H 1300 3700 50  0000 C CNN
-F 2 "" H 1300 3850 50  0001 C CNN
-F 3 "" H 1300 3850 50  0001 C CNN
-	1    1300 3850
+P 1300 3975
+F 0 "#PWR?" H 1300 3725 50  0001 C CNN
+F 1 "GND" H 1300 3825 50  0000 C CNN
+F 2 "" H 1300 3975 50  0001 C CNN
+F 3 "" H 1300 3975 50  0001 C CNN
+	1    1300 3975
 	1    0    0    -1  
 $EndComp
 Wire Wire Line
-	1300 3800 1300 3850
+	1300 3800 1300 3975
 $Comp
 L C_Small C5
 U 1 1 596B50C1
@@ -1225,7 +1225,7 @@ F 1 "?" H 5910 2495 50  0000 L CNN
 F 2 "" H 5900 2575 50  0001 C CNN
 F 3 "" H 5900 2575 50  0001 C CNN
 	1    5900 2575
-	1    0    0    1   
+	1    0    0    -1  
 $EndComp
 $Comp
 L GND #PWR?
@@ -1329,7 +1329,7 @@ F 1 "10V6" H 875 2375 50  0000 C CNN
 F 2 "" H 875 2475 50  0000 C CNN
 F 3 "" H 875 2475 50  0000 C CNN
 	1    875  2475
-	0    1    1    0   
+	0    -1   1    0   
 $EndComp
 Connection ~ 875  2350
 $Comp
@@ -1371,7 +1371,7 @@ F 1 "1M" H 8380 2535 50  0000 L CNN
 F 2 "" H 8350 2575 50  0001 C CNN
 F 3 "" H 8350 2575 50  0001 C CNN
 	1    8350 2575
-	1    0    0    1   
+	1    0    0    -1  
 $EndComp
 Wire Wire Line
 	8350 2675 8350 2775
@@ -1384,4 +1384,35 @@ Wire Wire Line
 	8450 2300 8350 2300
 Wire Wire Line
 	8350 2300 8350 2475
+$Comp
+L R_Small R36
+U 1 1 5A0D72CF
+P 4475 3375
+F 0 "R36" H 4505 3395 50  0000 L CNN
+F 1 "100k(01D)" H 4505 3335 50  0000 L CNN
+F 2 "" H 4475 3375 50  0001 C CNN
+F 3 "" H 4475 3375 50  0001 C CNN
+	1    4475 3375
+	-1   0    0    -1  
+$EndComp
+Connection ~ 4475 3250
+Wire Wire Line
+	4475 3475 4475 3500
+$Comp
+L R_Small R20
+U 1 1 5A0D88C2
+P 1675 3800
+F 0 "R20" H 1705 3820 50  0000 L CNN
+F 1 "1k(01B)" H 1705 3760 50  0000 L CNN
+F 2 "" H 1675 3800 50  0001 C CNN
+F 3 "" H 1675 3800 50  0001 C CNN
+	1    1675 3800
+	-1   0    0    -1  
+$EndComp
+Connection ~ 1675 3675
+Wire Wire Line
+	1675 3900 1675 3950
+Wire Wire Line
+	1675 3950 1300 3950
+Connection ~ 1300 3950
 $EndSCHEMATC

@@ -37,7 +37,7 @@ LIBS:my_rcld
 LIBS:my_switches
 LIBS:my_sensors
 LIBS:my_transistors
-LIBS:DPS3203-cache
+LIBS:DPS3003-cache
 EELAYER 25 0
 EELAYER END
 $Descr A4 11693 8268
@@ -130,22 +130,16 @@ F 3 "" H 1125 7575 50  0001 C CNN
 	1    0    0    -1  
 $EndComp
 Wire Wire Line
-	650  6950 650  7100
-Wire Wire Line
-	650  7100 650  7200
+	650  6950 650  7200
 Wire Wire Line
 	725  7100 650  7100
 Connection ~ 650  7100
 Wire Wire Line
 	650  7400 650  7500
 Wire Wire Line
-	650  7500 1125 7500
+	650  7500 1625 7500
 Wire Wire Line
-	1125 7500 1625 7500
-Wire Wire Line
-	1125 7400 1125 7500
-Wire Wire Line
-	1125 7500 1125 7575
+	1125 7400 1125 7575
 Connection ~ 1125 7500
 $Comp
 L C_Small C01
@@ -161,9 +155,7 @@ $EndComp
 Wire Wire Line
 	1525 7100 1625 7100
 Wire Wire Line
-	1625 6925 1625 7100
-Wire Wire Line
-	1625 7100 1625 7250
+	1625 6925 1625 7250
 Wire Wire Line
 	1625 7500 1625 7450
 $Comp
@@ -201,21 +193,11 @@ F 3 "" H 3700 1575 50  0001 C CNN
 	1    0    0    -1  
 $EndComp
 Wire Wire Line
-	3600 1425 3600 1450
-Wire Wire Line
-	3600 1450 3600 1875
+	3600 1425 3600 1875
 Wire Wire Line
 	3700 1475 3700 1450
 Wire Wire Line
-	3600 1450 3700 1450
-Wire Wire Line
-	3700 1450 3900 1450
-Wire Wire Line
-	3900 1450 4025 1450
-Wire Wire Line
-	4025 1450 4200 1450
-Wire Wire Line
-	4200 1450 4325 1450
+	3600 1450 4325 1450
 Connection ~ 3600 1450
 $Comp
 L C_Small C19
@@ -236,9 +218,7 @@ Wire Wire Line
 Wire Wire Line
 	3750 1850 3900 1850
 Wire Wire Line
-	3900 1450 3900 1850
-Wire Wire Line
-	3900 1850 3900 1875
+	3900 1450 3900 1875
 Connection ~ 3900 1450
 $Comp
 L GND #PWR?
@@ -254,11 +234,7 @@ $EndComp
 Wire Wire Line
 	3400 1800 3400 1725
 Wire Wire Line
-	3400 1725 3700 1725
-Wire Wire Line
-	3700 1725 4025 1725
-Wire Wire Line
-	4025 1725 4325 1725
+	3400 1725 4325 1725
 Wire Wire Line
 	4025 1725 4025 1675
 Wire Wire Line
@@ -308,15 +284,11 @@ F 3 "" H 6850 2650 50  0001 C CNN
 	-1   0    0    -1  
 $EndComp
 Wire Wire Line
-	6400 2275 6850 2275
-Wire Wire Line
-	6850 2275 7100 2275
+	6400 2275 7100 2275
 Wire Wire Line
 	6850 2275 6850 2375
 Wire Wire Line
-	6850 2575 6850 2625
-Wire Wire Line
-	6850 2625 6850 2650
+	6850 2575 6850 2650
 Wire Wire Line
 	6850 2625 7575 2625
 Wire Wire Line
@@ -359,15 +331,11 @@ F 3 "" H 6850 2075 50  0001 C CNN
 	-1   0    0    -1  
 $EndComp
 Wire Wire Line
-	6325 1700 6850 1700
-Wire Wire Line
-	6850 1700 7100 1700
+	6325 1700 7100 1700
 Wire Wire Line
 	6850 1700 6850 1800
 Wire Wire Line
-	6850 2000 6850 2050
-Wire Wire Line
-	6850 2050 6850 2075
+	6850 2000 6850 2075
 Wire Wire Line
 	6850 2050 7575 2050
 Wire Wire Line
@@ -410,15 +378,11 @@ F 3 "" H 6850 1500 50  0001 C CNN
 	-1   0    0    -1  
 $EndComp
 Wire Wire Line
-	6225 1125 6850 1125
-Wire Wire Line
-	6850 1125 7100 1125
+	6225 1125 7100 1125
 Wire Wire Line
 	6850 1125 6850 1225
 Wire Wire Line
-	6850 1425 6850 1475
-Wire Wire Line
-	6850 1475 6850 1500
+	6850 1425 6850 1500
 Wire Wire Line
 	6850 1475 7575 1475
 Wire Wire Line
@@ -461,15 +425,11 @@ F 3 "" H 1375 4250 50  0001 C CNN
 	1    0    0    -1  
 $EndComp
 Wire Wire Line
-	1125 3875 1375 3875
-Wire Wire Line
-	1375 3875 2400 3875
+	1125 3875 2400 3875
 Wire Wire Line
 	1375 3875 1375 3975
 Wire Wire Line
-	1375 4175 1375 4225
-Wire Wire Line
-	1375 4225 1375 4250
+	1375 4175 1375 4250
 Wire Wire Line
 	1375 4225 650  4225
 Wire Wire Line
@@ -493,9 +453,7 @@ Wire Wire Line
 Wire Wire Line
 	1475 4800 1725 4800
 Wire Wire Line
-	1725 3975 1725 4800
-Wire Wire Line
-	1725 4800 1725 4850
+	1725 3975 1725 4850
 Wire Wire Line
 	1725 3975 2400 3975
 $Comp
@@ -512,11 +470,7 @@ $EndComp
 Wire Wire Line
 	1175 5300 1175 5250
 Wire Wire Line
-	700  5250 1175 5250
-Wire Wire Line
-	1175 5250 1525 5250
-Wire Wire Line
-	1525 5250 1725 5250
+	700  5250 1725 5250
 Wire Wire Line
 	1525 5250 1525 5000
 Wire Wire Line
@@ -575,9 +529,7 @@ F 3 "" H 600 5700 50  0001 C CNN
 	1    0    0    -1  
 $EndComp
 Wire Wire Line
-	600  5650 600  5675
-Wire Wire Line
-	600  5675 600  5700
+	600  5650 600  5700
 Wire Wire Line
 	600  5675 825  5675
 Wire Wire Line
@@ -590,18 +542,14 @@ Wire Wire Line
 Wire Wire Line
 	1775 4500 600  4500
 Wire Wire Line
-	600  4500 600  4800
-Wire Wire Line
-	600  4800 600  5450
+	600  4500 600  5450
 Wire Wire Line
 	875  4800 600  4800
 Connection ~ 600  4800
 Wire Wire Line
 	875  5000 825  5000
 Wire Wire Line
-	825  4550 825  5000
-Wire Wire Line
-	825  5000 825  5400
+	825  4550 825  5400
 Wire Wire Line
 	825  4550 1825 4550
 Wire Wire Line
@@ -656,7 +604,7 @@ F 1 "10k(01C)" H 3005 5535 50  0000 L CNN
 F 2 "" H 2975 5575 50  0001 C CNN
 F 3 "" H 2975 5575 50  0001 C CNN
 	1    2975 5575
-	0    1    -1   0   
+	0    -1   -1   0   
 $EndComp
 Wire Wire Line
 	2225 4175 2225 5575
@@ -685,15 +633,9 @@ F 3 "" H 4200 5475 50  0001 C CNN
 	1    0    0    -1  
 $EndComp
 Wire Wire Line
-	4200 5375 4200 5425
+	4200 5375 4200 5475
 Wire Wire Line
-	4200 5425 4200 5475
-Wire Wire Line
-	3600 5425 3750 5425
-Wire Wire Line
-	3750 5425 3900 5425
-Wire Wire Line
-	3900 5425 4200 5425
+	3600 5425 4200 5425
 Wire Wire Line
 	3600 5425 3600 5375
 Connection ~ 4200 5425
@@ -904,7 +846,7 @@ F 1 "100k" H 8380 3560 50  0000 L CNN
 F 2 "" H 8350 3600 50  0001 C CNN
 F 3 "" H 8350 3600 50  0001 C CNN
 	1    8350 3600
-	1    0    0    1   
+	1    0    0    -1  
 $EndComp
 $Comp
 L R_Small R4
@@ -915,7 +857,7 @@ F 1 "10k" H 8380 3835 50  0000 L CNN
 F 2 "" H 8350 3875 50  0001 C CNN
 F 3 "" H 8350 3875 50  0001 C CNN
 	1    8350 3875
-	1    0    0    1   
+	1    0    0    -1  
 $EndComp
 $Comp
 L GND #PWR?
@@ -951,7 +893,7 @@ F 1 "100k" H 1005 3035 50  0000 L CNN
 F 2 "" H 975 3075 50  0001 C CNN
 F 3 "" H 975 3075 50  0001 C CNN
 	1    975  3075
-	-1   0    0    1   
+	-1   0    0    -1  
 $EndComp
 $Comp
 L R_Small R7
@@ -962,7 +904,7 @@ F 1 "5k1" H 1005 3285 50  0000 L CNN
 F 2 "" H 975 3325 50  0001 C CNN
 F 3 "" H 975 3325 50  0001 C CNN
 	1    975  3325
-	-1   0    0    1   
+	-1   0    0    -1  
 $EndComp
 $Comp
 L GND #PWR?
@@ -980,9 +922,7 @@ Wire Wire Line
 Wire Wire Line
 	975  2875 975  2975
 Wire Wire Line
-	975  3175 975  3200
-Wire Wire Line
-	975  3200 975  3225
+	975  3175 975  3225
 Wire Wire Line
 	975  3425 975  3475
 Wire Wire Line
@@ -1026,7 +966,7 @@ F 1 "10k(01C)" H 2080 2460 50  0000 L CNN
 F 2 "" H 2050 2500 50  0001 C CNN
 F 3 "" H 2050 2500 50  0001 C CNN
 	1    2050 2500
-	-1   0    0    1   
+	-1   0    0    -1  
 $EndComp
 Wire Wire Line
 	2400 2375 2050 2375
@@ -1060,9 +1000,7 @@ Wire Wire Line
 Wire Wire Line
 	5500 825  5500 2375
 Wire Wire Line
-	5400 2375 5500 2375
-Wire Wire Line
-	5500 2375 5625 2375
+	5400 2375 5625 2375
 $Comp
 L R_Small RL
 U 1 1 596BE4D7
@@ -1072,7 +1010,7 @@ F 1 "10k(01C)" H 5655 2135 50  0000 L CNN
 F 2 "" H 5625 2175 50  0001 C CNN
 F 3 "" H 5625 2175 50  0001 C CNN
 	1    5625 2175
-	1    0    0    1   
+	1    0    0    -1  
 $EndComp
 $Comp
 L +3.3V #PWR?
