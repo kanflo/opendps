@@ -43,6 +43,9 @@
 
 /** Contribution by @cleverfox */
 #if defined(DPS5015)
+ #ifndef CONFIG_DPS_MAX_CURRENT
+  #define CONFIG_DPS_MAX_CURRENT (15000) // Please note that the UI currently does not handle settings larger that 9.99A
+ #endif
  #define ADC_CHA_IOUT_GOLDEN_VALUE  (59)
  #define A_ADC_K (double)6.8403
  #define A_ADC_C (double)-394.06
@@ -53,6 +56,9 @@
  #define V_DAC_K (double)0.072266
  #define V_DAC_C (double)4.444777
 #elif defined(DPS5005)
+ #ifndef CONFIG_DPS_MAX_CURRENT
+  #define CONFIG_DPS_MAX_CURRENT (5000)
+ #endif
  #define ADC_CHA_IOUT_GOLDEN_VALUE  (0x45)
  #define A_ADC_K (double)1.713
  #define A_ADC_C (double)-118.51
@@ -63,6 +69,9 @@
  #define V_ADC_K (double)13.164
  #define V_ADC_C (double)-100.751
 #elif defined(DPS3005)
+ #ifndef CONFIG_DPS_MAX_CURRENT
+  #define CONFIG_DPS_MAX_CURRENT (5000)
+ #endif
  #define ADC_CHA_IOUT_GOLDEN_VALUE  (0x00)
  #define A_ADC_K (double)1.751
  #define A_ADC_C (double)-1.101
