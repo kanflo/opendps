@@ -33,6 +33,7 @@
 #include "cc.h"
 #include "dbg_printf.h"
 #include "mini-printf.h"
+#include "dps-model.h"
 
 /*
  * This is the implementation of the CC screen. 
