@@ -453,6 +453,7 @@ def run_upgrade(comms, fw_file_name, args):
     if ret_dict["status"] == upgrade_continue:
         if chunk_size != ret_dict["chunk_size"]:
             print("Device selected chunk size %d" % (ret_dict["chunk_size"]))
+            chunk_size = ret_dict["chunk_size"]
         counter = 0
         for chunk in chunk_from_file(fw_file_name, chunk_size):
             counter += len(chunk)
