@@ -35,7 +35,7 @@ make -C dpsboot flash
 
 Check [the blog](https://johan.kanflo.com/upgrading-your-dps5005/) for instructions on how to unlock and flash your DPS5005.
 
-Second, build and flash the ESP8266 firmware. First you need to create the file ```esp8266-proxy/esp-open-rtos/include/private_ssid_config.h``` with the following content:
+Second, build and flash the ESP8266 firmware. First you need to create the file `esp8266-proxy/esp-open-rtos/include/private_ssid_config.h` with the following content:
 
 ```
 #define WIFI_SSID "My SSID"
@@ -48,9 +48,17 @@ Next:
 make -C esp8266-proxy flash
 ```
 
+### Setup dpsctl.py
+
+The script runs with python2 and python3. The libraries pycrc and pyserial are required:
+
+```
+pip install -r requirements.txt
+```
+
 ### Usage
 
-A vanilla OpenDPS device will support two functions, constant voltage (cv) and constant current (cc). A tool called ```dpsctl.py``` can be used to talk to an OpenDPS device to query functionality and supported parameters for each function.
+A vanilla OpenDPS device will support two functions, constant voltage (cv) and constant current (cc). A tool called `dpsctl.py` can be used to talk to an OpenDPS device to query functionality and supported parameters for each function.
 
 Once upgraded and connected to an ESP8266, type the following at the terminal to find its IP address:
 
@@ -99,7 +107,7 @@ List supported functions parameters of current function:
 Selected OpenDPS supports the voltage (mV) current (mA) parameters for the cv function.
 ```
 
-Additionally, ```dpsctl.py``` can return JSON, eg.:
+Additionally, `dpsctl.py` can return JSON, eg.:
 
 ```
 % dpsctl.py -d 172.16.3.203 -q -j
@@ -129,7 +137,7 @@ As newer DPS:es have 1.25mm spaced JTAG pins (JST-GH) and limited space for runn
 
 If you accidentally upgrade to a really b0rken version, the bootloader can be forced to enter upgrade mode if you keep the SEL button pressed while enabling power.
 
-The display will be black during the entire upgrade operation. If it stays black, the bootloader might refuse or fail to start the OpenDPS application, or the application crashed. If you attempt the upgrade operation again, and upgrading begins, the bootloader is running but is refusing to boot your firmware. But why? Well, let's find out. If you append the ```-v``` option to ```dpsctl.py``` you will get a dump of the UART traffic.
+The display will be black during the entire upgrade operation. If it stays black, the bootloader might refuse or fail to start the OpenDPS application, or the application crashed. If you attempt the upgrade operation again, and upgrading begins, the bootloader is running but is refusing to boot your firmware. But why? Well, let's find out. If you append the `-v` option to `dpsctl.py` you will get a dump of the UART traffic.
 
 ```
 Communicating with /dev/ttyUSB0
@@ -144,11 +152,11 @@ The fourth byte from the end in the received data (0x03 in this example) will te
 
 The project consists of four parts:
 
-* ```dpsboot/``` The OpenDPS bootloader.
-* ```opendps/``` The OpenDPS firmware.
-* ```esp8266-proxy/``` The ESP8266 firmware for wifi connected OpenDPS:es.
-* ```dpsctl/``` A pyton script for controlling your OpenDPS via wifi or a serial port.
-* ```emu/``` Xcode project and GNU makefile for running an emulated OpenDPS.
+* `dpsboot/` The OpenDPS bootloader.
+* `opendps/` The OpenDPS firmware.
+* `esp8266-proxy/` The ESP8266 firmware for wifi connected OpenDPS:es.
+* `dpsctl/` A pyton script for controlling your OpenDPS via wifi or a serial port.
+* `emu/` Xcode project and GNU makefile for running an emulated OpenDPS.
 
 
 ### What about other DPS:es?
