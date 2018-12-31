@@ -27,11 +27,12 @@ SRCS = opendps.c \
 	uframe.c \
 	protocol.c \
 	protocol_handler.c \
-	font-0.c \
-	font-1.c \
 	func_cv.c \
 	func_cc.c \
 	misc.c \
+	font-18.c \
+	font-24.c \
+	font-48.c \
 
 #OBJECTS = $(patsubst ../%, %, $(patsubst %.c, %.o, $(SRCS)))
 OBJECTS = $(patsubst %.c, %.o, $(SRCS))
