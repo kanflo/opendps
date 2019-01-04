@@ -285,7 +285,7 @@ static void cv_tick(void)
     uint16_t i_out_raw, v_in_raw, v_out_raw;
     hw_get_adc_values(&i_out_raw, &v_in_raw, &v_out_raw);
     /** Continously update max voltage output value */
-    cv_voltage.max = (float) pwrctl_calc_vin(v_in_raw) / 1.1f + 0.5f; /** Max output voltage is 1.1 * Vin */
+    cv_voltage.max = (float) pwrctl_calc_vin(v_in_raw) / VIN_VOUT_RATIO + 0.5f; /** Max output voltage is 1.1 * Vin */
     if (pwrctl_vout_enabled()) {
         if (cv_voltage.ui.has_focus) {
             /** If the voltage setting has focus, make sure we're displaying
