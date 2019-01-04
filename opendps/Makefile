@@ -3,6 +3,9 @@ BINARY = opendps
 # Build with commandline interface rather than serial interface
 COMMANDLINE := 0
 
+# The baudrate used for serial communications, defaults to 115200
+BAUDRATE ?= 115200
+
 # Set build model, defaults to DPS5005
 MODEL := DPS5005
 
@@ -35,7 +38,7 @@ CFLAGS = -I. -DGIT_VERSION=\"$(GIT_VERSION)\" -Wno-missing-braces
 
 # Output voltage and current limit are persisted in flash,
 # this is the default setting
-CFLAGS += -DCONFIG_DEFAULT_VOUT=5000 -DCONFIG_DEFAULT_ILIMIT=500 -DCOLORSPACE=$(COLORSPACE) -D$(MODEL)
+CFLAGS += -DCONFIG_DEFAULT_VOUT=5000 -DCONFIG_DEFAULT_ILIMIT=500 -DCONFIG_BAUDRATE=$(BAUDRATE) -DCOLORSPACE=$(COLORSPACE) -D$(MODEL)
 
 # Application linker script
 LDSCRIPT = stm32f100_app.ld

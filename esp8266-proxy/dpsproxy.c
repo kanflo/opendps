@@ -327,7 +327,7 @@ static void wifi_task(void *pvParameters)
 
 void user_init(void)
 {
-    uart_set_baud(0, 115200);
+    uart_set_baud(0, CONFIG_BAUDRATE);  /** Baudrate set in makefile */
     uart_clear_txfifo(0);
     vSemaphoreCreateBinary(wifi_alive_sem);
     tx_queue = xQueueCreate(TX_QUEUE_DEPTH, sizeof(tx_item_t));

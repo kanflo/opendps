@@ -113,7 +113,7 @@ static void usart_init(void)
     gpio_set_mode(GPIOA, GPIO_MODE_INPUT, GPIO_CNF_INPUT_FLOAT, GPIO_USART1_RX);
 
     nvic_enable_irq(NVIC_USART1_IRQ);
-    usart_set_baudrate(USART1, 115200);
+    usart_set_baudrate(USART1, CONFIG_BAUDRATE); /** Baudrate set in makefile */
     usart_set_databits(USART1, 8);
     usart_set_stopbits(USART1, USART_STOPBITS_1);
     usart_set_mode(USART1, USART_MODE_TX_RX);
