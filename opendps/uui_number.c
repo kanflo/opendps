@@ -148,7 +148,7 @@ static void number_draw(ui_item_t *_item)
         cur_digit++;
     }
     xpos -= item->font_size == 18 ? 4 : 10;
-    tft_putch(item->font_size, '.', xpos, _item->y, item->font_size == 0 ? 4 : 10, h, false);
+    tft_putch(item->font_size, '.', xpos, _item->y, item->font_size == 18 ? 4 : 10, h, false);
     for (uint32_t i = 0; i < item->num_digits; i++) {
         bool highlight = _item->has_focus && item->cur_digit == cur_digit;
         xpos -= w;
