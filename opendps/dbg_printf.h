@@ -33,8 +33,13 @@
  /** emu_printf allows for prints only visible when running in the emulator */
  #define emu_printf printf
 #else // DPS_EMULATOR
- int dbg_printf(const char *fmt, ...);
- #define emu_printf(...)
+ #ifdef CONFIG_DEBUG
+  int dbg_printf(const char *fmt, ...);
+  #define emu_printf(...)
+ #else
+  #define dbg_printf(...)
+  #define emu_printf(...)
+ #endif
 #endif // DPS_EMULATOR
 
 #endif // __DBG_PRINTF_H__

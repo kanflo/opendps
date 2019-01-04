@@ -18,6 +18,9 @@ WIFI := 1
 #MAX_CURRENT := 5000
 # Please note that the UI currently does not handle settings larger that 9.99A
 
+# Print debug information on the serial output
+DEBUG ?= 0
+
 # Color space for the DPS display. Most units use GBR but RGB has been spotted in the wild
 COLORSPACE ?= 0
 
@@ -53,7 +56,6 @@ OBJS = \
     spi_driver.o \
     ringbuf.o \
     ili9163c.o \
-    dbg_printf.o \
     mini-printf.o \
     font-18.o \
     font-24.o \
@@ -61,6 +63,11 @@ OBJS = \
 
 ifdef MAX_CURRENT
 	CFLAGS +=-DCONFIG_DPS_MAX_CURRENT=$(MAX_CURRENT)
+endif
+
+ifeq ($(DEBUG),1)
+	CFLAGS +=-DCONFIG_DEBUG
+	OBJS += dbg_printf.o
 endif
 
 ifeq ($(CC_ENABLE),1)
