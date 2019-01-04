@@ -92,13 +92,15 @@ A class that describes a serial interface
 class tty_interface(comm_interface):
 
     _port_handle = None
+    _baudrate = None
 
-    def __init__(self, if_name):
+    def __init__(self, if_name, baudrate):
         self._if_name = if_name
+        self._baudrate = baudrate
 
     def open(self):
         if not self._port_handle:
-            self._port_handle = serial.Serial(baudrate = 115200, timeout = 1.0)
+            self._port_handle = serial.Serial(baudrate = self._baudrate, timeout = 1.0)
             self._port_handle.port = self._if_name
             self._port_handle.open()
         return True
@@ -502,7 +504,7 @@ def create_comms(args):
         if is_ip_address(if_name):
             comms = udp_interface(if_name)
         else:
-            comms = tty_interface(if_name)
+            comms = tty_interface(if_name, args.baudrate)
     else:
         fail("no comms interface specified")
     return comms
@@ -591,6 +593,7 @@ def main():
     parser = argparse.ArgumentParser(description='Instrument an OpenDPS device')
 
     parser.add_argument('-d', '--device', help="OpenDPS device to connect to. Can be a /dev/tty device or an IP number. If omitted, dpsctl.py will try the environment variable DPSIF", default='')
+    parser.add_argument('-b', '--baudrate', type=int, dest="baudrate", help="Set baudrate used for serial communications", default=115200)
     parser.add_argument('-S', '--scan', action="store_true", help="Scan for OpenDPS wifi devices")
     parser.add_argument('-f', '--function', nargs='?', help="Set active function")
     parser.add_argument('-F', '--list-functions', action='store_true', help="List available functions")
