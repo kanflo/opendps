@@ -41,6 +41,7 @@ cmd_list_functions = 13
 cmd_set_parameters = 14
 cmd_list_parameters = 15
 cmd_temperature_report = 16
+cmd_version = 17
 cmd_response = 0x80
 
 # wifi_status_t
@@ -245,3 +246,11 @@ def unpack_temperature_report(uframe):
         data['params'][key] = value
     return data
 
+# Returns the boot
+def unpack_version_response(uframe):
+    data = {}
+    data['command'] = uframe.unpack8()
+    data['status'] = uframe.unpack8()
+    data['boot_git_hash'] = uframe.unpack_cstr()
+    data['app_git_hash'] = uframe.unpack_cstr()
+    return data

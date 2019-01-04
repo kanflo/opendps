@@ -200,6 +200,34 @@ const char* opendps_get_curr_function_name(void)
 }
 
 /**
+ * @brief      Get dpsboot GIT hash string address
+ *
+ * @return     Return string length on success, else 0
+ */
+uint32_t opendps_get_boot_git_hash(const char** git_hash)
+{
+    uint32_t length;
+    if (past_read_unit(&g_past, past_boot_git_hash, (const void**) git_hash, &length))
+        return length;
+    else
+        return 0;
+}
+
+/**
+ * @brief      Get opendps GIT hash string address
+ *
+ * @return     Return string length on success, else 0
+ */
+uint32_t opendps_get_app_git_hash(const char** git_hash)
+{
+    uint32_t length;
+    if (past_read_unit(&g_past, past_app_git_hash, (const void**) git_hash, &length))
+        return length;
+    else
+        return 0;
+}
+
+/**
  * @brief      List parameter names of current function
  *
  * @param      parameters  Output vector holding pointers to the parameters

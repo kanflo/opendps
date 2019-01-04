@@ -59,6 +59,20 @@ uint32_t opendps_get_function_names(char* names[], size_t size);
 const char* opendps_get_curr_function_name(void);
 
 /**
+ * @brief      Get dpsboot GIT hash string address
+ *
+ * @return     Return string length on success, else 0
+ */
+uint32_t opendps_get_boot_git_hash(const char** git_hash);
+
+/**
+ * @brief      Get opendps GIT hash string address
+ *
+ * @return     Return string length on success, else 0
+ */
+uint32_t opendps_get_app_git_hash(const char** git_hash);
+
+/**
  * @brief      List parameter names of current function
  *
  * @param      parameters  Output vector holding pointers to the parameters
