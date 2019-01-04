@@ -65,4 +65,5 @@ def generate_size(size):
 
 if __name__== "__main__":
     generate_size(18)
+    generate_size(24)
     generate_size(48)
