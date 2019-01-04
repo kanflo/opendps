@@ -280,6 +280,37 @@ static command_status_t handle_temperature(uint8_t *payload, uint32_t payload_le
     return cmd_success;
 }
 
+static command_status_t handle_version(void)
+{
+    emu_printf("%s\n", __FUNCTION__);
+    uint32_t boot_str_len, app_str_len;
+    const char *boot_git_hash = 0;
+    const char *app_git_hash = 0;
+
+    /** Load and check both GIT hashes exist */ 
+    boot_str_len = opendps_get_boot_git_hash(&boot_git_hash);
+    app_str_len = opendps_get_app_git_hash(&app_git_hash);
+
+    DECLARE_FRAME(boot_str_len + app_str_len + 4);
+    PACK8(cmd_response | cmd_version);
+    if (boot_str_len > 0 &&
+        app_str_len > 0)
+    {
+        PACK8(1);
+        PACK_CSTR(boot_git_hash);
+        PACK_CSTR(app_git_hash);
+    }
+    else
+    {
+        PACK8(0);
+        PACK8('\0'); PACK8('\0'); /** Pack two empty strings */ 
+    }
+    FINISH_FRAME();
+
+    send_frame(_buffer, _length);
+    return cmd_success_but_i_actually_sent_my_own_status_thank_you_very_much;
+}
+
 /**
   * @brief Handle a wifi status command
   * @param payload payload of command frame
@@ -387,6 +418,8 @@ static void handle_frame(uint8_t *frame, uint32_t length)
             case cmd_temperature_report:
                 success = handle_temperature(payload, payload_len);
                 break;
+            case cmd_version:
+                success = handle_version();
             default:
                 emu_printf("Got unknown command %d (0x%02x)\n", cmd, cmd);
                 break;

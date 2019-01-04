@@ -331,6 +331,10 @@ def handle_response(command, frame, args):
         pass
     elif resp_command == cmd_lock:
         pass
+    elif resp_command == cmd_version:
+        data = unpack_version_response(frame)
+        print("BootDPS GIT Hash: %s" % data['boot_git_hash'])
+        print("OpenDPS GIT Hash: %s" % data['app_git_hash'])
     else:
         print("Unknown response %d from device." % (resp_command))
 
@@ -414,6 +418,9 @@ def handle_commands(args):
 
     if args.query:
         communicate(comms, create_cmd(cmd_query), args)
+
+    if args.version:
+        communicate(comms, create_cmd(cmd_version), args)
 
     if hasattr(args, 'temperature') and args.temperature:
         communicate(comms, create_temperature(float(args.temperature)), args)
@@ -603,6 +610,7 @@ def main():
     parser.add_argument('-q', '--query', action='store_true', help="Query device settings and measurements")
     parser.add_argument('-j', '--json', action='store_true', help="Output parameters as JSON")
     parser.add_argument('-v', '--verbose', action='store_true', help="Verbose communications")
+    parser.add_argument('-V', '--version', action='store_true', help="Get firmware version information")
     parser.add_argument('-U', '--upgrade', type=str, dest="firmware", help="Perform upgrade of OpenDPS firmware")
     parser.add_argument(      '--force', action='store_true', help="Force upgrade even if dpsctl complains about the firmware")
     if testing:
