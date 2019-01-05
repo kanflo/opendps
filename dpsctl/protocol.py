@@ -246,7 +246,7 @@ def unpack_temperature_report(uframe):
         data['params'][key] = value
     return data
 
-# Returns the boot
+# Returns the dpsBoot and OpenDPS git hash strings
 def unpack_version_response(uframe):
     data = {}
     data['command'] = uframe.unpack8()
