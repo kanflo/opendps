@@ -127,14 +127,18 @@ static void number_draw(ui_item_t *_item)
         w = font_48_widths[4] + 2; /** @todo: Find the widest glyph */
         h = font_48_height + 2;
         break;
+      default:
+        /* Can't do anything if the wrong font size was supplied. Drop out for safety. */
+        return;
     }
     uint16_t xpos = _item->x - w;
+    uint16_t color = item->color;
     switch(item->unit) {
         case unit_volt:
-            tft_putch(item->font_size, 'V', xpos, _item->y, w, h, false);
+            tft_putch(item->font_size, 'V', xpos, _item->y, w, h, color, false);
             break;
         case unit_ampere:
-            tft_putch(item->font_size, 'A', xpos, _item->y, w, h, false);
+            tft_putch(item->font_size, 'A', xpos, _item->y, w, h, color, false);
             break;
         default:
             assert(0);
@@ -143,16 +147,16 @@ static void number_draw(ui_item_t *_item)
     for (uint32_t i = 0; i < item->num_decimals; i++) {
         bool highlight = _item->has_focus && item->cur_digit == cur_digit;
         xpos -= w;
-        tft_putch(item->font_size, '0'+(value%10), xpos, _item->y, w, h, highlight);
+        tft_putch(item->font_size, '0'+(value%10), xpos, _item->y, w, h, color, highlight);
         value /= 10;
         cur_digit++;
     }
     xpos -= item->font_size == 18 ? 4 : 10;
-    tft_putch(item->font_size, '.', xpos, _item->y, item->font_size == 18 ? 4 : 10, h, false);
+    tft_putch(item->font_size, '.', xpos, _item->y, item->font_size == 18 ? 4 : 10, h, color, false);
     for (uint32_t i = 0; i < item->num_digits; i++) {
         bool highlight = _item->has_focus && item->cur_digit == cur_digit;
         xpos -= w;
-        tft_putch(item->font_size, '0'+(value%10), xpos, _item->y, w, h, highlight);
+        tft_putch(item->font_size, '0'+(value%10), xpos, _item->y, w, h, color, highlight);
         value /= 10;
         cur_digit++;
         if (!value && !_item->has_focus) { /** To prevent from printing 00.123 */

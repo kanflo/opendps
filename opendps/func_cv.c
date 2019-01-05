@@ -34,9 +34,10 @@
 #include "mini-printf.h"
 #include "cv.h"
 #include "dps-model.h"
+#include "ili9163c.h"
 
 /*
- * This is the implementation of the CV screen. It has two editable values, 
+ * This is the implementation of the CV screen. It has two editable values,
  * constant voltage and current limit. When power is enabled it will continously
  * display the current output voltage and current draw. If the user edits one
  * of the values when power is eabled, the other will continue to be updated.
@@ -71,6 +72,7 @@ ui_number_t cv_voltage = {
         .can_focus = true,
     },
     .font_size = 48, /** The bigger one, try 18 for kicks */
+    .color = COLOR_VOLTAGE,
     .value = 0,
     .min = 0,
     .max = 0, /** Set at init, continously updated in the tick callback */
@@ -90,6 +92,7 @@ ui_number_t cv_current = {
         .can_focus = true,
     },
     .font_size = 48,
+    .color = COLOR_AMPERAGE,
     .value = 0,
     .min = 0,
     .max = CONFIG_DPS_MAX_CURRENT,
@@ -138,7 +141,7 @@ ui_screen_t cv_screen = {
  * @param[in]  name   name of parameter
  * @param[in]  value  value of parameter as a string - always in SI units
  *
- * @retval     set_param_status_t status code 
+ * @retval     set_param_status_t status code
  */
 static set_param_status_t set_parameter(char *name, char *value)
 {
@@ -173,7 +176,7 @@ static set_param_status_t set_parameter(char *name, char *value)
  * @param[in]  value      value of parameter as a string - always in SI units
  * @param[in]  value_len  length of value buffer
  *
- * @retval     set_param_status_t status code 
+ * @retval     set_param_status_t status code
  */
 static set_param_status_t get_parameter(char *name, char *value, uint32_t value_len)
 {
@@ -206,7 +209,7 @@ static void cv_enable(bool enabled)
         pwrctl_enable_vout(true);
     } else {
         pwrctl_enable_vout(false);
-        /** Make sure we're displaying the settings and not the current 
+        /** Make sure we're displaying the settings and not the current
           * measurements when the power output is switched off */
         cv_voltage.value = saved_u;
         cv_voltage.ui.draw(&cv_voltage.ui);
@@ -284,7 +287,7 @@ static void cv_tick(void)
 {
     uint16_t i_out_raw, v_in_raw, v_out_raw;
     hw_get_adc_values(&i_out_raw, &v_in_raw, &v_out_raw);
-    /** Continously update max voltage output value 
+    /** Continously update max voltage output value
       * Max output voltage = Vin / VIN_VOUT_RATIO
       * Add 0.5f to ensure correct rounding when truncated */
     cv_voltage.max = (float) pwrctl_calc_vin(v_in_raw) / VIN_VOUT_RATIO + 0.5f;
@@ -338,7 +341,7 @@ void func_cv_init(uui_t *ui)
     (void) v_out_raw;
     cv_voltage.max = pwrctl_calc_vin(v_in_raw) / 10; /** @todo: subtract for LDO */
     number_init(&cv_voltage); /** @todo: add guards for missing init calls */
-    /** Start at the second most significant digit preventing the user from 
+    /** Start at the second most significant digit preventing the user from
         accidentally cranking up the setting 10V or more */
     cv_voltage.cur_digit = 2;
     number_init(&cv_current);

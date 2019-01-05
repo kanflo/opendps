@@ -44,9 +44,18 @@
 
 static bool is_inverted;
 
+#define ILI9163C_COLORSPACE_TWIDDLE(color) \
+        (((COLORSPACE) == 0) \
+            ? (((color) & 0xF800) >> 11) | ((color) & 0x07E0) | (((color) & 0x001F) << 11) \
+            : (color))
+
+#define ILI9163C_COLOR_TO_BITMASK(color) ( \
+    ((ILI9163C_COLORSPACE_TWIDDLE(color) & 0xFF) << 8) | \
+    ((ILI9163C_COLORSPACE_TWIDDLE(color) >> 8) & 0xFF) )
+
 /** Buffers for speeding up drawing */
-static uint16_t blit_buffer[20*35]; // 20x35 pixels
-static uint16_t black_buffer[20*35]; // 20x35 pixels
+static uint16_t blit_buffer[22*35]; // 22x35 pixels
+static uint16_t black_buffer[22*35]; // 22x35 pixels
 
 static void frame_glyph(uint32_t xpos, uint32_t ypos, uint32_t glyph_height, uint32_t glyph_width, uint16_t color);
 
@@ -95,10 +104,11 @@ void tft_blit(uint16_t *bits, uint32_t width, uint32_t height, uint32_t x, uint3
   * @param y y position
   * @param w width of bounding box
   * @param h height of bounding box
+  * @param color color of the glyph
   * @param highlight if true, the character will be inverted
   * @retval none
   */
-void tft_putch(uint8_t size, char ch, uint32_t x, uint32_t y, uint32_t w, uint32_t h, bool highlight)
+void tft_putch(uint8_t size, char ch, uint32_t x, uint32_t y, uint32_t w, uint32_t h, uint16_t color, bool highlight)
 {
     uint32_t glyph_index, glyph_width, glyph_height, glyph_size;
     uint32_t xpos, ypos;
@@ -155,6 +165,24 @@ void tft_putch(uint8_t size, char ch, uint32_t x, uint32_t y, uint32_t w, uint32
         }
         if (glyph_size % 4) { // Bits remaining?
             blit_buffer[2*i] = ~blit_buffer[2*i];
+        }
+        glyph = blit_buffer;
+    }
+    else if (color != WHITE) {
+        color = ILI9163C_COLOR_TO_BITMASK(color);
+        if(is_inverted) {
+            color = ~color;
+        }
+        uint32_t color_mask = (((uint32_t)color & 0xFFFF) << 16) | (color & 0xFFFF);
+        uint32_t *p = (uint32_t*) &blit_buffer[0];
+        /** @todo Perform memcpy and inversion operation */
+        memcpy(blit_buffer, glyph, glyph_size);
+        uint32_t i;
+        for (i = 0; i < glyph_size/4; i++) {
+            p[i] &= color_mask;
+        }
+        if (glyph_size % 4) { // Bits remaining?
+            blit_buffer[2*i] &= color_mask;
         }
         glyph = blit_buffer;
     }
@@ -271,4 +299,3 @@ static void frame_glyph(uint32_t xpos, uint32_t ypos, uint32_t glyph_height, uin
         ili9163c_draw_pixel(xpos + glyph_width, i, color);
     }
 }
-
