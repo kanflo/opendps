@@ -39,6 +39,7 @@ Measure the size of an image and return the coordinates of the (left, upper, rig
 def measure(im, border=(0,0,0,0)):
     bg = Image.new(im.mode, im.size, border)
     diff = ImageChops.difference(im, bg)
+    diff = ImageChops.add(diff, diff, 2.0, -100)
     return diff.getbbox()
 
 """
