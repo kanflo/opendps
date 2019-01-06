@@ -87,6 +87,16 @@
     PACK8(((w) >> 8) & 0xff); \
     PACK8((w) & 0xff);
 
+#define PACKFLOAT(w) \
+    { \
+        union { \
+            float f; \
+            uint32_t ui; \
+        } overlay; \
+        overlay.f = w; \
+        PACK32(overlay.ui); \
+    }
+
 /** Like PACK8 but does not compute crc */
 #define STUFF8(b) \
     if (_length+2 < sizeof(_buffer)) { \

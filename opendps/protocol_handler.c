@@ -312,6 +312,38 @@ static command_status_t handle_version(void)
 }
 
 /**
+  * @brief Handle a cal report
+  * @retval command_status_t failed, success or "I sent my own frame"
+  */
+static command_status_t handle_cal_report(void)
+{
+    uint16_t i_out_raw, v_in_raw, v_out_raw;
+    hw_get_adc_values(&i_out_raw, &v_in_raw, &v_out_raw);
+
+    DECLARE_FRAME(64);
+    PACK8(cmd_response | cmd_cal_report);
+    PACK8(1); 
+    PACK16(v_out_raw);
+    PACK16(v_in_raw);
+    PACK16(i_out_raw);
+    PACK16(DAC_DHR12R2);
+    PACK16(DAC_DHR12R1);
+    PACKFLOAT(A_ADC_K);
+    PACKFLOAT(A_ADC_C);
+    PACKFLOAT(A_DAC_K);
+    PACKFLOAT(A_DAC_C);
+    PACKFLOAT(V_ADC_K);
+    PACKFLOAT(V_ADC_C);
+    PACKFLOAT(V_DAC_K);
+    PACKFLOAT(V_DAC_C);
+    PACKFLOAT(VIN_ADC_K);
+    PACKFLOAT(VIN_ADC_C);
+    FINISH_FRAME();
+    send_frame(_buffer, _length);
+    return cmd_success_but_i_actually_sent_my_own_status_thank_you_very_much;
+}
+
+/**
   * @brief Handle a wifi status command
   * @param payload payload of command frame
   * @param payload_len length of payload
@@ -420,6 +452,10 @@ static void handle_frame(uint8_t *frame, uint32_t length)
                 break;
             case cmd_version:
                 success = handle_version();
+                break;
+            case cmd_cal_report:
+                success = handle_cal_report();
+                break;
             default:
                 emu_printf("Got unknown command %d (0x%02x)\n", cmd, cmd);
                 break;
