@@ -493,7 +493,6 @@ def run_upgrade(comms, fw_file_name, args):
                 fail("device reported an unknown error (%d)" % status)
     else:
         fail("Device rejected firmware upgrade")
-    sys.exit(os.EX_OK)
 
 """
 Create and return a comminications interface object or None if no comms if
