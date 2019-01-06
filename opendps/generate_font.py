@@ -3,6 +3,7 @@
 
 import argparse
 import sys
+import os
 try:
     from PIL import Image
     from PIL import ImageDraw
@@ -177,6 +178,11 @@ def main():
     parser = argparse.ArgumentParser(description='Generate font lookup tables for the OpenDPS firmware')
     parser.add_argument('-f', '--font', type=str, required=True, dest="fontfile", help="The font to use")
     args, unknown = parser.parse_known_args()
+
+    # Check font file actually exists
+    if not os.path.exists(args.fontfile):
+        print("Can't find file %s" % (args.fontfile))
+        sys.exit(1)
 
     characters = "0123456789.VA" # The characters to generate a lookup table of
     character_strings = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'dot', 'v', 'a'] # The textual reference to each character
