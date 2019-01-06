@@ -33,7 +33,7 @@
 #include "pwrctl.h"
 #include "serialhandler.h"
 
-extern void ui_update_power_status(bool enabled); // opendps.c
+extern void opendps_update_power_status(bool enabled); // opendps.c
 
 static void stat_cmd(uint32_t argc, char *argv[]);
 static void on_cmd(uint32_t argc, char *argv[]);
@@ -110,7 +110,7 @@ static void on_cmd(uint32_t argc, char *argv[])
     (void) argv;
     dbg_printf("Power on\n");
     pwrctl_enable_vout(true);
-    ui_update_power_status(true);
+    opendps_update_power_status(true);
 }
 
 static void off_cmd(uint32_t argc, char *argv[])
@@ -119,7 +119,7 @@ static void off_cmd(uint32_t argc, char *argv[])
     (void) argv;
     dbg_printf("Power off\n");
     pwrctl_enable_vout(false);
-    ui_update_power_status(false);
+    opendps_update_power_status(false);
 }
 
 static void stat_cmd(uint32_t argc, char *argv[])
