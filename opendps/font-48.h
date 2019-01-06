@@ -1,3 +1,8 @@
+/** Font generated from gfx/Ubuntu-C.ttf */
+
+#define FONT_48_MAX_GLYPH_HEIGHT (35)
+#define FONT_48_MAX_GLYPH_WIDTH  (22)
+
 extern const uint32_t font_48_height;
 extern const uint32_t font_48_num_glyphs;
 extern const uint8_t font_48_0[];

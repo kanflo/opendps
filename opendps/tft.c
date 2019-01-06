@@ -44,9 +44,10 @@
 
 static bool is_inverted;
 
-/** Buffers for speeding up drawing */
-static uint16_t blit_buffer[20*35]; // 20x35 pixels
-static uint16_t black_buffer[20*35]; // 20x35 pixels
+/** Buffers for speeding up drawing 
+  * Must be big enough to store the biggest glyph */
+static uint16_t blit_buffer[FONT_48_MAX_GLYPH_WIDTH*FONT_48_MAX_GLYPH_HEIGHT];
+static uint16_t black_buffer[FONT_48_MAX_GLYPH_WIDTH*FONT_48_MAX_GLYPH_HEIGHT];
 
 static void frame_glyph(uint32_t xpos, uint32_t ypos, uint32_t glyph_height, uint32_t glyph_width, uint16_t color);
 

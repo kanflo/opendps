@@ -125,10 +125,13 @@ def convert_font_to_c(font_fname, characters, character_strings, font_size):
 
     # Generate glyph widths
     font_source_file.write("const uint8_t font_%d_widths[%d] = {\n  " % (font_size, len(character_strings)))
+    character_max_width = 0
     count = 0
     for i in range(len(characters)):
         (width, _) = character_images[i].size
         font_source_file.write("%d" % (width))
+        if width > character_max_width:
+            character_max_width = width
         count += 1
         if count < len(characters):
             font_source_file.write(",\n  ")
@@ -159,6 +162,11 @@ def convert_font_to_c(font_fname, characters, character_strings, font_size):
     # Generate the C header file
     file_name = "font-%d.h" % (font_size)
     font_header_file = open(file_name, "w")
+
+    font_header_file.write("/** Font generated from %s */\n\n" % (font_fname))
+
+    font_header_file.write("#define FONT_%d_MAX_GLYPH_HEIGHT (%d)\n" % (font_size, character_heights))
+    font_header_file.write("#define FONT_%d_MAX_GLYPH_WIDTH  (%d)\n\n" % (font_size, character_max_width))
 
     font_header_file.write("extern const uint32_t font_%d_height;\n" % (font_size))
     font_header_file.write("extern const uint32_t font_%d_num_glyphs;\n" % (font_size))
