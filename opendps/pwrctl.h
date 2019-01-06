@@ -22,11 +22,11 @@
  * THE SOFTWARE.
  */
 
-#include <stdint.h>
-#include <stdbool.h>
-
 #ifndef __PWRCTL_H__
 #define __PWRCTL_H__
+
+#include <stdint.h>
+#include <stdbool.h>
 
 extern uint32_t pwrctl_i_limit_raw;
 
