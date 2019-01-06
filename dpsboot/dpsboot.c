@@ -302,9 +302,16 @@ int main(void)
 #ifdef GIT_VERSION
         /** Update boot git hash in past if needed */
         char *ver = 0;
-        uint32_t foo;
-        bool exists = past_read_unit(&past, past_boot_git_hash, (const void**) &ver, &foo);
-        if (!exists || strncmp((char*) ver, GIT_VERSION, 32 /* probably never longer than 32 bytes */) != 0) {
+        bool exists = past_read_unit(&past, past_boot_git_hash, (const void**) &ver, &length);
+
+        if (!exists) /** If hash isn't stored in past then write it in */
+        {
+            if (!past_write_unit(&past, past_boot_git_hash, (void*) &GIT_VERSION, strlen(GIT_VERSION))) {
+                /** @todo Handle past write errors */
+            }
+        }
+        else if (strncmp(ver, GIT_VERSION, length) != 0) //** Else if hash is stored in past but is different then update it */
+        {
             if (!past_write_unit(&past, past_boot_git_hash, (void*) &GIT_VERSION, strlen(GIT_VERSION))) {
                 /** @todo Handle past write errors */
             }
