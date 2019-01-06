@@ -310,7 +310,7 @@ int main(void)
                 /** @todo Handle past write errors */
             }
         }
-        else if (strncmp(ver, GIT_VERSION, length) != 0) //** Else if hash is stored in past but is different then update it */
+        else if (strncmp(ver, GIT_VERSION, length) != 0) /** Else if hash is stored in past but is different then update it */
         {
             if (!past_write_unit(&past, past_boot_git_hash, (void*) &GIT_VERSION, strlen(GIT_VERSION))) {
                 /** @todo Handle past write errors */
