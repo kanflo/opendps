@@ -156,6 +156,7 @@ ui_number_t input_voltage = {
         .can_focus = false,
     },
     .font_size = 18,
+    .color = COLOR_INPUT,
     .value = 0,
     .min = 0,
     .max = 0,

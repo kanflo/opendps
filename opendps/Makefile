@@ -27,6 +27,11 @@ DEBUG ?= 0
 # Color space for the DPS display. Most units use GBR but RGB has been spotted in the wild
 COLORSPACE ?= 0
 
+# Colors for the main UI elements -- see ili9163c.h for list of colors
+COLOR_VOLTAGE ?= WHITE
+COLOR_AMPERAGE ?= WHITE
+COLOR_INPUT ?= WHITE
+
 # Optional tinting for UI elements
 TINT ?= ffffff
 
@@ -38,7 +43,15 @@ CFLAGS = -I. -DGIT_VERSION=\"$(GIT_VERSION)\" -Wno-missing-braces
 
 # Output voltage and current limit are persisted in flash,
 # this is the default setting
-CFLAGS += -DCONFIG_DEFAULT_VOUT=5000 -DCONFIG_DEFAULT_ILIMIT=500 -DCONFIG_BAUDRATE=$(BAUDRATE) -DCOLORSPACE=$(COLORSPACE) -D$(MODEL)
+CFLAGS += \
+          -DCONFIG_DEFAULT_VOUT=5000 \
+          -DCONFIG_DEFAULT_ILIMIT=500 \
+          -DCONFIG_BAUDRATE=$(BAUDRATE) \
+          -DCOLORSPACE=$(COLORSPACE) \
+          -DCOLOR_VOLTAGE=$(COLOR_VOLTAGE) \
+          -DCOLOR_AMPERAGE=$(COLOR_AMPERAGE) \
+          -DCOLOR_INPUT=$(COLOR_INPUT) \
+          -D$(MODEL)
 
 # Application linker script
 LDSCRIPT = stm32f100_app.ld
@@ -62,7 +75,7 @@ OBJS = \
     mini-printf.o \
     font-18.o \
     font-24.o \
-    font-48.o 
+    font-48.o
 
 ifdef MAX_CURRENT
 	CFLAGS +=-DCONFIG_DPS_MAX_CURRENT=$(MAX_CURRENT)

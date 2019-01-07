@@ -34,11 +34,12 @@
 #include "dbg_printf.h"
 #include "mini-printf.h"
 #include "dps-model.h"
+#include "ili9163c.h"
 
 /*
- * This is the implementation of the CC screen. 
- * 
- * It has one editable value, 
+ * This is the implementation of the CC screen.
+ *
+ * It has one editable value,
  * constant voltage and current limit. When power is enabled it will continously
  * display the current output voltage and current draw. If the user edits one
  * of the values when power is eabled, the other will continue to be updated.
@@ -53,7 +54,7 @@ static void past_restore(past_t *past);
 static set_param_status_t set_parameter(char *name, char *value);
 static set_param_status_t get_parameter(char *name, char *value, uint32_t value_len);
 
-/* We need to keep copies of the user settings as the value in the UI will 
+/* We need to keep copies of the user settings as the value in the UI will
  * be replaced with measurements when output is active
  */
 static int32_t saved_i;
@@ -71,6 +72,7 @@ ui_number_t cc_voltage = {
         .can_focus = false,
     },
     .font_size = 48, /** The bigger one, try 18 for kicks */
+    .color = COLOR_VOLTAGE,
     .value = 0,
     .min = 0,
     .max = 0, /** Set at init, continously updated in the tick callback */
@@ -89,6 +91,7 @@ ui_number_t cc_current = {
         .can_focus = true,
     },
     .font_size = 48,
+    .color = COLOR_AMPERAGE,
     .value = 0,
     .min = 0,
     .max = CONFIG_DPS_MAX_CURRENT,
@@ -132,7 +135,7 @@ ui_screen_t cc_screen = {
  * @param[in]  name   name of parameter
  * @param[in]  value  value of parameter as a string - always in SI units
  *
- * @retval     set_param_status_t status code 
+ * @retval     set_param_status_t status code
  */
 static set_param_status_t set_parameter(char *name, char *value)
 {
@@ -157,7 +160,7 @@ static set_param_status_t set_parameter(char *name, char *value)
  * @param[in]  value      value of parameter as a string - always in SI units
  * @param[in]  value_len  length of value buffer
  *
- * @retval     set_param_status_t status code 
+ * @retval     set_param_status_t status code
  */
 static set_param_status_t get_parameter(char *name, char *value, uint32_t value_len)
 {
@@ -183,7 +186,7 @@ static void cc_enable(bool enabled)
         pwrctl_enable_vout(true);
     } else {
         pwrctl_enable_vout(false);
-        /** Make sure we're displaying the settings and not the current 
+        /** Make sure we're displaying the settings and not the current
           * measurements when the power output is switched off */
         cc_voltage.value = 0;
         cc_voltage.ui.draw(&cc_voltage.ui);
@@ -240,7 +243,7 @@ static void past_restore(past_t *past)
  *                        in which case we shall display the current setting.
  */
 static void cc_tick(void)
-{    
+{
     if (pwrctl_vout_enabled()) {
         uint16_t i_out_raw, v_in_raw, v_out_raw;
         hw_get_adc_values(&i_out_raw, &v_in_raw, &v_out_raw);
@@ -286,7 +289,7 @@ void func_cc_init(uui_t *ui)
     (void) v_out_raw;
     cc_voltage.max = pwrctl_calc_vin(v_in_raw) / 10; /** @todo: subtract for LDO */
     number_init(&cc_voltage); /** @todo: add guards for missing init calls */
-    /** Start at the second most significant digit preventing the user from 
+    /** Start at the second most significant digit preventing the user from
         accidentally cranking up the setting 10V or more */
 //    cc_voltage.cur_digit = 2;
     number_init(&cc_current);

@@ -104,11 +104,11 @@ mini_vsnprintf(char *buffer, unsigned int buffer_len, const char *fmt, va_list v
 	char bf[24];
 	char ch;
 
-	int _putc(char ch)
+	int _putc(char ch2)
 	{
 		if ((unsigned int)((pbuffer - buffer) + 1) >= buffer_len)
 			return 0;
-		*(pbuffer++) = ch;
+		*(pbuffer++) = ch2;
 		*(pbuffer) = '\0';
 		return 1;
 	}
