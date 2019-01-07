@@ -103,6 +103,23 @@ bool opendps_get_curr_function_param_value(char *name, char *value, uint32_t val
 set_param_status_t opendps_set_parameter(char *name, char *value);
 
 /**
+ * @brief      Sets Calibration Data
+ *
+ * @param      name Name of calibration variable to set
+ * @value      value Value to set it to
+ *
+ * @return     Status of the operation
+ */
+set_param_status_t opendps_set_calibration(char *name, float *value);
+
+/**
+ * @brief      Clear Calibration Data
+ *
+ * @return     True on success
+ */
+bool opendps_clear_calibration(void);
+
+/**
  * @brief      Enable output of current function
  *
  * @param[in]  enable  Enable or disable

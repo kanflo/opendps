@@ -226,6 +226,47 @@ static command_status_t handle_set_parameters(uint8_t *payload, uint32_t payload
     return cmd_success_but_i_actually_sent_my_own_status_thank_you_very_much;
 }
 
+static command_status_t handle_set_calibration(uint8_t *payload, uint32_t payload_len)
+{
+    emu_printf("%s\n", __FUNCTION__);
+    char *name = 0;
+    float *value = 0;
+    command_t cmd;
+    set_param_status_t stats[OPENDPS_MAX_PARAMETERS];
+    uint32_t status_index = 0;
+    {
+        DECLARE_UNPACK(payload, payload_len);
+        UNPACK8(cmd);
+        (void) cmd;
+        do {
+            /** Extract all occurences of <name>=<value> ... */
+            name = 0;
+            /** This is quite ugly (again), please don't look */
+            name = (char*) &_buffer[_pos];
+            _pos += strlen(name) + sizeof(char);
+            _remain -= strlen(name) + sizeof(char);
+            value = (float*) &_buffer[_pos];
+            _pos += sizeof(float);
+            _remain -= sizeof(float);
+            if (name && value) {
+                stats[status_index++] = opendps_set_calibration(name, value);
+            }
+        } while(_remain && status_index < OPENDPS_MAX_PARAMETERS);
+    }
+
+    {
+        DECLARE_FRAME(MAX_FRAME_LENGTH);
+        PACK8(cmd_response | cmd_set_calibration);
+        PACK8(1); // Always success
+        for (uint32_t i = 0; i < status_index; i++) {
+            PACK8(stats[i]);
+        }
+        FINISH_FRAME();
+        send_frame(_buffer, _length);
+    }
+    return cmd_success_but_i_actually_sent_my_own_status_thank_you_very_much;
+}
+
 static command_status_t handle_list_parameters(void)
 {
     emu_printf("%s\n", __FUNCTION__);
@@ -330,19 +371,31 @@ static command_status_t handle_cal_report(void)
     PACK16(i_out_raw);
     PACK16(DAC_DHR12R2);
     PACK16(DAC_DHR12R1);
-    PACKFLOAT(A_ADC_K);
-    PACKFLOAT(A_ADC_C);
-    PACKFLOAT(A_DAC_K);
-    PACKFLOAT(A_DAC_C);
-    PACKFLOAT(V_ADC_K);
-    PACKFLOAT(V_ADC_C);
-    PACKFLOAT(V_DAC_K);
-    PACKFLOAT(V_DAC_C);
-    PACKFLOAT(VIN_ADC_K);
-    PACKFLOAT(VIN_ADC_C);
+    PACKFLOAT(a_adc_k_coef);
+    PACKFLOAT(a_adc_c_coef);
+    PACKFLOAT(a_dac_k_coef);
+    PACKFLOAT(a_dac_c_coef);
+    PACKFLOAT(v_adc_k_coef);
+    PACKFLOAT(v_adc_c_coef);
+    PACKFLOAT(v_dac_k_coef);
+    PACKFLOAT(v_dac_c_coef);
+    PACKFLOAT(vin_adc_k_coef);
+    PACKFLOAT(vin_adc_c_coef);
     FINISH_FRAME();
     send_frame(_buffer, _length);
     return cmd_success_but_i_actually_sent_my_own_status_thank_you_very_much;
+}
+
+/**
+  * @brief  Clear and set calibration values
+  * @retval cmd_success on success else cmd_failed
+  */
+static command_status_t handle_clear_calibration(void)
+{
+    if (opendps_clear_calibration())
+        return cmd_success;
+    else
+        return cmd_failed;
 }
 
 /**
@@ -457,6 +510,12 @@ static void handle_frame(uint8_t *frame, uint32_t length)
                 break;
             case cmd_cal_report:
                 success = handle_cal_report();
+                break;
+            case cmd_set_calibration:
+                success = handle_set_calibration(payload, payload_len);
+                break;
+            case cmd_clear_calibration:
+                success = handle_clear_calibration();
                 break;
             default:
                 emu_printf("Got unknown command %d (0x%02x)\n", cmd, cmd);

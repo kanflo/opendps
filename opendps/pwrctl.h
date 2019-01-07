@@ -30,6 +30,16 @@
 #include "past.h"
 
 extern uint32_t pwrctl_i_limit_raw;
+extern float a_adc_k_coef;
+extern float a_adc_c_coef;
+extern float a_dac_k_coef;
+extern float a_dac_c_coef;
+extern float v_adc_k_coef;
+extern float v_adc_c_coef;
+extern float v_dac_k_coef;
+extern float v_dac_c_coef;
+extern float vin_adc_k_coef;
+extern float vin_adc_c_coef;
 
 /**
   * @brief Initialize the power control module

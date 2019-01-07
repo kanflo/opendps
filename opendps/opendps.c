@@ -331,9 +331,9 @@ set_param_status_t opendps_set_calibration(char *name, float *value)
 /**
  * @brief      Clear Calibration Data
  *
- * @return     Status of the operation
+ * @return     True on success
  */
-set_param_status_t opendps_clear_calibration(void)
+bool opendps_clear_calibration(void)
 {
     past_erase_unit(&g_past, past_A_ADC_K);
     past_erase_unit(&g_past, past_A_ADC_C);
@@ -348,7 +348,7 @@ set_param_status_t opendps_clear_calibration(void)
 
     /** Re-init pwrctl as calibration coefs have now been cleared */
     pwrctl_init(&g_past);
-    return ps_ok;
+    return true;
 }
 
 /**
