@@ -283,6 +283,75 @@ set_param_status_t opendps_set_parameter(char *name, char *value)
 }
 
 /**
+ * @brief      Sets Calibration Data
+ *
+ * @param      name Name of calibration variable to set
+ * @value      value Value to set it to
+ *
+ * @return     Status of the operation
+ */
+set_param_status_t opendps_set_calibration(char *name, float *value)
+{
+    past_id_t param;
+
+    if (strcmp(name,"A_ADC_K")==0){
+        param = past_A_ADC_K;
+    } else if(strcmp(name,"A_ADC_C")==0){
+        param = past_A_ADC_C;
+    } else if(strcmp(name,"A_DAC_K")==0){
+        param = past_A_DAC_K;
+    } else if(strcmp(name,"A_DAC_C")==0){
+        param = past_A_DAC_C;
+    } else if(strcmp(name,"V_ADC_K")==0){
+        param = past_V_DAC_K;
+    } else if(strcmp(name,"V_ADC_C")==0){
+        param = past_V_DAC_C;
+    } else if(strcmp(name,"V_DAC_K")==0){
+        param = past_V_ADC_K;
+    } else if(strcmp(name,"V_DAC_C")==0){
+        param = past_V_ADC_C;
+    } else if(strcmp(name,"VIN_ADC_K")==0){
+        param = past_VIN_ADC_K;
+    } else if(strcmp(name,"VIN_ADC_C")==0){
+        param = past_VIN_ADC_C;
+    } else {
+        return ps_not_supported;
+    }
+    
+    if (!past_write_unit(&g_past, param, (void*) value, sizeof(*value))) {
+        dbg_printf("Error: past write app git hash failed!\n");
+        return ps_flash_error;
+    }
+
+    /** Re-init pwrctl with new calibration coefs */
+    pwrctl_init(&g_past);
+    return ps_ok;
+}
+
+/**
+ * @brief      Clear Calibration Data
+ *
+ * @return     Status of the operation
+ */
+set_param_status_t opendps_clear_calibration(void)
+{
+    past_erase_unit(&g_past, past_A_ADC_K);
+    past_erase_unit(&g_past, past_A_ADC_C);
+    past_erase_unit(&g_past, past_A_DAC_K);
+    past_erase_unit(&g_past, past_A_DAC_C);
+    past_erase_unit(&g_past, past_V_DAC_K);
+    past_erase_unit(&g_past, past_V_DAC_C);
+    past_erase_unit(&g_past, past_V_ADC_K);
+    past_erase_unit(&g_past, past_V_ADC_C);
+    past_erase_unit(&g_past, past_VIN_ADC_K);
+    past_erase_unit(&g_past, past_VIN_ADC_C);
+
+    /** Re-init pwrctl as calibration coefs have now been cleared */
+    pwrctl_init(&g_past);
+    return ps_ok;
+}
+
+/**
  * @brief      Enable output of current function
  *
  * @param[in]  enable  Enable or disable
