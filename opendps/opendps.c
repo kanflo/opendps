@@ -774,7 +774,7 @@ static void event_handler(void)
 int main(int argc, char const *argv[])
 {
     hw_init();
-    pwrctl_init(); // Must be after DAC init
+    pwrctl_init(&g_past); // Must be after DAC init
     event_init();
 
 #ifdef CONFIG_COMMANDLINE
