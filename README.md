@@ -139,6 +139,17 @@ RX 9 bytes 7e 89 00 04 00 03 66 0f 7f
 
 The fourth byte from the end in the received data (0x03 in this example) will tell us why the bootloader refused to boot the firmware. See [protocol.h](https://github.com/kanflo/opendps/blob/master/opendps/protocol.h#L72) for the different reasons.
 
+### Custom Fonts
+
+If you would like to use a your own font for OpenDPS you may do so by doing the following:
+
+```
+% cd opendps
+% python generate_font.py -f gfx/Ubuntu-C.ttf
+% make clean
+% make
+
+```
 
 ### Source code organisation
 
