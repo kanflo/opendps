@@ -23,6 +23,7 @@ THE SOFTWARE.
 """
 
 from uframe import *
+import struct
 
 # command_t
 cmd_ping = 1
@@ -42,6 +43,7 @@ cmd_set_parameters = 14
 cmd_list_parameters = 15
 cmd_temperature_report = 16
 cmd_version = 17
+cmd_cal_report = 18
 cmd_response = 0x80
 
 # wifi_status_t
@@ -216,6 +218,29 @@ def unpack_query_response(uframe):
         value = uframe.unpack_cstr()
         data['params'][key] = value
     return data
+
+# Returns ADC/DAC values and calibration values
+def unpack_cal_report(uframe):
+    data = {}
+    data['cal']= {}
+    data['command'] = uframe.unpack8()
+    data['status'] = uframe.unpack8()
+    data['vout_adc'] = uframe.unpack16()
+    data['vin_adc'] = uframe.unpack16()
+    data['iout_adc'] = uframe.unpack16()
+    data['iout_dac'] = uframe.unpack16()
+    data['vout_dac'] = uframe.unpack16()
+    data['cal']['A_ADC_K'] = struct.unpack("<f", struct.pack("<I", uframe.unpack32()))[0]
+    data['cal']['A_ADC_C'] = struct.unpack("<f", struct.pack("<I", uframe.unpack32()))[0]
+    data['cal']['A_DAC_K'] = struct.unpack("<f", struct.pack("<I", uframe.unpack32()))[0]
+    data['cal']['A_DAC_C'] = struct.unpack("<f", struct.pack("<I", uframe.unpack32()))[0]
+    data['cal']['V_ADC_K'] = struct.unpack("<f", struct.pack("<I", uframe.unpack32()))[0]
+    data['cal']['V_ADC_C'] = struct.unpack("<f", struct.pack("<I", uframe.unpack32()))[0]
+    data['cal']['V_DAC_K'] = struct.unpack("<f", struct.pack("<I", uframe.unpack32()))[0]
+    data['cal']['V_DAC_C'] = struct.unpack("<f", struct.pack("<I", uframe.unpack32()))[0]
+    data['cal']['VIN_ADC_K'] = struct.unpack("<f", struct.pack("<I", uframe.unpack32()))[0]
+    data['cal']['VIN_ADC_C'] = struct.unpack("<f", struct.pack("<I", uframe.unpack32()))[0]
+    return data 
 
 # Returns wifi_status
 def unpack_wifi_status(uframe):
