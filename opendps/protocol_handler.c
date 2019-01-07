@@ -28,7 +28,9 @@
 #include <string.h>
 #include <stdlib.h>
 #include <scb.h>
+#include <dac.h>
 #include "dbg_printf.h"
+#include "dps-model.h"
 #include "hw.h"
 #include "uui.h"
 #include "pwrctl.h"
