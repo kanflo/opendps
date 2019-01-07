@@ -148,7 +148,6 @@ If you would like to use a your own font for OpenDPS you may do so by doing the 
 % python generate_font.py -f gfx/Ubuntu-C.ttf
 % make clean
 % make
-
 ```
 
 ### Source code organisation
