@@ -54,6 +54,7 @@ typedef enum {
     cmd_list_parameters,
     cmd_temperature_report,
     cmd_version,
+    cmd_cal_report,
     cmd_response = 0x80
 } command_t;
 

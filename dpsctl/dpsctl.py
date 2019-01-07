@@ -337,6 +337,8 @@ def handle_response(command, frame, args):
         data = unpack_version_response(frame)
         print("BootDPS GIT Hash: %s" % data['boot_git_hash'])
         print("OpenDPS GIT Hash: %s" % data['app_git_hash'])
+    elif resp_command == cmd_cal_report:
+        ret_dict = unpack_cal_report(frame)
     else:
         print("Unknown response %d from device." % (resp_command))
 
@@ -424,6 +426,25 @@ def handle_commands(args):
     if args.version:
         communicate(comms, create_cmd(cmd_version), args)
 
+    if args.calibration_report:
+        data = communicate(comms, create_cmd(cmd_cal_report), args)
+        print("Calibration Report:")
+        print("\tA_ADC_K = {}".format(data['cal']['A_ADC_K']))
+        print("\tA_ADC_C = {}".format(data['cal']['A_ADC_C']))
+        print("\tA_DAC_K = {}".format(data['cal']['A_DAC_K']))
+        print("\tA_DAC_C = {}".format(data['cal']['A_DAC_C']))
+        print("\tV_ADC_K = {}".format(data['cal']['V_ADC_K']))
+        print("\tV_ADC_C = {}".format(data['cal']['V_ADC_C']))
+        print("\tV_DAC_K = {}".format(data['cal']['V_DAC_K']))
+        print("\tV_DAC_C = {}".format(data['cal']['V_DAC_C']))
+        print("\tVIN_ADC_K = {}".format(data['cal']['VIN_ADC_K']))
+        print("\tVIN_ADC_C = {}".format(data['cal']['VIN_ADC_C']))
+        print("\tVIN_ADC = {}".format(data['vin_adc']))
+        print("\tVOUT_ADC = {}".format(data['vout_adc']))
+        print("\tIOUT_ADC = {}".format(data['iout_adc']))
+        print("\tIOUT_DAC = {}".format(data['iout_dac']))
+        print("\tVOUT_DAC = {}".format(data['vout_dac']))
+
     if hasattr(args, 'temperature') and args.temperature:
         communicate(comms, create_temperature(float(args.temperature)), args)
 
@@ -493,7 +514,6 @@ def run_upgrade(comms, fw_file_name, args):
                 fail("device reported an unknown error (%d)" % status)
     else:
         fail("Device rejected firmware upgrade")
-    sys.exit(os.EX_OK)
 
 """
 Create and return a comminications interface object or None if no comms if
@@ -606,6 +626,7 @@ def main():
     parser.add_argument('-F', '--list-functions', action='store_true', help="List available functions")
     parser.add_argument('-p', '--parameter', nargs='+', help="Set function parameter <name>=<value>")
     parser.add_argument('-P', '--list-parameters', action='store_true', help="List function parameters of active function")
+    parser.add_argument('-cr','--calibration_report', action="store_true", help="Prints Calibration report")
     parser.add_argument('-o', '--enable', help="Enable output ('on' or 'off')")
     parser.add_argument(      '--ping', action='store_true', help="Ping device (causes screen to flash)")
     parser.add_argument('-L', '--lock', action='store_true', help="Lock device keys")

@@ -39,6 +39,7 @@
 typedef struct ui_number_t {
     ui_item_t ui;
     unit_t unit;
+    uint16_t color;
     uint8_t font_size;
     uint8_t num_digits;
     uint8_t num_decimals;

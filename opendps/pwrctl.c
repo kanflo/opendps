@@ -168,7 +168,11 @@ bool pwrctl_vout_enabled(void)
   */
 uint32_t pwrctl_calc_vin(uint16_t raw)
 {
-    return 16.746*(raw-1) + 64.112; /** @todo: -1 becuse the value needed trimming */
+    float value = VIN_ADC_K * (raw-1) + VIN_ADC_C;
+    if (value <= 0)
+        return 0;
+    else
+        return value + 0.5f; /** Add 0.5f to value so it is correctly rounded when it is truncated */
 }
 
 /**
@@ -178,18 +182,27 @@ uint32_t pwrctl_calc_vin(uint16_t raw)
   */
 uint32_t pwrctl_calc_vout(uint16_t raw)
 {
-    return V_ADC_K*raw + V_ADC_C;
+    float value = V_ADC_K * raw + V_ADC_C;
+    if (value <= 0)
+        return 0;
+    else
+        return value + 0.5f; /** Add 0.5f to value so it is correctly rounded when it is truncated */
 }
 
 /**
   * @brief Calculate DAC setting for requested V_out
   * @param v_out_mv requested output voltage
-  * @retval corresponding voltage in milli volt
+  * @retval corresponding 12 bit DAC value
   */
 uint16_t pwrctl_calc_vout_dac(uint32_t v_out_mv)
 {
-    uint32_t dac = V_DAC_K*v_out_mv + V_DAC_C;
-    return dac & 0xfff; /** 12 bits */
+    float value = V_DAC_K * v_out_mv + V_DAC_C;
+    if (value <= 0)
+        return 0;
+    else if (value >= 0xfff)
+        return 0xfff; /** 12 bits */
+    else
+        return value + 0.5f; /** Add 0.5f to value so correct rounding is done when truncated */
 }
 
 /**
@@ -199,7 +212,11 @@ uint16_t pwrctl_calc_vout_dac(uint32_t v_out_mv)
   */
 uint32_t pwrctl_calc_iout(uint16_t raw)
 {
-    return A_ADC_K*raw + A_ADC_C;
+    float value = A_ADC_K * raw + A_ADC_C;
+    if (value <= 0)
+        return 0;
+    else
+        return value + 0.5f; /** Add 0.5f to value so correct rounding is done when truncated */
 }
 
 /**
@@ -209,18 +226,27 @@ uint32_t pwrctl_calc_iout(uint16_t raw)
   */
 uint16_t pwrctl_calc_ilimit_adc(uint16_t i_limit_ma)
 {
-    return (i_limit_ma - A_ADC_C) / A_ADC_K + 1;
+    float value = (i_limit_ma - A_ADC_C) / A_ADC_K + 1;
+    if (value <= 0)
+        return 0;
+    else
+        return value + 0.5f; // Add 0.5 so it is correctly rounded when it is truncated
 }
 
 /**
   * @brief Calculate DAC setting for constant current mode
   * @param i_out_ma requested constant current
-  * @retval corresponding DAC value
+  * @retval corresponding 12 bit DAC value
   * @note this formula is valid for the DPS5005 and would probably need changes
   *       for DPS:es capable of higher current output.
   */
 uint16_t pwrctl_calc_iout_dac(uint32_t i_out_ma)
 {
-    uint32_t dac = A_DAC_K * i_out_ma + A_DAC_C;
-    return dac & 0xfff; /** 12 bits */
+    float value = A_DAC_K * i_out_ma + A_DAC_C;
+    if (value <= 0)
+        return 0;
+    else if (value >= 0xfff)
+        return 0xfff; /** 12 bits */
+    else
+        return value + 0.5f; /** Add 0.5f to value so correct rounding is done when truncated */
 }
