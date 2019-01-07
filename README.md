@@ -150,6 +150,8 @@ If you would like to use a your own font for OpenDPS you may do so by doing the 
 % make
 ```
 
+You may replace Ubuntu-C.ttf with any font file you wish to use
+
 ### Source code organisation
 
 The project consists of four parts:
