@@ -25,7 +25,7 @@ WIFI := 1
 DEBUG ?= 0
 
 # Font file
-FONT_TTF ?= gfx/Ubuntu-C.ttf
+FONT_FILE ?= gfx/Ubuntu-C.ttf
 
 # Color space for the DPS display. Most units use GBR but RGB has been spotted in the wild
 COLORSPACE ?= 0
@@ -113,7 +113,7 @@ endif
 include ../libopencm3.target.mk
 
 fonts:
-	@python ./generate_font.py -f $(FONT_TTF)
+	@python ./generate_font.py -f $(FONT_FILE)
 
 graphics:
 	@./gfx-convert.sh $(TINT)
