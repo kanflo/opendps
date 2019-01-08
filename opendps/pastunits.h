@@ -34,6 +34,17 @@ typedef enum {
     /** stored as strings */
     past_boot_git_hash, /** WARN: Moving past_boot_git_hash requires a recompile and flash of DPSBoot! */
     past_app_git_hash,
+    /** stored as floats */
+    past_A_ADC_K,
+    past_A_ADC_C,
+    past_A_DAC_K,
+    past_A_DAC_C,
+    past_V_DAC_K,
+    past_V_DAC_C,
+    past_V_ADC_K,
+    past_V_ADC_C,
+    past_VIN_ADC_K,
+    past_VIN_ADC_C,
     /** A past unit who's precense indicates we have a non finished upgrade and
     must not boot */
     past_upgrade_started = 0xff

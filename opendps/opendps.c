@@ -283,6 +283,76 @@ set_param_status_t opendps_set_parameter(char *name, char *value)
 }
 
 /**
+ * @brief      Sets Calibration Data
+ *
+ * @param      name Name of calibration variable to set
+ * @value      value Value to set it to
+ *
+ * @return     Status of the operation
+ */
+set_param_status_t opendps_set_calibration(char *name, float *value)
+{
+    past_id_t param;
+
+    if (strcmp(name,"A_ADC_K")==0){
+        param = past_A_ADC_K;
+    } else if(strcmp(name,"A_ADC_C")==0){
+        param = past_A_ADC_C;
+    } else if(strcmp(name,"A_DAC_K")==0){
+        param = past_A_DAC_K;
+    } else if(strcmp(name,"A_DAC_C")==0){
+        param = past_A_DAC_C;
+    } else if(strcmp(name,"V_ADC_K")==0){
+        param = past_V_ADC_K;
+    } else if(strcmp(name,"V_ADC_C")==0){
+        param = past_V_ADC_C;
+    } else if(strcmp(name,"V_DAC_K")==0){
+        param = past_V_DAC_K;
+    } else if(strcmp(name,"V_DAC_C")==0){
+        param = past_V_DAC_C;
+    } else if(strcmp(name,"VIN_ADC_K")==0){
+        param = past_VIN_ADC_K;
+    } else if(strcmp(name,"VIN_ADC_C")==0){
+        param = past_VIN_ADC_C;
+    } else {
+        return ps_not_supported;
+    }
+    
+    if (!past_write_unit(&g_past, param, (void*) value, sizeof(*value))) {
+        dbg_printf("Error: past write opendps set calibration failed!\n");
+        return ps_flash_error;
+    }
+
+    /** Re-init pwrctl with new calibration coefs */
+    pwrctl_init(&g_past);
+    return ps_ok;
+}
+
+/**
+ * @brief      Clear Calibration Data
+ *
+ * @return     True on success
+ */
+bool opendps_clear_calibration(void)
+{
+    past_erase_unit(&g_past, past_A_ADC_K);
+    past_erase_unit(&g_past, past_A_ADC_C);
+    past_erase_unit(&g_past, past_A_DAC_K);
+    past_erase_unit(&g_past, past_A_DAC_C);
+    past_erase_unit(&g_past, past_V_DAC_K);
+    past_erase_unit(&g_past, past_V_DAC_C);
+    past_erase_unit(&g_past, past_V_ADC_K);
+    past_erase_unit(&g_past, past_V_ADC_C);
+    past_erase_unit(&g_past, past_VIN_ADC_K);
+    past_erase_unit(&g_past, past_VIN_ADC_C);
+
+    /** Re-init pwrctl as calibration coefs have now been cleared */
+    pwrctl_init(&g_past);
+    uui_refresh(&func_ui, false);
+    return true;
+}
+
+/**
  * @brief      Enable output of current function
  *
  * @param[in]  enable  Enable or disable
@@ -774,8 +844,6 @@ static void event_handler(void)
 int main(int argc, char const *argv[])
 {
     hw_init();
-    pwrctl_init(); // Must be after DAC init
-    event_init();
 
 #ifdef CONFIG_COMMANDLINE
     dbg_printf("Welcome to OpenDPS!\n");
@@ -798,6 +866,8 @@ int main(int argc, char const *argv[])
         /** @todo Handle past init failure */
     }
 
+    pwrctl_init(&g_past); // Must be after DAC init and Past init
+    event_init();
     check_master_reset();
     read_past_settings();
     ui_init();

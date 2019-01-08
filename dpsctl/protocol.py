@@ -44,6 +44,8 @@ cmd_list_parameters = 15
 cmd_temperature_report = 16
 cmd_version = 17
 cmd_cal_report = 18
+cmd_set_calibration = 19
+cmd_clear_calibration = 20
 cmd_response = 0x80
 
 # wifi_status_t
@@ -105,6 +107,21 @@ def create_set_parameter(parameter_list):
         else:
             f.pack_cstr(parts[0].lstrip().rstrip())
             f.pack_cstr(parts[1].lstrip().rstrip())
+    f.end()
+    return f
+
+def create_set_calibration(parameter_list):
+    f = uFrame()
+    f.pack8(cmd_set_calibration)
+    for p in parameter_list:
+        parts = p.split("=")
+        if len(parts) != 2:
+            return None
+        else:
+            f.pack_cstr(parts[0].lstrip().rstrip())
+            for t in bytearray(struct.pack("f",float(parts[1].lstrip().rstrip()))):
+                f.pack8(t)
+    f.pack8(0)
     f.end()
     return f
 

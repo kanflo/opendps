@@ -47,47 +47,47 @@
   #define CONFIG_DPS_MAX_CURRENT (15000) // Please note that the UI currently does not handle settings larger that 9.99A
  #endif
  #define ADC_CHA_IOUT_GOLDEN_VALUE  (59)
- #define A_ADC_K (double)6.8403
- #define A_ADC_C (double)-394.06
- #define A_DAC_K (double)0.166666
- #define A_DAC_C (double)261.6666
- #define V_ADC_K (double)13.012
- #define V_ADC_C (double)-125.732
- #define V_DAC_K (double)0.072266
- #define V_DAC_C (double)4.444777
+ #define A_ADC_K (float)6.8403f
+ #define A_ADC_C (float)-394.06f
+ #define A_DAC_K (float)0.166666f
+ #define A_DAC_C (float)261.6666f
+ #define V_ADC_K (float)13.012f
+ #define V_ADC_C (float)-125.732f
+ #define V_DAC_K (float)0.072266f
+ #define V_DAC_C (float)4.444777f
 #elif defined(DPS5005)
  #ifndef CONFIG_DPS_MAX_CURRENT
   #define CONFIG_DPS_MAX_CURRENT (5000)
  #endif
  #define ADC_CHA_IOUT_GOLDEN_VALUE  (0x45)
- #define A_ADC_K (double)1.713
- #define A_ADC_C (double)-118.51
- #define A_DAC_K (double)0.652
- #define A_DAC_C (double)288.611
- #define V_DAC_K (double)0.072
- #define V_DAC_C (double)1.85
- #define V_ADC_K (double)13.164
- #define V_ADC_C (double)-100.751
+ #define A_ADC_K (float)1.713f
+ #define A_ADC_C (float)-118.51f
+ #define A_DAC_K (float)0.652f
+ #define A_DAC_C (float)288.611f
+ #define V_DAC_K (float)0.072f
+ #define V_DAC_C (float)1.85f
+ #define V_ADC_K (float)13.164f
+ #define V_ADC_C (float)-100.751f
 #elif defined(DPS3005)
  #ifndef CONFIG_DPS_MAX_CURRENT
   #define CONFIG_DPS_MAX_CURRENT (5000)
  #endif
  #define ADC_CHA_IOUT_GOLDEN_VALUE  (0x00)
- #define A_ADC_K (double)1.751
- #define A_ADC_C (double)-1.101
- #define A_DAC_K (double)0.653
- #define A_DAC_C (double)262.5
- #define V_DAC_K (double)0.0761
- #define V_DAC_C (double)2.2857
- #define V_ADC_K (double)13.131
- #define V_ADC_C (double)-111.9
+ #define A_ADC_K (float)1.751f
+ #define A_ADC_C (float)-1.101f
+ #define A_DAC_K (float)0.653f
+ #define A_DAC_C (float)262.5f
+ #define V_DAC_K (float)0.0761f
+ #define V_DAC_C (float)2.2857f
+ #define V_ADC_K (float)13.131f
+ #define V_ADC_C (float)-111.9f
 #else
  #error "Please set MODEL to the device you want to build for"
 #endif // MODEL
 
 /** These are constant across all models currently but may require tuning for each model */
-#define VIN_ADC_K (double)16.746
-#define VIN_ADC_C (double)64.112
+#define VIN_ADC_K (float)16.746f
+#define VIN_ADC_C (float)64.112f
 
 #define VIN_VOUT_RATIO (float)1.1f /** (Vin / VIN_VOUT_RATIO) = Max Vout */
 

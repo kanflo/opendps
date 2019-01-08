@@ -96,6 +96,7 @@ typedef enum {
     ps_unknown_name,
     ps_range_error,
     ps_not_supported,
+    ps_flash_error,
 } set_param_status_t;
 
 /**

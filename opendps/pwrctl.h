@@ -27,14 +27,25 @@
 
 #include <stdint.h>
 #include <stdbool.h>
+#include "past.h"
 
 extern uint32_t pwrctl_i_limit_raw;
+extern float a_adc_k_coef;
+extern float a_adc_c_coef;
+extern float a_dac_k_coef;
+extern float a_dac_c_coef;
+extern float v_adc_k_coef;
+extern float v_adc_c_coef;
+extern float v_dac_k_coef;
+extern float v_dac_c_coef;
+extern float vin_adc_k_coef;
+extern float vin_adc_c_coef;
 
 /**
   * @brief Initialize the power control module
   * @retval none
   */
-void pwrctl_init(void);
+void pwrctl_init(past_t *past);
 
 /**
   * @brief Set voltage output
