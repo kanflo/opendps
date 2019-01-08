@@ -32,7 +32,7 @@ typedef enum {
     /** stored as 0 or 1 */
     past_tft_inversion,
     /** stored as strings */
-    past_boot_git_hash,
+    past_boot_git_hash, /** WARN: Moving past_boot_git_hash requires a recompile and flash of DPSBoot! */
     past_app_git_hash,
     /** A past unit who's precense indicates we have a non finished upgrade and
     must not boot */
