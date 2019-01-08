@@ -3,8 +3,8 @@
 For all your non hardware related needs, OpenDPS can now run as an emulator on your PC:
 
 ```
-cd emul
-make && ./dpsemul
+cd emu
+make && ./dpsemu
 OpenDPS Emulator
 Comms thread listening on UDP port 5005
 Event thread listening on UDP port 5006

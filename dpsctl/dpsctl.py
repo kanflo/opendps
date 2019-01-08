@@ -43,7 +43,8 @@ try:
     import serial
 except:
     print("Missing dependency pyserial:")
-    print(" sudo pip%s install pyserial" % ("3" if sys.version_info.major == 3 else ""))
+    print(" sudo pip{} install pyserial"
+          .format("3" if sys.version_info.major == 3 else ""))
     raise SystemExit()
 import threading
 import time
@@ -55,7 +56,8 @@ try:
     from PyCRC.CRCCCITT import CRCCCITT
 except:
     print("Missing dependency pycrc:")
-    print(" sudo pip%s install pycrc" % ("3" if sys.version_info.major == 3 else ""))
+    print(" sudo pip{} install pycrc"
+          .format("3" if sys.version_info.major == 3 else ""))
     raise SystemExit()
 import json
 
@@ -239,7 +241,7 @@ def handle_response(command, frame, args):
             _json = data
         else:
             print("%-10s : %s (%s)" % ('Func', data['cur_func'], enable_str))
-            for key, value in data['params'].iteritems():
+            for key, value in data['params'].items():
                 print("  %-8s : %s" % (key, value))
             print("%-10s : %s V" % ('V_in', v_in_str))
             print("%-10s : %s V" % ('V_out', v_out_str))
@@ -564,7 +566,7 @@ def uhej_worker_thread():
             except uhej.IllegalFrameException as e:
                 pass
         except socket.error as e:
-            print('Exception'), e
+            print('Exception', e)
 
 """
 Scan for OpenDPS devices on the local network
