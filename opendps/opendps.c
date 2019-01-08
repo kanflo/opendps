@@ -303,13 +303,13 @@ set_param_status_t opendps_set_calibration(char *name, float *value)
     } else if(strcmp(name,"A_DAC_C")==0){
         param = past_A_DAC_C;
     } else if(strcmp(name,"V_ADC_K")==0){
-        param = past_V_DAC_K;
-    } else if(strcmp(name,"V_ADC_C")==0){
-        param = past_V_DAC_C;
-    } else if(strcmp(name,"V_DAC_K")==0){
         param = past_V_ADC_K;
-    } else if(strcmp(name,"V_DAC_C")==0){
+    } else if(strcmp(name,"V_ADC_C")==0){
         param = past_V_ADC_C;
+    } else if(strcmp(name,"V_DAC_K")==0){
+        param = past_V_DAC_K;
+    } else if(strcmp(name,"V_DAC_C")==0){
+        param = past_V_DAC_C;
     } else if(strcmp(name,"VIN_ADC_K")==0){
         param = past_VIN_ADC_K;
     } else if(strcmp(name,"VIN_ADC_C")==0){
@@ -348,6 +348,7 @@ bool opendps_clear_calibration(void)
 
     /** Re-init pwrctl as calibration coefs have now been cleared */
     pwrctl_init(&g_past);
+    uui_refresh(&func_ui, false);
     return true;
 }
 
@@ -843,8 +844,6 @@ static void event_handler(void)
 int main(int argc, char const *argv[])
 {
     hw_init();
-    pwrctl_init(&g_past); // Must be after DAC init
-    event_init();
 
 #ifdef CONFIG_COMMANDLINE
     dbg_printf("Welcome to OpenDPS!\n");
@@ -867,6 +866,8 @@ int main(int argc, char const *argv[])
         /** @todo Handle past init failure */
     }
 
+    pwrctl_init(&g_past); // Must be after DAC init and Past init
+    event_init();
     check_master_reset();
     read_past_settings();
     ui_init();

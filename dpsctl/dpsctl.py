@@ -297,6 +297,14 @@ def handle_response(command, frame, args):
             parts = p.split("=")
             # TODO: handle json output
             print("%s: %s" % (parts[0], "ok" if status == 0 else "unknown parameter" if status == 1 else "out of range" if status == 2 else "unsupported parameter" if status == 3 else "unknown error %d" % (status)))
+    elif resp_command == cmd_set_calibration:
+        cmd = frame.unpack8()
+        status = frame.unpack8()
+        for p in args.calibration_set:
+            status = frame.unpack8()
+            parts = p.split("=")
+            # TODO: handle json output
+            print("%s: %s" % (parts[0], "ok" if status == 0 else "unknown coefficient" if status == 1 else "out of range" if status == 2 else "unsupported coefficient" if status == 3 else "flash write error" if status == 4 else "unknown error %d" % (status)))   
     elif resp_command == cmd_list_parameters:
         cmd = frame.unpack8()
         status = frame.unpack8()
@@ -339,6 +347,8 @@ def handle_response(command, frame, args):
         print("OpenDPS GIT Hash: %s" % data['app_git_hash'])
     elif resp_command == cmd_cal_report:
         ret_dict = unpack_cal_report(frame)
+    elif resp_command == cmd_clear_calibration:
+        pass
     else:
         print("Unknown response %d from device." % (resp_command))
 
@@ -445,8 +455,18 @@ def handle_commands(args):
         print("\tIOUT_DAC = {}".format(data['iout_dac']))
         print("\tVOUT_DAC = {}".format(data['vout_dac']))
 
+    if args.calibration_set:
+        payload = create_set_calibration(args.calibration_set)
+        if payload:
+            communicate(comms, payload, args)
+        else:
+            fail("malformatted parameters")
+
     if hasattr(args, 'temperature') and args.temperature:
         communicate(comms, create_temperature(float(args.temperature)), args)
+
+    if args.calibration_reset:
+        communicate(comms, create_cmd(cmd_clear_calibration), args)
 
 """
 Return True if the parameter if_name is an IP address.
@@ -626,7 +646,9 @@ def main():
     parser.add_argument('-F', '--list-functions', action='store_true', help="List available functions")
     parser.add_argument('-p', '--parameter', nargs='+', help="Set function parameter <name>=<value>")
     parser.add_argument('-P', '--list-parameters', action='store_true', help="List function parameters of active function")
+    parser.add_argument('-c', '--calibration_set', nargs='+', help="Set the specified calibration coefficient <name>=<value>")
     parser.add_argument('-cr','--calibration_report', action="store_true", help="Prints Calibration report")
+    parser.add_argument(      '--calibration_reset', action='store_true', help="Resets the calibration to the default values")
     parser.add_argument('-o', '--enable', help="Enable output ('on' or 'off')")
     parser.add_argument(      '--ping', action='store_true', help="Ping device (causes screen to flash)")
     parser.add_argument('-L', '--lock', action='store_true', help="Lock device keys")
