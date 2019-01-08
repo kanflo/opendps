@@ -54,8 +54,8 @@ static bool is_inverted;
     ((ILI9163C_COLORSPACE_TWIDDLE(color) >> 8) & 0xFF) )
 
 /** Buffers for speeding up drawing */
-static uint16_t blit_buffer[22*35]; // 22x35 pixels
-static uint16_t black_buffer[22*35]; // 22x35 pixels
+static uint16_t blit_buffer[FONT_48_MAX_GLYPH_WIDTH*FONT_48_MAX_GLYPH_HEIGHT];
+static uint16_t black_buffer[FONT_48_MAX_GLYPH_WIDTH*FONT_48_MAX_GLYPH_HEIGHT];
 
 static void frame_glyph(uint32_t xpos, uint32_t ypos, uint32_t glyph_height, uint32_t glyph_width, uint16_t color);
 

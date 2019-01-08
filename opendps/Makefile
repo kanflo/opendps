@@ -24,6 +24,9 @@ WIFI := 1
 # Print debug information on the serial output
 DEBUG ?= 0
 
+# Font file
+FONT_FILE ?= gfx/Ubuntu-C.ttf
+
 # Color space for the DPS display. Most units use GBR but RGB has been spotted in the wild
 COLORSPACE ?= 0
 
@@ -110,7 +113,7 @@ endif
 include ../libopencm3.target.mk
 
 fonts:
-	@./font-convert.py $(TINT)
+	@python ./generate_font.py -f $(FONT_FILE)
 
 graphics:
 	@./gfx-convert.sh $(TINT)
