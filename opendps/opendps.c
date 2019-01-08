@@ -319,7 +319,7 @@ set_param_status_t opendps_set_calibration(char *name, float *value)
     }
     
     if (!past_write_unit(&g_past, param, (void*) value, sizeof(*value))) {
-        dbg_printf("Error: past write app git hash failed!\n");
+        dbg_printf("Error: past write opendps set calibration failed!\n");
         return ps_flash_error;
     }
 
