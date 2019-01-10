@@ -25,6 +25,13 @@
 #ifndef __TFT_H__
 #define __TFT_H__
 
+typedef enum
+{
+    FONT_SMALL,
+    FONT_MEDIUM,
+    FONT_LARGE
+} tft_font_size_t;
+
 /**
   * @brief Initialize the TFT module
   * @retval none
@@ -50,7 +57,7 @@ void tft_blit(uint16_t *bits, uint32_t width, uint32_t height, uint32_t x, uint3
 
 /**
   * @brief Blit character on TFT
-  * @param size size of character (0:small 1:large)
+  * @param size size of character
   * @param ch the character (must be a supported character)
   * @param x x position
   * @param y y position
@@ -60,7 +67,7 @@ void tft_blit(uint16_t *bits, uint32_t width, uint32_t height, uint32_t x, uint3
   * @param highlight if true, the character will be inverted
   * @retval none
   */
-void tft_putch(uint8_t size, char ch, uint32_t x, uint32_t y, uint32_t w, uint32_t h, uint16_t color, bool highlight);
+void tft_putch(tft_font_size_t size, char ch, uint32_t x, uint32_t y, uint32_t w, uint32_t h, uint16_t color, bool highlight);
 
 /**
   * @brief Fill area with specified pattern

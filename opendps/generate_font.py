@@ -83,8 +83,8 @@ def generate_font_images(font_fname, characters, font_size):
 """
 Convert the specified font to a pair of .c/.h C language lookup tables in BGR565 format
 """
-def convert_font_to_c(font_fname, characters, character_strings, font_size):
-    print "Converting %s to font-%d.c/h" % (font_fname, font_size)
+def convert_font_to_c(font_fname, characters, character_strings, font_size, output_filename):
+    print "Converting %s %dpt to font-%s.c/h" % (font_fname, font_size, output_filename)
 
     if len(characters) != len(character_strings):
         print("characters and character_strings must have matching length")
@@ -99,17 +99,17 @@ def convert_font_to_c(font_fname, characters, character_strings, font_size):
         character_data.append(image_to_bgr565(character_images[i]))
 
     # Generate the C source file
-    file_name = "font-%d.c" % (font_size)
+    file_name = "font-%s.c" % (output_filename)
     font_source_file = open(file_name, "w")
 
-    font_source_file.write("/** Font generated from %s */\n\n" % (font_fname))
-    font_source_file.write("#include <stdint.h>\n")
-    font_source_file.write("const uint32_t font_%d_height = %d;\n" % (font_size, character_heights))
-    font_source_file.write("const uint32_t font_%d_num_glyphs = %d;\n\n" % (font_size, len(character_strings)))
+    font_source_file.write("/** Font generated from %s %dpt */\n\n" % (font_fname, font_size))
+    font_source_file.write("#include <stdint.h>\n\n")
+    font_source_file.write("const uint32_t font_%s_height = %d;\n" % (output_filename, character_heights))
+    font_source_file.write("const uint32_t font_%s_num_glyphs = %d;\n\n" % (output_filename, len(character_strings)))
 
     # Generate character data lookup tables
     for i in range(len(characters)):
-        font_source_file.write("const uint8_t font_%d_%s[] = {\n  " % (font_size, character_strings[i]))
+        font_source_file.write("const uint8_t font_%s_%s[] = {\n  " % (output_filename, character_strings[i]))
 
         count = 0
         for j in character_data[i]:
@@ -121,10 +121,10 @@ def convert_font_to_c(font_fname, characters, character_strings, font_size):
                     font_source_file.write("\n  ")
 
         font_source_file.write("\n};\n")
-        font_source_file.write("const uint32_t font_%d_%s_len = %d;\n\n" % (font_size, character_strings[i], len(character_data[i])))
+        font_source_file.write("const uint32_t font_%s_%s_len = %d;\n\n" % (output_filename, character_strings[i], len(character_data[i])))
 
     # Generate glyph widths
-    font_source_file.write("const uint8_t font_%d_widths[%d] = {\n  " % (font_size, len(character_strings)))
+    font_source_file.write("const uint8_t font_%s_widths[%d] = {\n  " % (output_filename, len(character_strings)))
     character_max_width = 0
     count = 0
     for i in range(len(characters)):
@@ -138,7 +138,7 @@ def convert_font_to_c(font_fname, characters, character_strings, font_size):
     font_source_file.write("\n};\n\n")
 
     # Generate glyph sizes
-    font_source_file.write("const uint16_t font_%d_sizes[%d] = {\n  " % (font_size, len(character_strings)))
+    font_source_file.write("const uint16_t font_%s_sizes[%d] = {\n  " % (output_filename, len(character_strings)))
     count = 0
     for i in range(len(characters)):
         font_source_file.write("%d" % (len(character_data[i])))
@@ -148,10 +148,10 @@ def convert_font_to_c(font_fname, characters, character_strings, font_size):
     font_source_file.write("\n};\n\n")
 
     # Generate glyph pix pointers
-    font_source_file.write("const uint16_t *font_%d_pix[%d] = {\n  " % (font_size, len(character_strings)))
+    font_source_file.write("const uint16_t *font_%s_pix[%d] = {\n  " % (output_filename, len(character_strings)))
     count = 0
     for i in range(len(characters)):
-        font_source_file.write("(uint16_t*) &font_%d_%s" % (font_size, character_strings[i]))
+        font_source_file.write("(uint16_t*) &font_%s_%s" % (output_filename, character_strings[i]))
         count += 1
         if count < len(characters):
             font_source_file.write(",\n  ")
@@ -160,31 +160,33 @@ def convert_font_to_c(font_fname, characters, character_strings, font_size):
     font_source_file.close()
 
     # Generate the C header file
-    file_name = "font-%d.h" % (font_size)
+    file_name = "font-%s.h" % (output_filename)
     font_header_file = open(file_name, "w")
 
-    font_header_file.write("/** Font generated from %s */\n\n" % (font_fname))
+    font_header_file.write("/** Font generated from %s %dpt */\n\n" % (font_fname, font_size))
 
-    font_header_file.write("#define FONT_%d_MAX_GLYPH_HEIGHT (%d)\n" % (font_size, character_heights))
-    font_header_file.write("#define FONT_%d_MAX_GLYPH_WIDTH  (%d)\n\n" % (font_size, character_max_width))
+    font_header_file.write("#define FONT_%s_MAX_GLYPH_HEIGHT (%d)\n" % (output_filename.upper(), character_heights))
+    font_header_file.write("#define FONT_%s_MAX_GLYPH_WIDTH  (%d)\n\n" % (output_filename.upper(), character_max_width))
 
-    font_header_file.write("extern const uint32_t font_%d_height;\n" % (font_size))
-    font_header_file.write("extern const uint32_t font_%d_num_glyphs;\n" % (font_size))
+    font_header_file.write("extern const uint32_t font_%s_height;\n" % (output_filename))
+    font_header_file.write("extern const uint32_t font_%s_num_glyphs;\n" % (output_filename))
 
     for i in range(len(characters)):
-        font_header_file.write("extern const uint8_t font_%d_%s[];\n" % (font_size, character_strings[i]))
-        font_header_file.write("extern const uint32_t font_%d_%s_len;\n" % (font_size, character_strings[i]))
+        font_header_file.write("extern const uint8_t font_%s_%s[];\n" % (output_filename, character_strings[i]))
+        font_header_file.write("extern const uint32_t font_%s_%s_len;\n" % (output_filename, character_strings[i]))
 
-    font_header_file.write("extern const uint8_t font_%d_widths[%d];\n" % (font_size, len(character_strings)))
-    font_header_file.write("extern const uint16_t font_%d_sizes[%d];\n" % (font_size, len(character_strings)))
-    font_header_file.write("extern const uint16_t *font_%d_pix[%d];\n" % (font_size, len(character_strings)))
+    font_header_file.write("extern const uint8_t font_%s_widths[%d];\n" % (output_filename, len(character_strings)))
+    font_header_file.write("extern const uint16_t font_%s_sizes[%d];\n" % (output_filename, len(character_strings)))
+    font_header_file.write("extern const uint16_t *font_%s_pix[%d];\n" % (output_filename, len(character_strings)))
 
     font_header_file.close()
 
 def main():
     global args
     parser = argparse.ArgumentParser(description='Generate font lookup tables for the OpenDPS firmware')
-    parser.add_argument('-f', '--font', type=str, required=True, dest="fontfile", help="The font to use")
+    parser.add_argument('-f', '--font',      type=str, required=True, dest="fontfile", help="The font to use")
+    parser.add_argument('-s', '--font_size', type=int, help="The font pt size to use")
+    parser.add_argument('-o', '--output',    type=str, required=True, help="The output file name")
     args, unknown = parser.parse_known_args()
 
     # Check font file actually exists
@@ -192,12 +194,19 @@ def main():
         print("Can't find file %s" % (args.fontfile))
         sys.exit(1)
 
-    characters = "0123456789.VA" # The characters to generate a lookup table of
-    character_strings = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'dot', 'v', 'a'] # The textual reference to each character
+    # If this is a font file ensure that a font_size has been specified
+    if args.fontfile.lower().endswith(('.ttf', '.otf')):
+        if args.font_size:
+            characters = "0123456789.VA" # The characters to generate a lookup table of
+            character_strings = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'dot', 'v', 'a'] # The textual reference to each character
 
-    convert_font_to_c(args.fontfile, characters, character_strings, 18)
-    convert_font_to_c(args.fontfile, characters, character_strings, 24)
-    convert_font_to_c(args.fontfile, characters, character_strings, 48)
+            convert_font_to_c(args.fontfile, characters, character_strings, args.font_size, args.output)
+        else:
+            print("error: argument -s/--font_size is required for fonts")
+            sys.exit(1)
+    else:
+        print("File %s isn't a font file" % (args.fontfile))
+        sys.exit(1)
 
 if __name__ == "__main__":
     main()
