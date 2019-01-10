@@ -155,6 +155,8 @@ If you would like to use a your own font for OpenDPS you may do so by doing the 
 % make -C opendps fonts FONT_FILE=<path_to_font> FONT_SMALL_SIZE=18 FONT_MEDIUM_SIZE=24 FONT_LARGE_SIZE=48
 ```
 
+Supported fonts are .ttf or .otf
+
 ### Source code organisation
 
 The project consists of four parts:
