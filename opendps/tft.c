@@ -98,7 +98,7 @@ void tft_blit(uint16_t *bits, uint32_t width, uint32_t height, uint32_t x, uint3
 
 /**
   * @brief Blit character on TFT
-  * @param size size of character (0:small 1:large)
+  * @param size size of character
   * @param ch the character (must be a supported character)
   * @param x x position
   * @param y y position
