@@ -44,9 +44,9 @@
 #include "thermometer.h"
 #include "power.h"
 #include "wifi.h"
-#include "font-18.h"
-#include "font-24.h"
-#include "font-48.h"
+#include "font-small.h"
+#include "font-medium.h"
+#include "font-large.h"
 #include "gpio.h"
 #include "past.h"
 #include "pastunits.h"
@@ -155,7 +155,7 @@ ui_number_t input_voltage = {
         .y = 0,
         .can_focus = false,
     },
-    .font_size = 18,
+    .font_size = FONT_SMALL,
     .color = COLOR_INPUT,
     .value = 0,
     .min = 0,
@@ -415,7 +415,7 @@ static void ui_init(void)
     uui_init(&main_ui, &g_past);
     number_init(&input_voltage);
     input_voltage.ui.x = 105;
-    input_voltage.ui.y = ui_height - font_18_height;
+    input_voltage.ui.y = ui_height - font_small_height;
     uui_add_screen(&main_ui, &main_screen);
     uui_activate(&main_ui);
 }

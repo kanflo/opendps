@@ -26,6 +26,9 @@ DEBUG ?= 0
 
 # Font file
 FONT_FILE ?= gfx/Ubuntu-C.ttf
+FONT_SMALL_SIZE ?= 18
+FONT_MEDIUM_SIZE ?= 24
+FONT_LARGE_SIZE ?= 48
 
 # Color space for the DPS display. Most units use GBR but RGB has been spotted in the wild
 COLORSPACE ?= 0
@@ -76,9 +79,9 @@ OBJS = \
     ringbuf.o \
     ili9163c.o \
     mini-printf.o \
-    font-18.o \
-    font-24.o \
-    font-48.o
+    font-small.o \
+    font-medium.o \
+    font-large.o
 
 ifdef MAX_CURRENT
 	CFLAGS +=-DCONFIG_DPS_MAX_CURRENT=$(MAX_CURRENT)
@@ -113,7 +116,9 @@ endif
 include ../libopencm3.target.mk
 
 fonts:
-	@python ./generate_font.py -f $(FONT_FILE)
+	@python ./generate_font.py -f $(FONT_FILE) -s $(FONT_SMALL_SIZE) -o small
+	@python ./generate_font.py -f $(FONT_FILE) -s $(FONT_MEDIUM_SIZE) -o medium
+	@python ./generate_font.py -f $(FONT_FILE) -s $(FONT_LARGE_SIZE) -o large
 
 graphics:
 	@./gfx-convert.sh $(TINT)

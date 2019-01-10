@@ -28,6 +28,7 @@
 #include <stdio.h>
 #include <stdint.h>
 #include <stdbool.h>
+#include "tft.h"
 #include "uui.h"
 
 /**
@@ -40,7 +41,7 @@ typedef struct ui_number_t {
     ui_item_t ui;
     unit_t unit;
     uint16_t color;
-    uint8_t font_size;
+    tft_font_size_t font_size;
     uint8_t num_digits;
     uint8_t num_decimals;
     uint8_t cur_digit;

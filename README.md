@@ -152,13 +152,10 @@ The fourth byte from the end in the received data (0x03 in this example) will te
 If you would like to use a your own font for OpenDPS you may do so by doing the following:
 
 ```
-% cd opendps
-% python generate_font.py -f gfx/Ubuntu-C.ttf
-% make clean
-% make
+% make -C opendps fonts FONT_FILE=<path_to_font> FONT_SMALL_SIZE=18 FONT_MEDIUM_SIZE=24 FONT_LARGE_SIZE=48
 ```
 
-You may replace Ubuntu-C.ttf with any font file you wish to use
+Supported fonts are .ttf or .otf
 
 ### Source code organisation
 
