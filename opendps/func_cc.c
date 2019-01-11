@@ -26,11 +26,11 @@
 #include <stdbool.h>
 #include <stdlib.h>
 #include <string.h>
+#include "gfx-cc.h"
 #include "hw.h"
 #include "func_cc.h"
 #include "uui.h"
 #include "uui_number.h"
-#include "cc.h"
 #include "dbg_printf.h"
 #include "mini-printf.h"
 #include "dps-model.h"
@@ -105,10 +105,10 @@ ui_number_t cc_current = {
 ui_screen_t cc_screen = {
     .id = SCREEN_ID,
     .name = "cc",
-    .icon_data = (uint8_t *) cc,
-    .icon_data_len = sizeof(cc),
-    .icon_width = cc_width,
-    .icon_height = cc_height,
+    .icon_data = (uint8_t *) gfx_cc,
+    .icon_data_len = sizeof(gfx_cc),
+    .icon_width = GFX_CC_WIDTH,
+    .icon_height = GFX_CC_HEIGHT,
     .enable = &cc_enable,
     .past_save = &past_save,
     .past_restore = &past_restore,

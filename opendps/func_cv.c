@@ -26,13 +26,13 @@
 #include <stdbool.h>
 #include <stdlib.h>
 #include <string.h>
+#include "gfx-cv.h"
 #include "hw.h"
 #include "func_cv.h"
 #include "uui.h"
 #include "uui_number.h"
 #include "dbg_printf.h"
 #include "mini-printf.h"
-#include "cv.h"
 #include "dps-model.h"
 #include "ili9163c.h"
 
@@ -106,10 +106,10 @@ ui_number_t cv_current = {
 ui_screen_t cv_screen = {
     .id = SCREEN_ID,
     .name = "cv",
-    .icon_data = (uint8_t *) cv,
-    .icon_data_len = sizeof(cv),
-    .icon_width = cv_width,
-    .icon_height = cv_height,
+    .icon_data = (uint8_t *) gfx_cv,
+    .icon_data_len = sizeof(gfx_cv),
+    .icon_width = GFX_CV_WIDTH,
+    .icon_height = GFX_CV_HEIGHT,
     .enable = &cv_enable,
     .past_save = &past_save,
     .past_restore = &past_restore,
