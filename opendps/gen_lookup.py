@@ -68,15 +68,10 @@ def generate_font_images(font_fname, characters, font_size):
         )
 
     # Crop all characters to the same height but a different width
-    character_widths = []
     for i in range(0, len(characters)):
 
         # Crop box around content, using the array we calulated in last loop
         images[i] = images[i].crop(font_canvas_size[i])
-
-        # Add to sprites next to each other.
-        width, height = images[i].size
-        character_widths.append(width)
 
     return images
 
