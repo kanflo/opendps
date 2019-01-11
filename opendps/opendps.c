@@ -40,10 +40,10 @@
 #include "protocol.h"
 #include "serialhandler.h"
 #include "ili9163c.h"
-#include "padlock.h"
-#include "thermometer.h"
-#include "power.h"
-#include "wifi.h"
+#include "gfx-padlock.h"
+#include "gfx-thermometer.h"
+#include "gfx-power.h"
+#include "gfx-wifi.h"
 #include "font-small.h"
 #include "font-medium.h"
 #include "font-large.h"
@@ -503,10 +503,10 @@ void opendps_lock(bool lock)
         lock_flashing_period = 0;
         if (is_locked) {
             lock_visible = true;
-            tft_blit((uint16_t*) padlock, padlock_width, padlock_height, XPOS_LOCK, ui_height-padlock_height);
+            tft_blit((uint16_t*) gfx_padlock, GFX_PADLOCK_WIDTH, GFX_PADLOCK_HEIGHT, XPOS_LOCK, ui_height-GFX_PADLOCK_HEIGHT);
         } else {
             lock_visible = false;
-            tft_fill(XPOS_LOCK, ui_height-padlock_height, padlock_width, padlock_height, bg_color);
+            tft_fill(XPOS_LOCK, ui_height-GFX_PADLOCK_HEIGHT, GFX_PADLOCK_WIDTH, GFX_PADLOCK_HEIGHT, bg_color);
         }
     }
 }
@@ -527,7 +527,7 @@ void opendps_temperature_lock(bool lock)
             tft_clear();
             uui_show(&func_ui, false);
             uui_show(&main_ui, false);
-            tft_blit((uint16_t*) thermometer, thermometer_width, thermometer_height, 1+(ui_width-thermometer_width)/2, 30);
+            tft_blit((uint16_t*) gfx_thermometer, GFX_THERMOMETER_WIDTH, GFX_THERMOMETER_HEIGHT, 1+(ui_width-GFX_THERMOMETER_WIDTH)/2, 30);
         } else {
             emu_printf("DPS enabled due to temperature\n");
             tft_clear();
@@ -573,9 +573,9 @@ static void ui_tick(void)
     if (wifi_status_flashing_period > 0 && get_ticks() - last_wifi_update > wifi_status_flashing_period) {
         last_wifi_update = get_ticks();
         if (wifi_status_visible) {
-            tft_fill(XPOS_WIFI, ui_height-wifi_height, wifi_width, wifi_height, bg_color);
+            tft_fill(XPOS_WIFI, ui_height-GFX_WIFI_HEIGHT, GFX_WIFI_WIDTH, GFX_WIFI_HEIGHT, bg_color);
         } else {
-            tft_blit((uint16_t*) wifi, wifi_width, wifi_height, XPOS_WIFI, ui_height-wifi_height);
+            tft_blit((uint16_t*) gfx_wifi, GFX_WIFI_WIDTH, GFX_WIFI_HEIGHT, XPOS_WIFI, ui_height-GFX_WIFI_HEIGHT);
         }
         wifi_status_visible = !wifi_status_visible;
     }
@@ -584,16 +584,16 @@ static void ui_tick(void)
         last_lock_flash = get_ticks();
         lock_visible = !lock_visible;
         if (lock_visible) {
-            tft_blit((uint16_t*) padlock, padlock_width, padlock_height, XPOS_LOCK, ui_height-padlock_height);
+            tft_blit((uint16_t*) gfx_padlock, GFX_PADLOCK_WIDTH, GFX_PADLOCK_HEIGHT, XPOS_LOCK, ui_height-GFX_PADLOCK_HEIGHT);
         } else {
-            tft_fill(XPOS_LOCK, ui_height-padlock_height, padlock_width, padlock_height, bg_color);
+            tft_fill(XPOS_LOCK, ui_height-GFX_PADLOCK_HEIGHT, GFX_PADLOCK_WIDTH, GFX_PADLOCK_HEIGHT, bg_color);
         }
         lock_flash_counter--;
         if (lock_flash_counter == 0) {
             lock_visible = true;
             /** If the user hammers the locked buttons we might end up with an
                 invisible locking symbol at the end of the flashing */
-            tft_blit((uint16_t*) padlock, padlock_width, padlock_height, XPOS_LOCK, ui_height-padlock_height);
+            tft_blit((uint16_t*) gfx_padlock, GFX_PADLOCK_WIDTH, GFX_PADLOCK_HEIGHT, XPOS_LOCK, ui_height-GFX_PADLOCK_HEIGHT);
             lock_flashing_period = 0;
         }
     }
@@ -634,7 +634,7 @@ void opendps_update_wifi_status(wifi_status_t status)
             case wifi_off:
                 wifi_status_flashing_period = 0;
                 wifi_status_visible = true;
-                tft_fill(XPOS_WIFI, ui_height-wifi_height, wifi_width, wifi_height, bg_color);
+                tft_fill(XPOS_WIFI, ui_height-GFX_WIFI_HEIGHT, GFX_WIFI_WIDTH, GFX_WIFI_HEIGHT, bg_color);
                 break;
             case wifi_connecting:
                 wifi_status_flashing_period = WIFI_CONNECTING_FLASHING_PERIOD;
@@ -642,7 +642,7 @@ void opendps_update_wifi_status(wifi_status_t status)
             case wifi_connected:
                 wifi_status_flashing_period = 0;
                 wifi_status_visible = false;
-                tft_blit((uint16_t*) wifi, wifi_width, wifi_height, XPOS_WIFI, ui_height-wifi_height);
+                tft_blit((uint16_t*) gfx_wifi, GFX_WIFI_WIDTH, GFX_WIFI_HEIGHT, XPOS_WIFI, ui_height-GFX_WIFI_HEIGHT);
                 break;
             case wifi_error:
                 wifi_status_flashing_period = WIFI_ERROR_FLASHING_PERIOD;
@@ -664,9 +664,9 @@ void opendps_update_power_status(bool enabled)
     if (is_enabled != enabled) {
         is_enabled = enabled;
         if (is_enabled) {
-            tft_blit((uint16_t*) power, power_width, power_height, ui_width-power_width, ui_height-power_height);
+            tft_blit((uint16_t*) gfx_power, GFX_POWER_WIDTH, GFX_POWER_HEIGHT, ui_width-GFX_POWER_WIDTH, ui_height-GFX_POWER_HEIGHT);
         } else {
-            tft_fill(ui_width-power_width, ui_height-power_height, power_width, power_height, bg_color);
+            tft_fill(ui_width-GFX_POWER_WIDTH, ui_height-GFX_POWER_HEIGHT, GFX_POWER_WIDTH, GFX_POWER_HEIGHT, bg_color);
         }
     }
 }

@@ -81,7 +81,13 @@ OBJS = \
     mini-printf.o \
     font-small.o \
     font-medium.o \
-    font-large.o
+    font-large.o \
+    gfx-cc.o \
+    gfx-cv.o \
+    gfx-padlock.o \
+    gfx-power.o \
+    gfx-thermometer.o \
+    gfx-wifi.o
 
 ifdef MAX_CURRENT
 	CFLAGS +=-DCONFIG_DPS_MAX_CURRENT=$(MAX_CURRENT)
@@ -116,12 +122,9 @@ endif
 include ../libopencm3.target.mk
 
 fonts:
-	@python ./generate_font.py -f $(FONT_FILE) -s $(FONT_SMALL_SIZE) -o small
-	@python ./generate_font.py -f $(FONT_FILE) -s $(FONT_MEDIUM_SIZE) -o medium
-	@python ./generate_font.py -f $(FONT_FILE) -s $(FONT_LARGE_SIZE) -o large
-
-graphics:
-	@./gfx-convert.sh $(TINT)
+	@python ./gen_lookup.py -f $(FONT_FILE) -s $(FONT_SMALL_SIZE) -o small
+	@python ./gen_lookup.py -f $(FONT_FILE) -s $(FONT_MEDIUM_SIZE) -o medium
+	@python ./gen_lookup.py -f $(FONT_FILE) -s $(FONT_LARGE_SIZE) -o large
 
 test:
 	@make -C tests
