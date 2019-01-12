@@ -244,28 +244,47 @@ def convert_graphic_to_c(graphic_fname, output_filename):
 def main():
     global args
     parser = argparse.ArgumentParser(description='Generate font lookup tables for the OpenDPS firmware')
-    parser.add_argument('-f', '--file',      type=str, required=True, dest="file", help="The graphic or font to use")
-    parser.add_argument('-s', '--font_size', type=int, help="The font pt size to use")
-    parser.add_argument('-o', '--output',    type=str, required=True, help="The output file name")
+    parser.add_argument('-f', '--font_file',  type=str, help="The font to use")
+    parser.add_argument('-s', '--font_size',  type=int, help="The font pt size to use")
+    parser.add_argument('-i', '--image_file', type=str, help="The image file to use")
+    parser.add_argument('-o', '--output',     type=str, required=True, help="The output file name")
     args, unknown = parser.parse_known_args()
 
-    # Check font file actually exists
-    if not os.path.exists(args.file):
-        print("Can't find file %s" % (args.file))
+    # Only allow a font or an image not both
+    if args.font_file and args.image_file:
+        print("Can't process a font and image simultaneously")
         sys.exit(1)
 
-    # If this is a font file ensure that a font_size has been specified
-    if args.file.lower().endswith(('.ttf', '.otf')):
+    # If no input has been chosen
+    if not args.font_file and not args.image_file:
+        print("error: argument -f/--font_file or -i/--image_file is required")
+        sys.exit(1)
+
+    if args.font_file:
+    
+        # Check font file actually exists
+        if not os.path.exists(args.font_file):
+            print("Can't find file %s" % (args.font_file))
+            sys.exit(1)
+    
+        # If this is a font file ensure that a font_size has been specified
         if args.font_size:
             characters = "0123456789.VA" # The characters to generate a lookup table of
             character_strings = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'dot', 'v', 'a'] # The textual reference to each character
 
-            convert_font_to_c(args.file, characters, character_strings, args.font_size, args.output)
+            convert_font_to_c(args.font_file, characters, character_strings, args.font_size, args.output)
         else:
             print("error: argument -s/--font_size is required for fonts")
             sys.exit(1)
-    else:
-        convert_graphic_to_c(args.file, args.output)
+            
+    elif args.image_file:
+
+        # Check image file actually exists
+        if not os.path.exists(args.image_file):
+            print("Can't find file %s" % (args.image_file))
+            sys.exit(1)
+
+        convert_graphic_to_c(args.image_file, args.output)
 
 if __name__ == "__main__":
     main()
