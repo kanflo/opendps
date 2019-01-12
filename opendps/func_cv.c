@@ -67,17 +67,18 @@ ui_number_t cv_voltage = {
     {
         .type = ui_item_number,
         .id = 10,
-        .x = 120,
+        .x = 5,
         .y = 15,
         .can_focus = true,
     },
-    .font_size = FONT_LARGE, /** The bigger one, try 18 for kicks */
+    .font_size = FONT_LARGE, /** The bigger one, try FONT_SMALL or FONT_MEDIUM for kicks */
+    .pad_dot = false,
     .color = COLOR_VOLTAGE,
     .value = 0,
     .min = 0,
     .max = 0, /** Set at init, continously updated in the tick callback */
     .num_digits = 2,
-    .num_decimals = 2, /** 2 decimals => value is in centivolts */
+    .num_decimals = 2,
     .unit = unit_volt, /** Affects the unit printed on screen */
     .changed = &voltage_changed,
 };
@@ -87,17 +88,18 @@ ui_number_t cv_current = {
     {
         .type = ui_item_number,
         .id = 11,
-        .x = 120,
+        .x = 5,
         .y = 60,
         .can_focus = true,
     },
     .font_size = FONT_LARGE,
+    .pad_dot = false,
     .color = COLOR_AMPERAGE,
     .value = 0,
     .min = 0,
     .max = CONFIG_DPS_MAX_CURRENT,
     .num_digits = 1,
-    .num_decimals = 3, /** 3 decimals => value is in milliapmere */
+    .num_decimals = 3,
     .unit = unit_ampere,
     .changed = &current_changed,
 };
@@ -152,8 +154,7 @@ static set_param_status_t set_parameter(char *name, char *value)
             return ps_range_error;
         }
         emu_printf("[CV] Setting voltage to %d\n", ivalue);
-        /** value received in millivolt, module internal representation is centivolt */
-        cv_voltage.value = ivalue / 10;
+        /** value received in millivolt */
         voltage_changed(&cv_voltage);
         return ps_ok;
     } else if (strcmp("current", name) == 0 || strcmp("i", name) == 0) {
@@ -182,7 +183,7 @@ static set_param_status_t get_parameter(char *name, char *value, uint32_t value_
 {
     if (strcmp("voltage", name) == 0 || strcmp("u", name) == 0) {
         /** value returned in millivolt, module internal representation is centivolt */
-        (void) mini_snprintf(value, value_len, "%d", 10 * (pwrctl_vout_enabled() ? saved_u : cv_voltage.value));
+        (void) mini_snprintf(value, value_len, "%d", (pwrctl_vout_enabled() ? saved_u : cv_voltage.value));
         return ps_ok;
     } else if (strcmp("current", name) == 0 || strcmp("i", name) == 0) {
         (void) mini_snprintf(value, value_len, "%d", pwrctl_vout_enabled() ? saved_i : cv_current.value);
@@ -203,7 +204,7 @@ static void cv_enable(bool enabled)
         /** Display will now show the current values, keep the user setting saved */
         saved_u = cv_voltage.value;
         saved_i = cv_current.value;
-        (void) pwrctl_set_vout(10 * cv_voltage.value);
+        (void) pwrctl_set_vout(cv_voltage.value);
         (void) pwrctl_set_iout(CONFIG_DPS_MAX_CURRENT);
         (void) pwrctl_set_ilimit(cv_current.value);
         pwrctl_enable_vout(true);
@@ -226,7 +227,7 @@ static void cv_enable(bool enabled)
 static void voltage_changed(ui_number_t *item)
 {
     saved_u = item->value;
-    (void) pwrctl_set_vout(10 * item->value);
+    (void) pwrctl_set_vout(item->value);
 }
 
 /**
@@ -295,13 +296,13 @@ static void cv_tick(void)
         if (cv_voltage.ui.has_focus) {
             /** If the voltage setting has focus, make sure we're displaying
               * the desired setting and not the current output value. */
-            if (cv_voltage.value != (int32_t) pwrctl_get_vout() / 10) {
-                cv_voltage.value = pwrctl_get_vout() / 10;
+            if (cv_voltage.value != (int32_t) pwrctl_get_vout()) {
+                cv_voltage.value = pwrctl_get_vout();
                 cv_voltage.ui.draw(&cv_voltage.ui);
             }
         } else {
             /** No focus, update display if necessary */
-            int32_t new_u = pwrctl_calc_vout(v_out_raw) / 10;
+            int32_t new_u = pwrctl_calc_vout(v_out_raw);
             if (new_u != cv_voltage.value) {
                 cv_voltage.value = new_u;
                 cv_voltage.ui.draw(&cv_voltage.ui);
@@ -339,7 +340,7 @@ void func_cv_init(uui_t *ui)
     hw_get_adc_values(&i_out_raw, &v_in_raw, &v_out_raw);
     (void) i_out_raw;
     (void) v_out_raw;
-    cv_voltage.max = pwrctl_calc_vin(v_in_raw) / 10; /** @todo: subtract for LDO */
+    cv_voltage.max = pwrctl_calc_vin(v_in_raw); /** @todo: subtract for LDO */
     number_init(&cv_voltage); /** @todo: add guards for missing init calls */
     /** Start at the second most significant digit preventing the user from
         accidentally cranking up the setting 10V or more */

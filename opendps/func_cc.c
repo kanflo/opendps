@@ -67,17 +67,18 @@ ui_number_t cc_voltage = {
     {
         .type = ui_item_number,
         .id = 10,
-        .x = 120,
+        .x = 5,
         .y = 15,
         .can_focus = false,
     },
-    .font_size = FONT_LARGE, /** The bigger one, try 18 for kicks */
+    .font_size = FONT_LARGE, /** The bigger one, try FONT_SMALL or FONT_MEDIUM for kicks */
+    .pad_dot = false,
     .color = COLOR_VOLTAGE,
     .value = 0,
     .min = 0,
     .max = 0, /** Set at init, continously updated in the tick callback */
     .num_digits = 2,
-    .num_decimals = 2, /** 2 decimals => value is in centivolts */
+    .num_decimals = 2,
     .unit = unit_volt, /** Affects the unit printed on screen */
 };
 
@@ -86,17 +87,18 @@ ui_number_t cc_current = {
     {
         .type = ui_item_number,
         .id = 11,
-        .x = 120,
+        .x = 5,
         .y = 60,
         .can_focus = true,
     },
     .font_size = FONT_LARGE,
+    .pad_dot = false,
     .color = COLOR_AMPERAGE,
     .value = 0,
     .min = 0,
     .max = CONFIG_DPS_MAX_CURRENT,
     .num_digits = 1,
-    .num_decimals = 3, /** 3 decimals => value is in milliapmere */
+    .num_decimals = 3,
     .unit = unit_ampere,
     .changed = &current_changed,
 };
@@ -180,7 +182,7 @@ static void cc_enable(bool enabled)
 {
     if (enabled) {
         saved_i = cc_current.value;
-        (void) pwrctl_set_vout(10 * cc_voltage.max - 1000);
+        (void) pwrctl_set_vout(cc_voltage.max - 1000); /** Updated in cc_tick */
         (void) pwrctl_set_ilimit(CONFIG_DPS_MAX_CURRENT);
         (void) pwrctl_set_iout(cc_current.value);
         pwrctl_enable_vout(true);
@@ -247,9 +249,11 @@ static void cc_tick(void)
     if (pwrctl_vout_enabled()) {
         uint16_t i_out_raw, v_in_raw, v_out_raw;
         hw_get_adc_values(&i_out_raw, &v_in_raw, &v_out_raw);
-        /** Continously update max voltage output value */
-        cc_voltage.max = pwrctl_calc_vin(v_in_raw) / 10;
-        int32_t new_u = pwrctl_calc_vout(v_out_raw) / 10;
+        /** Continously update max voltage output value
+          * Max output voltage = Vin / VIN_VOUT_RATIO
+          * Add 0.5f to ensure correct rounding when truncated */
+        cc_voltage.max = (float) pwrctl_calc_vin(v_in_raw) / VIN_VOUT_RATIO + 0.5f;
+        int32_t new_u = pwrctl_calc_vout(v_out_raw);
         if (new_u != cc_voltage.value) {
             cc_voltage.value = new_u;
             cc_voltage.ui.draw(&cc_voltage.ui);
@@ -281,13 +285,13 @@ static void cc_tick(void)
  */
 void func_cc_init(uui_t *ui)
 {
-    cc_voltage.value = pwrctl_get_vout() / 10;
+    cc_voltage.value = pwrctl_get_vout();
     cc_current.value = pwrctl_get_ilimit();
     uint16_t i_out_raw, v_in_raw, v_out_raw;
     hw_get_adc_values(&i_out_raw, &v_in_raw, &v_out_raw);
     (void) i_out_raw;
     (void) v_out_raw;
-    cc_voltage.max = pwrctl_calc_vin(v_in_raw) / 10; /** @todo: subtract for LDO */
+    cc_voltage.max = pwrctl_calc_vin(v_in_raw); /** @todo: subtract for LDO */
     number_init(&cc_voltage); /** @todo: add guards for missing init calls */
     /** Start at the second most significant digit preventing the user from
         accidentally cranking up the setting 10V or more */

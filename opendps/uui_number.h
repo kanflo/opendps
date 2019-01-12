@@ -42,6 +42,7 @@ typedef struct ui_number_t {
     unit_t unit;
     uint16_t color;
     tft_font_size_t font_size;
+    bool pad_dot; /** Make the '.' character the same width as the digits? */
     uint8_t num_digits;
     uint8_t num_decimals;
     uint8_t cur_digit;

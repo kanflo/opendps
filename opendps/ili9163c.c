@@ -45,8 +45,8 @@ static void color_space(uint8_t cspace);
 
 void ili9163c_init(void)
 {
-    screen_width = 128;
-    screen_height = 128;
+    screen_width = _TFTWIDTH;
+    screen_height = _TFTHEIGHT;
     gpio_set(TFT_RST_PORT, TFT_RST_PIN);
     delay_ms(10);
     gpio_clear(TFT_RST_PORT, TFT_RST_PIN);
@@ -191,14 +191,12 @@ void ili9163c_draw_pixel(int16_t x, int16_t y, uint16_t color)
 {
     if (ili9163c_boundary_check(x,y)) return;
     if ((x < 0) || (y < 0)) return;
-    ili9163c_set_window(x,y,x+1,y+1);
+    ili9163c_set_window(x,y,x,y);
     write_data16(color);
 }
 
-#if 0
 void ili9163c_draw_vline(int16_t x, int16_t y, int16_t h, uint16_t color)
 {
-    // Rudimentary clipping
     if (ili9163c_boundary_check(x,y)) return;
     if (((y + h) - 1) >= screen_height) h = screen_height-y;
     ili9163c_set_window(x,y,x,(y+h)-1);
@@ -209,15 +207,13 @@ void ili9163c_draw_vline(int16_t x, int16_t y, int16_t h, uint16_t color)
 
 void ili9163c_draw_hline(int16_t x, int16_t y, int16_t w, uint16_t color)
 {
-    // Rudimentary clipping
     if (ili9163c_boundary_check(x,y)) return;
-    if (((x+w) - 1) >= screen_width)  w = screen_width-x;
+    if (((x+w) - 1) >= screen_width) w = screen_width-x;
     ili9163c_set_window(x,y,(x+w)-1,y);
     while (w-- > 0) {
         write_data16(color);
     }
 }
-#endif
 
 bool ili9163c_boundary_check(int16_t x,int16_t y)
 {

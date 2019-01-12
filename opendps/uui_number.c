@@ -27,9 +27,12 @@
 #include "my_assert.h"
 #include "uui_number.h"
 #include "tft.h"
+#include "ili9163c.h"
 #include "font-small.h"
 #include "font-medium.h"
 #include "font-large.h"
+
+#define MAX(a,b) (((a)>(b))?(a):(b))
 
 /** @todo: why is pow missing from my -lm ? */
 static uint32_t my_pow(uint32_t a, uint32_t b)
@@ -39,6 +42,22 @@ static uint32_t my_pow(uint32_t a, uint32_t b)
         r *= a;
     }
     return r;
+}
+
+/**
+  * @brief Draw a one pixel frame around a glyph
+  * @param xpos x position
+  * @param ypos y position
+  * @param glyph_width width of frame
+  * @param glyph_height height of frame
+  * @param color color in bgr565 format
+  */
+static void frame_glyph(uint32_t xpos, uint32_t ypos, uint32_t glyph_width, uint32_t glyph_height, uint16_t color)
+{
+    ili9163c_draw_hline(xpos-1, ypos-1, glyph_width + 2, color);
+    ili9163c_draw_hline(xpos-1, ypos + glyph_height, glyph_width + 2, color);
+    ili9163c_draw_vline(xpos-1, ypos-1, glyph_height + 2, color);
+    ili9163c_draw_vline(xpos + glyph_width, ypos-1, glyph_height + 2, color);
 }
 
 /**
@@ -54,20 +73,20 @@ static void number_got_event(ui_item_t *_item, event_t event)
     bool value_changed = false;
     switch(event) {
         case event_rot_left: {
-            uint32_t diff = my_pow(10, item->cur_digit);
+            uint32_t diff = my_pow(10, 3 - item->num_decimals + item->cur_digit);
             item->value -= diff;
-            if (item->value < (item->unit == unit_volt ? item->min / 10 : item->min)) {
-                item->value = (item->unit == unit_volt ? item->min / 10 : item->min);
+            if (item->value < item->min) {
+                item->value = item->min;
             }
             _item->needs_redraw = true;
             value_changed = true;
             break;
         }
         case event_rot_right: {
-            uint32_t diff = my_pow(10, item->cur_digit);
+            uint32_t diff = my_pow(10, 3 - item->num_decimals + item->cur_digit);
             item->value += diff;
-            if (item->value > (item->unit == unit_volt ? item->max / 10 : item->max)) {
-                item->value = (item->unit == unit_volt ? item->max / 10 : item->max);
+            if (item->value > item->max) {
+                item->value = item->max;
             }
             _item->needs_redraw = true;
             value_changed = true;
@@ -103,67 +122,97 @@ static uint32_t number_get_value(ui_item_t *_item)
     return item->value;
 }
 
-/**
- * @brief      Draw the number from right to left (unit first)
- *
- * @param      _item  The item
- */
 static void number_draw(ui_item_t *_item)
 {
-    uint32_t cur_digit = 0;
     ui_number_t *item = (ui_number_t*) _item;
-    uint32_t value = item->value;
-    uint32_t w, h;
+    uint32_t digit_w, max_w, h, dot_width, spacing;
+
     switch (item->font_size) {
       case FONT_SMALL:
-        w = font_small_widths[4]; /** @todo: Find the widest glyph */
-        h = font_small_height;
+        digit_w = FONT_SMALL_MAX_DIGIT_WIDTH;
+        max_w = FONT_SMALL_MAX_GLYPH_WIDTH;
+        h = FONT_SMALL_MAX_GLYPH_HEIGHT;
+        dot_width = item->pad_dot ? MAX(FONT_SMALL_MAX_DIGIT_WIDTH, FONT_SMALL_DOT_WIDTH) : FONT_SMALL_DOT_WIDTH;
+        spacing = FONT_SMALL_SPACING;
         break;
       case FONT_MEDIUM:
-        w = font_medium_widths[4] + 2; /** @todo: Find the widest glyph */
-        h = font_medium_height + 2;
+        digit_w = FONT_MEDIUM_MAX_DIGIT_WIDTH;
+        max_w = FONT_MEDIUM_MAX_GLYPH_WIDTH;
+        h = FONT_MEDIUM_MAX_GLYPH_HEIGHT;
+        dot_width = item->pad_dot ? MAX(FONT_MEDIUM_MAX_DIGIT_WIDTH, FONT_MEDIUM_DOT_WIDTH) : FONT_MEDIUM_DOT_WIDTH;
+        spacing = FONT_MEDIUM_SPACING;
         break;
       case FONT_LARGE:
-        w = font_large_widths[4] + 2; /** @todo: Find the widest glyph */
-        h = font_large_height + 2;
+        digit_w = FONT_LARGE_MAX_DIGIT_WIDTH;
+        max_w = FONT_LARGE_MAX_GLYPH_WIDTH;
+        h = FONT_LARGE_MAX_GLYPH_HEIGHT;
+        dot_width = item->pad_dot ? MAX(FONT_LARGE_MAX_DIGIT_WIDTH, FONT_LARGE_DOT_WIDTH) : FONT_LARGE_DOT_WIDTH;
+        spacing = FONT_LARGE_SPACING;
         break;
       default:
         /* Can't do anything if the wrong font size was supplied. Drop out for safety. */
         return;
     }
-    uint16_t xpos = _item->x - w;
+    
+    uint32_t xpos = _item->x;
     uint16_t color = item->color;
+    uint32_t cur_digit = item->num_digits + item->num_decimals - 1; /** Which digit are we currently drawing? 0 is the right most digit */
+
+    /** Start printing from left to right */
+
+    /** Digits before the decimal point */
+    for (uint32_t i = item->num_digits - 1; i < item->num_digits; --i) {
+        bool highlight = _item->has_focus && item->cur_digit == cur_digit;
+        uint8_t digit = item->value / my_pow(10, 3 + i) % 10;
+
+        if (!digit && !_item->has_focus && cur_digit != item->num_decimals) /** To prevent from printing 00.123 */
+            tft_fill(xpos, _item->y, digit_w, h, BLACK); /** Black out any 0 that has previously been printed */
+        else
+        {
+            if (spacing > 1) /** Dont frame tiny fonts */
+            {
+                if (highlight) /** Draw an extra pixel wide border around the highlighted item */
+                    frame_glyph(xpos, _item->y, digit_w, h, WHITE);
+                else
+                    frame_glyph(xpos, _item->y, digit_w, h, BLACK);
+            }
+            tft_putch(item->font_size, '0' + digit, xpos, _item->y, digit_w, h, color, highlight);
+        }
+
+        cur_digit--;
+        xpos += digit_w + spacing;
+    }
+
+    /** The decimal point */
+    tft_putch(item->font_size, '.', xpos, _item->y, dot_width, h, color, false);
+    xpos += dot_width + spacing;
+
+    /** Digits after the decimal point */
+    for (uint32_t i = 0; i < item->num_decimals; ++i) {
+        bool highlight = _item->has_focus && item->cur_digit == cur_digit;
+        uint8_t digit = item->value / my_pow(10, 2 - i) % 10;
+        if (spacing > 1) /** Dont frame tiny fonts */
+        {
+            if (highlight) /** Draw an extra pixel wide border around the highlighted item */
+                frame_glyph(xpos, _item->y, digit_w, h, WHITE);
+            else
+                frame_glyph(xpos, _item->y, digit_w, h, BLACK);
+        }
+        tft_putch(item->font_size, '0' + digit, xpos, _item->y, digit_w, h, color, highlight);
+        cur_digit--;
+        xpos += digit_w + spacing;
+    }
+
+    /** The unit */
     switch(item->unit) {
         case unit_volt:
-            tft_putch(item->font_size, 'V', xpos, _item->y, w, h, color, false);
+            tft_putch(item->font_size, 'V', xpos, _item->y, max_w, h, color, false);
             break;
         case unit_ampere:
-            tft_putch(item->font_size, 'A', xpos, _item->y, w, h, color, false);
+            tft_putch(item->font_size, 'A', xpos, _item->y, max_w, h, color, false);
             break;
         default:
             assert(0);
-    }
-    xpos -= item->font_size == FONT_SMALL ? 2 : 4;
-    for (uint32_t i = 0; i < item->num_decimals; i++) {
-        bool highlight = _item->has_focus && item->cur_digit == cur_digit;
-        xpos -= w;
-        tft_putch(item->font_size, '0'+(value%10), xpos, _item->y, w, h, color, highlight);
-        value /= 10;
-        cur_digit++;
-    }
-    xpos -= item->font_size == FONT_SMALL ? 4 : 10;
-    tft_putch(item->font_size, '.', xpos, _item->y, item->font_size == FONT_SMALL ? 4 : 10, h, color, false);
-    for (uint32_t i = 0; i < item->num_digits; i++) {
-        bool highlight = _item->has_focus && item->cur_digit == cur_digit;
-        xpos -= w;
-        tft_putch(item->font_size, '0'+(value%10), xpos, _item->y, w, h, color, highlight);
-        value /= 10;
-        cur_digit++;
-        if (!value && !_item->has_focus) { /** To prevent from printing 00.123 */
-            xpos -= w;
-            tft_fill(xpos, _item->y, w, h, 0);
-            break;
-        }
     }
 }
 
