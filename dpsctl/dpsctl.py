@@ -470,6 +470,9 @@ def handle_commands(args):
     if args.calibration_reset:
         communicate(comms, create_cmd(cmd_clear_calibration), args)
 
+    if args.calibrate:
+        do_calibration(comms, args)
+
 """
 Return True if the parameter if_name is an IP address.
 """
@@ -536,6 +539,184 @@ def run_upgrade(comms, fw_file_name, args):
                 fail("device reported an unknown error (%d)" % status)
     else:
         fail("Device rejected firmware upgrade")
+
+"""
+Calculate linear line of best fit's constants
+"""
+def best_fit(X, Y):
+    xbar = sum(X)/len(X)
+    ybar = sum(Y)/len(Y)
+    n = len(X) # or len(Y)
+
+    numer = sum([xi*yi for xi,yi in zip(X, Y)]) - n * xbar * ybar
+    denum = sum([xi**2 for xi in X]) - n * xbar**2
+
+    k = numer / denum
+    c = ybar - k * xbar
+
+    return k, c
+
+"""
+Run DPS calibration prompts
+"""
+def do_calibration(comms,args):
+    print("For calibration you will need:")
+    print("\tA multimeter")
+    print("\tA known load capable of handling the required power")
+    print("\t2 stable input voltages\r\n")
+    print("Please ensure nothing is connected to the output of the DPS before starting calibration!\r\n")
+
+    t = raw_input("Would you like to proceed? (y/n): ")
+    if t.lower() != 'y':
+        return
+
+    communicate(comms, create_enable_output("off"), args) # Ensure output is off
+    start_params = communicate(comms, create_cmd(cmd_query), args) # Fetch current settings so we can restore them after calibrating
+    communicate(comms, create_set_function("cv"), args) # Ensure we're in constant voltage mode
+
+    print("Input Voltage Calibration:")
+    #Do First voltage hookup, We need the adc values, hopefully
+    #peoples computers assign consistent serial ports/IP's
+    print("Please hook up the first lower supply voltage to the DPS now")
+    print("ensuring that the serial connection is connected after boot")
+    v1 = float(raw_input("Type input voltage in mV: "))
+    data1 = communicate(comms, create_cmd(cmd_cal_report), args)
+    #Do second Voltage Hookup
+    print("\r\nPlease hook up the second higher supply voltage to the DPS now")
+    print("ensuring that the serial connection is connected after boot")
+    v2 = float(raw_input("Type input voltage in mV: "))
+    data2 = communicate(comms, create_cmd(cmd_cal_report), args)
+
+    #Math out the calibration constants
+    k_adc = (v1-v2)/(data1['vin_adc']-data2['vin_adc'])
+    c_adc = v1-k_adc*data1['vin_adc']
+
+    args.calibration_set = ['VIN_ADC_K={}'.format(k_adc),
+                            'VIN_ADC_C={}'.format(c_adc)]
+
+    payload = create_set_calibration(args.calibration_set)
+    if payload:
+        communicate(comms, payload, args)
+    print("Input Voltage Calibration Complete\r\n")
+
+
+    print("Output Voltage Calibration:")
+    print("Calibration Point 1 of 2, 10% of Max")
+    args.parameter = ["voltage={}".format(v2*.1),"current=1000"]
+    payload = create_set_parameter(args.parameter)
+    if payload:
+        communicate(comms, payload, args)
+    communicate(comms, create_enable_output("on"), args)
+    c1 = float(raw_input("Type measured voltage on output in mV: "))
+    c1_data = communicate(comms, create_cmd(cmd_cal_report), args)
+
+    print("Calibration Point 2 of 2, 90% of Max")
+    args.parameter = ["voltage={}".format(v2*.9),"current=1000"]
+    payload = create_set_parameter(args.parameter)
+    if payload:
+        communicate(comms, payload, args)
+    c2 = float(raw_input("Type measured voltage on output in mV: "))
+    c2_data = communicate(comms, create_cmd(cmd_cal_report), args)
+    communicate(comms, create_enable_output("off"), args)
+    k_dac = (c1_data['vout_dac']-c2_data['vout_dac'])/(c1-c2)
+    c_dac = c1_data['vout_dac']-k_dac*c1
+    k_adc = (c1-c2)/(c1_data['vout_adc']-c2_data['vout_adc'])
+    c_adc = c1-k_adc*c1_data['vout_adc']
+
+    args.calibration_set = ['V_DAC_K={}'.format(k_dac),
+                            'V_DAC_C={}'.format(c_dac),
+                            'V_ADC_K={}'.format(k_adc),
+                            'V_ADC_C={}'.format(c_adc)]
+    payload = create_set_calibration(args.calibration_set)
+    if payload:
+        communicate(comms, payload, args)
+    print("Output Voltage Calibration Complete\r\n")
+
+
+    print("Output Current Calibration:")
+    max_a = float(raw_input("DPS max amperage in mA: "))
+
+    load_resistance = float(raw_input("Load resistance in ohms: "))
+    print('Load must be rated for at least {:.1f} watts!'.format(((v2/1000)*(v2/1000))/load_resistance))
+    raw_input("Please connect load to the output of the DPS, then press enter")
+
+    # Take multiple current readings at different voltages and construct an Iout vs Iadc array
+    i_out = []
+    i_adc = []
+
+    max_v = min(0.9 * v2, max_a * load_resistance) # Calculate max output voltage based on max_output_current * load_resistor
+    print("Calibrating"),
+    for voltage_scaler in range(0, 10):
+        output_voltage = max_v * (float(voltage_scaler) / 10)
+        args.parameter = ["voltage={}".format(output_voltage),"current={}".format(max_a)]
+        i_out.append(output_voltage / load_resistance)
+        payload = create_set_parameter(args.parameter)
+        if payload:
+            communicate(comms, payload, args)
+        communicate(comms, create_enable_output("on"), args)
+        time.sleep(2) # Wait for DPS output to settle
+        data = communicate(comms, create_cmd(cmd_cal_report), args)
+        i_adc.append(data['iout_adc'])
+        print('.'),
+
+    communicate(comms, create_enable_output("off"), args)
+
+    k_adc, c_adc = best_fit(i_adc, i_out) # Calculate gradient and coefficient of line of best fit
+
+    args.calibration_set = ['A_ADC_K={}'.format(k_adc),
+                            'A_ADC_C={}'.format(c_adc)]
+    payload = create_set_calibration(args.calibration_set)
+    if payload:
+        communicate(comms, payload, args)
+    print("\r\nOutput Current Calibration Complete\r\n") 
+
+
+    print("Constant Current Calibration:")
+    communicate(comms, create_set_function("cc"), args) # Ensure we're in constant current mode
+
+    # Take multiple current readings at different constant currents and construct an Iout vs Idac array
+    i_out = []
+    i_dac = []
+
+    max_a = min(0.9 * v2 / load_resistance, max_a) # Calculate max output current based on max_output_voltage / load_resistor
+    print("Calibrating"),
+    for current_scaler in range(0, 10):
+        output_current = max_a * (float(current_scaler) / 10)
+        args.parameter = ["current={}".format(output_current)]
+        payload = create_set_parameter(args.parameter)
+        if payload:
+            communicate(comms, payload, args)
+        communicate(comms, create_enable_output("on"), args)
+        time.sleep(2) # Wait for DPS output to settle
+        data = communicate(comms, create_cmd(cmd_cal_report), args)
+        i_dac.append(data['iout_dac'])
+        i_out.append(data['iout_adc'] * data['cal']['A_ADC_K'] + data['cal']['A_ADC_C'])
+        print('.'),
+
+    communicate(comms, create_enable_output("off"), args)
+
+    k_dac, c_dac = best_fit(i_out, i_dac) # Calculate gradient and coefficient of line of best fit
+
+    args.calibration_set = ['A_DAC_K={}'.format(k_dac),
+                            'A_DAC_C={}'.format(c_dac)]
+    payload = create_set_calibration(args.calibration_set)
+    if payload:
+        communicate(comms, payload, args)
+    print("\r\nConstant Current Calibration Complete\r\n")
+
+    # Restore the original settings
+    if start_params['cur_func'] == 'cv':
+        communicate(comms, create_set_function("cv"), args)
+        args.parameter = ["voltage={}".format(start_params['params']['voltage']),"current={}".format(start_params['params']['current'])]
+    if start_params['cur_func'] == 'cc':
+        communicate(comms, create_set_function("cc"), args)
+        args.parameter = ["current={}".format(start_params['params']['current'])]
+    payload = create_set_parameter(args.parameter)
+    if payload:
+        communicate(comms, payload, args)
+
+    print("Calibration Complete\r\n")
+    print("To restore the device to factory defaults use dpsctl.py --calibration_reset")
 
 """
 Create and return a comminications interface object or None if no comms if
@@ -648,6 +829,7 @@ def main():
     parser.add_argument('-F', '--list-functions', action='store_true', help="List available functions")
     parser.add_argument('-p', '--parameter', nargs='+', help="Set function parameter <name>=<value>")
     parser.add_argument('-P', '--list-parameters', action='store_true', help="List function parameters of active function")
+    parser.add_argument('-C', '--calibrate', action="store_true", help="Starts System Calibration Routine")
     parser.add_argument('-c', '--calibration_set', nargs='+', help="Set the specified calibration coefficient <name>=<value>")
     parser.add_argument('-cr','--calibration_report', action="store_true", help="Prints Calibration report")
     parser.add_argument(      '--calibration_reset', action='store_true', help="Resets the calibration to the default values")
