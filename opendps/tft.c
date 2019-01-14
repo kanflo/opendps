@@ -247,7 +247,7 @@ void tft_fill_pattern(uint32_t x1, uint32_t y1, uint32_t x2, uint32_t y2, uint8_
 void tft_fill(uint32_t x, uint32_t y, uint32_t w, uint32_t h, uint16_t color)
 {
     uint8_t hi = color >> 8;
-    uint8_t lo = color && 0xff;
+    uint8_t lo = color & 0xff;
     int32_t count = 2 * w * h;
     uint8_t fill[] = {hi, lo, hi, lo, hi, lo, hi, lo, hi, lo, hi, lo, hi, lo, hi, lo, hi, lo, hi, lo, hi, lo, hi, lo, hi, lo, hi, lo, hi, lo, hi, lo};
     ili9163c_set_window(x, y, x+w-1, y+h-1);
@@ -255,7 +255,7 @@ void tft_fill(uint32_t x, uint32_t y, uint32_t w, uint32_t h, uint16_t color)
     while (count > 0) {
         uint32_t len = (uint32_t) count > sizeof(fill) ? sizeof(fill) : (uint32_t) count;
         (void) spi_dma_transceive((uint8_t*) fill, len, 0, 0);
-        count -= sizeof(fill);
+        count -= len;
     }
 }
 
