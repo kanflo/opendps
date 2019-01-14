@@ -54,6 +54,7 @@
 #include "uui_number.h"
 #include "opendps.h"
 #include "func_cv.h"
+#include "func_calibration.h"
 #include "my_assert.h"
 #ifdef CONFIG_CC_ENABLE
 #include "func_cc.h"
@@ -407,6 +408,7 @@ static void ui_init(void)
 
     uui_init(&func_ui, &g_past);
     func_cv_init(&func_ui);
+    func_calibration_init(&func_ui);
 #ifdef CONFIG_CC_ENABLE
     func_cc_init(&func_ui);
 #endif // CONFIG_CC_ENABLE
