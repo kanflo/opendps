@@ -205,6 +205,8 @@ static void number_draw(ui_item_t *_item)
 
     /** The unit */
     switch(item->unit) {
+        case unit_none:
+            break;
         case unit_volt:
             tft_putch(item->font_size, 'V', xpos, _item->y, max_w, h, color, false);
             break;

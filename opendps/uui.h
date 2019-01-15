@@ -56,7 +56,8 @@
  * Please keep in sync with dpsctl/dpsctl.py: def unit_name(unit)
  */
 typedef enum {
-    unit_ampere = 0,
+    unit_none = 0,
+    unit_ampere,
     unit_volt,
     unit_watt,
     unit_second,
