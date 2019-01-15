@@ -239,8 +239,21 @@ static void number_draw(ui_item_t *_item)
         bool highlight = _item->has_focus && item->cur_digit == cur_digit;
         uint8_t digit = item->value / my_pow(10, (item->si_prefix * -1) + i) % 10;
 
-        if (!digit && !_item->has_focus && cur_digit != item->num_decimals) /** To prevent from printing 00.123 */
-            tft_fill(xpos, _item->y, digit_w, h, BLACK); /** Black out any 0 that has previously been printed */
+        if (!digit /** If current digit is a 0 */
+            && !_item->has_focus /** and its not in focus (selected) */
+            && cur_digit != item->num_decimals /** to prevent 0.123 becoming .123 */
+            && my_pow(10, cur_digit) > (uint32_t) item->value) /** to prevent 4023 becoming 4 23 */
+        {
+            /** To prevent from printing 00.123 */
+            /** Black out any 0 that has previously been printed */
+            if (spacing > 1)
+            {
+                tft_fill(xpos, _item->y, digit_w, h, BLACK);
+                frame_glyph(xpos, _item->y, digit_w, h, BLACK); /** Remove any potential frame highlight */
+            }
+            else
+                tft_fill(xpos, _item->y, digit_w, h, BLACK); /** Black out any 0 that has previously been printed */
+        }
         else
         {
             if (spacing > 1) /** Dont frame tiny fonts */
