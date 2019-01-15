@@ -183,9 +183,12 @@ static void number_draw(ui_item_t *_item)
         xpos += digit_w + spacing;
     }
 
-    /** The decimal point */
-    tft_putch(item->font_size, '.', xpos, _item->y, dot_width, h, color, false);
-    xpos += dot_width + spacing;
+    /** Draw the decimal point if there is decimal places */
+    if (item->num_decimals)
+    {
+        tft_putch(item->font_size, '.', xpos, _item->y, dot_width, h, color, false);
+        xpos += dot_width + spacing;
+    }
 
     /** Digits after the decimal point */
     for (uint32_t i = 0; i < item->num_decimals; ++i) {
