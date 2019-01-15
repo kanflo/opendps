@@ -109,6 +109,76 @@ static void number_got_event(ui_item_t *_item, event_t event)
 }
 
 /**
+ * @brief      Get the width of the number if it were to be drawn
+ *
+ * @param      _item  The item
+ *
+ * @return     The width in pixels
+ */
+static uint32_t number_draw_width(ui_item_t *_item)
+{
+    ui_number_t *item = (ui_number_t*) _item;
+    uint32_t digit_w, max_w, dot_width, spacing;
+    uint32_t total_width = 0;
+
+    switch (item->font_size) {
+      case FONT_SMALL:
+        digit_w = FONT_SMALL_MAX_DIGIT_WIDTH;
+        max_w = FONT_SMALL_MAX_GLYPH_WIDTH;
+        dot_width = item->pad_dot ? MAX(FONT_SMALL_MAX_DIGIT_WIDTH, FONT_SMALL_DOT_WIDTH) : FONT_SMALL_DOT_WIDTH;
+        spacing = FONT_SMALL_SPACING;
+        break;
+      case FONT_MEDIUM:
+        digit_w = FONT_MEDIUM_MAX_DIGIT_WIDTH;
+        max_w = FONT_MEDIUM_MAX_GLYPH_WIDTH;
+        dot_width = item->pad_dot ? MAX(FONT_MEDIUM_MAX_DIGIT_WIDTH, FONT_MEDIUM_DOT_WIDTH) : FONT_MEDIUM_DOT_WIDTH;
+        spacing = FONT_MEDIUM_SPACING;
+        break;
+      case FONT_LARGE:
+        digit_w = FONT_LARGE_MAX_DIGIT_WIDTH;
+        max_w = FONT_LARGE_MAX_GLYPH_WIDTH;
+        dot_width = item->pad_dot ? MAX(FONT_LARGE_MAX_DIGIT_WIDTH, FONT_LARGE_DOT_WIDTH) : FONT_LARGE_DOT_WIDTH;
+        spacing = FONT_LARGE_SPACING;
+        break;
+      default:
+        /* Can't do anything if the wrong font size was supplied. */
+        assert(0);
+    }
+
+    /** Start printing from left to right */
+
+    /** Digits before the decimal point */
+    for (uint32_t i = item->num_digits - 1; i < item->num_digits; --i) {
+        total_width += digit_w + spacing;
+    }
+
+    /** The decimal point if there is decimal places */
+    if (item->num_decimals)
+    {
+        total_width += dot_width + spacing;
+    }
+
+    /** Digits after the decimal point */
+    for (uint32_t i = 0; i < item->num_decimals; ++i) {
+        total_width += digit_w + spacing;
+    }
+
+    /** The unit */
+    switch(item->unit) {
+        case unit_none:
+            break;
+        case unit_volt:
+        case unit_ampere:
+            total_width += max_w;
+            break;
+        default:
+            assert(0);
+    }
+
+    return total_width;
+}
+
+/**
  * @brief      Getter of our value
  *
  * @param      _item  The item
@@ -157,6 +227,10 @@ static void number_draw(ui_item_t *_item)
     uint32_t xpos = _item->x;
     uint16_t color = item->color;
     uint32_t cur_digit = item->num_digits + item->num_decimals - 1; /** Which digit are we currently drawing? 0 is the right most digit */
+
+    /** Adjust drawing position if right aligned */
+    if (item->alignment == ui_text_right_aligned)
+        xpos -= number_draw_width(_item);
 
     /** Start printing from left to right */
 

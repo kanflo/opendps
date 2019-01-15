@@ -67,11 +67,12 @@ ui_number_t cc_voltage = {
     {
         .type = ui_item_number,
         .id = 10,
-        .x = 5,
+        .x = 120,
         .y = 15,
         .can_focus = false,
     },
     .font_size = FONT_LARGE, /** The bigger one, try FONT_SMALL or FONT_MEDIUM for kicks */
+    .alignment = ui_text_right_aligned,
     .pad_dot = false,
     .color = COLOR_VOLTAGE,
     .value = 0,
@@ -87,11 +88,12 @@ ui_number_t cc_current = {
     {
         .type = ui_item_number,
         .id = 11,
-        .x = 5,
+        .x = 120,
         .y = 60,
         .can_focus = true,
     },
     .font_size = FONT_LARGE,
+    .alignment = ui_text_right_aligned,
     .pad_dot = false,
     .color = COLOR_AMPERAGE,
     .value = 0,

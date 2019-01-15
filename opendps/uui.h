@@ -90,6 +90,14 @@ typedef enum {
 } ui_item_type_t;
 
 /**
+ * UI text alignment
+ */
+typedef enum {
+    ui_text_left_aligned,
+    ui_text_right_aligned
+} ui_text_alignment_t;
+
+/**
  * Return values to set_parameter
  */
 typedef enum {
