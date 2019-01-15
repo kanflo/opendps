@@ -73,7 +73,7 @@ static void number_got_event(ui_item_t *_item, event_t event)
     bool value_changed = false;
     switch(event) {
         case event_rot_left: {
-            uint32_t diff = my_pow(10, 3 - item->num_decimals + item->cur_digit);
+            uint32_t diff = my_pow(10, (item->si_prefix * -1) - item->num_decimals + item->cur_digit);
             item->value -= diff;
             if (item->value < item->min) {
                 item->value = item->min;
@@ -83,7 +83,7 @@ static void number_got_event(ui_item_t *_item, event_t event)
             break;
         }
         case event_rot_right: {
-            uint32_t diff = my_pow(10, 3 - item->num_decimals + item->cur_digit);
+            uint32_t diff = my_pow(10, (item->si_prefix * -1) - item->num_decimals + item->cur_digit);
             item->value += diff;
             if (item->value > item->max) {
                 item->value = item->max;
@@ -237,7 +237,7 @@ static void number_draw(ui_item_t *_item)
     /** Digits before the decimal point */
     for (uint32_t i = item->num_digits - 1; i < item->num_digits; --i) {
         bool highlight = _item->has_focus && item->cur_digit == cur_digit;
-        uint8_t digit = item->value / my_pow(10, 3 + i) % 10;
+        uint8_t digit = item->value / my_pow(10, (item->si_prefix * -1) + i) % 10;
 
         if (!digit && !_item->has_focus && cur_digit != item->num_decimals) /** To prevent from printing 00.123 */
             tft_fill(xpos, _item->y, digit_w, h, BLACK); /** Black out any 0 that has previously been printed */
@@ -267,7 +267,7 @@ static void number_draw(ui_item_t *_item)
     /** Digits after the decimal point */
     for (uint32_t i = 0; i < item->num_decimals; ++i) {
         bool highlight = _item->has_focus && item->cur_digit == cur_digit;
-        uint8_t digit = item->value / my_pow(10, 2 - i) % 10;
+        uint8_t digit = item->value / my_pow(10, (item->si_prefix * -1) -1 - i) % 10;
         if (spacing > 1) /** Dont frame tiny fonts */
         {
             if (highlight) /** Draw an extra pixel wide border around the highlighted item */

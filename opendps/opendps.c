@@ -162,6 +162,7 @@ ui_number_t input_voltage = {
     .value = 0,
     .min = 0,
     .max = 0,
+    .si_prefix = si_milli,
     .num_digits = 2,
     .num_decimals = 1,
     .unit = unit_volt,

@@ -44,6 +44,7 @@ typedef struct ui_number_t {
     tft_font_size_t font_size;
     ui_text_alignment_t alignment;
     bool pad_dot; /** Make the '.' character the same width as the digits? */
+    si_prefix_t si_prefix;
     uint8_t num_digits;
     uint8_t num_decimals;
     uint8_t cur_digit;
