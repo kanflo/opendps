@@ -78,7 +78,7 @@ def generate_font_images(font_fname, characters, font_size):
 """
 Convert the specified font to a pair of .c/.h C language lookup tables in BGR565 format
 """
-def convert_font_to_c(font_fname, characters, character_strings, font_size, output_filename):
+def convert_font_to_c(font_fname, characters, character_strings, font_size, font_spacing, output_filename):
     print "Converting %s %dpt to font-%s.c/h" % (font_fname, font_size, output_filename)
 
     if len(characters) != len(character_strings):
@@ -123,17 +123,26 @@ def convert_font_to_c(font_fname, characters, character_strings, font_size, outp
     # Generate glyph widths
     font_source_file.write("const uint8_t font_%s_widths[%d] = {\n  " % (output_filename, len(character_strings)))
     character_max_width = 0
+    digit_max_width = 0
     count = 0
     for i in range(len(characters)):
         (width, _) = character_images[i].size
         font_source_file.write("%d" % (width))
         if width > character_max_width:
-            character_max_width = width
+            character_max_width = width # Find the maximum glyph width
+        if width > digit_max_width and characters[i].isdigit():
+            digit_max_width = width # Find the maximum digit width
         count += 1
         if count < len(characters):
             font_source_file.write(",\n  ")
     font_source_file.write("\n};\n\n")
 
+    # If no spacing parameter is set then generate one based on the max glyph width
+    if not args.font_spacing:
+        args.font_spacing = int(round(0.223 * float(character_max_width) - 0.863)) # This is fairly rough
+        if args.font_spacing < 1:
+            args.font_spacing = 1 # Spacing should be at least one pixel
+            
     # Generate glyph sizes
     font_source_file.write("const uint16_t font_%s_sizes[%d] = {\n  " % (output_filename, len(character_strings)))
     count = 0
@@ -167,7 +176,16 @@ def convert_font_to_c(font_fname, characters, character_strings, font_size, outp
     font_header_file.write("#include <stdint.h>\n\n")
 
     font_header_file.write("#define FONT_%s_MAX_GLYPH_HEIGHT (%d)\n" % (output_filename.upper(), character_heights))
-    font_header_file.write("#define FONT_%s_MAX_GLYPH_WIDTH  (%d)\n\n" % (output_filename.upper(), character_max_width))
+    font_header_file.write("#define FONT_%s_MAX_GLYPH_WIDTH  (%d)\n" % (output_filename.upper(), character_max_width))
+    font_header_file.write("#define FONT_%s_MAX_DIGIT_WIDTH  (%d)\n" % (output_filename.upper(), digit_max_width))
+
+    # If a dot is in the lookup tables make a #define for its width
+    if '.' in characters:
+        dot_index = characters.index('.')
+        (dot_width, _) = character_images[dot_index].size
+        font_header_file.write("#define FONT_%s_%s_WIDTH        (%d)\n" % (output_filename.upper(), character_strings[dot_index].upper(), dot_width))
+
+    font_header_file.write("#define FONT_%s_SPACING          (%d)\n\n" % (output_filename.upper(), args.font_spacing))
 
     font_header_file.write("extern const uint32_t font_%s_height;\n" % (output_filename))
     font_header_file.write("extern const uint32_t font_%s_num_glyphs;\n" % (output_filename))
@@ -244,28 +262,48 @@ def convert_graphic_to_c(graphic_fname, output_filename):
 def main():
     global args
     parser = argparse.ArgumentParser(description='Generate font lookup tables for the OpenDPS firmware')
-    parser.add_argument('-f', '--file',      type=str, required=True, dest="file", help="The graphic or font to use")
-    parser.add_argument('-s', '--font_size', type=int, help="The font pt size to use")
-    parser.add_argument('-o', '--output',    type=str, required=True, help="The output file name")
+    parser.add_argument('-f',  '--font_file',    type=str, help="The font to use")
+    parser.add_argument('-s',  '--font_size',    type=int, help="The font pt size to use")
+    parser.add_argument('-sp', '--font_spacing', type=int, help="The number of pixels to space characters by")
+    parser.add_argument('-i',  '--image_file',   type=str, help="The image file to use")
+    parser.add_argument('-o',  '--output',       type=str, required=True, help="The output file name")
     args, unknown = parser.parse_known_args()
 
-    # Check font file actually exists
-    if not os.path.exists(args.file):
-        print("Can't find file %s" % (args.file))
+    # Only allow a font or an image not both
+    if args.font_file and args.image_file:
+        print("Can't process a font and image simultaneously")
         sys.exit(1)
 
-    # If this is a font file ensure that a font_size has been specified
-    if args.file.lower().endswith(('.ttf', '.otf')):
+    # If no input has been chosen
+    if not args.font_file and not args.image_file:
+        print("error: argument -f/--font_file or -i/--image_file is required")
+        sys.exit(1)
+
+    if args.font_file:
+    
+        # Check font file actually exists
+        if not os.path.exists(args.font_file):
+            print("Can't find file %s" % (args.font_file))
+            sys.exit(1)
+    
+        # If this is a font file ensure that a font_size has been specified
         if args.font_size:
             characters = "0123456789.VA" # The characters to generate a lookup table of
             character_strings = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'dot', 'v', 'a'] # The textual reference to each character
 
-            convert_font_to_c(args.file, characters, character_strings, args.font_size, args.output)
+            convert_font_to_c(args.font_file, characters, character_strings, args.font_size, args.font_spacing, args.output)
         else:
             print("error: argument -s/--font_size is required for fonts")
             sys.exit(1)
-    else:
-        convert_graphic_to_c(args.file, args.output)
+            
+    elif args.image_file:
+
+        # Check image file actually exists
+        if not os.path.exists(args.image_file):
+            print("Can't find file %s" % (args.image_file))
+            sys.exit(1)
+
+        convert_graphic_to_c(args.image_file, args.output)
 
 if __name__ == "__main__":
     main()

@@ -60,7 +60,7 @@ void ili9163c_set_rotation(uint8_t r);
 void ili9163c_invert_display(bool i);
 void ili9163c_display(bool on);
 bool ili9163c_boundary_check(int16_t x,int16_t y);
-//void ili9163c_draw_vline(int16_t x, int16_t y, int16_t h, uint16_t color);
-//void ili9163c_draw_hline(int16_t x, int16_t y, int16_t w, uint16_t color);
+void ili9163c_draw_vline(int16_t x, int16_t y, int16_t h, uint16_t color);
+void ili9163c_draw_hline(int16_t x, int16_t y, int16_t w, uint16_t color);
 
 #endif // _ILI9163C_H_

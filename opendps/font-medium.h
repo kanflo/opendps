@@ -7,6 +7,9 @@
 
 #define FONT_MEDIUM_MAX_GLYPH_HEIGHT (17)
 #define FONT_MEDIUM_MAX_GLYPH_WIDTH  (12)
+#define FONT_MEDIUM_MAX_DIGIT_WIDTH  (9)
+#define FONT_MEDIUM_DOT_WIDTH        (3)
+#define FONT_MEDIUM_SPACING          (2)
 
 extern const uint32_t font_medium_height;
 extern const uint32_t font_medium_num_glyphs;

@@ -7,6 +7,9 @@
 
 #define FONT_SMALL_MAX_GLYPH_HEIGHT (12)
 #define FONT_SMALL_MAX_GLYPH_WIDTH  (9)
+#define FONT_SMALL_MAX_DIGIT_WIDTH  (6)
+#define FONT_SMALL_DOT_WIDTH        (2)
+#define FONT_SMALL_SPACING          (1)
 
 extern const uint32_t font_small_height;
 extern const uint32_t font_small_num_glyphs;
