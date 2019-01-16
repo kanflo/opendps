@@ -168,7 +168,7 @@ class udp_interface(comm_interface):
         try:
             self._socket.sendto(bytes, (self._if_name, 5005))
         except socket.error as msg:
-            fail("%s (%d)" % (str(msg[0]), msg[1]))
+            fail("{} ({:d})".format(str(msg[0]), msg[1]))
         return True
 
     def read(self):
@@ -188,7 +188,7 @@ def fail(message):
     """
     Print error message and exit with error
     """
-    print("Error: %s." % (message))
+    print("Error: {}.".format(message))
     sys.exit(1)
 
 
@@ -233,7 +233,7 @@ def prefix_name(prefix):
         return "k"
     if prefix == 4:
         return "M"
-    return "e%d" % prefix
+    return "e{:d}".format(prefix)
 
 
 def handle_response(command, frame, args):
@@ -247,7 +247,7 @@ def handle_response(command, frame, args):
         resp_command ^= protocol.CMD_RESPONSE
         success = frame.get_frame()[1]
         if resp_command != command:
-            print("Warning: sent command %02x, response was %02x." % (command, resp_command))
+            print("Warning: sent command {:02x}, response was {:02x}.".format(command, resp_command))
         if resp_command != protocol.CMD_UPGRADE_START and resp_command != protocol.CMD_UPGRADE_DATA and not success:
             fail("command failed according to device")
 
@@ -261,22 +261,22 @@ def handle_response(command, frame, args):
     elif resp_command == protocol.CMD_QUERY:
         data = unpack_query_response(frame)
         enable_str = "on" if data['output_enabled'] else "temperature shutdown" if data['temp_shutdown'] == 1 else "off"
-        v_in_str = "%d.%02d" % (data['v_in'] / 1000, (data['v_in'] % 1000) / 10)
-        v_out_str = "%d.%02d" % (data['v_out'] / 1000, (data['v_out'] % 1000) / 10)
-        i_out_str = "%d.%03d" % (data['i_out'] / 1000, data['i_out'] % 1000)
+        v_in_str = "{:d}.{:02d}".format(data['v_in'] / 1000, (data['v_in'] % 1000) / 10)
+        v_out_str = "{:d}.{:02d}".format(data['v_out'] / 1000, (data['v_out'] % 1000) / 10)
+        i_out_str = "{:d}.{:03d}".format(data['i_out'] / 1000, data['i_out'] % 1000)
         if args.json:
             _json = data
         else:
-            print("%-10s : %s (%s)" % ('Func', data['cur_func'], enable_str))
+            print("{:<10} : {} ({})".format('Func', data['cur_func'], enable_str))
             for key, value in data['params'].items():
-                print("  %-8s : %s" % (key, value))
-            print("%-10s : %s V" % ('V_in', v_in_str))
-            print("%-10s : %s V" % ('V_out', v_out_str))
-            print("%-10s : %s A" % ('I_out', i_out_str))
+                print("  {:<8} : {}".format(key, value))
+            print("{:<10} : {} V".format('V_in', v_in_str))
+            print("{:<10} : {} V".format('V_out', v_out_str))
+            print("{:<10} : {} A".format('I_out', i_out_str))
             if 'temp1' in data:
-                print("%-10s : %.1f" % ('temp1', data['temp1']))
+                print("{:<10} : {:.1f}".format('temp1', data['temp1']))
             if 'temp2' in data:
-                print("%-10s : %.1f" % ('temp2', data['temp2']))
+                print("{:<10} : {:.1f}".format('temp2', data['temp2']))
 
     elif resp_command == protocol.CMD_UPGRADE_START:
         #  *  DPS BL: [cmd_response | cmd_upgrade_start] [<upgrade_status_t>] [<chunk_size:16>]
@@ -313,11 +313,11 @@ def handle_response(command, frame, args):
                 if len(functions) == 0:
                     print("Selected OpenDPS supports no functions at all, which is quite weird when you think about it...")
                 elif len(functions) == 1:
-                    print("Selected OpenDPS supports the %s function." % functions[0])
+                    print("Selected OpenDPS supports the {} function.".format(functions[0]))
                 else:
                     temp = ", ".join(functions[:-1])
-                    temp = "%s and %s" % (temp, functions[-1])
-                    print("Selected OpenDPS supports the %s functions." % temp)
+                    temp = "{} and {}".format(temp, functions[-1])
+                    print("Selected OpenDPS supports the {} functions.".format(temp))
     elif resp_command == protocol.CMD_SET_PARAMETERS:
         cmd = frame.unpack8()
         status = frame.unpack8()
@@ -325,7 +325,7 @@ def handle_response(command, frame, args):
             status = frame.unpack8()
             parts = p.split("=")
             # TODO: handle json output
-            print("%s: %s" % (parts[0], "ok" if status == 0 else "unknown parameter" if status == 1 else "out of range" if status == 2 else "unsupported parameter" if status == 3 else "unknown error %d" % (status)))
+            print("{}: {}".format(parts[0], "ok" if status == 0 else "unknown parameter" if status == 1 else "out of range" if status == 2 else "unsupported parameter" if status == 3 else "unknown error {:d}".format(status)))
     elif resp_command == protocol.CMD_SET_CALIBRATION:
         cmd = frame.unpack8()
         status = frame.unpack8()
@@ -333,7 +333,7 @@ def handle_response(command, frame, args):
             status = frame.unpack8()
             parts = p.split("=")
             # TODO: handle json output
-            print("%s: %s" % (parts[0], "ok" if status == 0 else "unknown coefficient" if status == 1 else "out of range" if status == 2 else "unsupported coefficient" if status == 3 else "flash write error" if status == 4 else "unknown error %d" % (status)))
+            print("{}: {}".format(parts[0], "ok" if status == 0 else "unknown coefficient" if status == 1 else "out of range" if status == 2 else "unsupported coefficient" if status == 3 else "flash write error" if status == 4 else "unknown error {:d}".format(status)))
     elif resp_command == protocol.CMD_LIST_PARAMETERS:
         cmd = frame.unpack8()
         status = frame.unpack8()
@@ -353,14 +353,14 @@ def handle_response(command, frame, args):
                 _json["parameters"] = parameters
             else:
                 if len(parameters) == 0:
-                    print("Selected OpenDPS supports no parameters at all for the %s function" % (cur_func))
+                    print("Selected OpenDPS supports no parameters at all for the {} function".format(cur_func))
                 elif len(parameters) == 1:
-                    print("Selected OpenDPS supports the %s parameter (%s%s) for the %s function." % (parameters[0]['name'], parameters[0]['prefix'], parameters[0]['unit'], cur_func))
+                    print("Selected OpenDPS supports the {} parameter ({}{}) for the {} function.".format(parameters[0]['name'], parameters[0]['prefix'], parameters[0]['unit'], cur_func))
                 else:
                     temp = ""
                     for p in parameters:
-                        temp += p['name'] + ' (%s%s)' % (p['prefix'], p['unit']) + " "
-                    print("Selected OpenDPS supports the %sparameters for the %s function." % (temp, cur_func))
+                        temp += p['name'] + ' ({}{})'.format(p['prefix'], p['unit']) + " "
+                    print("Selected OpenDPS supports the {}parameters for the {} function.".format(temp, cur_func))
     elif resp_command == protocol.CMD_ENABLE_OUTPUT:
         cmd = frame.unpack8()
         status = frame.unpack8()
@@ -372,14 +372,14 @@ def handle_response(command, frame, args):
         pass
     elif resp_command == protocol.CMD_VERSION:
         data = unpack_version_response(frame)
-        print("BootDPS GIT Hash: %s" % data['boot_git_hash'])
-        print("OpenDPS GIT Hash: %s" % data['app_git_hash'])
+        print("BootDPS GIT Hash: {}".format(data['boot_git_hash']))
+        print("OpenDPS GIT Hash: {}".format(data['app_git_hash']))
     elif resp_command == protocol.CMD_CAL_REPORT:
         ret_dict = unpack_cal_report(frame)
     elif resp_command == protocol.CMD_CLEAR_CALIBRATION:
         pass
     else:
-        print("Unknown response %d from device." % (resp_command))
+        print("Unknown response {:d} from device.".format(resp_command))
 
     if args.json:
         print(json.dumps(_json, indent=4, sort_keys=True))
@@ -396,24 +396,24 @@ def communicate(comms, frame, args):
     if not comms:
         fail("no communication interface specified")
     if not comms.open():
-        fail("could not open %s" % (comms.name()))
+        fail("could not open {}".format(comms.name()))
     if args.verbose:
-        print("Communicating with %s" % (comms.name()))
-        print("TX %2d bytes [%s]" % (len(bytes), " ".join("%02x" % b for b in bytes)))
+        print("Communicating with {}".format(comms.name()))
+        print("TX {:2d} bytes [{}]".format(len(bytes), " ".join("{:02x}".format(b) for b in bytes)))
     if not comms.write(bytes):
-        fail("write failed on %s" % (comms.name()))
+        fail("write failed on {}".format(comms.name()))
     resp = comms.read()
     if len(resp) == 0:
-        fail("timeout talking to device %s" % (comms._if_name))
+        fail("timeout talking to device {}".format(comms._if_name))
     elif args.verbose:
-        print("RX %2d bytes [%s]\n" % (len(resp), " ".join("%02x" % b for b in resp)))
+        print("RX {:2d} bytes [{}]\n".format(len(resp), " ".join("{:02x}".format(b) for b in resp)))
     if not comms.close:
-        print("Warning: could not close %s" % (comms.name()))
+        print("Warning: could not close {}".format(comms.name()))
 
     f = uframe.uFrame()
     res = f.set_frame(resp)
     if res < 0:
-        fail("protocol error (%d)" % (res))
+        fail("protocol error ({:d})".format(res))
     else:
         return handle_response(frame.get_frame()[1], f, args)
 
@@ -537,14 +537,14 @@ def run_upgrade(comms, fw_file_name, args):
     ret_dict = communicate(comms, create_upgrade_start(chunk_size, crc), args)
     if ret_dict["status"] == protocol.UPGRADE_CONTINUE:
         if chunk_size != ret_dict["chunk_size"]:
-            print("Device selected chunk size %d" % (ret_dict["chunk_size"]))
+            print("Device selected chunk size {:d}".format(ret_dict["chunk_size"]))
             chunk_size = ret_dict["chunk_size"]
         counter = 0
         for chunk in chunk_from_file(fw_file_name, chunk_size):
             counter += len(chunk)
-            sys.stdout.write("\rDownload progress: %d%% " % (counter * 1.0 / len(content) * 100.0))
+            sys.stdout.write("\rDownload progress: {:d}% ".format(counter * 1.0 / len(content) * 100.0))
             sys.stdout.flush()
-            #            print(" %d bytes" % (counter))
+                       # print(" {:d} bytes".format(counter))
 
             ret_dict = communicate(comms, create_upgrade_data(chunk), args)
             status = ret_dict["status"]
@@ -566,7 +566,7 @@ def run_upgrade(comms, fw_file_name, args):
                 print("")
             else:
                 print("")
-                fail("device reported an unknown error (%d)" % status)
+                fail("device reported an unknown error ({:d})".format(status))
     else:
         fail("Device rejected firmware upgrade")
 
@@ -612,12 +612,12 @@ def uhej_worker_thread():
                 types = ["UDP", "TCP", "mcast"]
                 if uhej.ANNOUNCE == f["frame_type"]:
                     for s in f["services"]:
-                        key = "%s:%s:%s" % (f["source"], s["port"], s["type"])
+                        key = "{}:{}:{}".format(f["source"], s["port"], s["type"])
                         if not key in discovery_list:
                             if s["service_name"] == "opendps":
                                 discovery_list[key] = True  # Keep track of which hosts we have seen
-                                print("%s" % (f["source"]))
-            #                            print("%16s:%-5d  %-8s %s" % (f["source"], s["port"], types[s["type"]], s["service_name"]))
+                                print("{}".format(f["source"]))
+                                # print("{:>16}:{:<5d}  {:<8} {}".format(f["source"], s["port"], types[s["type"]], s["service_name"]))
             except uhej.IllegalFrameException as e:
                 pass
         except socket.error as e:
@@ -666,7 +666,7 @@ def uhej_scan():
     elif num_found == 1:
         print("1 OpenDPS device found")
     else:
-        print("%d OpenDPS devices found" % (num_found))
+        print("{:d} OpenDPS devices found".format(num_found))
 
 
 def main():

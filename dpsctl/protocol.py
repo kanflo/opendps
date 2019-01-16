@@ -188,7 +188,7 @@ def create_upgrade_data(data):
 
 
 def create_temperature(temperature):
-    print("Sending temperature %.1f and %.1f" % (temperature, -temperature))
+    print("Sending temperature {:.1f} and {:.1f}".format(temperature, -temperature))
     temperature = int(10 * temperature)
     f = uFrame()
     f.pack8(CMD_TEMPERATURE_REPORT)

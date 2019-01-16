@@ -192,7 +192,7 @@ class uFrame(object):
             b = self._frame[self._unpack_pos]
             self._unpack_pos += 1
             while self._unpack_pos < len(self._frame) and b != 0:
-                string += '%c' % b
+                string += '{:c}'.format(b)
                 b = self._frame[self._unpack_pos]
                 self._unpack_pos += 1
         return string
