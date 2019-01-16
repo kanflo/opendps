@@ -613,7 +613,7 @@ def uhej_worker_thread():
                 if uhej.ANNOUNCE == f["frame_type"]:
                     for s in f["services"]:
                         key = "{}:{}:{}".format(f["source"], s["port"], s["type"])
-                        if not key in discovery_list:
+                        if key not in discovery_list:
                             if s["service_name"] == "opendps":
                                 discovery_list[key] = True  # Keep track of which hosts we have seen
                                 print("{}".format(f["source"]))
