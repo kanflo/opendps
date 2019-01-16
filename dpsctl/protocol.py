@@ -26,43 +26,43 @@ from uframe import uFrame
 import struct
 
 # command_t
-cmd_ping = 1
-#cmd_set_vout = 2
-#cmd_set_ilimit = 3
-cmd_query = 4
-#cmd_power_enable = 5
-cmd_wifi_status = 6
-cmd_lock = 7
-cmd_ocp_event = 8
-cmd_upgrade_start = 9
-cmd_upgrade_data = 10
-cmd_set_function = 11
-cmd_enable_output = 12
-cmd_list_functions = 13
-cmd_set_parameters = 14
-cmd_list_parameters = 15
-cmd_temperature_report = 16
-cmd_version = 17
-cmd_cal_report = 18
-cmd_set_calibration = 19
-cmd_clear_calibration = 20
-cmd_response = 0x80
+CMD_PING = 1
+# CMD_SET_VOUT = 2
+# CMD_SET_ILIMIT = 3
+CMD_QUERY = 4
+# CMD_POWER_ENABLE = 5
+CMD_WIFI_STATUS = 6
+CMD_LOCK = 7
+CMD_OCP_EVENT = 8
+CMD_UPGRADE_START = 9
+CMD_UPGRADE_DATA = 10
+CMD_SET_FUNCTION = 11
+CMD_ENABLE_OUTPUT = 12
+CMD_LIST_FUNCTIONS = 13
+CMD_SET_PARAMETERS = 14
+CMD_LIST_PARAMETERS = 15
+CMD_TEMPERATURE_REPORT = 16
+CMD_VERSION = 17
+CMD_CAL_REPORT = 18
+CMD_SET_CALIBRATION = 19
+CMD_CLEAR_CALIBRATION = 20
+CMD_RESPONSE = 0x80
 
 # wifi_status_t
-wifi_off = 0
-wifi_connecting = 1
-wifi_connected = 2
-wifi_error = 3
-wifi_upgrading = 4
+WIFI_OFF = 0
+WIFI_CONNECTING = 1
+WIFI_CONNECTED = 2
+WIFI_ERROR = 3
+WIFI_UPGRADING = 4
 
 # upgrade_status_t
-upgrade_continue = 0
-upgrade_bootcom_error = 1
-upgrade_crc_error = 2
-upgrade_erase_error = 3
-upgrade_flash_error = 4
-upgrade_overflow_error = 5
-upgrade_success = 16
+UPGRADE_CONTINUE = 0
+UPGRADE_BOOTCOM_ERROR = 1
+UPGRADE_CRC_ERROR = 2
+UPGRADE_ERASE_ERROR = 3
+UPGRADE_FLASH_ERROR = 4
+UPGRADE_OVERFLOW_ERROR = 5
+UPGRADE_SUCCESS = 16
 
 
 """
@@ -72,7 +72,7 @@ upgrade_success = 16
 """
 def create_response(command, success):
     f = uFrame()
-    f.pack8(cmd_response | command)
+    f.pack8(CMD_RESPONSE | command)
     f.pack8(success)
     f.end()
     return f
@@ -85,21 +85,21 @@ def create_cmd(cmd):
 
 def create_set_function(name):
     f = uFrame()
-    f.pack8(cmd_set_function)
+    f.pack8(CMD_SET_FUNCTION)
     f.pack_cstr(name)
     f.end()
     return f
 
 def create_enable_output(activate):
     f = uFrame()
-    f.pack8(cmd_enable_output)
+    f.pack8(CMD_ENABLE_OUTPUT)
     f.pack8(1 if activate == "on" else 0)
     f.end()
     return f
 
 def create_set_parameter(parameter_list):
     f = uFrame()
-    f.pack8(cmd_set_parameters)
+    f.pack8(CMD_SET_PARAMETERS)
     for p in parameter_list:
         parts = p.split("=")
         if len(parts) != 2:
@@ -112,7 +112,7 @@ def create_set_parameter(parameter_list):
 
 def create_set_calibration(parameter_list):
     f = uFrame()
-    f.pack8(cmd_set_calibration)
+    f.pack8(CMD_SET_CALIBRATION)
     for p in parameter_list:
         parts = p.split("=")
         if len(parts) != 2:
@@ -127,7 +127,7 @@ def create_set_calibration(parameter_list):
 
 def create_query_response(v_in, v_out_setting, v_out, i_out, i_limit, power_enabled):
     f = uFrame()
-    f.pack8(cmd_response | cmd_query)
+    f.pack8(CMD_RESPONSE | CMD_QUERY)
     f.pack16(v_in)
     f.pack16(v_out_setting)
     f.pack16(v_out)
@@ -139,28 +139,28 @@ def create_query_response(v_in, v_out_setting, v_out, i_out, i_limit, power_enab
 
 def create_wifi_status(wifi_status):
     f = uFrame()
-    f.pack8(cmd_wifi_status)
+    f.pack8(CMD_WIFI_STATUS)
     f.pack8(wifi_status)
     f.end()
     return f
 
 def create_lock(locked):
     f = uFrame()
-    f.pack8(cmd_lock)
+    f.pack8(CMD_LOCK)
     f.pack8(locked)
     f.end()
     return f
 
 def create_ocp(i_cut):
     f = uFrame()
-    f.pack8(cmd_ocp_event)
+    f.pack8(CMD_OCP_EVENT)
     f.pack16(i_cut)
     f.end()
     return f
 
 def create_upgrade_start(window_size, crc):
     f = uFrame()
-    f.pack8(cmd_upgrade_start)
+    f.pack8(CMD_UPGRADE_START)
     f.pack16(window_size)
     f.pack16(crc)
     f.end()
@@ -168,7 +168,7 @@ def create_upgrade_start(window_size, crc):
 
 def create_upgrade_data(data):
     f = uFrame()
-    f.pack8(cmd_upgrade_data)
+    f.pack8(CMD_UPGRADE_DATA)
     for d in data:
         f.pack8(d)
     f.end()
@@ -178,7 +178,7 @@ def create_temperature(temperature):
     print("Sending temperature %.1f and %.1f" % (temperature, -temperature))
     temperature = int(10 * temperature)
     f = uFrame()
-    f.pack8(cmd_temperature_report)
+    f.pack8(CMD_TEMPERATURE_REPORT)
     f.pack16(temperature)
     f.pack16(-temperature)
     f.end()
