@@ -64,12 +64,11 @@ UPGRADE_FLASH_ERROR = 4
 UPGRADE_OVERFLOW_ERROR = 5
 UPGRADE_SUCCESS = 16
 
+# ########################################################################## #
+# Helpers for creating frames.
+# Each function returns a complete frame ready for transmission.
+# ########################################################################## #
 
-"""
- Helpers for creating frames.
- Each function returns a complete frame ready for transmission.
-
-"""
 def create_response(command, success):
     f = uFrame()
     f.pack8(CMD_RESPONSE | command)
@@ -184,32 +183,48 @@ def create_temperature(temperature):
     f.end()
     return f
 
-"""
-Helpers for unpacking frames.
 
-These functions will unpack the content of the unframed payload and return
-true. If the command byte of the frame does not match the expectation or the
-frame is too short to unpack the expected payload, false will be returned.
-"""
+# ########################################################################## #
+# Helpers for unpacking frames.
+#
+# These functions will unpack the content of the unframed payload and return
+# true. If the command byte of the frame does not match the expectation or the
+# frame is too short to unpack the expected payload, false will be returned.
+# ########################################################################## #
 
-# Returns success
+
 def unpack_response(uframe):
+    """
+    Returns success
+    """
     return uframe.unpack8()
 
-# Returns enable
+
 def unpack_power_enable(uframe):
+    """
+    Returns enable
+    """
     return uframe.unpack8()
 
-# Returns V_out
+
 def unpack_vout(uframe):
+    """
+    Returns V_out
+    """
     return uframe.unpack16()
 
-# Returns I_limit
+
 def unpack_ilimit(uframe):
+    """
+    Returns I_limit
+    """
     return uframe.unpack16()
 
-# Returns a dictionary of the frame contents
+
 def unpack_query_response(uframe):
+    """
+    Returns a dictionary of the frame contents
+    """
     data = {}
     data['command'] = uframe.unpack8()
     data['status'] = uframe.unpack8()
@@ -236,8 +251,10 @@ def unpack_query_response(uframe):
         data['params'][key] = value
     return data
 
-# Returns ADC/DAC values and calibration values
 def unpack_cal_report(uframe):
+    """
+    Returns ADC/DAC values and calibration values
+    """
     data = {}
     data['cal']= {}
     data['command'] = uframe.unpack8()
@@ -259,20 +276,29 @@ def unpack_cal_report(uframe):
     data['cal']['VIN_ADC_C'] = struct.unpack("<f", struct.pack("<I", uframe.unpack32()))[0]
     return data 
 
-# Returns wifi_status
 def unpack_wifi_status(uframe):
+    """
+    Returns wifi_status
+    """
     return uframe.unpack8()
 
-# Returns locked
 def unpack_lock(uframe):
+    """
+    Returns locked
+    """
     return uframe.unpack8()
 
-# Returns i_cut
 def unpack_ocp(uframe):
+    """
+    Returns i_cut
+    """
     return uframe.unpack16()
 
-# Returns a dictionary of the frame contents
+
 def unpack_temperature_report(uframe):
+    """
+    Returns a dictionary of the frame contents
+    """
     data = {}
     data['command'] = uframe.unpack8()
     data['status'] = uframe.unpack8()
@@ -288,8 +314,10 @@ def unpack_temperature_report(uframe):
         data['params'][key] = value
     return data
 
-# Returns the dpsBoot and OpenDPS git hash strings
 def unpack_version_response(uframe):
+    """
+    Returns the dpsBoot and OpenDPS git hash strings
+    """
     data = {}
     data['command'] = uframe.unpack8()
     data['status'] = uframe.unpack8()
