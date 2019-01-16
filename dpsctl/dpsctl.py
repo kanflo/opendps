@@ -51,7 +51,6 @@ import time
 from uhej import uhej
 from protocol import *
 import uframe
-import binascii
 try:
     from PyCRC.CRCCCITT import CRCCCITT
 except:
