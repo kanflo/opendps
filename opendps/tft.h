@@ -64,10 +64,10 @@ void tft_blit(uint16_t *bits, uint32_t width, uint32_t height, uint32_t x, uint3
   * @param w width of bounding box
   * @param h height of bounding box
   * @param color color of the glyph
-  * @param highlight if true, the character will be inverted
+  * @param invert if true, the character will be inverted
   * @retval none
   */
-void tft_putch(tft_font_size_t size, char ch, uint32_t x, uint32_t y, uint32_t w, uint32_t h, uint16_t color, bool highlight);
+void tft_putch(tft_font_size_t size, char ch, uint32_t x, uint32_t y, uint32_t w, uint32_t h, uint16_t color, bool invert);
 
 /**
   * @brief Fill area with specified pattern

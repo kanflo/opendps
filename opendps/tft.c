@@ -55,10 +55,6 @@ static bool is_inverted;
 
 /** Buffers for speeding up drawing */
 static uint16_t blit_buffer[FONT_LARGE_MAX_GLYPH_WIDTH*FONT_LARGE_MAX_GLYPH_HEIGHT];
-static uint16_t black_buffer[FONT_LARGE_MAX_GLYPH_WIDTH*FONT_LARGE_MAX_GLYPH_HEIGHT];
-
-static void frame_glyph(uint32_t xpos, uint32_t ypos, uint32_t glyph_height, uint32_t glyph_width, uint16_t color);
-
 
 /**
   * @brief Initialize the TFT module
@@ -108,7 +104,7 @@ void tft_blit(uint16_t *bits, uint32_t width, uint32_t height, uint32_t x, uint3
   * @param highlight if true, the character will be inverted
   * @retval none
   */
-void tft_putch(tft_font_size_t size, char ch, uint32_t x, uint32_t y, uint32_t w, uint32_t h, uint16_t color, bool highlight)
+void tft_putch(tft_font_size_t size, char ch, uint32_t x, uint32_t y, uint32_t w, uint32_t h, uint16_t color, bool invert)
 {
     uint32_t glyph_index, glyph_width, glyph_height, glyph_size;
     uint32_t xpos, ypos;
@@ -155,16 +151,15 @@ void tft_putch(tft_font_size_t size, char ch, uint32_t x, uint32_t y, uint32_t w
             return;
     }
 
-    if (highlight) {
+    if (invert) {
         uint32_t *p = (uint32_t*) &blit_buffer;
-        /** @todo Perform memcpy and inversion operation */
         memcpy(blit_buffer, glyph, glyph_size);
         uint32_t i;
-        for (i = 0; i < glyph_size/4; i++) { // Invert 32 bits in each go
+        for (i = 0; i < glyph_size / sizeof(uint32_t); i++) { // Invert 32 bits in each go
             p[i] = ~p[i];
         }
-        if (glyph_size % 4) { // Bits remaining?
-            blit_buffer[2*i] = ~blit_buffer[2*i];
+        if (glyph_size % sizeof(uint32_t)) { // Bits remaining?
+            blit_buffer[sizeof(uint16_t)*i] = ~blit_buffer[sizeof(uint16_t)*i];
         }
         glyph = blit_buffer;
     }
@@ -178,41 +173,31 @@ void tft_putch(tft_font_size_t size, char ch, uint32_t x, uint32_t y, uint32_t w
         /** @todo Perform memcpy and inversion operation */
         memcpy(blit_buffer, glyph, glyph_size);
         uint32_t i;
-        for (i = 0; i < glyph_size/4; i++) {
+        for (i = 0; i < glyph_size/sizeof(uint32_t); i++) {
             p[i] &= color_mask;
         }
-        if (glyph_size % 4) { // Bits remaining?
-            blit_buffer[2*i] &= color_mask;
+        if (glyph_size % sizeof(uint32_t)) { // Bits remaining?
+            blit_buffer[sizeof(uint16_t)*i] &= color_mask;
         }
         glyph = blit_buffer;
     }
 
-    if (w < glyph_width) {
-        w = glyph_width + 2;
-    }
-    if (h < glyph_height) {
-        h = glyph_height + 2;
-    }
+    /** Position glyph in center of region */
     xpos = x+(w-glyph_width)/2;
     ypos = y+(h-glyph_height)/2;
 
+    /** Draw the glyph */
     ili9163c_set_window(xpos, ypos, xpos + glyph_width-1, ypos + glyph_height-1);
     gpio_set(TFT_A0_PORT, TFT_A0_PIN);
-    (void) spi_dma_transceive((uint8_t*) glyph, 2 * glyph_width * glyph_height, 0, 0);
+    (void) spi_dma_transceive((uint8_t*) glyph, sizeof(uint16_t) * glyph_width * glyph_height, 0, 0);
 
+    /** If our glyph hasn't filled the entire region fill the remainder in with black or white depending on if we're inverting */
+    uint16_t fill_color = invert ? WHITE : BLACK;
     if (x < xpos) {
-        tft_fill_pattern(x, y, xpos-1, y+h-1, (uint8_t*) black_buffer, sizeof(black_buffer));
+        tft_fill(x, y, xpos-x, h, fill_color);
     }
     if (xpos+glyph_width < x+w) {
-        tft_fill_pattern(xpos+glyph_width, y, x+w, y+h-1, (uint8_t*) black_buffer, sizeof(black_buffer));
-    }
-
-    if (highlight) {
-        // Add some more highlighting around the glyph
-        frame_glyph(xpos, ypos, glyph_height, glyph_width, WHITE);
-    } else if (size == FONT_LARGE) { /** @todo Ugly hack as only size LARGE can get highlighted */
-        // If not highlighted, make sure to erase the highlight (small font will never get highlighted)
-        frame_glyph(xpos, ypos, glyph_height, glyph_width, BLACK);
+        tft_fill(xpos+glyph_width, y, (w-glyph_width+1)/2, h, fill_color);
     }
 }
 
@@ -247,7 +232,7 @@ void tft_fill_pattern(uint32_t x1, uint32_t y1, uint32_t x2, uint32_t y2, uint8_
 void tft_fill(uint32_t x, uint32_t y, uint32_t w, uint32_t h, uint16_t color)
 {
     uint8_t hi = color >> 8;
-    uint8_t lo = color && 0xff;
+    uint8_t lo = color & 0xff;
     int32_t count = 2 * w * h;
     uint8_t fill[] = {hi, lo, hi, lo, hi, lo, hi, lo, hi, lo, hi, lo, hi, lo, hi, lo, hi, lo, hi, lo, hi, lo, hi, lo, hi, lo, hi, lo, hi, lo, hi, lo};
     ili9163c_set_window(x, y, x+w-1, y+h-1);
@@ -255,7 +240,7 @@ void tft_fill(uint32_t x, uint32_t y, uint32_t w, uint32_t h, uint16_t color)
     while (count > 0) {
         uint32_t len = (uint32_t) count > sizeof(fill) ? sizeof(fill) : (uint32_t) count;
         (void) spi_dma_transceive((uint8_t*) fill, len, 0, 0);
-        count -= sizeof(fill);
+        count -= len;
     }
 }
 
@@ -277,25 +262,4 @@ void tft_invert(bool invert)
 bool tft_is_inverted(void)
 {
     return is_inverted;
-}
-
-/**
-  * @brief Draw a highlight frame around a glyph
-  * @param xpos x position
-  * @param ypos y position
-  * @param glyph_height height of frame
-  * @param glyph_width width of frame
-  * @param color color in bgr565 format
-  * @retval none
-  */
-static void frame_glyph(uint32_t xpos, uint32_t ypos, uint32_t glyph_height, uint32_t glyph_width, uint16_t color)
-{
-    for (uint32_t i = xpos; i < xpos + glyph_width; i++) {
-        ili9163c_draw_pixel(i, ypos-1, color);
-        ili9163c_draw_pixel(i, ypos + glyph_height, color);
-    }
-    for (uint32_t i = ypos; i < ypos + glyph_height; i++) {
-        ili9163c_draw_pixel(xpos-1, i, color);
-        ili9163c_draw_pixel(xpos + glyph_width, i, color);
-    }
 }

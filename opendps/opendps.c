@@ -157,12 +157,15 @@ ui_number_t input_voltage = {
         .can_focus = false,
     },
     .font_size = FONT_SMALL,
+    .alignment = ui_text_right_aligned,
+    .pad_dot = false,
     .color = COLOR_INPUT,
     .value = 0,
     .min = 0,
     .max = 0,
+    .si_prefix = si_milli,
     .num_digits = 2,
-    .num_decimals = 1, /** 2 decimals => value is in decivolts */
+    .num_decimals = 1,
     .unit = unit_volt,
 };
 
@@ -392,7 +395,7 @@ static void main_ui_tick(void)
     hw_get_adc_values(&i_out_raw, &v_in_raw, &v_out_raw);
     (void) i_out_raw;
     (void) v_out_raw;
-    input_voltage.value = pwrctl_calc_vin(v_in_raw) / 100;
+    input_voltage.value = pwrctl_calc_vin(v_in_raw);
     input_voltage.ui.draw(&input_voltage.ui);
 }
 

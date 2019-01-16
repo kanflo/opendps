@@ -187,11 +187,12 @@ def fail(message):
 Return name of unit (must of course match unit_t in opendps/uui.h)
 """
 def unit_name(unit):
-    if unit == 0: return "A"
-    if unit == 1: return "V"
-    if unit == 2: return "W"
-    if unit == 3: return "s"
-    if unit == 4: return "Hz"
+    if unit == 0: return "" # none
+    if unit == 1: return "A" # ampere
+    if unit == 2: return "V" # volt
+    if unit == 3: return "W" # watt
+    if unit == 4: return "s" # second
+    if unit == 5: return "Hz" # hertz
     return "unknown"
 
 """
