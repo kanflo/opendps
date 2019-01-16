@@ -43,8 +43,12 @@ import sys
 import threading
 import time
 
+import protocol
 import uframe
-from protocol import *
+from protocol import (create_cmd, create_enable_output, create_lock, create_set_calibration,
+                      create_set_function, create_set_parameter, create_temperature,
+                      create_upgrade_data, create_upgrade_start, unpack_cal_report,
+                      unpack_query_response, unpack_version_response)
 from uhej import uhej
 
 try:
@@ -239,12 +243,12 @@ def handle_response(command, frame, args):
     """
     ret_dict = {}
     resp_command = frame.get_frame()[0]
-    if resp_command & CMD_RESPONSE:
-        resp_command ^= CMD_RESPONSE
+    if resp_command & protocol.CMD_RESPONSE:
+        resp_command ^= protocol.CMD_RESPONSE
         success = frame.get_frame()[1]
         if resp_command != command:
             print("Warning: sent command %02x, response was %02x." % (command, resp_command))
-        if resp_command != CMD_UPGRADE_START and resp_command != CMD_UPGRADE_DATA and not success:
+        if resp_command != protocol.CMD_UPGRADE_START and resp_command != protocol.CMD_UPGRADE_DATA and not success:
             fail("command failed according to device")
 
     if args.json:
@@ -252,9 +256,9 @@ def handle_response(command, frame, args):
         _json["cmd"] = resp_command;
         _json["status"] = 1;  # we're here aren't we?
 
-    if resp_command == CMD_PING:
+    if resp_command == protocol.CMD_PING:
         print("Got pong from device")
-    elif resp_command == CMD_QUERY:
+    elif resp_command == protocol.CMD_QUERY:
         data = unpack_query_response(frame)
         enable_str = "on" if data['output_enabled'] else "temperature shutdown" if data['temp_shutdown'] == 1 else "off"
         v_in_str = "%d.%02d" % (data['v_in'] / 1000, (data['v_in'] % 1000) / 10)
@@ -274,25 +278,25 @@ def handle_response(command, frame, args):
             if 'temp2' in data:
                 print("%-10s : %.1f" % ('temp2', data['temp2']))
 
-    elif resp_command == CMD_UPGRADE_START:
+    elif resp_command == protocol.CMD_UPGRADE_START:
         #  *  DPS BL: [cmd_response | cmd_upgrade_start] [<upgrade_status_t>] [<chunk_size:16>]
         cmd = frame.unpack8()
         status = frame.unpack8()
         chunk_size = frame.unpack16()
         ret_dict["status"] = status
         ret_dict["chunk_size"] = chunk_size
-    elif resp_command == CMD_UPGRADE_DATA:
+    elif resp_command == protocol.CMD_UPGRADE_DATA:
         cmd = frame.unpack8()
         status = frame.unpack8()
         ret_dict["status"] = status
-    elif resp_command == CMD_SET_FUNCTION:
+    elif resp_command == protocol.CMD_SET_FUNCTION:
         cmd = frame.unpack8()
         status = frame.unpack8()
         if not status:
             print("Function does not exist.")  # Never reached due to status == 0
         else:
             print("Changed function.")
-    elif resp_command == CMD_LIST_FUNCTIONS:
+    elif resp_command == protocol.CMD_LIST_FUNCTIONS:
         cmd = frame.unpack8()
         status = frame.unpack8()
         if status == 0:
@@ -314,7 +318,7 @@ def handle_response(command, frame, args):
                     temp = ", ".join(functions[:-1])
                     temp = "%s and %s" % (temp, functions[-1])
                     print("Selected OpenDPS supports the %s functions." % temp)
-    elif resp_command == CMD_SET_PARAMETERS:
+    elif resp_command == protocol.CMD_SET_PARAMETERS:
         cmd = frame.unpack8()
         status = frame.unpack8()
         for p in args.parameter:
@@ -322,7 +326,7 @@ def handle_response(command, frame, args):
             parts = p.split("=")
             # TODO: handle json output
             print("%s: %s" % (parts[0], "ok" if status == 0 else "unknown parameter" if status == 1 else "out of range" if status == 2 else "unsupported parameter" if status == 3 else "unknown error %d" % (status)))
-    elif resp_command == CMD_SET_CALIBRATION:
+    elif resp_command == protocol.CMD_SET_CALIBRATION:
         cmd = frame.unpack8()
         status = frame.unpack8()
         for p in args.calibration_set:
@@ -330,7 +334,7 @@ def handle_response(command, frame, args):
             parts = p.split("=")
             # TODO: handle json output
             print("%s: %s" % (parts[0], "ok" if status == 0 else "unknown coefficient" if status == 1 else "out of range" if status == 2 else "unsupported coefficient" if status == 3 else "flash write error" if status == 4 else "unknown error %d" % (status)))
-    elif resp_command == CMD_LIST_PARAMETERS:
+    elif resp_command == protocol.CMD_LIST_PARAMETERS:
         cmd = frame.unpack8()
         status = frame.unpack8()
         if status == 0:
@@ -357,22 +361,22 @@ def handle_response(command, frame, args):
                     for p in parameters:
                         temp += p['name'] + ' (%s%s)' % (p['prefix'], p['unit']) + " "
                     print("Selected OpenDPS supports the %sparameters for the %s function." % (temp, cur_func))
-    elif resp_command == CMD_ENABLE_OUTPUT:
+    elif resp_command == protocol.CMD_ENABLE_OUTPUT:
         cmd = frame.unpack8()
         status = frame.unpack8()
         if status == 0:
             print("Error, failed to enable/disable output.")
-    elif resp_command == CMD_TEMPERATURE_REPORT:
+    elif resp_command == protocol.CMD_TEMPERATURE_REPORT:
         pass
-    elif resp_command == CMD_LOCK:
+    elif resp_command == protocol.CMD_LOCK:
         pass
-    elif resp_command == CMD_VERSION:
+    elif resp_command == protocol.CMD_VERSION:
         data = unpack_version_response(frame)
         print("BootDPS GIT Hash: %s" % data['boot_git_hash'])
         print("OpenDPS GIT Hash: %s" % data['app_git_hash'])
-    elif resp_command == CMD_CAL_REPORT:
+    elif resp_command == protocol.CMD_CAL_REPORT:
         ret_dict = unpack_cal_report(frame)
-    elif resp_command == CMD_CLEAR_CALIBRATION:
+    elif resp_command == protocol.CMD_CLEAR_CALIBRATION:
         pass
     else:
         print("Unknown response %d from device." % (resp_command))
@@ -406,7 +410,7 @@ def communicate(comms, frame, args):
     if not comms.close:
         print("Warning: could not close %s" % (comms.name()))
 
-    f = uFrame()
+    f = uframe.uFrame()
     res = f.set_frame(resp)
     if res < 0:
         fail("protocol error (%d)" % (res))
@@ -425,7 +429,7 @@ def handle_commands(args):
     comms = create_comms(args)
 
     if args.ping:
-        communicate(comms, create_cmd(CMD_PING), args)
+        communicate(comms, create_cmd(protocol.CMD_PING), args)
 
     if args.firmware:
         run_upgrade(comms, args.firmware, args)
@@ -436,10 +440,10 @@ def handle_commands(args):
         communicate(comms, create_lock(0), args)
 
     if args.list_functions:
-        communicate(comms, create_cmd(CMD_LIST_FUNCTIONS), args)
+        communicate(comms, create_cmd(protocol.CMD_LIST_FUNCTIONS), args)
 
     if args.list_parameters:
-        communicate(comms, create_cmd(CMD_LIST_PARAMETERS), args)
+        communicate(comms, create_cmd(protocol.CMD_LIST_PARAMETERS), args)
 
     if args.function:
         communicate(comms, create_set_function(args.function), args)
@@ -458,13 +462,13 @@ def handle_commands(args):
             fail("malformatted parameters")
 
     if args.query:
-        communicate(comms, create_cmd(CMD_QUERY), args)
+        communicate(comms, create_cmd(protocol.CMD_QUERY), args)
 
     if args.version:
-        communicate(comms, create_cmd(CMD_VERSION), args)
+        communicate(comms, create_cmd(protocol.CMD_VERSION), args)
 
     if args.calibration_report:
-        data = communicate(comms, create_cmd(CMD_CAL_REPORT), args)
+        data = communicate(comms, create_cmd(protocol.CMD_CAL_REPORT), args)
         print("Calibration Report:")
         print("\tA_ADC_K = {}".format(data['cal']['A_ADC_K']))
         print("\tA_ADC_C = {}".format(data['cal']['A_ADC_C']))
@@ -493,7 +497,7 @@ def handle_commands(args):
         communicate(comms, create_temperature(float(args.temperature)), args)
 
     if args.calibration_reset:
-        communicate(comms, create_cmd(CMD_CLEAR_CALIBRATION), args)
+        communicate(comms, create_cmd(protocol.CMD_CLEAR_CALIBRATION), args)
 
 
 def is_ip_address(if_name):
@@ -531,7 +535,7 @@ def run_upgrade(comms, fw_file_name, args):
         crc = CRCCCITT().calculate(content)
     chunk_size = 1024
     ret_dict = communicate(comms, create_upgrade_start(chunk_size, crc), args)
-    if ret_dict["status"] == UPGRADE_CONTINUE:
+    if ret_dict["status"] == protocol.UPGRADE_CONTINUE:
         if chunk_size != ret_dict["chunk_size"]:
             print("Device selected chunk size %d" % (ret_dict["chunk_size"]))
             chunk_size = ret_dict["chunk_size"]
@@ -544,21 +548,21 @@ def run_upgrade(comms, fw_file_name, args):
 
             ret_dict = communicate(comms, create_upgrade_data(chunk), args)
             status = ret_dict["status"]
-            if status == UPGRADE_CONTINUE:
+            if status == protocol.UPGRADE_CONTINUE:
                 pass
-            elif status == UPGRADE_CRC_ERROR:
+            elif status == protocol.UPGRADE_CRC_ERROR:
                 print("")
                 fail("device reported CRC error")
-            elif status == UPGRADE_ERASE_ERROR:
+            elif status == protocol.UPGRADE_ERASE_ERROR:
                 print("")
                 fail("device reported erasing error")
-            elif status == UPGRADE_FLASH_ERROR:
+            elif status == protocol.UPGRADE_FLASH_ERROR:
                 print("")
                 fail("device reported flashing error")
-            elif status == UPGRADE_OVERFLOW_ERROR:
+            elif status == protocol.UPGRADE_OVERFLOW_ERROR:
                 print("")
                 fail("device reported firmware overflow error")
-            elif status == UPGRADE_SUCCESS:
+            elif status == protocol.UPGRADE_SUCCESS:
                 print("")
             else:
                 print("")
