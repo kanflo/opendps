@@ -87,7 +87,7 @@ class comm_interface(object):
     def close(self):
         return False
 
-    def write(self, bytes):
+    def write(self, bytes_):
         return False
 
     def read(self):
@@ -122,12 +122,12 @@ class tty_interface(comm_interface):
         self._port_handle = None
         return True
 
-    def write(self, bytes):
-        self._port_handle.write(bytes)
+    def write(self, bytes_):
+        self._port_handle.write(bytes_)
         return True
 
     def read(self):
-        bytes = bytearray()
+        bytes_ = bytearray()
         sof = False
         while True:
             b = self._port_handle.read(1)
@@ -135,13 +135,13 @@ class tty_interface(comm_interface):
                 break
             b = ord(b)
             if b == uframe._SOF:
-                bytes = bytearray()
+                bytes_ = bytearray()
                 sof = True
             if sof:
-                bytes.append(b)
+                bytes_.append(b)
             if b == uframe._EOF:
                 break
-        return bytes
+        return bytes_
 
 
 class udp_interface(comm_interface):
@@ -169,9 +169,9 @@ class udp_interface(comm_interface):
         self._socket = None
         return True
 
-    def write(self, bytes):
+    def write(self, bytes_):
         try:
-            self._socket.sendto(bytes, (self._if_name, 5005))
+            self._socket.sendto(bytes_, (self._if_name, 5005))
         except socket.error as msg:
             fail("{} ({:d})".format(str(msg[0]), msg[1]))
         return True
@@ -396,7 +396,7 @@ def communicate(comms, frame, args):
     """
     Communicate with the DPS device according to the user's whishes
     """
-    bytes = frame.get_frame()
+    bytes_ = frame.get_frame()
 
     if not comms:
         fail("no communication interface specified")
@@ -404,8 +404,8 @@ def communicate(comms, frame, args):
         fail("could not open {}".format(comms.name()))
     if args.verbose:
         print("Communicating with {}".format(comms.name()))
-        print("TX {:2d} bytes [{}]".format(len(bytes), " ".join("{:02x}".format(b) for b in bytes)))
-    if not comms.write(bytes):
+        print("TX {:2d} bytes [{}]".format(len(bytes_), " ".join("{:02x}".format(b) for b in bytes_)))
+    if not comms.write(bytes_):
         fail("write failed on {}".format(comms.name()))
     resp = comms.read()
     if len(resp) == 0:
