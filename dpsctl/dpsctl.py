@@ -35,6 +35,8 @@ time, add it tht the environment variable DPSIF.
 
 """
 
+from __future__ import division
+
 import argparse
 import json
 import os
@@ -261,9 +263,9 @@ def handle_response(command, frame, args):
     elif resp_command == protocol.CMD_QUERY:
         data = unpack_query_response(frame)
         enable_str = "on" if data['output_enabled'] else "temperature shutdown" if data['temp_shutdown'] == 1 else "off"
-        v_in_str = "{:d}.{:02d}".format(data['v_in'] / 1000, (data['v_in'] % 1000) / 10)
-        v_out_str = "{:d}.{:02d}".format(data['v_out'] / 1000, (data['v_out'] % 1000) / 10)
-        i_out_str = "{:d}.{:03d}".format(data['i_out'] / 1000, data['i_out'] % 1000)
+        v_in_str = "{:.2f}".format(data['v_in'] / 1000)
+        v_out_str = "{:.2f}".format(data['v_out'] / 1000)
+        i_out_str = "{:.3f}".format(data['i_out'] / 1000)
         if args.json:
             _json = data
         else:
@@ -542,7 +544,7 @@ def run_upgrade(comms, fw_file_name, args):
         counter = 0
         for chunk in chunk_from_file(fw_file_name, chunk_size):
             counter += len(chunk)
-            sys.stdout.write("\rDownload progress: {:d}% ".format(counter * 1.0 / len(content) * 100.0))
+            sys.stdout.write("\rDownload progress: {:d}% ".format(counter / len(content) * 100))
             sys.stdout.flush()
             # print(" {:d} bytes".format(counter))
 

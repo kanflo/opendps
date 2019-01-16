@@ -21,6 +21,7 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 """
+from __future__ import division
 
 import struct
 
@@ -250,12 +251,12 @@ def unpack_query_response(uframe):
     if temp1 != 0xffff:
         if temp1 & 0x8000:
             temp1 -= 0x10000
-        data['temp1'] = float(temp1) / 10
+        data['temp1'] = temp1 / 10
     temp2 = int(uframe.unpack16())
     if temp2 != 0xffff:
         if temp2 & 0x8000:
             temp2 -= 0x10000
-        data['temp2'] = float(temp2) / 10
+        data['temp2'] = temp2 / 10
     data['temp_shutdown'] = uframe.unpack8()
     data['cur_func'] = uframe.unpack_cstr()
     data['params'] = {}
