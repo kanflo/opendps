@@ -193,7 +193,7 @@ frame is too short to unpack the expected payload, false will be returned.
 """
 
 # Returns success
-def unpack_response():
+def unpack_response(uframe):
     return uframe.unpack8()
 
 # Returns enable
