@@ -28,9 +28,10 @@ _XOR = 0x20
 _EOF = 0x7f
 
 # Errors returned by uframe_unescape(...)
-E_LEN = 1 # Received frame is too short to be a uframe
-E_FRM = 2 # Received data has no framing
-E_CRC = 3 # CRC mismatch
+E_LEN = 1  # Received frame is too short to be a uframe
+E_FRM = 2  # Received data has no framing
+E_CRC = 3  # CRC mismatch
+
 
 # https://stackoverflow.com/a/30357446
 def crc16_ccitt(crc, data):
@@ -42,9 +43,12 @@ def crc16_ccitt(crc, data):
     lsb = (x ^ (x << 5)) & 255
     return (msb << 8) + lsb
 
+
 """
 Describes a class for simple serial protocols
 """
+
+
 class uFrame(object):
     _valid = False
     _crc = 0
@@ -59,7 +63,8 @@ class uFrame(object):
     """
     Pack a byte into the frame, update CRC
     """
-    def pack8(self, byte, update_crc = True):
+
+    def pack8(self, byte, update_crc=True):
         byte &= 0xff
         if update_crc:
             self._crc = crc16_ccitt(self._crc, byte)
@@ -85,12 +90,13 @@ class uFrame(object):
         word &= 0xffffffff
         self.pack8((word >> 24) & 0xff)
         self.pack8((word >> 16) & 0xff)
-        self.pack8((word >>  8) & 0xff)
-        self.pack8((word >>  0) & 0xff)
+        self.pack8((word >> 8) & 0xff)
+        self.pack8((word >> 0) & 0xff)
 
     """
     End packing
     """
+
     def end(self):
         crc1 = (self._crc >> 8) & 0xff
         crc2 = self._crc & 0xff
@@ -102,6 +108,7 @@ class uFrame(object):
     """
     Return frame binary data
     """
+
     def get_frame(self):
         return self._frame
 
@@ -109,6 +116,7 @@ class uFrame(object):
     Set frame to given (escaped) frame, unescape, check crc and extract payload
     Return -E_* if error or 0 if frame is valid.
     """
+
     def set_frame(self, escaped_frame):
         self._frame = escaped_frame
         res = self._unescape()
@@ -119,17 +127,19 @@ class uFrame(object):
     """
     Return a string describing the data in the frame
     """
+
     def frame_str(self):
         return ' '.join(format(x, '02x') for x in self._frame)
 
     """
     Unsecape frame data (internal function)
     """
+
     def _unescape(self):
         length = len(self._frame)
         if length < 4:
             return -E_LEN
-        if self._frame[0] != _SOF or self._frame[length-1] != _EOF:
+        if self._frame[0] != _SOF or self._frame[length - 1] != _EOF:
             return -E_FRM
         f = bytearray()
         seen_dle = False
@@ -147,6 +157,7 @@ class uFrame(object):
     """
     Check crc of frame data and chop crc off payload if valid (internal function)
     """
+
     def _calc_crc(self):
         self._crc = 0
         for b in self._frame[:-2]:
@@ -157,7 +168,7 @@ class uFrame(object):
         if not self._valid:
             return -E_CRC
         else:
-            self._frame = self._frame[:-2] # Chop of crc
+            self._frame = self._frame[:-2]  # Chop of crc
             return 0
 
     def unpack8(self):
@@ -191,5 +202,4 @@ class uFrame(object):
         return string
 
     def eof(self):
-        return self._unpack_pos >= len(self._frame) 
-
+        return self._unpack_pos >= len(self._frame)
