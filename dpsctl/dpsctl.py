@@ -106,6 +106,7 @@ class tty_interface(comm_interface):
     _baudrate = None
 
     def __init__(self, if_name, baudrate):
+        super(tty_interface, self).__init__(if_name)
         self._if_name = if_name
         self._baudrate = baudrate
 
@@ -151,6 +152,8 @@ class udp_interface(comm_interface):
     _socket = None
 
     def __init__(self, if_name):
+        super(udp_interface, self).__init__(if_name)
+
         self._if_name = if_name
 
     def open(self):
