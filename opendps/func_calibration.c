@@ -56,44 +56,119 @@ static set_param_status_t get_parameter(char *name, char *value, uint32_t value_
 
 #define SCREEN_ID  (3)
 
-/* This is the definition of the voltage item in the UI */
+/* This is the definition of the voltage ADC item in the UI */
 ui_number_t calibration_v_dac = {
     {
         .type = ui_item_number,
         .id = 10,
-        .x = 120,
+        .x = 2,
         .y = 15,
         .can_focus = true,
     },
-    .font_size = FONT_LARGE,
-    .color = COLOR_VOLTAGE,
+    .font_size = FONT_MEDIUM,
+    .alignment = ui_text_left_aligned,
+    .pad_dot = false,
+    .color = WHITE,
     .value = 0,
     .min = 0,
     .max = 4095,
-    .num_digits = 1,
-    .num_decimals = 3,
-    .unit = unit_volt, /** Affects the unit printed on screen */
+    .si_prefix = si_none,
+    .num_digits = 4,
+    .num_decimals = 0,
+    .unit = unit_volt,
     .changed = &v_dac_changed,
 };
 
-/* This is the definition of the current item in the UI */
+/* This is the definition of the current DAC item in the UI */
 ui_number_t calibration_a_dac = {
     {
         .type = ui_item_number,
         .id = 11,
-        .x = 120,
-        .y = 60,
+        .x = 2,
+        .y = 40,
         .can_focus = true,
     },
-    .font_size = FONT_LARGE,
-    .color = COLOR_AMPERAGE,
+    .font_size = FONT_MEDIUM,
+    .alignment = ui_text_left_aligned,
+    .pad_dot = false,
+    .color = WHITE,
+    .value = 2,
+    .min = 0,
+    .max = 4095,
+    .si_prefix = si_none,
+    .num_digits = 4,
+    .num_decimals = 0,
+    .unit = unit_ampere,
+    .changed = &a_dac_changed,
+};
+
+/* This is the definition of the voltage ADC item in the UI */
+ui_number_t calibration_vin_adc = {
+    {
+        .type = ui_item_number,
+        .id = 11,
+        .x = 127,
+        .y = 65,
+        .can_focus = false,
+    },
+    .font_size = FONT_MEDIUM,
+    .alignment = ui_text_right_aligned,
+    .pad_dot = false,
+    .color = WHITE,
     .value = 0,
     .min = 0,
     .max = 4095,
-    .num_digits = 1,
-    .num_decimals = 3,
+    .si_prefix = si_none,
+    .num_digits = 4,
+    .num_decimals = 0,
+    .unit = unit_volt,
+    .changed = NULL,
+};
+
+/* This is the definition of the voltage ADC item in the UI */
+ui_number_t calibration_v_adc = {
+    {
+        .type = ui_item_number,
+        .id = 11,
+        .x = 127,
+        .y = 15,
+        .can_focus = false,
+    },
+    .font_size = FONT_MEDIUM,
+    .alignment = ui_text_right_aligned,
+    .pad_dot = false,
+    .color = WHITE,
+    .value = 0,
+    .min = 0,
+    .max = 4095,
+    .si_prefix = si_none,
+    .num_digits = 4,
+    .num_decimals = 0,
+    .unit = unit_volt,
+    .changed = NULL,
+};
+
+/* This is the definition of the current ADC item in the UI */
+ui_number_t calibration_a_adc = {
+    {
+        .type = ui_item_number,
+        .id = 11,
+        .x = 127,
+        .y = 40,
+        .can_focus = false,
+    },
+    .font_size = FONT_MEDIUM,
+    .alignment = ui_text_right_aligned,
+    .pad_dot = false,
+    .color = WHITE,
+    .value = 0,
+    .min = 0,
+    .max = 4095,
+    .si_prefix = si_none,
+    .num_digits = 5,
+    .num_decimals = 0,
     .unit = unit_ampere,
-    .changed = &a_dac_changed,
+    .changed = NULL,
 };
 
 /* This is the screen definition */
@@ -110,23 +185,42 @@ ui_screen_t calibration_screen = {
     .tick = &calibration_tick,
     .set_parameter = &set_parameter,
     .get_parameter = &get_parameter,
-    .num_items = 2,
+    .num_items = 5,
     .parameters = {
         {
             .name = "V_DAC",
-            .unit = unit_volt,
-            .prefix = si_milli
+            .unit = unit_none,
+            .prefix = si_none
         },
         {
             .name = "A_DAC",
-            .unit = unit_ampere,
-            .prefix = si_milli
+            .unit = unit_none,
+            .prefix = si_none
+        },
+        {
+            .name = "VIN_ADC",
+            .unit = unit_none,
+            .prefix = si_none
+        },
+        {
+            .name = "V_ADC",
+            .unit = unit_none,
+            .prefix = si_none
+        },
+        {
+            .name = "A_ADC",
+            .unit = unit_none,
+            .prefix = si_none
         },
         {
             .name = {'\0'} /** Terminator */
         },
     },
-    .items = { (ui_item_t*) &calibration_v_dac, (ui_item_t*) &calibration_a_dac }
+    .items = { (ui_item_t*) &calibration_v_dac,
+               (ui_item_t*) &calibration_a_dac,
+               (ui_item_t*) &calibration_vin_adc,
+               (ui_item_t*) &calibration_v_adc,
+               (ui_item_t*) &calibration_a_adc }
 };
 
 /**
@@ -192,6 +286,7 @@ static void calibration_enable(bool enabled)
 {
     emu_printf("[Calibration] %s output\n", enabled ? "Enable" : "Disable");
     if (enabled) {
+        pwrctl_set_ilimit(10000);
         pwrctl_enable_vout(true);
     } else {
         pwrctl_enable_vout(false);
@@ -248,7 +343,24 @@ static void past_restore(past_t *past)
  */
 static void calibration_tick(void)
 {
+    /** Continously update the ADC displayed values */
+    uint16_t i_out_raw, v_in_raw, v_out_raw;
+    hw_get_adc_values(&i_out_raw, &v_in_raw, &v_out_raw);
 
+    if (v_in_raw != calibration_vin_adc.value) {
+        calibration_vin_adc.value = v_in_raw;
+        calibration_vin_adc.ui.draw(&calibration_vin_adc.ui);
+    }
+
+    if (v_out_raw != calibration_v_adc.value) {
+        calibration_v_adc.value = v_out_raw;
+        calibration_v_adc.ui.draw(&calibration_v_adc.ui);
+    }
+
+    if (i_out_raw != calibration_a_adc.value) {
+        calibration_a_adc.value = i_out_raw;
+        calibration_a_adc.ui.draw(&calibration_a_adc.ui);
+    }
 }
 
 /**
@@ -260,6 +372,9 @@ void func_calibration_init(uui_t *ui)
 {
     number_init(&calibration_v_dac);
     number_init(&calibration_a_dac);
+    number_init(&calibration_vin_adc);
+    number_init(&calibration_v_adc);
+    number_init(&calibration_a_adc);
 
     uui_add_screen(ui, &calibration_screen);
 }
