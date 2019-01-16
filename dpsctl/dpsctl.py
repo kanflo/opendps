@@ -583,7 +583,7 @@ def create_comms(args):
     elif 'DPSIF' in os.environ and len(os.environ['DPSIF']) > 0:
         if_name = os.environ['DPSIF']
 
-    if if_name != None:
+    if if_name is not None:
         if is_ip_address(if_name):
             comms = udp_interface(if_name)
         else:
