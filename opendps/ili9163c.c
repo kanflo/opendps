@@ -255,8 +255,8 @@ void ili9163c_set_window(uint16_t x0, uint16_t y0, uint16_t x1, uint16_t y1)
 {
     write_command(CMD_CLMADRS); // Column
     if (rotation == 0 || rotation > 1) {
-        /** @todo: find out why the magic numbers 3 and 2 are needed for correct
-         *         drawing on the DPS TFTs */
+        /** @todo: find out why an offset is needed for correct drawing on the
+         *         DPS TFTs */
         write_data16(x0 + __CONST_X_OFFSET);
         write_data16(x1 + __CONST_X_OFFSET);
     } else {
