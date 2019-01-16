@@ -28,7 +28,7 @@ change all the settings possible with the buttons and dial on the device
 directly. The device can be talked to via a serial interface or (if you added
 an ESP8266) via wifi
 
-dpsctl.py --help will provide enlightment.
+dpsctl.py --help will provide enlightenment.
 
 Oh, and if you get tired of specifying the comms interface (TTY or IP) all the
 time, add it tht the environment variable DPSIF.
@@ -244,7 +244,7 @@ def prefix_name(prefix):
 def handle_response(command, frame, args):
     """
     Handle a response frame from the device.
-    Return a dictionaty of interesting information.
+    Return a dictionary of interesting information.
     """
     ret_dict = {}
     resp_command = frame.get_frame()[0]
@@ -394,7 +394,7 @@ def handle_response(command, frame, args):
 
 def communicate(comms, frame, args):
     """
-    Communicate with the DPS device according to the user's whishes
+    Communicate with the DPS device according to the user's wishes
     """
     bytes_ = frame.get_frame()
 
@@ -425,7 +425,7 @@ def communicate(comms, frame, args):
 
 def handle_commands(args):
     """
-    Communicate with the DPS device according to the user's whishes
+    Communicate with the DPS device according to the user's wishes
     """
     if args.scan:
         uhej_scan()
@@ -464,7 +464,7 @@ def handle_commands(args):
         if payload:
             communicate(comms, payload, args)
         else:
-            fail("malformatted parameters")
+            fail("malformed parameters")
 
     if args.query:
         communicate(comms, create_cmd(protocol.CMD_QUERY), args)
@@ -496,7 +496,7 @@ def handle_commands(args):
         if payload:
             communicate(comms, payload, args)
         else:
-            fail("malformatted parameters")
+            fail("malformed parameters")
 
     if hasattr(args, 'temperature') and args.temperature:
         communicate(comms, create_temperature(float(args.temperature)), args)
@@ -578,7 +578,7 @@ def run_upgrade(comms, fw_file_name, args):
 
 def create_comms(args):
     """
-    Create and return a comminications interface object or None if no comms if
+    Create and return a communications interface object or None if no comms if
     was specified.
     """
     if_name = None
