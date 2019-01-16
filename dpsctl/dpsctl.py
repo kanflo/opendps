@@ -53,14 +53,14 @@ from uhej import uhej
 
 try:
     from PyCRC.CRCCCITT import CRCCCITT
-except:
+except ImportError:
     print("Missing dependency pycrc:")
     print(" sudo pip{} install pycrc"
           .format("3" if sys.version_info.major == 3 else ""))
     raise SystemExit()
 try:
     import serial
-except:
+except ImportError:
     print("Missing dependency pyserial:")
     print(" sudo pip{} install pyserial"
           .format("3" if sys.version_info.major == 3 else ""))
