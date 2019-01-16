@@ -36,21 +36,17 @@ time, add it tht the environment variable DPSIF.
 """
 
 import argparse
-import sys
+import json
 import os
 import socket
-try:
-    import serial
-except:
-    print("Missing dependency pyserial:")
-    print(" sudo pip{} install pyserial"
-          .format("3" if sys.version_info.major == 3 else ""))
-    raise SystemExit()
+import sys
 import threading
 import time
-from uhej import uhej
-from protocol import *
+
 import uframe
+from protocol import *
+from uhej import uhej
+
 try:
     from PyCRC.CRCCCITT import CRCCCITT
 except:
@@ -58,7 +54,13 @@ except:
     print(" sudo pip{} install pycrc"
           .format("3" if sys.version_info.major == 3 else ""))
     raise SystemExit()
-import json
+try:
+    import serial
+except:
+    print("Missing dependency pyserial:")
+    print(" sudo pip{} install pyserial"
+          .format("3" if sys.version_info.major == 3 else ""))
+    raise SystemExit()
 
 parameters = []
 
