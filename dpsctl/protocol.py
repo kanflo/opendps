@@ -22,8 +22,9 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 """
 
-from uframe import uFrame
 import struct
+
+from uframe import uFrame
 
 # command_t
 CMD_PING = 1
