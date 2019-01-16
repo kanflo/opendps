@@ -255,20 +255,22 @@ void ili9163c_set_window(uint16_t x0, uint16_t y0, uint16_t x1, uint16_t y1)
 {
     write_command(CMD_CLMADRS); // Column
     if (rotation == 0 || rotation > 1) {
-        write_data16(x0);
-        write_data16(x1);
+        /** @todo: find out why the magic numbers 3 and 2 are needed for correct
+         *         drawing on the DPS TFTs */
+        write_data16(x0 + 3);
+        write_data16(x1 + 3);
     } else {
-        write_data16(x0 + __OFFSET);
-        write_data16(x1 + __OFFSET);
+        write_data16(x0 + 3);
+        write_data16(x1 + 3);
     }
 
     write_command(CMD_PGEADRS); // Page
     if (rotation == 0) {
-        write_data16(y0 + __OFFSET);
-        write_data16(y1 + __OFFSET);
+        write_data16(y0 + 2);
+        write_data16(y1 + 2);
     } else {
-        write_data16(y0);
-        write_data16(y1);
+        write_data16(y0 + 2);
+        write_data16(y1 + 2);
     }
     write_command(CMD_RAMWR); // Into RAM
 }
