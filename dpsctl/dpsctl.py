@@ -64,10 +64,11 @@ except:
 
 parameters = []
 
-"""
-An abstract class that describes a communication interface
-"""
+
 class comm_interface(object):
+    """
+    An abstract class that describes a communication interface
+    """
 
     _if_name = None
 
@@ -89,10 +90,11 @@ class comm_interface(object):
     def name(self):
         return self._if_name
 
-"""
-A class that describes a serial interface
-"""
+
 class tty_interface(comm_interface):
+    """
+    A class that describes a serial interface
+    """
 
     _port_handle = None
     _baudrate = None
@@ -134,10 +136,11 @@ class tty_interface(comm_interface):
                 break
         return bytes
 
-"""
-A class that describes a UDP interface
-"""
+
 class udp_interface(comm_interface):
+    """
+    A class that describes a UDP interface
+    """
 
     _socket = None
 
@@ -176,18 +179,20 @@ class udp_interface(comm_interface):
             pass
         return reply
 
-"""
-Print error message and exit with error
-"""
+
 def fail(message):
-        print("Error: %s." % (message))
-        sys.exit(1)
+    """
+    Print error message and exit with error
+    """
+    print("Error: %s." % (message))
+    sys.exit(1)
 
 
-"""
-Return name of unit (must of course match unit_t in opendps/uui.h)
-"""
+
 def unit_name(unit):
+    """
+    Return name of unit (must of course match unit_t in opendps/uui.h)
+    """
     if unit == 0: return "" # none
     if unit == 1: return "A" # ampere
     if unit == 2: return "V" # volt
@@ -196,10 +201,11 @@ def unit_name(unit):
     if unit == 5: return "Hz" # hertz
     return "unknown"
 
-"""
-Return SI prefix
-"""
+
 def prefix_name(prefix):
+    """
+    Return SI prefix
+    """
     if prefix == -6: return "u"
     if prefix == -3: return "m"
     if prefix == -2: return "c"
@@ -211,11 +217,12 @@ def prefix_name(prefix):
     if prefix ==  4: return "M"
     return "e%d" % prefix
 
-"""
-Handle a response frame from the device.
-Return a dictionaty of interesting information.
-"""
+
 def handle_response(command, frame, args):
+    """
+    Handle a response frame from the device.
+    Return a dictionaty of interesting information.
+    """
     ret_dict = {}
     resp_command = frame.get_frame()[0]
     if resp_command & CMD_RESPONSE:
@@ -361,10 +368,11 @@ def handle_response(command, frame, args):
  
     return ret_dict
 
-"""
-Communicate with the DPS device according to the user's whishes
-"""
+
 def communicate(comms, frame, args):
+    """
+    Communicate with the DPS device according to the user's whishes
+    """
     bytes = frame.get_frame()
 
     if not comms:
@@ -391,10 +399,11 @@ def communicate(comms, frame, args):
     else:
         return handle_response(frame.get_frame()[1], f, args)
 
-"""
-Communicate with the DPS device according to the user's whishes
-"""
+
 def handle_commands(args):
+    """
+    Communicate with the DPS device according to the user's whishes
+    """
     if args.scan:
         uhej_scan()
         return
@@ -472,18 +481,20 @@ def handle_commands(args):
     if args.calibration_reset:
         communicate(comms, create_cmd(CMD_CLEAR_CALIBRATION), args)
 
-"""
-Return True if the parameter if_name is an IP address.
-"""
+
 def is_ip_address(if_name):
+    """
+    Return True if the parameter if_name is an IP address.
+    """
     try:
         socket.inet_aton(if_name)
         return True
     except socket.error:
         return False
 
-# Darn beautiful, from SO: https://stackoverflow.com/a/1035456
 def chunk_from_file(filename, chunk_size):
+    # Darn beautiful, from SO: https://stackoverflow.com/a/1035456
+
     with open(filename, "rb") as f:
         while True:
             chunk = f.read(chunk_size)
@@ -492,10 +503,11 @@ def chunk_from_file(filename, chunk_size):
             else:
                 break
 
-"""
-Run OpenDPS firmware upgrade
-"""
+
 def run_upgrade(comms, fw_file_name, args):
+    """
+    Run OpenDPS firmware upgrade
+    """
     with open(fw_file_name, mode='rb') as file:
         #crc = binascii.crc32(file.read()) % (1<<32)
         content = file.read()
@@ -539,11 +551,12 @@ def run_upgrade(comms, fw_file_name, args):
     else:
         fail("Device rejected firmware upgrade")
 
-"""
-Create and return a comminications interface object or None if no comms if
-was specified.
-"""
+
 def create_comms(args):
+    """
+    Create and return a comminications interface object or None if no comms if
+    was specified.
+    """
     if_name = None
     comms = None
     if args.device:
@@ -560,10 +573,11 @@ def create_comms(args):
         fail("no comms interface specified")
     return comms
 
-"""
-The worker thread used by uHej for service discovery
-"""
+
 def uhej_worker_thread():
+    """
+    The worker thread used by uHej for service discovery
+    """
     global discovery_list
     global sock
     while 1:
@@ -590,10 +604,11 @@ def uhej_worker_thread():
         except socket.error as e:
             print('Exception', e)
 
-"""
-Scan for OpenDPS devices on the local network
-"""
+
 def uhej_scan():
+    """
+    Scan for OpenDPS devices on the local network
+    """
     global discovery_list
     global sock
     discovery_list = {}
@@ -635,10 +650,11 @@ def uhej_scan():
         print("%d OpenDPS devices found" % (num_found))
 
 
-"""
-Ye olde main
-"""
+
 def main():
+    """
+    Ye olde main
+    """
     global args
     testing = '--testing' in sys.argv
     parser = argparse.ArgumentParser(description='Instrument an OpenDPS device')
