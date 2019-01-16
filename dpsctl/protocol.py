@@ -64,6 +64,7 @@ UPGRADE_FLASH_ERROR = 4
 UPGRADE_OVERFLOW_ERROR = 5
 UPGRADE_SUCCESS = 16
 
+
 # ########################################################################## #
 # Helpers for creating frames.
 # Each function returns a complete frame ready for transmission.
@@ -76,11 +77,13 @@ def create_response(command, success):
     f.end()
     return f
 
+
 def create_cmd(cmd):
     f = uFrame()
     f.pack8(cmd)
     f.end()
     return f
+
 
 def create_set_function(name):
     f = uFrame()
@@ -89,12 +92,14 @@ def create_set_function(name):
     f.end()
     return f
 
+
 def create_enable_output(activate):
     f = uFrame()
     f.pack8(CMD_ENABLE_OUTPUT)
     f.pack8(1 if activate == "on" else 0)
     f.end()
     return f
+
 
 def create_set_parameter(parameter_list):
     f = uFrame()
@@ -109,6 +114,7 @@ def create_set_parameter(parameter_list):
     f.end()
     return f
 
+
 def create_set_calibration(parameter_list):
     f = uFrame()
     f.pack8(CMD_SET_CALIBRATION)
@@ -118,11 +124,12 @@ def create_set_calibration(parameter_list):
             return None
         else:
             f.pack_cstr(parts[0].lstrip().rstrip())
-            for t in bytearray(struct.pack("f",float(parts[1].lstrip().rstrip()))):
+            for t in bytearray(struct.pack("f", float(parts[1].lstrip().rstrip()))):
                 f.pack8(t)
     f.pack8(0)
     f.end()
     return f
+
 
 def create_query_response(v_in, v_out_setting, v_out, i_out, i_limit, power_enabled):
     f = uFrame()
@@ -136,12 +143,14 @@ def create_query_response(v_in, v_out_setting, v_out, i_out, i_limit, power_enab
     f.end()
     return f
 
+
 def create_wifi_status(wifi_status):
     f = uFrame()
     f.pack8(CMD_WIFI_STATUS)
     f.pack8(wifi_status)
     f.end()
     return f
+
 
 def create_lock(locked):
     f = uFrame()
@@ -150,12 +159,14 @@ def create_lock(locked):
     f.end()
     return f
 
+
 def create_ocp(i_cut):
     f = uFrame()
     f.pack8(CMD_OCP_EVENT)
     f.pack16(i_cut)
     f.end()
     return f
+
 
 def create_upgrade_start(window_size, crc):
     f = uFrame()
@@ -165,6 +176,7 @@ def create_upgrade_start(window_size, crc):
     f.end()
     return f
 
+
 def create_upgrade_data(data):
     f = uFrame()
     f.pack8(CMD_UPGRADE_DATA)
@@ -172,6 +184,7 @@ def create_upgrade_data(data):
         f.pack8(d)
     f.end()
     return f
+
 
 def create_temperature(temperature):
     print("Sending temperature %.1f and %.1f" % (temperature, -temperature))
@@ -236,12 +249,12 @@ def unpack_query_response(uframe):
     if temp1 != 0xffff:
         if temp1 & 0x8000:
             temp1 -= 0x10000
-        data['temp1'] = float(temp1)/10
+        data['temp1'] = float(temp1) / 10
     temp2 = int(uframe.unpack16())
     if temp2 != 0xffff:
         if temp2 & 0x8000:
             temp2 -= 0x10000
-        data['temp2'] = float(temp2)/10
+        data['temp2'] = float(temp2) / 10
     data['temp_shutdown'] = uframe.unpack8()
     data['cur_func'] = uframe.unpack_cstr()
     data['params'] = {}
@@ -251,12 +264,13 @@ def unpack_query_response(uframe):
         data['params'][key] = value
     return data
 
+
 def unpack_cal_report(uframe):
     """
     Returns ADC/DAC values and calibration values
     """
     data = {}
-    data['cal']= {}
+    data['cal'] = {}
     data['command'] = uframe.unpack8()
     data['status'] = uframe.unpack8()
     data['vout_adc'] = uframe.unpack16()
@@ -274,7 +288,8 @@ def unpack_cal_report(uframe):
     data['cal']['V_DAC_C'] = struct.unpack("<f", struct.pack("<I", uframe.unpack32()))[0]
     data['cal']['VIN_ADC_K'] = struct.unpack("<f", struct.pack("<I", uframe.unpack32()))[0]
     data['cal']['VIN_ADC_C'] = struct.unpack("<f", struct.pack("<I", uframe.unpack32()))[0]
-    return data 
+    return data
+
 
 def unpack_wifi_status(uframe):
     """
@@ -282,11 +297,13 @@ def unpack_wifi_status(uframe):
     """
     return uframe.unpack8()
 
+
 def unpack_lock(uframe):
     """
     Returns locked
     """
     return uframe.unpack8()
+
 
 def unpack_ocp(uframe):
     """
@@ -313,6 +330,7 @@ def unpack_temperature_report(uframe):
         value = uframe.unpack_cstr()
         data['params'][key] = value
     return data
+
 
 def unpack_version_response(uframe):
     """
