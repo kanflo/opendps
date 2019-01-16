@@ -105,7 +105,7 @@ class tty_interface(comm_interface):
 
     def open(self):
         if not self._port_handle:
-            self._port_handle = serial.Serial(baudrate = self._baudrate, timeout = 1.0)
+            self._port_handle = serial.Serial(baudrate=self._baudrate, timeout=1.0)
             self._port_handle.port = self._if_name
             self._port_handle.open()
         return True
@@ -124,7 +124,7 @@ class tty_interface(comm_interface):
         sof = False
         while True:
             b = self._port_handle.read(1)
-            if not b: # timeout
+            if not b:  # timeout
                 break
             b = ord(b)
             if b == uframe._SOF:
@@ -188,17 +188,22 @@ def fail(message):
     sys.exit(1)
 
 
-
 def unit_name(unit):
     """
     Return name of unit (must of course match unit_t in opendps/uui.h)
     """
-    if unit == 0: return "" # none
-    if unit == 1: return "A" # ampere
-    if unit == 2: return "V" # volt
-    if unit == 3: return "W" # watt
-    if unit == 4: return "s" # second
-    if unit == 5: return "Hz" # hertz
+    if unit == 0:
+        return ""  # none
+    if unit == 1:
+        return "A"  # ampere
+    if unit == 2:
+        return "V"  # volt
+    if unit == 3:
+        return "W"  # watt
+    if unit == 4:
+        return "s"  # second
+    if unit == 5:
+        return "Hz"  # hertz
     return "unknown"
 
 
@@ -206,15 +211,24 @@ def prefix_name(prefix):
     """
     Return SI prefix
     """
-    if prefix == -6: return "u"
-    if prefix == -3: return "m"
-    if prefix == -2: return "c"
-    if prefix == -1: return "d" # TODO: is this correct (deci?
-    if prefix ==  0: return ""
-    if prefix ==  1: return "D" # TODO: is this correct (deca)?
-    if prefix ==  2: return "hg"
-    if prefix ==  3: return "k"
-    if prefix ==  4: return "M"
+    if prefix == -6:
+        return "u"
+    if prefix == -3:
+        return "m"
+    if prefix == -2:
+        return "c"
+    if prefix == -1:
+        return "d"  # TODO: is this correct (deci?
+    if prefix == 0:
+        return ""
+    if prefix == 1:
+        return "D"  # TODO: is this correct (deca)?
+    if prefix == 2:
+        return "hg"
+    if prefix == 3:
+        return "k"
+    if prefix == 4:
+        return "M"
     return "e%d" % prefix
 
 
@@ -230,22 +244,22 @@ def handle_response(command, frame, args):
         success = frame.get_frame()[1]
         if resp_command != command:
             print("Warning: sent command %02x, response was %02x." % (command, resp_command))
-        if resp_command !=  CMD_UPGRADE_START and resp_command != CMD_UPGRADE_DATA and not success:
+        if resp_command != CMD_UPGRADE_START and resp_command != CMD_UPGRADE_DATA and not success:
             fail("command failed according to device")
 
     if args.json:
         _json = {}
         _json["cmd"] = resp_command;
-        _json["status"] = 1; # we're here aren't we?
+        _json["status"] = 1;  # we're here aren't we?
 
     if resp_command == CMD_PING:
         print("Got pong from device")
     elif resp_command == CMD_QUERY:
         data = unpack_query_response(frame)
         enable_str = "on" if data['output_enabled'] else "temperature shutdown" if data['temp_shutdown'] == 1 else "off"
-        v_in_str = "%d.%02d" % (data['v_in']/1000, (data['v_in']%1000)/10)
-        v_out_str = "%d.%02d" % (data['v_out']/1000, (data['v_out']%1000)/10)
-        i_out_str = "%d.%03d" % (data['i_out']/1000, data['i_out']%1000)
+        v_in_str = "%d.%02d" % (data['v_in'] / 1000, (data['v_in'] % 1000) / 10)
+        v_out_str = "%d.%02d" % (data['v_out'] / 1000, (data['v_out'] % 1000) / 10)
+        i_out_str = "%d.%03d" % (data['i_out'] / 1000, data['i_out'] % 1000)
         if args.json:
             _json = data
         else:
@@ -261,7 +275,7 @@ def handle_response(command, frame, args):
                 print("%-10s : %.1f" % ('temp2', data['temp2']))
 
     elif resp_command == CMD_UPGRADE_START:
-    #  *  DPS BL: [cmd_response | cmd_upgrade_start] [<upgrade_status_t>] [<chunk_size:16>]
+        #  *  DPS BL: [cmd_response | cmd_upgrade_start] [<upgrade_status_t>] [<chunk_size:16>]
         cmd = frame.unpack8()
         status = frame.unpack8()
         chunk_size = frame.unpack16()
@@ -275,7 +289,7 @@ def handle_response(command, frame, args):
         cmd = frame.unpack8()
         status = frame.unpack8()
         if not status:
-            print("Function does not exist.") # Never reached due to status == 0
+            print("Function does not exist.")  # Never reached due to status == 0
         else:
             print("Changed function.")
     elif resp_command == CMD_LIST_FUNCTIONS:
@@ -315,7 +329,7 @@ def handle_response(command, frame, args):
             status = frame.unpack8()
             parts = p.split("=")
             # TODO: handle json output
-            print("%s: %s" % (parts[0], "ok" if status == 0 else "unknown coefficient" if status == 1 else "out of range" if status == 2 else "unsupported coefficient" if status == 3 else "flash write error" if status == 4 else "unknown error %d" % (status)))   
+            print("%s: %s" % (parts[0], "ok" if status == 0 else "unknown coefficient" if status == 1 else "out of range" if status == 2 else "unsupported coefficient" if status == 3 else "flash write error" if status == 4 else "unknown error %d" % (status)))
     elif resp_command == CMD_LIST_PARAMETERS:
         cmd = frame.unpack8()
         status = frame.unpack8()
@@ -365,7 +379,7 @@ def handle_response(command, frame, args):
 
     if args.json:
         print(json.dumps(_json, indent=4, sort_keys=True))
- 
+
     return ret_dict
 
 
@@ -492,6 +506,7 @@ def is_ip_address(if_name):
     except socket.error:
         return False
 
+
 def chunk_from_file(filename, chunk_size):
     # Darn beautiful, from SO: https://stackoverflow.com/a/1035456
 
@@ -509,7 +524,7 @@ def run_upgrade(comms, fw_file_name, args):
     Run OpenDPS firmware upgrade
     """
     with open(fw_file_name, mode='rb') as file:
-        #crc = binascii.crc32(file.read()) % (1<<32)
+        # crc = binascii.crc32(file.read()) % (1<<32)
         content = file.read()
         if content.encode('hex')[6:8] != "20" and not args.force:
             fail("The firmware file does not seem valid, use --force to force upgrade")
@@ -523,9 +538,9 @@ def run_upgrade(comms, fw_file_name, args):
         counter = 0
         for chunk in chunk_from_file(fw_file_name, chunk_size):
             counter += len(chunk)
-            sys.stdout.write("\rDownload progress: %d%% " % (counter*1.0/len(content)*100.0) )
+            sys.stdout.write("\rDownload progress: %d%% " % (counter * 1.0 / len(content) * 100.0))
             sys.stdout.flush()
-#            print(" %d bytes" % (counter))
+            #            print(" %d bytes" % (counter))
 
             ret_dict = communicate(comms, create_upgrade_data(chunk), args)
             status = ret_dict["status"]
@@ -596,9 +611,9 @@ def uhej_worker_thread():
                         key = "%s:%s:%s" % (f["source"], s["port"], s["type"])
                         if not key in discovery_list:
                             if s["service_name"] == "opendps":
-                                discovery_list[key] = True # Keep track of which hosts we have seen
+                                discovery_list[key] = True  # Keep track of which hosts we have seen
                                 print("%s" % (f["source"]))
-#                            print("%16s:%-5d  %-8s %s" % (f["source"], s["port"], types[s["type"]], s["service_name"]))
+            #                            print("%16s:%-5d  %-8s %s" % (f["source"], s["port"], types[s["type"]], s["service_name"]))
             except uhej.IllegalFrameException as e:
                 pass
         except socket.error as e:
@@ -623,14 +638,14 @@ def uhej_scan():
     sock.setsockopt(socket.IPPROTO_IP, socket.IP_MULTICAST_LOOP, 1)
     sock.bind((ANY, uhej.MCAST_PORT))
 
-    thread = threading.Thread(target = uhej_worker_thread)
+    thread = threading.Thread(target=uhej_worker_thread)
     thread.daemon = True
     thread.start()
 
     sock.setsockopt(socket.SOL_IP, socket.IP_ADD_MEMBERSHIP, socket.inet_aton(uhej.MCAST_GRP) + socket.inet_aton(ANY))
 
-    run_time_s = 6 # Run query for this many seconds
-    query_interval_s = 2 # Send query this often
+    run_time_s = 6  # Run query for this many seconds
+    query_interval_s = 2  # Send query this often
     last_query = 0
     start_time = time.time()
 
@@ -650,7 +665,6 @@ def uhej_scan():
         print("%d OpenDPS devices found" % (num_found))
 
 
-
 def main():
     """
     Ye olde main
@@ -667,10 +681,10 @@ def main():
     parser.add_argument('-p', '--parameter', nargs='+', help="Set function parameter <name>=<value>")
     parser.add_argument('-P', '--list-parameters', action='store_true', help="List function parameters of active function")
     parser.add_argument('-c', '--calibration_set', nargs='+', help="Set the specified calibration coefficient <name>=<value>")
-    parser.add_argument('-cr','--calibration_report', action="store_true", help="Prints Calibration report")
-    parser.add_argument(      '--calibration_reset', action='store_true', help="Resets the calibration to the default values")
+    parser.add_argument('-cr', '--calibration_report', action="store_true", help="Prints Calibration report")
+    parser.add_argument('--calibration_reset', action='store_true', help="Resets the calibration to the default values")
     parser.add_argument('-o', '--enable', help="Enable output ('on' or 'off')")
-    parser.add_argument(      '--ping', action='store_true', help="Ping device (causes screen to flash)")
+    parser.add_argument('--ping', action='store_true', help="Ping device (causes screen to flash)")
     parser.add_argument('-L', '--lock', action='store_true', help="Lock device keys")
     parser.add_argument('-l', '--unlock', action='store_true', help="Unlock device keys")
     parser.add_argument('-q', '--query', action='store_true', help="Query device settings and measurements")
@@ -678,7 +692,7 @@ def main():
     parser.add_argument('-v', '--verbose', action='store_true', help="Verbose communications")
     parser.add_argument('-V', '--version', action='store_true', help="Get firmware version information")
     parser.add_argument('-U', '--upgrade', type=str, dest="firmware", help="Perform upgrade of OpenDPS firmware")
-    parser.add_argument(      '--force', action='store_true', help="Force upgrade even if dpsctl complains about the firmware")
+    parser.add_argument('--force', action='store_true', help="Force upgrade even if dpsctl complains about the firmware")
     if testing:
         parser.add_argument('-t', '--temperature', type=str, dest="temperature", help="Send temperature report (for testing)")
 
@@ -688,6 +702,7 @@ def main():
         handle_commands(args)
     except KeyboardInterrupt:
         print("")
+
 
 if __name__ == "__main__":
     main()
