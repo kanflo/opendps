@@ -253,8 +253,8 @@ def handle_response(command, frame, args):
 
     if args.json:
         _json = {}
-        _json["cmd"] = resp_command;
-        _json["status"] = 1;  # we're here aren't we?
+        _json["cmd"] = resp_command
+        _json["status"] = 1  # we're here aren't we?
 
     if resp_command == protocol.CMD_PING:
         print("Got pong from device")
@@ -308,7 +308,7 @@ def handle_response(command, frame, args):
                 functions.append(name)
                 name = frame.unpack_cstr()
             if args.json:
-                _json["functions"] = functions;
+                _json["functions"] = functions
             else:
                 if len(functions) == 0:
                     print("Selected OpenDPS supports no functions at all, which is quite weird when you think about it...")
@@ -349,7 +349,7 @@ def handle_response(command, frame, args):
                 parameter['prefix'] = prefix_name(frame.unpacks8())
                 parameters.append(parameter)
             if args.json:
-                _json["current_function"] = cur_func;
+                _json["current_function"] = cur_func
                 _json["parameters"] = parameters
             else:
                 if len(parameters) == 0:
@@ -544,7 +544,7 @@ def run_upgrade(comms, fw_file_name, args):
             counter += len(chunk)
             sys.stdout.write("\rDownload progress: {:d}% ".format(counter * 1.0 / len(content) * 100.0))
             sys.stdout.flush()
-                       # print(" {:d} bytes".format(counter))
+            # print(" {:d} bytes".format(counter))
 
             ret_dict = communicate(comms, create_upgrade_data(chunk), args)
             status = ret_dict["status"]
