@@ -80,6 +80,9 @@ static bool longpress_detected;
 /** Used to filter SET press from SET + ROT */
 static bool set_pressed = false;
 static bool set_skip = false;
+static bool m1_pressed = false;
+static bool m2_pressed = false;
+static bool m1_and_m2_pressed = false;
 
 /** We skip the first 40 samples. For a connected ESP8266 the first sample
   * will read a current draw of ~3A which will trigger the OCP.
@@ -149,6 +152,26 @@ void hw_get_adc_values(uint16_t *i_out_raw, uint16_t *v_in_raw, uint16_t *v_out_
     *i_out_raw = i_out_adc;
     *v_in_raw = v_in_adc;
     *v_out_raw = v_out_adc;
+}
+
+/**
+  * @brief Set the output voltage DAC value
+  * @param v_dac the value to set to
+  * @retval none
+  */
+void hw_set_voltage_dac(uint16_t v_dac)
+{
+    DAC_DHR12R1 = v_dac;
+}
+
+/**
+  * @brief Set the output current DAC value
+  * @param i_dac the value to set to
+  * @retval none
+  */
+void hw_set_current_dac(uint16_t i_dac)
+{
+    DAC_DHR12R2 = i_dac;
 }
 
 /**
@@ -696,9 +719,23 @@ void BUTTON_M1_isr(void)
     static bool falling = true;
     exti_reset_request(BUTTON_M1_EXTI);
     if (falling) {
+        m1_pressed = true;
+        if (m2_pressed)
+            m1_and_m2_pressed = true;
         exti_set_trigger(BUTTON_M1_EXTI, EXTI_TRIGGER_RISING);
     } else {
-        event_put(event_button_m1, press_short);
+        m1_pressed = false;
+
+        if (!m2_pressed) {
+            if (m1_and_m2_pressed) {
+                m1_and_m2_pressed = false;
+                event_put(event_buttom_m1_and_m2, press_short);
+            }
+            else {
+                event_put(event_button_m1, press_short);
+            }
+        }
+
         exti_set_trigger(BUTTON_M1_EXTI, EXTI_TRIGGER_FALLING);
     }
     falling = !falling;
@@ -713,9 +750,23 @@ void BUTTON_M2_isr(void)
     static bool falling = true;
     exti_reset_request(BUTTON_M2_EXTI);
     if (falling) {
+        m2_pressed = true;
+        if (m1_pressed)
+            m1_and_m2_pressed = true;
         exti_set_trigger(BUTTON_M2_EXTI, EXTI_TRIGGER_RISING);
     } else {
-        event_put(event_button_m2, press_short);
+        m2_pressed = false;
+
+        if (!m1_pressed) {
+            if (m1_and_m2_pressed) {
+                m1_and_m2_pressed = false;
+                event_put(event_buttom_m1_and_m2, press_short);
+            }
+            else {
+                event_put(event_button_m2, press_short);
+            }
+        }
+
         exti_set_trigger(BUTTON_M2_EXTI, EXTI_TRIGGER_FALLING);
     }
     falling = !falling;

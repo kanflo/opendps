@@ -29,6 +29,7 @@ typedef enum {
 	event_none = 0,
 	event_button_m1,
 	event_button_m2,
+  event_buttom_m1_and_m2,
 	event_button_sel,
 	event_button_enable,
   event_rot_left,

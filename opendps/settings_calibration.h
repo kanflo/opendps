@@ -22,8 +22,8 @@
  * THE SOFTWARE.
  */
 
-#ifndef __FUNC_CALIBRATION_H__
-#define __FUNC_CALIBRATION_H__
+#ifndef __SETTINGS_CALIBRATION_H__
+#define __SETTINGS_CALIBRATION_H__
 
 #include "uui.h"
 
@@ -32,6 +32,6 @@
  *
  * @param      ui    The user interface
  */
-void func_calibration_init(uui_t *ui);
+void settings_calibration_init(uui_t *ui);
 
-#endif // __FUNC_CALIBRATION_H__
+#endif // __SETTINGS_CALIBRATION_H__

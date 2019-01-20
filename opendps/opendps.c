@@ -54,7 +54,7 @@
 #include "uui_number.h"
 #include "opendps.h"
 #include "func_cv.h"
-#include "func_calibration.h"
+#include "settings_calibration.h"
 #include "my_assert.h"
 #ifdef CONFIG_CC_ENABLE
 #include "func_cc.h"
@@ -141,8 +141,13 @@ static past_t g_past = {
 
 /** The function UI displaying the current active function */
 static uui_t func_ui;
+/** The settings UI displaying the current active settings screen */
+static uui_t settings_ui;
 /** The main UI displaying input voltage and such */
 static uui_t main_ui;
+
+/** The UI we are currently displaying (func_ui or setting_ui) */
+static uui_t *current_ui;
 
 
 static void main_ui_tick(void);
@@ -365,8 +370,8 @@ bool opendps_clear_calibration(void)
  */
 bool opendps_enable_output(bool enable)
 {
-    if (!is_temperature_locked && func_ui.screens[func_ui.cur_screen]->enable) {
-        if (func_ui.screens[func_ui.cur_screen]->is_enabled != enable) {
+    if (!is_temperature_locked && current_ui->screens[current_ui->cur_screen]->enable) {
+        if (current_ui->screens[current_ui->cur_screen]->is_enabled != enable) {
             event_put(event_button_enable, press_short); /** @todo: call directly as this will not work for temperature alarm */
         }
     } else {
@@ -381,7 +386,7 @@ bool opendps_enable_function_idx(uint32_t index)
     if (is_temperature_locked) {
         return false;
     } else {
-        uui_set_screen(&func_ui, index);
+        uui_set_screen(current_ui, index);
         return true; /** @todo: handle failure */
     }
 }
@@ -409,19 +414,27 @@ static void ui_init(void)
     ui_width = TFT_WIDTH;
     ui_height = TFT_HEIGHT;
 
+    /** Initialise the function screens */
     uui_init(&func_ui, &g_past);
     func_cv_init(&func_ui);
-    func_calibration_init(&func_ui);
 #ifdef CONFIG_CC_ENABLE
     func_cc_init(&func_ui);
 #endif // CONFIG_CC_ENABLE
-    uui_activate(&func_ui);
 
+    /** Initialise the settings screens */
+    uui_init(&settings_ui, &g_past);
+    settings_calibration_init(&settings_ui);
+
+    /** Initialise the main screens */
     uui_init(&main_ui, &g_past);
     number_init(&input_voltage);
     input_voltage.ui.x = 105;
     input_voltage.ui.y = ui_height - font_small_height;
     uui_add_screen(&main_ui, &main_screen);
+
+    /** Activate the UIs */
+    current_ui = &func_ui;
+    uui_activate(current_ui);
     uui_activate(&main_ui);
 }
 
@@ -431,7 +444,7 @@ static void ui_init(void)
   * @param data optional extra data
   * @retval none
   */
-static void ui_hande_event(event_t event, uint8_t data)
+static void ui_handle_event(event_t event, uint8_t data)
 {
     if (event == event_rot_press && data == press_long) {
         opendps_lock(!is_locked);
@@ -475,11 +488,16 @@ static void ui_hande_event(event_t event, uint8_t data)
                 uui_handle_screen_event(&func_ui, event);
             }
             break;
+        case event_buttom_m1_and_m2:
+            /** Change between the settings and functional screen */
+            current_ui = current_ui == &func_ui ? &settings_ui : &func_ui;
+            tft_clear(); /** Clear any previous screen */
+            uui_activate(current_ui);
+            break;
         case event_button_enable:
 #pragma GCC diagnostic ignored "-Wimplicit-fallthrough"
             write_past_settings();
             /** Deliberate fallthrough */
-
         case event_button_m1:
         case event_button_m2:
         case event_button_sel:
@@ -488,8 +506,8 @@ static void ui_hande_event(event_t event, uint8_t data)
         case event_rot_right:
         case event_rot_left_set:
         case event_rot_right_set:
-            uui_handle_screen_event(&func_ui, event);
-            uui_refresh(&func_ui, false);
+            uui_handle_screen_event(current_ui, event);
+            uui_refresh(current_ui, false);
             break;
         default:
             break;
@@ -561,7 +579,7 @@ static void ui_tick(void)
     }
 
     last = get_ticks();
-    uui_tick(&func_ui);
+    uui_tick(current_ui);
     uui_tick(&main_ui);
 
 #ifndef CONFIG_SPLASH_SCREEN
@@ -837,7 +855,7 @@ static void event_handler(void)
                 default:
                     break;
             }
-            ui_hande_event(event, data);
+            ui_handle_event(event, data);
         }
     }
 }
@@ -894,7 +912,7 @@ int main(int argc, char const *argv[])
     hw_enable_backlight();
     delay_ms(750);
     tft_clear();
-    uui_refresh(&func_ui, true);
+    uui_refresh(&current_ui, true);
 #endif // CONFIG_SPLASH_SCREEN
     event_handler();
     return 0;

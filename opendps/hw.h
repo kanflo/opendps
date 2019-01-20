@@ -90,6 +90,20 @@ void hw_init(void);
 void hw_get_adc_values(uint16_t *i_out_raw, uint16_t *v_in_raw, uint16_t *v_out_raw);
 
 /**
+  * @brief Set the output voltage DAC value
+  * @param v_dac the value to set to
+  * @retval none
+  */
+void hw_set_voltage_dac(uint16_t v_dac);
+
+/**
+  * @brief Set the output current DAC value
+  * @param i_dac the value to set to
+  * @retval none
+  */
+void hw_set_current_dac(uint16_t i_dac);
+
+/**
   * @brief Initialize TIM4 that drives the backlight of the TFT
   * @retval None
   */

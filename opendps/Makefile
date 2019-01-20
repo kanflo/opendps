@@ -69,7 +69,7 @@ OBJS = \
     uui.o \
     uui_number.o \
     func_cv.o \
-    func_calibration.o \
+    settings_calibration.o \
     hw.o \
     pwrctl.o \
     event.o \

@@ -29,7 +29,7 @@
 #include <dac.h>
 #include "gfx-crosshair.h"
 #include "hw.h"
-#include "func_calibration.h"
+#include "settings_calibration.h"
 #include "uui.h"
 #include "uui_number.h"
 #include "dbg_printf.h"
@@ -61,7 +61,7 @@ ui_number_t calibration_v_dac = {
     {
         .type = ui_item_number,
         .id = 10,
-        .x = 2,
+        .x = 4,
         .y = 15,
         .can_focus = true,
     },
@@ -84,7 +84,7 @@ ui_number_t calibration_a_dac = {
     {
         .type = ui_item_number,
         .id = 11,
-        .x = 2,
+        .x = 4,
         .y = 40,
         .can_focus = true,
     },
@@ -288,29 +288,33 @@ static void calibration_enable(bool enabled)
     if (enabled) {
         pwrctl_set_ilimit(10000);
         pwrctl_enable_vout(true);
+        hw_set_voltage_dac(calibration_v_dac.value);
+        hw_set_current_dac(calibration_a_dac.value);
     } else {
         pwrctl_enable_vout(false);
     }
 }
 
 /**
- * @brief      Callback for when value of the voltage item is changed
+ * @brief      Callback for when value of the voltage DAC item is changed
  *
  * @param      item  The voltage item
  */
 static void v_dac_changed(ui_number_t *item)
 {
-    DAC_DHR12R1 = item->value;
+    if (calibration_screen.is_enabled)
+        hw_set_voltage_dac(item->value);
 }
 
 /**
- * @brief      Callback for when value of the current item is changed
+ * @brief      Callback for when value of the current DAC item is changed
  *
  * @param      item  The current item
  */
 static void a_dac_changed(ui_number_t *item)
 {
-    DAC_DHR12R2 = item->value;
+    if (calibration_screen.is_enabled)
+        hw_set_current_dac(item->value);
 }
 
 /**
@@ -368,7 +372,7 @@ static void calibration_tick(void)
  *
  * @param      ui    The user interface
  */
-void func_calibration_init(uui_t *ui)
+void settings_calibration_init(uui_t *ui)
 {
     number_init(&calibration_v_dac);
     number_init(&calibration_a_dac);
