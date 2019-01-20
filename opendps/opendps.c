@@ -489,8 +489,9 @@ static void ui_handle_event(event_t event, uint8_t data)
             }
             break;
         case event_buttom_m1_and_m2:
-            /** Change between the settings and functional screen */
-            current_ui = current_ui == &func_ui ? &settings_ui : &func_ui;
+            uui_disable_cur_screen(current_ui); /** Turn off the output */
+            opendps_update_power_status(false); /** Update the power icon status */
+            current_ui = current_ui == &func_ui ? &settings_ui : &func_ui; /** Change between the settings and functional screen */
             tft_clear(); /** Clear any previous screen */
             uui_activate(current_ui);
             break;
