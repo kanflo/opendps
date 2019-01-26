@@ -158,7 +158,7 @@ static set_param_status_t set_parameter(char *name, char *value)
             return ps_range_error;
         }
         emu_printf("[CV] Setting voltage to %d\n", ivalue);
-        /** value received in millivolt */
+        cv_voltage.value = ivalue;
         voltage_changed(&cv_voltage);
         return ps_ok;
     } else if (strcmp("current", name) == 0 || strcmp("i", name) == 0) {
