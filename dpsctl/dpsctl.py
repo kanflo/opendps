@@ -481,7 +481,6 @@ def handle_commands(args):
         else:
             fail("please specify either settings or main as parameters")
 
-
 """
 Return True if the parameter if_name is an IP address.
 """
