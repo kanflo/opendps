@@ -549,22 +549,6 @@ def run_upgrade(comms, fw_file_name, args):
         fail("Device rejected firmware upgrade")
 
 """
-Calculate linear line of best fit's constants
-"""
-def best_fit(X, Y):
-    xbar = sum(X)/len(X)
-    ybar = sum(Y)/len(Y)
-    n = len(X) # or len(Y)
-
-    numer = sum([xi*yi for xi,yi in zip(X, Y)]) - n * xbar * ybar
-    denum = sum([xi**2 for xi in X]) - n * xbar**2
-
-    k = numer / denum
-    c = ybar - k * xbar
-
-    return k, c
-
-"""
 Create and return a comminications interface object or None if no comms if
 was specified.
 """
