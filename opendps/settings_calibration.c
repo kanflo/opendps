@@ -198,21 +198,6 @@ ui_screen_t calibration_screen = {
             .prefix = si_none
         },
         {
-            .name = "VIN_ADC",
-            .unit = unit_none,
-            .prefix = si_none
-        },
-        {
-            .name = "V_ADC",
-            .unit = unit_none,
-            .prefix = si_none
-        },
-        {
-            .name = "A_ADC",
-            .unit = unit_none,
-            .prefix = si_none
-        },
-        {
             .name = {'\0'} /** Terminator */
         },
     },

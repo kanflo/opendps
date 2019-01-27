@@ -124,7 +124,7 @@ bool opendps_clear_calibration(void);
  *
  * @param[in]  enable  Enable or disable
  *
- * @return     True if enable was successul
+ * @return     True if enable was successful
  */
 bool opendps_enable_output(bool enable);
 
@@ -185,5 +185,14 @@ void opendps_get_temperature(int16_t *temp1, int16_t *temp2, bool *temp_shutdown
   * @param chunk_size size of data chunks as requested by the remote
  */
 void opendps_upgrade_start(void);
+
+/**
+ * @brief      Change the current screen
+ *
+ * @param[in]  screen_id  The screen ID to change to
+ *
+ * @return     True if successful
+ */
+bool opendps_change_screen(uint8_t screen_id);
 
 #endif // __OPENDPS_H__

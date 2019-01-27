@@ -46,6 +46,7 @@ cmd_version = 17
 cmd_cal_report = 18
 cmd_set_calibration = 19
 cmd_clear_calibration = 20
+cmd_change_screen = 21
 cmd_response = 0x80
 
 # wifi_status_t
@@ -181,6 +182,13 @@ def create_temperature(temperature):
     f.pack8(cmd_temperature_report)
     f.pack16(temperature)
     f.pack16(-temperature)
+    f.end()
+    return f
+
+def create_change_screen(screen):
+    f = uFrame()
+    f.pack8(cmd_change_screen)
+    f.pack8(screen)
     f.end()
     return f
 

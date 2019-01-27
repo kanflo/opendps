@@ -435,7 +435,7 @@ static command_status_t handle_lock(uint8_t *payload, uint32_t payload_len)
 }
 
 /**
-  * @brief Handle an upgrde start command
+  * @brief Handle an upgrade start command
   * @param payload payload of command frame
   * @param payload_len length of payload
   * @retval false in case of errors, if successful the device reboots
@@ -450,6 +450,27 @@ static command_status_t handle_upgrade_start(uint8_t *payload, uint32_t payload_
         opendps_upgrade_start();
     }
     return success;
+}
+
+/**
+  * @brief Handle a change screen command
+  * @param payload payload of command frame
+  * @param payload_len length of payload
+  * @retval false in case of errors, if successful the device reboots
+  */
+static command_status_t handle_change_screen(uint8_t *payload, uint32_t payload_len)
+{
+    emu_printf("%s\n", __FUNCTION__);
+    uint8_t cmd, screen_id;
+    DECLARE_UNPACK(payload, payload_len);
+    UNPACK8(cmd);
+    (void) cmd;
+    UNPACK8(screen_id);
+    if (opendps_change_screen(screen_id)) {
+        return cmd_success;
+    } else {
+        return cmd_failed;
+    }
 }
 
 /**
@@ -516,6 +537,9 @@ static void handle_frame(uint8_t *frame, uint32_t length)
                 break;
             case cmd_clear_calibration:
                 success = handle_clear_calibration();
+                break;
+            case cmd_change_screen:
+                success = handle_change_screen(payload, payload_len);
                 break;
             default:
                 emu_printf("Got unknown command %d (0x%02x)\n", cmd, cmd);
