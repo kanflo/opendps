@@ -475,9 +475,9 @@ def handle_commands(args):
 
     if args.switch_screen:
         if (args.switch_screen.lower() == "main"):
-            communicate(comms, create_change_screen(0), args) # Screen 0 is the main screen
+            communicate(comms, create_change_screen(change_screen_main), args)
         elif (args.switch_screen.lower() == "settings"):
-            communicate(comms, create_change_screen(1), args) # Screen 1 is the settings screen
+            communicate(comms, create_change_screen(change_screen_settings), args)
         else:
             fail("please specify either settings or main as parameters")
 

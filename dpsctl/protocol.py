@@ -65,6 +65,9 @@ upgrade_flash_error = 4
 upgrade_overflow_error = 5
 upgrade_success = 16
 
+# options for cmd_change_screen
+change_screen_main = 0
+change_screen_settings = 1
 
 """
  Helpers for creating frames.
