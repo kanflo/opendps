@@ -13,21 +13,21 @@
 
 extern const uint32_t font_small_height;
 extern const uint32_t font_small_num_glyphs;
-extern const uint8_t font_small_0[144];
-extern const uint8_t font_small_1[96];
-extern const uint8_t font_small_2[144];
-extern const uint8_t font_small_3[144];
-extern const uint8_t font_small_4[144];
-extern const uint8_t font_small_5[144];
-extern const uint8_t font_small_6[144];
-extern const uint8_t font_small_7[144];
-extern const uint8_t font_small_8[144];
-extern const uint8_t font_small_9[144];
-extern const uint8_t font_small_dot[48];
-extern const uint8_t font_small_v[216];
-extern const uint8_t font_small_a[216];
+extern const uint8_t font_small_0[36];
+extern const uint8_t font_small_1[24];
+extern const uint8_t font_small_2[36];
+extern const uint8_t font_small_3[36];
+extern const uint8_t font_small_4[36];
+extern const uint8_t font_small_5[36];
+extern const uint8_t font_small_6[36];
+extern const uint8_t font_small_7[36];
+extern const uint8_t font_small_8[36];
+extern const uint8_t font_small_9[36];
+extern const uint8_t font_small_dot[12];
+extern const uint8_t font_small_v[54];
+extern const uint8_t font_small_a[54];
 extern const uint8_t font_small_widths[13];
 extern const uint16_t font_small_sizes[13];
-extern const uint16_t *font_small_pix[13];
+extern const uint8_t * const font_small_pix[13];
 
 #endif // __FONT_SMALL_H__

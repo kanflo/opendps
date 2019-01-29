@@ -41,6 +41,7 @@
 #include "font-medium.h"
 #include "font-large.h"
 #include "dbg_printf.h"
+#include "gfx_lookup.h"
 
 static bool is_inverted;
 
@@ -54,7 +55,7 @@ static bool is_inverted;
     ((ILI9163C_COLORSPACE_TWIDDLE(color) >> 8) & 0xFF) )
 
 /** Buffers for speeding up drawing */
-static uint16_t blit_buffer[FONT_LARGE_MAX_GLYPH_WIDTH*FONT_LARGE_MAX_GLYPH_HEIGHT];
+static uint16_t blit_buffer[FONT_LARGE_MAX_GLYPH_WIDTH*FONT_LARGE_MAX_GLYPH_HEIGHT+1]; // +1 for uint32_t alignment, if odd number of pixels
 
 /**
   * @brief Initialize the TFT module
@@ -74,6 +75,38 @@ void tft_init(void)
 void tft_clear(void)
 {
     ili9163c_fill_screen(BLACK);
+}
+
+/**
+  * @brief Decode 4bpp glyph to TFT-native bgr565 format
+  * @param target the buffer to write the resulting image data to
+  * @param source the input bytes from the font definition
+  * @param nbytes number of bytes in the source glyph array
+  * @param invert whether to invert the glyph
+  * @param color color mask to use when decoding
+  * @retval none
+  */
+void tft_decode_glyph(uint16_t *target, const uint8_t *source, size_t nbytes, bool invert, uint16_t color)
+{
+    uint32_t *target32 = (uint32_t*)target;
+    if(invert)
+    {
+        for(size_t i = 0; i < nbytes; ++i)
+            *target32++ = mono4bpp_lookup[source[i]] ^ (~(uint32_t)0);
+    }
+    else if(color != WHITE)
+    {
+        uint32_t color_mask = ((uint32_t)ILI9163C_COLOR_TO_BITMASK(color) << 16) | ILI9163C_COLOR_TO_BITMASK(color);
+        if(is_inverted)
+            color_mask = ~color_mask;
+        for(size_t i = 0; i < nbytes; ++i)
+            *target32++ = mono4bpp_lookup[source[i]] & color_mask;
+    }
+    else
+    {
+        for(size_t i = 0; i < nbytes; ++i)
+            *target32++ = mono4bpp_lookup[source[i]];
+    }
 }
 
 /**
@@ -108,7 +141,7 @@ void tft_putch(tft_font_size_t size, char ch, uint32_t x, uint32_t y, uint32_t w
 {
     uint32_t glyph_index, glyph_width, glyph_height, glyph_size;
     uint32_t xpos, ypos;
-    uint16_t *glyph;
+    const uint8_t *glyph;
     switch(ch) {
         case '0': case '1': case '2': case '3': case '4':
         case '5': case '6': case '7': case '8': case '9':
@@ -130,19 +163,19 @@ void tft_putch(tft_font_size_t size, char ch, uint32_t x, uint32_t y, uint32_t w
     switch(size) {
         case FONT_SMALL:
             glyph_width = font_small_widths[glyph_index];
-            glyph = (uint16_t*) font_small_pix[glyph_index];
+            glyph = font_small_pix[glyph_index];
             glyph_size = font_small_sizes[glyph_index];
             glyph_height = font_small_height;
             break;
         case FONT_MEDIUM:
             glyph_width = font_medium_widths[glyph_index];
-            glyph = (uint16_t*) font_medium_pix[glyph_index];
+            glyph = font_medium_pix[glyph_index];
             glyph_size = font_medium_sizes[glyph_index];
             glyph_height = font_medium_height;
             break;
         case FONT_LARGE:
             glyph_width = font_large_widths[glyph_index];
-            glyph = (uint16_t*) font_large_pix[glyph_index];
+            glyph = font_large_pix[glyph_index];
             glyph_size = font_large_sizes[glyph_index];
             glyph_height = font_large_height;
             break;
@@ -151,36 +184,7 @@ void tft_putch(tft_font_size_t size, char ch, uint32_t x, uint32_t y, uint32_t w
             return;
     }
 
-    if (invert) {
-        uint32_t *p = (uint32_t*) &blit_buffer;
-        memcpy(blit_buffer, glyph, glyph_size);
-        uint32_t i;
-        for (i = 0; i < glyph_size / sizeof(uint32_t); i++) { // Invert 32 bits in each go
-            p[i] = ~p[i];
-        }
-        if (glyph_size % sizeof(uint32_t)) { // Bits remaining?
-            blit_buffer[sizeof(uint16_t)*i] = ~blit_buffer[sizeof(uint16_t)*i];
-        }
-        glyph = blit_buffer;
-    }
-    else if (color != WHITE) {
-        color = ILI9163C_COLOR_TO_BITMASK(color);
-        if(is_inverted) {
-            color = ~color;
-        }
-        uint32_t color_mask = (((uint32_t)color & 0xFFFF) << 16) | (color & 0xFFFF);
-        uint32_t *p = (uint32_t*) &blit_buffer[0];
-        /** @todo Perform memcpy and inversion operation */
-        memcpy(blit_buffer, glyph, glyph_size);
-        uint32_t i;
-        for (i = 0; i < glyph_size/sizeof(uint32_t); i++) {
-            p[i] &= color_mask;
-        }
-        if (glyph_size % sizeof(uint32_t)) { // Bits remaining?
-            blit_buffer[sizeof(uint16_t)*i] &= color_mask;
-        }
-        glyph = blit_buffer;
-    }
+    tft_decode_glyph(blit_buffer, glyph, glyph_size, invert, color);
 
     /** Position glyph in center of region */
     xpos = x+(w-glyph_width)/2;
@@ -189,7 +193,7 @@ void tft_putch(tft_font_size_t size, char ch, uint32_t x, uint32_t y, uint32_t w
     /** Draw the glyph */
     ili9163c_set_window(xpos, ypos, xpos + glyph_width-1, ypos + glyph_height-1);
     gpio_set(TFT_A0_PORT, TFT_A0_PIN);
-    (void) spi_dma_transceive((uint8_t*) glyph, sizeof(uint16_t) * glyph_width * glyph_height, 0, 0);
+    (void) spi_dma_transceive((uint8_t*) blit_buffer, sizeof(uint16_t) * glyph_width * glyph_height, 0, 0);
 
     /** If our glyph hasn't filled the entire region fill the remainder in with black or white depending on if we're inverting */
     uint16_t fill_color = invert ? WHITE : BLACK;

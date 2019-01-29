@@ -45,6 +45,17 @@ void tft_init(void);
 void tft_clear(void);
 
 /**
+  * @brief Decode 4bpp glyph to TFT-native bgr565 format
+  * @param target the buffer to write the resulting image data to
+  * @param source the input bytes from the font definition
+  * @param nbytes number of bytes in the source glyph array
+  * @param invert whether to invert the glyph
+  * @param color color mask to use when decoding
+  * @retval none
+  */
+void tft_decode_glyph(uint16_t *target, const uint8_t *source, size_t nbytes, bool invert, uint16_t color);
+
+/**
   * @brief Blit graphics on TFT
   * @param bits graphics in bgr565 format mathing the specified size
   * @param width width of data
