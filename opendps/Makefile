@@ -79,6 +79,7 @@ OBJS = \
     ringbuf.o \
     ili9163c.o \
     mini-printf.o \
+    gfx_lookup.o \
     font-small.o \
     font-medium.o \
     font-large.o \
@@ -122,6 +123,7 @@ endif
 include ../libopencm3.target.mk
 
 fonts:
+	@python ./gen_lookup.py -l -o gfx_lookup
 	@python ./gen_lookup.py -f $(FONT_FILE) -s $(FONT_SMALL_SIZE) -o small
 	@python ./gen_lookup.py -f $(FONT_FILE) -s $(FONT_MEDIUM_SIZE) -o medium
 	@python ./gen_lookup.py -f $(FONT_FILE) -s $(FONT_LARGE_SIZE) -o large
