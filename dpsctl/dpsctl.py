@@ -547,7 +547,7 @@ def run_upgrade(comms, fw_file_name, args):
         counter = 0
         for chunk in chunk_from_file(fw_file_name, chunk_size):
             counter += len(chunk)
-            sys.stdout.write("\rDownload progress: {:d}% ".format(counter / len(content) * 100))
+            sys.stdout.write("\rDownload progress: {:d}% ".format(int(counter / len(content) * 100)))
             sys.stdout.flush()
             # print(" {:d} bytes".format(counter))
 
