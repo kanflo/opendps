@@ -396,6 +396,21 @@ static void main_ui_tick(void)
     (void) v_out_raw;
     input_voltage.value = pwrctl_calc_vin(v_in_raw);
     input_voltage.ui.draw(&input_voltage.ui);
+
+    uint32_t y_offset = 0;
+    uint32_t x_offset = 0;
+
+    for (uint32_t y = 0 + y_offset; y < 128 + y_offset; y++) {
+        ili9163c_draw_pixel(x_offset, y, YELLOW);
+//        ili9163c_draw_pixel(127, y, YELLOW); // No adding x_offset here :-/
+        ili9163c_draw_pixel(127 + x_offset, y, YELLOW); // Doesn't appear
+    }
+
+    for (uint32_t x = 0 + x_offset; x < 128 + x_offset; x++) {
+        ili9163c_draw_pixel(x, y_offset, YELLOW);
+//        ili9163c_draw_pixel(x, 127, YELLOW); // No adding y_offset here :-/
+        ili9163c_draw_pixel(x, 127 + y_offset, YELLOW); // Doesn't appear
+    }
 }
 
 /**
