@@ -10,12 +10,13 @@
 #define FONT_SMALL_MAX_DIGIT_WIDTH  (6)
 #define FONT_SMALL_DOT_WIDTH        (2)
 #define FONT_SMALL_SPACING          (1)
+#define FONT_SMALL_SPACE_WIDTH      (4)
 
 extern const uint32_t font_small_height;
 extern const uint32_t font_small_num_glyphs;
-extern const uint8_t font_small_widths[13];
-extern const uint8_t font_small_sizes[13];
-extern const uint16_t font_small_offsets[13];
+extern const uint8_t font_small_widths[96];
+extern const uint8_t font_small_sizes[96];
+extern const uint16_t font_small_offsets[96];
 extern const uint8_t font_small_pixdata[234];
 
 #endif // __FONT_SMALL_H__

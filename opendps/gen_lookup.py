@@ -124,6 +124,16 @@ def generate_font_images(font_fname, characters, font_size):
     return images
 
 """
+Determine the width of a space character
+"""
+def get_space_width(font_fname, font_size):
+    font = ImageFont.truetype(font_fname, font_size)
+    dummy = Image.new("RGB", (100,100), (0,0,0))
+    draw = ImageDraw.Draw(dummy)
+    (width,_) = draw.textsize(' ', font=font)
+    return width
+
+"""
 Convert the specified font to a pair of .c/.h C language lookup tables in mono 2bpp format
 """
 def convert_font_to_c(font_fname, characters, font_size, font_spacing, output_filename):
@@ -136,6 +146,14 @@ def convert_font_to_c(font_fname, characters, font_size, font_spacing, output_fi
     character_data = []
     for i in range(len(characters)):
         character_data.append(image_to_mono2bpp(character_images[i]))
+
+    character_sizes = [0] * 96
+    character_widths = [0] * 96
+    character_offsets = [0] * 96
+
+    # Measure the space character width
+    space_width = get_space_width(font_fname, font_size)
+    character_widths[ord(' ')-0x20] = space_width
 
     # Generate the output filenames
     font_source_filename = "font-%s.c" % (output_filename)
@@ -155,12 +173,12 @@ def convert_font_to_c(font_fname, characters, font_size, font_spacing, output_fi
         total_byte_count += len(character_data[i])
 
     # Generate character data lookup tables
-    character_offsets = []
     current_offset = 0
     font_source_file.write("const uint8_t font_%s_pixdata[%d] = {" % (output_filename, total_byte_count))
     for i in range(len(characters)):
-        font_source_file.write("\n  // %s\n " % (characters[i]))
-        character_offsets.append(current_offset)
+        idx = ord(characters[i]) - 0x20
+        font_source_file.write("\n  /* '%s' */\n " % (characters[i]))
+        character_offsets[idx] = current_offset
         current_offset += len(character_data[i])
         count = 0
         for j in character_data[i]:
@@ -173,21 +191,26 @@ def convert_font_to_c(font_fname, characters, font_size, font_spacing, output_fi
     font_source_file.write("\n};\n\n")
 
     # Generate glyph widths
-    font_source_file.write("const uint8_t font_%s_widths[%d] = {\n  " % (output_filename, len(characters)))
     character_max_width = 0
     digit_max_width = 0
-    count = 0
     for i in range(len(characters)):
+        idx = ord(characters[i]) - 0x20
         (width, _) = character_images[i].size
-        font_source_file.write("%d" % (width))
+        character_widths[idx] = width
+        character_sizes[idx] = len(character_data[i])
         if width > character_max_width:
             character_max_width = width # Find the maximum glyph width
         if width > digit_max_width and characters[i].isdigit():
             digit_max_width = width # Find the maximum digit width
+
+    font_source_file.write("const uint8_t font_%s_widths[96] = {\n " % (output_filename))
+    count = 0
+    for i in range(len(character_widths)):
+        font_source_file.write(" %4du," % (character_widths[i]))
         count += 1
-        if count < len(characters):
-            font_source_file.write(",\n  ")
-    font_source_file.write("\n};\n\n")
+        if not (count % 8): # Place a new line every 8 values
+            font_source_file.write("\n ")
+    font_source_file.write("};\n\n")
 
     # If no spacing parameter is set then generate one based on the max glyph width
     if not args.font_spacing:
@@ -196,20 +219,24 @@ def convert_font_to_c(font_fname, characters, font_size, font_spacing, output_fi
             args.font_spacing = 1 # Spacing should be at least one pixel
 
     # Generate glyph sizes
-    font_source_file.write("const uint8_t font_%s_sizes[%d] = {\n  " % (output_filename, len(characters)))
+    font_source_file.write("const uint8_t font_%s_sizes[96] = {\n " % (output_filename))
     count = 0
-    for i in range(len(characters)):
-        font_source_file.write("%d" % (len(character_data[i])))
+    for i in range(len(character_sizes)):
+        font_source_file.write(" %4du," % (character_sizes[i]))
         count += 1
-        if count < len(characters):
-            font_source_file.write(",\n  ")
-    font_source_file.write("\n};\n\n")
+        if not (count % 8): # Place a new line every 8 values
+            font_source_file.write("\n ")
+    font_source_file.write("};\n\n")
 
     # Generate glyph pix pointers
-    font_source_file.write("const uint16_t font_%s_offsets[%d] = {" % (output_filename, len(character_offsets)))
+    font_source_file.write("const uint16_t font_%s_offsets[96] = {\n " % (output_filename))
+    count = 0
     for i in range(len(character_offsets)):
-        font_source_file.write("\n  %d," % (character_offsets[i]))
-    font_source_file.write("\n};\n\n")
+        font_source_file.write(" %4du," % (character_offsets[i]))
+        count += 1
+        if not (count % 8): # Place a new line every 8 values
+            font_source_file.write("\n ")
+    font_source_file.write("};\n\n")
 
     font_source_file.close()
 
@@ -233,13 +260,14 @@ def convert_font_to_c(font_fname, characters, font_size, font_spacing, output_fi
         (dot_width, _) = character_images[dot_index].size
         font_header_file.write("#define FONT_%s_DOT_WIDTH        (%d)\n" % (output_filename.upper(), dot_width))
 
-    font_header_file.write("#define FONT_%s_SPACING          (%d)\n\n" % (output_filename.upper(), args.font_spacing))
+    font_header_file.write("#define FONT_%s_SPACING          (%d)\n" % (output_filename.upper(), args.font_spacing))
+    font_header_file.write("#define FONT_%s_SPACE_WIDTH      (%d)\n\n" % (output_filename.upper(), space_width))
 
     font_header_file.write("extern const uint32_t font_%s_height;\n" % (output_filename))
     font_header_file.write("extern const uint32_t font_%s_num_glyphs;\n" % (output_filename))
-    font_header_file.write("extern const uint8_t font_%s_widths[%d];\n" % (output_filename, len(characters)))
-    font_header_file.write("extern const uint8_t font_%s_sizes[%d];\n" % (output_filename, len(characters)))
-    font_header_file.write("extern const uint16_t font_%s_offsets[%d];\n" % (output_filename, len(characters)))
+    font_header_file.write("extern const uint8_t font_%s_widths[96];\n" % (output_filename))
+    font_header_file.write("extern const uint8_t font_%s_sizes[96];\n" % (output_filename))
+    font_header_file.write("extern const uint16_t font_%s_offsets[96];\n" % (output_filename))
     font_header_file.write("extern const uint8_t font_%s_pixdata[%d];\n\n" % (output_filename, total_byte_count))
 
     font_header_file.write("#endif // __FONT_%s_H__" % (output_filename.upper()))
@@ -311,6 +339,7 @@ def main():
     parser.add_argument('-s',  '--font_size',    type=int, help="The font pt size to use")
     parser.add_argument('-sp', '--font_spacing', type=int, help="The number of pixels to space characters by")
     parser.add_argument('-o',  '--output',       type=str, required=True, help="The output file name")
+    parser.add_argument('-a',  '--ascii',                  help="Whether to generate the entire ascii character set", dest="ascii", action="store_true")
 
     group = parser.add_mutually_exclusive_group(required=True)
     group.add_argument('-f',  '--font_file',    type=str, help="The font to use")
@@ -330,6 +359,10 @@ def main():
         # If this is a font file ensure that a font_size has been specified
         if args.font_size:
             characters = "0123456789.VA" # The characters to generate a lookup table of
+            if args.ascii:
+                characters = ""
+                for ch in range(0x21,0x7F): # skip <Space>, <Del>
+                    characters += chr(ch)
             convert_font_to_c(args.font_file, characters, args.font_size, args.font_spacing, args.output)
         else:
             print("error: argument -s/--font_size is required for fonts")

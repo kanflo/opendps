@@ -45,7 +45,7 @@ void tft_init(void);
 void tft_clear(void);
 
 /**
-  * @brief Decode 4bpp glyph to TFT-native bgr565 format
+  * @brief Decode 2bpp glyph to TFT-native bgr565 format
   * @param target the buffer to write the resulting image data to
   * @param source the input bytes from the font definition
   * @param nbytes number of bytes in the source glyph array
