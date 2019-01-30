@@ -28,9 +28,10 @@
 #include "uui_number.h"
 #include "tft.h"
 #include "ili9163c.h"
-#include "font-small.h"
-#include "font-medium.h"
-#include "font-large.h"
+#include "font-full_small.h"
+#include "font-meter_small.h"
+#include "font-meter_medium.h"
+#include "font-meter_large.h"
 
 #define MAX(a,b) (((a)>(b))?(a):(b))
 
@@ -122,23 +123,29 @@ static uint32_t number_draw_width(ui_item_t *_item)
     uint32_t total_width = 0;
 
     switch (item->font_size) {
-      case FONT_SMALL:
-        digit_w = FONT_SMALL_MAX_DIGIT_WIDTH;
-        max_w = FONT_SMALL_MAX_GLYPH_WIDTH;
-        dot_width = item->pad_dot ? MAX(FONT_SMALL_MAX_DIGIT_WIDTH, FONT_SMALL_DOT_WIDTH) : FONT_SMALL_DOT_WIDTH;
-        spacing = FONT_SMALL_SPACING;
+      case FONT_FULL_SMALL:
+        digit_w = FONT_FULL_SMALL_MAX_DIGIT_WIDTH;
+        max_w = FONT_FULL_SMALL_MAX_GLYPH_WIDTH;
+        dot_width = item->pad_dot ? MAX(FONT_FULL_SMALL_MAX_DIGIT_WIDTH, FONT_FULL_SMALL_DOT_WIDTH) : FONT_FULL_SMALL_DOT_WIDTH;
+        spacing = FONT_FULL_SMALL_SPACING;
         break;
-      case FONT_MEDIUM:
-        digit_w = FONT_MEDIUM_MAX_DIGIT_WIDTH;
-        max_w = FONT_MEDIUM_MAX_GLYPH_WIDTH;
-        dot_width = item->pad_dot ? MAX(FONT_MEDIUM_MAX_DIGIT_WIDTH, FONT_MEDIUM_DOT_WIDTH) : FONT_MEDIUM_DOT_WIDTH;
-        spacing = FONT_MEDIUM_SPACING;
+      case FONT_METER_SMALL:
+        digit_w = FONT_METER_SMALL_MAX_DIGIT_WIDTH;
+        max_w = FONT_METER_SMALL_MAX_GLYPH_WIDTH;
+        dot_width = item->pad_dot ? MAX(FONT_METER_SMALL_MAX_DIGIT_WIDTH, FONT_METER_SMALL_DOT_WIDTH) : FONT_METER_SMALL_DOT_WIDTH;
+        spacing = FONT_METER_SMALL_SPACING;
         break;
-      case FONT_LARGE:
-        digit_w = FONT_LARGE_MAX_DIGIT_WIDTH;
-        max_w = FONT_LARGE_MAX_GLYPH_WIDTH;
-        dot_width = item->pad_dot ? MAX(FONT_LARGE_MAX_DIGIT_WIDTH, FONT_LARGE_DOT_WIDTH) : FONT_LARGE_DOT_WIDTH;
-        spacing = FONT_LARGE_SPACING;
+      case FONT_METER_MEDIUM:
+        digit_w = FONT_METER_MEDIUM_MAX_DIGIT_WIDTH;
+        max_w = FONT_METER_MEDIUM_MAX_GLYPH_WIDTH;
+        dot_width = item->pad_dot ? MAX(FONT_METER_MEDIUM_MAX_DIGIT_WIDTH, FONT_METER_MEDIUM_DOT_WIDTH) : FONT_METER_MEDIUM_DOT_WIDTH;
+        spacing = FONT_METER_MEDIUM_SPACING;
+        break;
+      case FONT_METER_LARGE:
+        digit_w = FONT_METER_LARGE_MAX_DIGIT_WIDTH;
+        max_w = FONT_METER_LARGE_MAX_GLYPH_WIDTH;
+        dot_width = item->pad_dot ? MAX(FONT_METER_LARGE_MAX_DIGIT_WIDTH, FONT_METER_LARGE_DOT_WIDTH) : FONT_METER_LARGE_DOT_WIDTH;
+        spacing = FONT_METER_LARGE_SPACING;
         break;
       default:
         /* Can't do anything if the wrong font size was supplied. */
@@ -198,32 +205,39 @@ static void number_draw(ui_item_t *_item)
     uint32_t digit_w, max_w, h, dot_width, spacing;
 
     switch (item->font_size) {
-      case FONT_SMALL:
-        digit_w = FONT_SMALL_MAX_DIGIT_WIDTH;
-        max_w = FONT_SMALL_MAX_GLYPH_WIDTH;
-        h = FONT_SMALL_MAX_GLYPH_HEIGHT;
-        dot_width = item->pad_dot ? MAX(FONT_SMALL_MAX_DIGIT_WIDTH, FONT_SMALL_DOT_WIDTH) : FONT_SMALL_DOT_WIDTH;
-        spacing = FONT_SMALL_SPACING;
+      case FONT_FULL_SMALL:
+        digit_w = FONT_FULL_SMALL_MAX_DIGIT_WIDTH;
+        max_w = FONT_FULL_SMALL_MAX_GLYPH_WIDTH;
+        h = FONT_FULL_SMALL_MAX_GLYPH_HEIGHT;
+        dot_width = item->pad_dot ? MAX(FONT_FULL_SMALL_MAX_DIGIT_WIDTH, FONT_FULL_SMALL_DOT_WIDTH) : FONT_FULL_SMALL_DOT_WIDTH;
+        spacing = FONT_FULL_SMALL_SPACING;
         break;
-      case FONT_MEDIUM:
-        digit_w = FONT_MEDIUM_MAX_DIGIT_WIDTH;
-        max_w = FONT_MEDIUM_MAX_GLYPH_WIDTH;
-        h = FONT_MEDIUM_MAX_GLYPH_HEIGHT;
-        dot_width = item->pad_dot ? MAX(FONT_MEDIUM_MAX_DIGIT_WIDTH, FONT_MEDIUM_DOT_WIDTH) : FONT_MEDIUM_DOT_WIDTH;
-        spacing = FONT_MEDIUM_SPACING;
+      case FONT_METER_SMALL:
+        digit_w = FONT_METER_SMALL_MAX_DIGIT_WIDTH;
+        max_w = FONT_METER_SMALL_MAX_GLYPH_WIDTH;
+        h = FONT_METER_SMALL_MAX_GLYPH_HEIGHT;
+        dot_width = item->pad_dot ? MAX(FONT_METER_SMALL_MAX_DIGIT_WIDTH, FONT_METER_SMALL_DOT_WIDTH) : FONT_METER_SMALL_DOT_WIDTH;
+        spacing = FONT_METER_SMALL_SPACING;
         break;
-      case FONT_LARGE:
-        digit_w = FONT_LARGE_MAX_DIGIT_WIDTH;
-        max_w = FONT_LARGE_MAX_GLYPH_WIDTH;
-        h = FONT_LARGE_MAX_GLYPH_HEIGHT;
-        dot_width = item->pad_dot ? MAX(FONT_LARGE_MAX_DIGIT_WIDTH, FONT_LARGE_DOT_WIDTH) : FONT_LARGE_DOT_WIDTH;
-        spacing = FONT_LARGE_SPACING;
+      case FONT_METER_MEDIUM:
+        digit_w = FONT_METER_MEDIUM_MAX_DIGIT_WIDTH;
+        max_w = FONT_METER_MEDIUM_MAX_GLYPH_WIDTH;
+        h = FONT_METER_MEDIUM_MAX_GLYPH_HEIGHT;
+        dot_width = item->pad_dot ? MAX(FONT_METER_MEDIUM_MAX_DIGIT_WIDTH, FONT_METER_MEDIUM_DOT_WIDTH) : FONT_METER_MEDIUM_DOT_WIDTH;
+        spacing = FONT_METER_MEDIUM_SPACING;
+        break;
+      case FONT_METER_LARGE:
+        digit_w = FONT_METER_LARGE_MAX_DIGIT_WIDTH;
+        max_w = FONT_METER_LARGE_MAX_GLYPH_WIDTH;
+        h = FONT_METER_LARGE_MAX_GLYPH_HEIGHT;
+        dot_width = item->pad_dot ? MAX(FONT_METER_LARGE_MAX_DIGIT_WIDTH, FONT_METER_LARGE_DOT_WIDTH) : FONT_METER_LARGE_DOT_WIDTH;
+        spacing = FONT_METER_LARGE_SPACING;
         break;
       default:
         /* Can't do anything if the wrong font size was supplied. Drop out for safety. */
         return;
     }
-    
+
     uint32_t xpos = _item->x;
     uint16_t color = item->color;
     uint32_t cur_digit = item->num_digits + item->num_decimals - 1; /** Which digit are we currently drawing? 0 is the right most digit */

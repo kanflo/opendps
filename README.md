@@ -152,7 +152,13 @@ The fourth byte from the end in the received data (0x03 in this example) will te
 If you would like to use a your own font for OpenDPS you may do so by doing the following:
 
 ```
-% make -C opendps fonts FONT_FILE=<path_to_font> FONT_SMALL_SIZE=18 FONT_MEDIUM_SIZE=24 FONT_LARGE_SIZE=48
+% make -C opendps fonts \
+    METER_FONT_FILE=<path_to_font> \
+    METER_FONT_SMALL_SIZE=18 \
+    METER_FONT_MEDIUM_SIZE=24 \
+    METER_FONT_LARGE_SIZE=48 \
+    FULL_FONT_FILE=<path_to_font> \
+    FULL_FONT_SMALL_SIZE=15
 ```
 
 Supported fonts are .ttf or .otf

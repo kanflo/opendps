@@ -44,9 +44,10 @@
 #include "gfx-thermometer.h"
 #include "gfx-power.h"
 #include "gfx-wifi.h"
-#include "font-small.h"
-#include "font-medium.h"
-#include "font-large.h"
+#include "font-full_small.h"
+#include "font-meter_small.h"
+#include "font-meter_medium.h"
+#include "font-meter_large.h"
 #include "gpio.h"
 #include "past.h"
 #include "pastunits.h"
@@ -155,7 +156,7 @@ ui_number_t input_voltage = {
         .y = 0,
         .can_focus = false,
     },
-    .font_size = FONT_SMALL,
+    .font_size = FONT_METER_SMALL,
     .alignment = ui_text_right_aligned,
     .pad_dot = false,
     .color = COLOR_INPUT,
@@ -320,7 +321,7 @@ set_param_status_t opendps_set_calibration(char *name, float *value)
     } else {
         return ps_not_supported;
     }
-    
+
     if (!past_write_unit(&g_past, param, (void*) value, sizeof(*value))) {
         dbg_printf("Error: past write opendps set calibration failed!\n");
         return ps_flash_error;
@@ -418,7 +419,7 @@ static void ui_init(void)
     uui_init(&main_ui, &g_past);
     number_init(&input_voltage);
     input_voltage.ui.x = 105;
-    input_voltage.ui.y = ui_height - font_small_height;
+    input_voltage.ui.y = ui_height - font_meter_small_height;
     uui_add_screen(&main_ui, &main_screen);
     uui_activate(&main_ui);
 }

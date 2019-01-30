@@ -78,6 +78,14 @@ void ili9163c_init(void)
     chip_init();
 }
 
+void ili9163c_get_geometry(uint16_t *width, uint16_t *height)
+{
+    if(width)
+        *width = _GRAMWIDTH;
+    if(height)
+        *height = _GRAMHEIGH;
+}
+
 static void write_command(uint8_t c)
 {
     gpio_clear(TFT_A0_PORT, TFT_A0_PIN);
@@ -225,7 +233,7 @@ void ili9163c_fill_screen(uint16_t color)
 {
     uint32_t i;
     uint8_t hi = color >> 8;
-    uint8_t lo = color & 0xff; 
+    uint8_t lo = color & 0xff;
     uint8_t fill[] = {hi, lo, hi, lo, hi, lo, hi, lo, hi, lo, hi, lo, hi, lo, hi, lo};
     uint8_t dummy[sizeof(fill)];
     gpio_clear(TFT_A0_PORT, TFT_A0_PIN);
