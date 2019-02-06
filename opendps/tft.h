@@ -27,9 +27,10 @@
 
 typedef enum
 {
-    FONT_SMALL,
-    FONT_MEDIUM,
-    FONT_LARGE
+    FONT_FULL_SMALL,
+    FONT_METER_SMALL,
+    FONT_METER_MEDIUM,
+    FONT_METER_LARGE
 } tft_font_size_t;
 
 /**
@@ -45,6 +46,43 @@ void tft_init(void);
 void tft_clear(void);
 
 /**
+  * @brief Determine glyph spacing given the font size
+  * @param size font size
+  * @retval the spacing
+  */
+uint8_t tft_get_glyph_spacing(tft_font_size_t size);
+
+/**
+  * @brief Determine glyph metrics given the supplied character and font size
+  * @param size font size
+  * @param ch the character (must be a supported character)
+  * @param glyph_width (out) the width in pixels of the character
+  * @param glyph_height (out) the height in pixels of the character
+  * @retval none
+  */
+void tft_get_glyph_metrics(tft_font_size_t size, char ch, uint32_t *glyph_width, uint32_t *glyph_height);
+
+/**
+  * @brief Determine glyph pixel data given the supplied character and font size
+  * @param size font size
+  * @param ch the character (must be a supported character)
+  * @param glyph_pixdata (out) the pointer to the pixel data for the glyph
+  * @param glyph_size (out) the number of bytes taken up in pixdata for this glyph
+  * @retval none
+  */
+void tft_get_glyph_pixdata(tft_font_size_t size, char ch, const uint8_t **glyph_pixdata, uint32_t *glyph_size);
+
+/**
+  * @brief Decode 2bpp glyph to TFT-native bgr565 format into the tft's blit_buffer
+  * @param pixdata the input bytes from the font definition
+  * @param nbytes number of bytes in the source glyph array
+  * @param invert whether to invert the glyph
+  * @param color color mask to use when decoding
+  * @retval none
+  */
+void tft_decode_glyph(const uint8_t *pixdata, size_t nbytes, bool invert, uint16_t color);
+
+/**
   * @brief Blit graphics on TFT
   * @param bits graphics in bgr565 format mathing the specified size
   * @param width width of data
@@ -57,7 +95,7 @@ void tft_blit(uint16_t *bits, uint32_t width, uint32_t height, uint32_t x, uint3
 
 /**
   * @brief Blit character on TFT
-  * @param size size of character
+  * @param size font size used
   * @param ch the character (must be a supported character)
   * @param x x position
   * @param y y position
@@ -65,9 +103,33 @@ void tft_blit(uint16_t *bits, uint32_t width, uint32_t height, uint32_t x, uint3
   * @param h height of bounding box
   * @param color color of the glyph
   * @param invert if true, the character will be inverted
+  * @retval the width of the character drawn
+  */
+uint8_t tft_putch(tft_font_size_t size, char ch, uint32_t x, uint32_t y, uint32_t w, uint32_t h, uint16_t color, bool invert);
+
+/**
+  * @brief Determine string metrics given the supplied string and font size
+  * @param size font size
+  * @param str the string
+  * @param string_width (out) the width in pixels of the string
+  * @param string_height (out) the height in pixels of the string
   * @retval none
   */
-void tft_putch(tft_font_size_t size, char ch, uint32_t x, uint32_t y, uint32_t w, uint32_t h, uint16_t color, bool invert);
+void tft_get_string_metrics(tft_font_size_t size, const char *str, uint32_t *string_width, uint32_t *string_height);
+
+/**
+  * @brief Blit string on TFT, anchored to bottom-left
+  * @param size size of character
+  * @param str the string (must be a supported character)
+  * @param x x position (left-side of string)
+  * @param y y position (bottom of string)
+  * @param w width of bounding box
+  * @param h height of bounding box
+  * @param color color of the string
+  * @param invert if true, the string will be inverted
+  * @retval the width of the string drawn
+  */
+uint16_t tft_puts(tft_font_size_t size, const char *str, uint32_t x, uint32_t y, uint32_t w, uint32_t h, uint16_t color, bool invert);
 
 /**
   * @brief Fill area with specified pattern

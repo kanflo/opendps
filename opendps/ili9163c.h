@@ -18,7 +18,7 @@
  * SOFTWARE.
  *
  * ILI9163C driver based on TFT_ILI9163C: https://github.com/sumotoy/TFT_ILI9163C
- * Copyright (c) 2014, .S.U.M.O.T.O.Y., coded by Max MC Costa.    
+ * Copyright (c) 2014, .S.U.M.O.T.O.Y., coded by Max MC Costa.
  *
  */
 
@@ -51,6 +51,7 @@
 
 
 void ili9163c_init(void);
+void ili9163c_get_geometry(uint16_t *width, uint16_t *height);
 void ili9163c_set_window(uint16_t x0, uint16_t y0, uint16_t x1, uint16_t y1);
 void ili9163c_push_color(uint16_t color);
 void ili9163c_fill_screen(uint16_t color);

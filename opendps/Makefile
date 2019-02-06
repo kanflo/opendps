@@ -25,10 +25,12 @@ WIFI := 1
 DEBUG ?= 0
 
 # Font file
-FONT_FILE ?= gfx/Ubuntu-C.ttf
-FONT_SMALL_SIZE ?= 18
-FONT_MEDIUM_SIZE ?= 24
-FONT_LARGE_SIZE ?= 48
+METER_FONT_FILE ?= gfx/Ubuntu-C.ttf
+METER_FONT_SMALL_SIZE ?= 18
+METER_FONT_MEDIUM_SIZE ?= 24
+METER_FONT_LARGE_SIZE ?= 48
+FULL_FONT_FILE ?= gfx/ProggyClean.ttf
+FULL_FONT_SMALL_SIZE ?= 16
 
 # Color space for the DPS display. Most units use GBR but RGB has been spotted in the wild
 COLORSPACE ?= 0
@@ -80,9 +82,11 @@ OBJS = \
     ringbuf.o \
     ili9163c.o \
     mini-printf.o \
-    font-small.o \
-    font-medium.o \
-    font-large.o \
+    gfx_lookup.o \
+    font-full_small.o \
+    font-meter_small.o \
+    font-meter_medium.o \
+    font-meter_large.o \
     gfx-cc.o \
     gfx-crosshair.o \
     gfx-cv.o \
@@ -124,9 +128,11 @@ endif
 include ../libopencm3.target.mk
 
 fonts:
-	@python ./gen_lookup.py -f $(FONT_FILE) -s $(FONT_SMALL_SIZE) -o small
-	@python ./gen_lookup.py -f $(FONT_FILE) -s $(FONT_MEDIUM_SIZE) -o medium
-	@python ./gen_lookup.py -f $(FONT_FILE) -s $(FONT_LARGE_SIZE) -o large
+	@python ./gen_lookup.py -l -o gfx_lookup
+	@python ./gen_lookup.py -f $(FULL_FONT_FILE) -s $(FULL_FONT_SMALL_SIZE) -o full_small -a
+	@python ./gen_lookup.py -f $(METER_FONT_FILE) -s $(METER_FONT_SMALL_SIZE) -o meter_small
+	@python ./gen_lookup.py -f $(METER_FONT_FILE) -s $(METER_FONT_MEDIUM_SIZE) -o meter_medium
+	@python ./gen_lookup.py -f $(METER_FONT_FILE) -s $(METER_FONT_LARGE_SIZE) -o meter_large
 
 test:
 	@make -C tests

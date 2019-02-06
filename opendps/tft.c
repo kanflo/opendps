@@ -37,10 +37,12 @@
 #include "hw.h"
 #include "tft.h"
 #include "ili9163c.h"
-#include "font-small.h"
-#include "font-medium.h"
-#include "font-large.h"
+#include "font-full_small.h"
+#include "font-meter_small.h"
+#include "font-meter_medium.h"
+#include "font-meter_large.h"
 #include "dbg_printf.h"
+#include "gfx_lookup.h"
 
 static bool is_inverted;
 
@@ -54,7 +56,8 @@ static bool is_inverted;
     ((ILI9163C_COLORSPACE_TWIDDLE(color) >> 8) & 0xFF) )
 
 /** Buffers for speeding up drawing */
-static uint16_t blit_buffer[FONT_LARGE_MAX_GLYPH_WIDTH*FONT_LARGE_MAX_GLYPH_HEIGHT];
+
+static uint16_t blit_buffer[((4*FONT_METER_LARGE_MAX_GLYPH_WIDTH*FONT_METER_LARGE_MAX_GLYPH_HEIGHT)+3)/4]; // Alignment for being able to lay down uint64_t in one go, without dealing with padding
 
 /**
   * @brief Initialize the TFT module
@@ -77,6 +80,50 @@ void tft_clear(void)
 }
 
 /**
+  * @brief Decode 2bpp glyph to TFT-native bgr565 format into the tft's blit_buffer
+  * @param pixdata the input bytes from the font definition
+  * @param nbytes number of bytes in the source glyph array
+  * @param invert whether to invert the glyph
+  * @param color color mask to use when decoding
+  * @retval none
+  */
+void tft_decode_glyph(const uint8_t *pixdata, size_t nbytes, bool invert, uint16_t color)
+{
+    if(nbytes == 0) { /* we're attempting to draw a space */
+        /** Wipe out the target buffer if we're drawing a space */
+        memset(blit_buffer, (invert ? WHITE : BLACK) & 0xFF, sizeof(blit_buffer));
+    }
+    else {
+        uint32_t *target32 = (uint32_t*)blit_buffer;
+        if(invert) {
+            for(size_t i = 0; i < nbytes; ++i) {
+                *target32++ = ~mono2bpp_lookup[pixdata[i] & 0xF];
+                *target32++ = ~mono2bpp_lookup[pixdata[i] >> 4];
+            }
+        }
+        else if(color != WHITE) {
+            uint32_t color_mask =
+                ((uint32_t)ILI9163C_COLOR_TO_BITMASK(color) << 16) |
+                ILI9163C_COLOR_TO_BITMASK(color);
+
+            if(is_inverted)
+                color_mask = ~color_mask;
+
+            for(size_t i = 0; i < nbytes; ++i) {
+                *target32++ = mono2bpp_lookup[pixdata[i] & 0xF] & color_mask;
+                *target32++ = mono2bpp_lookup[pixdata[i] >> 4] & color_mask;
+            }
+        }
+        else {
+            for(size_t i = 0; i < nbytes; ++i) {
+                *target32++ = mono2bpp_lookup[pixdata[i] & 0xF];
+                *target32++ = mono2bpp_lookup[pixdata[i] >> 4];
+            }
+        }
+    }
+}
+
+/**
   * @brief Blit graphics on TFT
   * @param bits graphics in bgr565 format mathing the specified size
   * @param width width of data
@@ -93,6 +140,95 @@ void tft_blit(uint16_t *bits, uint32_t width, uint32_t height, uint32_t x, uint3
 }
 
 /**
+  * @brief Determine glyph spacing given the font size
+  * @param size font size
+  * @retval the spacing
+  */
+uint8_t tft_get_glyph_spacing(tft_font_size_t size)
+{
+    switch(size) {
+        case FONT_FULL_SMALL:
+            return FONT_FULL_SMALL_SPACING;
+        case FONT_METER_SMALL:
+            return FONT_METER_SMALL_SPACING;
+        case FONT_METER_MEDIUM:
+            return FONT_METER_MEDIUM_SPACING;
+        case FONT_METER_LARGE:
+            return FONT_METER_LARGE_SPACING;
+        default:
+            return 0;
+    }
+}
+
+/**
+  * @brief Determine glyph metrics given the supplied character and font size
+  * @param size font size
+  * @param ch the character (must be a supported character)
+  * @param glyph_width (out) the width in pixels of the character
+  * @param glyph_height (out) the height in pixels of the character
+  * @retval none
+  */
+void tft_get_glyph_metrics(tft_font_size_t size, char ch, uint32_t *glyph_width, uint32_t *glyph_height)
+{
+    size_t idx = ch - 0x20;
+    switch(size) {
+        case FONT_FULL_SMALL:
+            *glyph_width = font_full_small_widths[idx];
+            *glyph_height = font_full_small_height;
+            break;
+        case FONT_METER_SMALL:
+            *glyph_width = font_meter_small_widths[idx];
+            *glyph_height = font_meter_small_height;
+            break;
+        case FONT_METER_MEDIUM:
+            *glyph_width = font_meter_medium_widths[idx];
+            *glyph_height = font_meter_medium_height;
+            break;
+        case FONT_METER_LARGE:
+            *glyph_width = font_meter_large_widths[idx];
+            *glyph_height = font_meter_large_height;
+            break;
+        default:
+            dbg_printf("Cannot print at size %d\n", (int) size);
+            return;
+    }
+}
+
+/**
+  * @brief Determine glyph pixel data given the supplied character and font size
+  * @param size font size
+  * @param ch the character (must be a supported character)
+  * @param glyph_pixdata (out) the pointer to the pixel data for the glyph
+  * @param glyph_size (out) the number of bytes taken up in pixdata for this glyph
+  * @retval none
+  */
+void tft_get_glyph_pixdata(tft_font_size_t size, char ch, const uint8_t **glyph_pixdata, uint32_t *glyph_size)
+{
+    size_t idx = ch - 0x20;
+    switch(size) {
+        case FONT_FULL_SMALL:
+            *glyph_pixdata = &font_full_small_pixdata[font_full_small_offsets[idx]];
+            *glyph_size = font_full_small_sizes[idx];
+            break;
+        case FONT_METER_SMALL:
+            *glyph_pixdata = &font_meter_small_pixdata[font_meter_small_offsets[idx]];
+            *glyph_size = font_meter_small_sizes[idx];
+            break;
+        case FONT_METER_MEDIUM:
+            *glyph_pixdata = &font_meter_medium_pixdata[font_meter_medium_offsets[idx]];
+            *glyph_size = font_meter_medium_sizes[idx];
+            break;
+        case FONT_METER_LARGE:
+            *glyph_pixdata = &font_meter_large_pixdata[font_meter_large_offsets[idx]];
+            *glyph_size = font_meter_large_sizes[idx];
+            break;
+        default:
+            dbg_printf("Cannot print at size %d\n", (int) size);
+            return;
+    }
+}
+
+/**
   * @brief Blit character on TFT
   * @param size size of character
   * @param ch the character (must be a supported character)
@@ -102,85 +238,26 @@ void tft_blit(uint16_t *bits, uint32_t width, uint32_t height, uint32_t x, uint3
   * @param h height of bounding box
   * @param color color of the glyph
   * @param highlight if true, the character will be inverted
-  * @retval none
+  * @retval the width of the character drawn
   */
-void tft_putch(tft_font_size_t size, char ch, uint32_t x, uint32_t y, uint32_t w, uint32_t h, uint16_t color, bool invert)
+uint8_t tft_putch(tft_font_size_t size, char ch, uint32_t x, uint32_t y, uint32_t w, uint32_t h, uint16_t color, bool invert)
 {
-    uint32_t glyph_index, glyph_width, glyph_height, glyph_size;
+    uint32_t glyph_width, glyph_height, glyph_size;
     uint32_t xpos, ypos;
-    uint16_t *glyph;
-    switch(ch) {
-        case '0': case '1': case '2': case '3': case '4':
-        case '5': case '6': case '7': case '8': case '9':
-            glyph_index = ch - '0';
-            break;
-        case '.':
-            glyph_index = 10;
-            break;
-        case 'V':
-            glyph_index = 11;
-            break;
-        case 'A':
-            glyph_index = 12;
-            break;
-        default:
-            dbg_printf("Cannot print character '%c'\n", ch);
-            return;
-    }
-    switch(size) {
-        case FONT_SMALL:
-            glyph_width = font_small_widths[glyph_index];
-            glyph = (uint16_t*) font_small_pix[glyph_index];
-            glyph_size = font_small_sizes[glyph_index];
-            glyph_height = font_small_height;
-            break;
-        case FONT_MEDIUM:
-            glyph_width = font_medium_widths[glyph_index];
-            glyph = (uint16_t*) font_medium_pix[glyph_index];
-            glyph_size = font_medium_sizes[glyph_index];
-            glyph_height = font_medium_height;
-            break;
-        case FONT_LARGE:
-            glyph_width = font_large_widths[glyph_index];
-            glyph = (uint16_t*) font_large_pix[glyph_index];
-            glyph_size = font_large_sizes[glyph_index];
-            glyph_height = font_large_height;
-            break;
-        default:
-            dbg_printf("Cannot print at size %d\n", (int) size);
-            return;
+    const uint8_t *glyph_pixdata;
+
+    /** Get the glyph metrics */
+    tft_get_glyph_metrics(size, ch, &glyph_width, &glyph_height);
+
+    /** Skip drawing if there's no character available */
+    if(glyph_width == 0 || glyph_height == 0) {
+        dbg_printf("Glyph 0x%02X does not exist in font size %d\n", (int) ch, (int) size);
+        return 0;
     }
 
-    if (invert) {
-        uint32_t *p = (uint32_t*) &blit_buffer;
-        memcpy(blit_buffer, glyph, glyph_size);
-        uint32_t i;
-        for (i = 0; i < glyph_size / sizeof(uint32_t); i++) { // Invert 32 bits in each go
-            p[i] = ~p[i];
-        }
-        if (glyph_size % sizeof(uint32_t)) { // Bits remaining?
-            blit_buffer[sizeof(uint16_t)*i] = ~blit_buffer[sizeof(uint16_t)*i];
-        }
-        glyph = blit_buffer;
-    }
-    else if (color != WHITE) {
-        color = ILI9163C_COLOR_TO_BITMASK(color);
-        if(is_inverted) {
-            color = ~color;
-        }
-        uint32_t color_mask = (((uint32_t)color & 0xFFFF) << 16) | (color & 0xFFFF);
-        uint32_t *p = (uint32_t*) &blit_buffer[0];
-        /** @todo Perform memcpy and inversion operation */
-        memcpy(blit_buffer, glyph, glyph_size);
-        uint32_t i;
-        for (i = 0; i < glyph_size/sizeof(uint32_t); i++) {
-            p[i] &= color_mask;
-        }
-        if (glyph_size % sizeof(uint32_t)) { // Bits remaining?
-            blit_buffer[sizeof(uint16_t)*i] &= color_mask;
-        }
-        glyph = blit_buffer;
-    }
+    /** Get the glyph data and decode it to the native TFT format */
+    tft_get_glyph_pixdata(size, ch, &glyph_pixdata, &glyph_size);
+    tft_decode_glyph(glyph_pixdata, glyph_size, invert, color);
 
     /** Position glyph in center of region */
     xpos = x+(w-glyph_width)/2;
@@ -189,7 +266,7 @@ void tft_putch(tft_font_size_t size, char ch, uint32_t x, uint32_t y, uint32_t w
     /** Draw the glyph */
     ili9163c_set_window(xpos, ypos, xpos + glyph_width-1, ypos + glyph_height-1);
     gpio_set(TFT_A0_PORT, TFT_A0_PIN);
-    (void) spi_dma_transceive((uint8_t*) glyph, sizeof(uint16_t) * glyph_width * glyph_height, 0, 0);
+    (void) spi_dma_transceive((uint8_t*) blit_buffer, sizeof(uint16_t) * glyph_width * glyph_height, 0, 0);
 
     /** If our glyph hasn't filled the entire region fill the remainder in with black or white depending on if we're inverting */
     uint16_t fill_color = invert ? WHITE : BLACK;
@@ -199,6 +276,113 @@ void tft_putch(tft_font_size_t size, char ch, uint32_t x, uint32_t y, uint32_t w
     if (xpos+glyph_width < x+w) {
         tft_fill(xpos+glyph_width, y, (w-glyph_width+1)/2, h, fill_color);
     }
+
+    return glyph_width;
+}
+
+/**
+  * @brief Determine string metrics given the supplied string and font size
+  * @param size font size
+  * @param str the string
+  * @param string_width (out) the width in pixels of the string
+  * @param string_height (out) the height in pixels of the string
+  * @retval none
+  */
+void tft_get_string_metrics(tft_font_size_t size, const char *str, uint32_t *string_width, uint32_t *string_height)
+{
+    uint32_t w = 0, h = 0;
+    uint8_t spacing = tft_get_glyph_spacing(size);
+    bool first = true;
+
+    while(str && *str) {
+        uint32_t glyph_width, glyph_height;
+
+        if(!first) {
+            w += spacing;
+        }
+
+        tft_get_glyph_metrics(size, *str, &glyph_width, &glyph_height);
+        h = glyph_height;
+        w += glyph_width;
+
+        first = false;
+        ++str;
+    }
+
+    *string_width = w;
+    *string_height = h;
+}
+
+/**
+  * @brief Blit string on TFT, anchored to bottom-left
+  * @param size size of character
+  * @param str the string (must be a supported character)
+  * @param x x position (left-side of string)
+  * @param y y position (bottom of string)
+  * @param w width of bounding box
+  * @param h height of bounding box
+  * @param color color of the string
+  * @param invert if true, the string will be inverted
+  * @retval the width of the string drawn
+  */
+uint16_t tft_puts(tft_font_size_t size, const char *str, uint32_t x, uint32_t y, uint32_t w, uint32_t h, uint16_t color, bool invert)
+{
+    uint32_t width_remainder, screen_remainder, draw_remainder;
+    uint16_t screen_w, screen_h;
+    uint32_t xpos, ypos;
+    uint32_t space_width, font_height;
+    uint8_t spacing = tft_get_glyph_spacing(size);
+    bool first = true;
+
+    ili9163c_get_geometry(&screen_w, &screen_h);
+    tft_get_glyph_metrics(size, ' ', &space_width, &font_height);
+    xpos = x;
+    ypos = y - font_height;
+
+    while(str && *str) {
+        uint32_t glyph_width, glyph_height, glyph_size;
+        const uint8_t *glyph_pixdata;
+
+        if(!first) {
+            tft_fill(xpos, ypos, spacing, h, invert ? WHITE : BLACK);
+            xpos += spacing;
+        }
+
+        /** Get the glyph metadata */
+        tft_get_glyph_metrics(size, *str, &glyph_width, &glyph_height);
+
+        /** Skip drawing if there's no character available */
+        if(glyph_width == 0 || glyph_height == 0) {
+            dbg_printf("Glyph 0x%02X does not exist in font size %d\n", (int) *str, (int) size);
+            continue;
+        }
+
+        /** Check if this character would exceed the supplied width or screen width, blank the rest and drop out if so */
+        width_remainder = w - (xpos - x);
+        screen_remainder = screen_w - (xpos - x);
+        draw_remainder = width_remainder < screen_remainder ? width_remainder : screen_remainder;
+        if(glyph_width > draw_remainder) {
+            tft_fill(xpos, ypos, draw_remainder, glyph_height, invert ? WHITE : BLACK);
+            xpos += draw_remainder;
+            return xpos - x;
+        }
+
+        /** Get the glyph data and decode it to the native TFT format */
+        tft_get_glyph_pixdata(size, *str, &glyph_pixdata, &glyph_size);
+        tft_decode_glyph(glyph_pixdata, glyph_size, invert, color);
+
+        /** Draw the glyph */
+        ili9163c_set_window(xpos, ypos, xpos + glyph_width-1, ypos + glyph_height-1);
+        gpio_set(TFT_A0_PORT, TFT_A0_PIN);
+        (void) spi_dma_transceive((uint8_t*) blit_buffer, sizeof(uint16_t) * glyph_width * glyph_height, 0, 0);
+
+        xpos += glyph_width;
+
+        first = false;
+        ++str;
+    }
+
+    return xpos - x;
 }
 
 /**
