@@ -75,7 +75,7 @@ ui_number_t calibration_v_dac = {
     .si_prefix = si_none,
     .num_digits = 4,
     .num_decimals = 0,
-    .unit = unit_volt,
+    .unit = unit_none,
     .changed = &v_dac_changed,
 };
 
@@ -98,7 +98,7 @@ ui_number_t calibration_a_dac = {
     .si_prefix = si_none,
     .num_digits = 4,
     .num_decimals = 0,
-    .unit = unit_ampere,
+    .unit = unit_none,
     .changed = &a_dac_changed,
 };
 
@@ -121,7 +121,7 @@ ui_number_t calibration_vin_adc = {
     .si_prefix = si_none,
     .num_digits = 4,
     .num_decimals = 0,
-    .unit = unit_volt,
+    .unit = unit_none,
     .changed = NULL,
 };
 
@@ -144,7 +144,7 @@ ui_number_t calibration_v_adc = {
     .si_prefix = si_none,
     .num_digits = 4,
     .num_decimals = 0,
-    .unit = unit_volt,
+    .unit = unit_none,
     .changed = NULL,
 };
 
@@ -167,7 +167,7 @@ ui_number_t calibration_a_adc = {
     .si_prefix = si_none,
     .num_digits = 5,
     .num_decimals = 0,
-    .unit = unit_ampere,
+    .unit = unit_none,
     .changed = NULL,
 };
 
@@ -352,10 +352,10 @@ static void calibration_tick(void)
     }
 
     tft_puts(FONT_FULL_SMALL, "Vout DAC:", 6, 22, 64, 20, WHITE, false);
-    tft_puts(FONT_FULL_SMALL, "Aout DAC:", 6, 40, 64, 20, WHITE, false);
+    tft_puts(FONT_FULL_SMALL, "Iout DAC:", 6, 40, 64, 20, WHITE, false);
     tft_puts(FONT_FULL_SMALL, "Vin ADC:" , 6, 58, 64, 20, WHITE, false);
     tft_puts(FONT_FULL_SMALL, "Vout ADC:", 6, 76, 64, 20, WHITE, false);
-    tft_puts(FONT_FULL_SMALL, "Aout ADC:", 6, 94, 64, 20, WHITE, false);
+    tft_puts(FONT_FULL_SMALL, "Iout ADC:", 6, 94, 64, 20, WHITE, false);
 }
 
 /**
