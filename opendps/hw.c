@@ -730,8 +730,7 @@ void BUTTON_M1_isr(void)
             if (m1_and_m2_pressed) {
                 m1_and_m2_pressed = false;
                 event_put(event_buttom_m1_and_m2, press_short);
-            }
-            else {
+            } else {
                 event_put(event_button_m1, press_short);
             }
         }
@@ -761,8 +760,7 @@ void BUTTON_M2_isr(void)
             if (m1_and_m2_pressed) {
                 m1_and_m2_pressed = false;
                 event_put(event_buttom_m1_and_m2, press_short);
-            }
-            else {
+            } else {
                 event_put(event_button_m2, press_short);
             }
         }

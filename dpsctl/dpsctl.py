@@ -512,7 +512,7 @@ def handle_commands(args):
         elif (args.switch_screen.lower() == "settings"):
             communicate(comms, create_change_screen(protocol.CHANGE_SCREEN_SETTINGS), args)
         else:
-            fail("please specify either settings or main as parameters")
+            fail("please specify either 'settings' or 'main' as parameters")
 
 
 def is_ip_address(if_name):
@@ -711,7 +711,7 @@ def main():
     parser.add_argument('-v', '--verbose', action='store_true', help="Verbose communications")
     parser.add_argument('-V', '--version', action='store_true', help="Get firmware version information")
     parser.add_argument('-U', '--upgrade', type=str, dest="firmware", help="Perform upgrade of OpenDPS firmware")
-    parser.add_argument('--screen', type=str, dest="switch_screen", help="Switch to or from the settings screen")
+    parser.add_argument('--screen', type=str, dest="switch_screen", help="Switch to 'settings' or 'main' screen")
     parser.add_argument('--force', action='store_true', help="Force upgrade even if dpsctl complains about the firmware")
     if testing:
         parser.add_argument('-t', '--temperature', type=str, dest="temperature", help="Send temperature report (for testing)")
