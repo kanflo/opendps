@@ -68,8 +68,8 @@ UPGRADE_OVERFLOW_ERROR = 5
 UPGRADE_SUCCESS = 16
 
 # options for cmd_change_screen
-change_screen_main = 0
-change_screen_settings = 1
+CHANGE_SCREEN_MAIN = 0
+CHANGE_SCREEN_SETTINGS = 1
 
 # ########################################################################## #
 # Helpers for creating frames.
