@@ -61,12 +61,12 @@ ui_number_t calibration_v_dac = {
     {
         .type = ui_item_number,
         .id = 10,
-        .x = 4,
-        .y = 15,
+        .x = 121,
+        .y = 10,
         .can_focus = true,
     },
-    .font_size = FONT_MEDIUM,
-    .alignment = ui_text_left_aligned,
+    .font_size = FONT_FULL_SMALL,
+    .alignment = ui_text_right_aligned,
     .pad_dot = false,
     .color = WHITE,
     .value = 0,
@@ -84,12 +84,12 @@ ui_number_t calibration_a_dac = {
     {
         .type = ui_item_number,
         .id = 11,
-        .x = 4,
-        .y = 40,
+        .x = 121,
+        .y = 28,
         .can_focus = true,
     },
-    .font_size = FONT_MEDIUM,
-    .alignment = ui_text_left_aligned,
+    .font_size = FONT_FULL_SMALL,
+    .alignment = ui_text_right_aligned,
     .pad_dot = false,
     .color = WHITE,
     .value = 2,
@@ -107,11 +107,11 @@ ui_number_t calibration_vin_adc = {
     {
         .type = ui_item_number,
         .id = 11,
-        .x = 127,
-        .y = 65,
+        .x = 121,
+        .y = 46,
         .can_focus = false,
     },
-    .font_size = FONT_MEDIUM,
+    .font_size = FONT_FULL_SMALL,
     .alignment = ui_text_right_aligned,
     .pad_dot = false,
     .color = WHITE,
@@ -130,11 +130,11 @@ ui_number_t calibration_v_adc = {
     {
         .type = ui_item_number,
         .id = 11,
-        .x = 127,
-        .y = 15,
+        .x = 121,
+        .y = 64,
         .can_focus = false,
     },
-    .font_size = FONT_MEDIUM,
+    .font_size = FONT_FULL_SMALL,
     .alignment = ui_text_right_aligned,
     .pad_dot = false,
     .color = WHITE,
@@ -153,11 +153,11 @@ ui_number_t calibration_a_adc = {
     {
         .type = ui_item_number,
         .id = 11,
-        .x = 127,
-        .y = 40,
+        .x = 121,
+        .y = 82,
         .can_focus = false,
     },
-    .font_size = FONT_MEDIUM,
+    .font_size = FONT_FULL_SMALL,
     .alignment = ui_text_right_aligned,
     .pad_dot = false,
     .color = WHITE,
@@ -350,6 +350,12 @@ static void calibration_tick(void)
         calibration_a_adc.value = i_out_raw;
         calibration_a_adc.ui.draw(&calibration_a_adc.ui);
     }
+
+    tft_puts(FONT_FULL_SMALL, "Vout DAC:", 6, 22, 64, 20, WHITE, false);
+    tft_puts(FONT_FULL_SMALL, "Aout DAC:", 6, 40, 64, 20, WHITE, false);
+    tft_puts(FONT_FULL_SMALL, "Vin ADC:" , 6, 58, 64, 20, WHITE, false);
+    tft_puts(FONT_FULL_SMALL, "Vout ADC:", 6, 76, 64, 20, WHITE, false);
+    tft_puts(FONT_FULL_SMALL, "Aout ADC:", 6, 94, 64, 20, WHITE, false);
 }
 
 /**
