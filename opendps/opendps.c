@@ -55,6 +55,7 @@
 #include "uui_number.h"
 #include "opendps.h"
 #include "func_cv.h"
+#include "settings_calibration.h"
 #include "my_assert.h"
 #ifdef CONFIG_CC_ENABLE
 #include "func_cc.h"
@@ -140,9 +141,16 @@ static past_t g_past = {
 };
 
 /** The function UI displaying the current active function */
+#define FUNC_UI_ID (0)
 static uui_t func_ui;
+/** The settings UI displaying the current active settings screen */
+#define SETTINGS_UI_ID (1)
+static uui_t settings_ui;
 /** The main UI displaying input voltage and such */
 static uui_t main_ui;
+
+/** The UI we are currently displaying (func_ui or setting_ui) */
+static uui_t *current_ui;
 
 
 static void main_ui_tick(void);
@@ -188,8 +196,8 @@ ui_screen_t main_screen = {
 uint32_t opendps_get_function_names(char* names[], size_t size)
 {
     uint32_t i;
-    for (i = 0; i < func_ui.num_screens && i < size; i++) {
-        names[i] = func_ui.screens[i]->name;
+    for (i = 0; i < current_ui->num_screens && i < size; i++) {
+        names[i] = current_ui->screens[i]->name;
     }
     return i;
 }
@@ -201,7 +209,7 @@ uint32_t opendps_get_function_names(char* names[], size_t size)
  */
 const char* opendps_get_curr_function_name(void)
 {
-    return (const char*) func_ui.screens[func_ui.cur_screen]->name;
+    return (const char*) current_ui->screens[current_ui->cur_screen]->name;
 }
 
 /**
@@ -242,7 +250,7 @@ uint32_t opendps_get_app_git_hash(const char** git_hash)
 uint32_t opendps_get_curr_function_params(ui_parameter_t **parameters)
 {
     uint32_t i = 0;
-    *parameters = (ui_parameter_t*) &func_ui.screens[func_ui.cur_screen]->parameters;
+    *parameters = (ui_parameter_t*) &current_ui->screens[current_ui->cur_screen]->parameters;
     while ((*parameters)[i].name[0] != 0) {
         i++;
     }
@@ -260,8 +268,8 @@ uint32_t opendps_get_curr_function_params(ui_parameter_t **parameters)
  */
 bool opendps_get_curr_function_param_value(char *name, char *value, uint32_t value_len)
 {
-    if (func_ui.screens[func_ui.cur_screen]->get_parameter) {
-        return ps_ok == func_ui.screens[func_ui.cur_screen]->get_parameter(name, value, value_len);
+    if (current_ui->screens[current_ui->cur_screen]->get_parameter) {
+        return ps_ok == current_ui->screens[current_ui->cur_screen]->get_parameter(name, value, value_len);
     }
     return false;
 }
@@ -277,10 +285,10 @@ bool opendps_get_curr_function_param_value(char *name, char *value, uint32_t val
 set_param_status_t opendps_set_parameter(char *name, char *value)
 {
     set_param_status_t status = ps_not_supported;
-    if (func_ui.screens[func_ui.cur_screen]->set_parameter) {
-        status = func_ui.screens[func_ui.cur_screen]->set_parameter(name, value);
+    if (current_ui->screens[current_ui->cur_screen]->set_parameter) {
+        status = current_ui->screens[current_ui->cur_screen]->set_parameter(name, value);
         if (status == ps_ok) {
-            uui_refresh(&func_ui, true);
+            uui_refresh(current_ui, true);
         }
     }
     return status;
@@ -352,7 +360,7 @@ bool opendps_clear_calibration(void)
 
     /** Re-init pwrctl as calibration coefs have now been cleared */
     pwrctl_init(&g_past);
-    uui_refresh(&func_ui, false);
+    uui_refresh(current_ui, false);
     return true;
 }
 
@@ -365,8 +373,8 @@ bool opendps_clear_calibration(void)
  */
 bool opendps_enable_output(bool enable)
 {
-    if (!is_temperature_locked && func_ui.screens[func_ui.cur_screen]->enable) {
-        if (func_ui.screens[func_ui.cur_screen]->is_enabled != enable) {
+    if (!is_temperature_locked && current_ui->screens[current_ui->cur_screen]->enable) {
+        if (current_ui->screens[current_ui->cur_screen]->is_enabled != enable) {
             event_put(event_button_enable, press_short); /** @todo: call directly as this will not work for temperature alarm */
         }
     } else {
@@ -381,7 +389,7 @@ bool opendps_enable_function_idx(uint32_t index)
     if (is_temperature_locked) {
         return false;
     } else {
-        uui_set_screen(&func_ui, index);
+        uui_set_screen(current_ui, index);
         return true; /** @todo: handle failure */
     }
 }
@@ -409,18 +417,27 @@ static void ui_init(void)
     ui_width = TFT_WIDTH;
     ui_height = TFT_HEIGHT;
 
+    /** Initialise the function screens */
     uui_init(&func_ui, &g_past);
     func_cv_init(&func_ui);
 #ifdef CONFIG_CC_ENABLE
     func_cc_init(&func_ui);
 #endif // CONFIG_CC_ENABLE
-    uui_activate(&func_ui);
 
+    /** Initialise the settings screens */
+    uui_init(&settings_ui, &g_past);
+    settings_calibration_init(&settings_ui);
+
+    /** Initialise the main screens */
     uui_init(&main_ui, &g_past);
     number_init(&input_voltage);
     input_voltage.ui.x = 105;
     input_voltage.ui.y = ui_height - font_meter_small_height;
     uui_add_screen(&main_ui, &main_screen);
+
+    /** Activate the UIs */
+    current_ui = &func_ui;
+    uui_activate(current_ui);
     uui_activate(&main_ui);
 }
 
@@ -430,7 +447,7 @@ static void ui_init(void)
   * @param data optional extra data
   * @retval none
   */
-static void ui_hande_event(event_t event, uint8_t data)
+static void ui_handle_event(event_t event, uint8_t data)
 {
     if (event == event_rot_press && data == press_long) {
         opendps_lock(!is_locked);
@@ -471,14 +488,17 @@ static void ui_hande_event(event_t event, uint8_t data)
 #endif // CONFIG_OCP_DEBUGGING
                 ui_flash(); /** @todo When OCP kicks in, show last I_out on screen */
                 opendps_update_power_status(false);
-                uui_handle_screen_event(&func_ui, event);
+                uui_handle_screen_event(current_ui, event);
             }
+            break;
+        case event_buttom_m1_and_m2: ;
+            uint8_t target_screen_id = current_ui == &func_ui ? SETTINGS_UI_ID : FUNC_UI_ID; /** Change between the settings and functional screen */
+            opendps_change_screen(target_screen_id);
             break;
         case event_button_enable:
 #pragma GCC diagnostic ignored "-Wimplicit-fallthrough"
             write_past_settings();
             /** Deliberate fallthrough */
-
         case event_button_m1:
         case event_button_m2:
         case event_button_sel:
@@ -487,8 +507,8 @@ static void ui_hande_event(event_t event, uint8_t data)
         case event_rot_right:
         case event_rot_left_set:
         case event_rot_right_set:
-            uui_handle_screen_event(&func_ui, event);
-            uui_refresh(&func_ui, false);
+            uui_handle_screen_event(current_ui, event);
+            uui_refresh(current_ui, false);
             break;
         default:
             break;
@@ -527,17 +547,17 @@ void opendps_temperature_lock(bool lock)
         if (is_temperature_locked) {
             emu_printf("DPS disabled due to temperature\n");
             /** @todo Right now we cannot use opendps_enable_output here */
-            uui_disable_cur_screen(&func_ui);
+            uui_disable_cur_screen(current_ui);
             tft_clear();
-            uui_show(&func_ui, false);
+            uui_show(current_ui, false);
             uui_show(&main_ui, false);
             tft_blit((uint16_t*) gfx_thermometer, GFX_THERMOMETER_WIDTH, GFX_THERMOMETER_HEIGHT, 1+(ui_width-GFX_THERMOMETER_WIDTH)/2, 30);
         } else {
             emu_printf("DPS enabled due to temperature\n");
             tft_clear();
-            uui_show(&func_ui, true);
+            uui_show(current_ui, true);
             uui_show(&main_ui, true);
-            uui_refresh(&func_ui, true);
+            uui_refresh(current_ui, true);
             uui_refresh(&main_ui, true);
         }
     }
@@ -560,7 +580,7 @@ static void ui_tick(void)
     }
 
     last = get_ticks();
-    uui_tick(&func_ui);
+    uui_tick(current_ui);
     uui_tick(&main_ui);
 
 #ifndef CONFIG_SPLASH_SCREEN
@@ -716,6 +736,31 @@ void opendps_upgrade_start(void)
     scb_reset_system();
 }
 
+/**
+ * @brief      Change the current screen
+ *
+ * @param[in]  screen_id  The screen ID to change to
+ *
+ * @return     True if successful
+ */
+bool opendps_change_screen(uint8_t screen_id)
+{
+    if (screen_id != FUNC_UI_ID && screen_id != SETTINGS_UI_ID)
+        return false;
+
+    uui_disable_cur_screen(current_ui); /** Turn off the output */
+    opendps_update_power_status(false); /** Update the power icon status */
+
+    if (screen_id == FUNC_UI_ID)
+        current_ui = &func_ui;
+    else if (screen_id == SETTINGS_UI_ID)
+        current_ui = &settings_ui;
+
+    tft_clear(); /** Clear any previous screen */
+    uui_activate(current_ui);
+
+    return true;
+}
 
 #ifdef CONFIG_SPLASH_SCREEN
 /**
@@ -836,7 +881,7 @@ static void event_handler(void)
                 default:
                     break;
             }
-            ui_hande_event(event, data);
+            ui_handle_event(event, data);
         }
     }
 }
@@ -893,7 +938,7 @@ int main(int argc, char const *argv[])
     hw_enable_backlight();
     delay_ms(750);
     tft_clear();
-    uui_refresh(&func_ui, true);
+    uui_refresh(current_ui, true);
 #endif // CONFIG_SPLASH_SCREEN
     event_handler();
     return 0;

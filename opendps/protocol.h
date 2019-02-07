@@ -57,6 +57,7 @@ typedef enum {
     cmd_cal_report,
     cmd_set_calibration,
     cmd_clear_calibration,
+    cmd_change_screen,
     cmd_response = 0x80
 } command_t;
 

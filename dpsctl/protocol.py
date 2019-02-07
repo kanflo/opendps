@@ -48,6 +48,7 @@ CMD_VERSION = 17
 CMD_CAL_REPORT = 18
 CMD_SET_CALIBRATION = 19
 CMD_CLEAR_CALIBRATION = 20
+CMD_CHANGE_SCREEN = 21
 CMD_RESPONSE = 0x80
 
 # wifi_status_t
@@ -66,6 +67,9 @@ UPGRADE_FLASH_ERROR = 4
 UPGRADE_OVERFLOW_ERROR = 5
 UPGRADE_SUCCESS = 16
 
+# options for cmd_change_screen
+CHANGE_SCREEN_MAIN = 0
+CHANGE_SCREEN_SETTINGS = 1
 
 # ########################################################################## #
 # Helpers for creating frames.
@@ -195,6 +199,14 @@ def create_temperature(temperature):
     f.pack8(CMD_TEMPERATURE_REPORT)
     f.pack16(temperature)
     f.pack16(-temperature)
+    f.end()
+    return f
+
+
+def create_change_screen(screen):
+    f = uFrame()
+    f.pack8(CMD_CHANGE_SCREEN)
+    f.pack8(screen)
     f.end()
     return f
 

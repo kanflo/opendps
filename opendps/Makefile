@@ -71,6 +71,7 @@ OBJS = \
     uui.o \
     uui_number.o \
     func_cv.o \
+    settings_calibration.o \
     hw.o \
     pwrctl.o \
     event.o \
@@ -87,6 +88,7 @@ OBJS = \
     font-meter_medium.o \
     font-meter_large.o \
     gfx-cc.o \
+    gfx-crosshair.o \
     gfx-cv.o \
     gfx-padlock.o \
     gfx-power.o \

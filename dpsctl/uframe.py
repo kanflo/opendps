@@ -176,6 +176,8 @@ class uFrame(object):
         """
         b = self._frame[self._unpack_pos]
         self._unpack_pos += 1
+        if b == 0:
+            return 0
         return b - 256
 
     def unpack16(self):

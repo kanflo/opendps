@@ -202,7 +202,7 @@ def unit_name(unit):
     Return name of unit (must of course match unit_t in opendps/uui.h)
     """
     if unit == 0:
-        return ""  # none
+        return "unitless"  # none
     if unit == 1:
         return "A"  # ampere
     if unit == 2:
@@ -383,6 +383,8 @@ def handle_response(command, frame, args):
         ret_dict = unpack_cal_report(frame)
     elif resp_command == protocol.CMD_CLEAR_CALIBRATION:
         pass
+    elif resp_command == protocol.CMD_CHANGE_SCREEN:
+        pass
     else:
         print("Unknown response {:d} from device.".format(resp_command))
 
@@ -503,6 +505,14 @@ def handle_commands(args):
 
     if args.calibration_reset:
         communicate(comms, create_cmd(protocol.CMD_CLEAR_CALIBRATION), args)
+
+    if args.switch_screen:
+        if (args.switch_screen.lower() == "main"):
+            communicate(comms, create_change_screen(protocol.CHANGE_SCREEN_MAIN), args)
+        elif (args.switch_screen.lower() == "settings"):
+            communicate(comms, create_change_screen(protocol.CHANGE_SCREEN_SETTINGS), args)
+        else:
+            fail("please specify either 'settings' or 'main' as parameters")
 
 
 def is_ip_address(if_name):
@@ -701,6 +711,7 @@ def main():
     parser.add_argument('-v', '--verbose', action='store_true', help="Verbose communications")
     parser.add_argument('-V', '--version', action='store_true', help="Get firmware version information")
     parser.add_argument('-U', '--upgrade', type=str, dest="firmware", help="Perform upgrade of OpenDPS firmware")
+    parser.add_argument('--screen', type=str, dest="switch_screen", help="Switch to 'settings' or 'main' screen")
     parser.add_argument('--force', action='store_true', help="Force upgrade even if dpsctl complains about the firmware")
     if testing:
         parser.add_argument('-t', '--temperature', type=str, dest="temperature", help="Send temperature report (for testing)")
