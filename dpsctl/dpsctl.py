@@ -49,8 +49,8 @@ import protocol
 import uframe
 from protocol import (create_cmd, create_enable_output, create_lock, create_set_calibration,
                       create_set_function, create_set_parameter, create_temperature,
-                      create_upgrade_data, create_upgrade_start, unpack_cal_report,
-                      unpack_query_response, unpack_version_response)
+                      create_upgrade_data, create_upgrade_start, create_change_screen,
+                      unpack_cal_report, unpack_query_response, unpack_version_response)
 from uhej import uhej
 
 try:
