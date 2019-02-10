@@ -653,6 +653,7 @@ def do_calibration(comms, args):
     print("For calibration you will need:")
     print("\tA multimeter")
     print("\tA known load capable of handling the required power")
+    print("\tA thick wire for shorting the output of the DPS")
     print("\t2 stable input voltages\r\n")
     print("Please ensure nothing is connected to the output of the DPS before starting calibration!\r\n")
 
