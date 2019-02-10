@@ -44,6 +44,11 @@ import socket
 import sys
 import threading
 import time
+import math
+
+calibration_debug_plotting = False  # Change this to True to enable plotting of the calibration graphs during dpsctl -C
+if calibration_debug_plotting:
+    import matplotlib.pyplot as plt
 
 import protocol
 import uframe
@@ -514,6 +519,9 @@ def handle_commands(args):
         else:
             fail("please specify either 'settings' or 'main' as parameters")
 
+    if args.calibrate:
+        do_calibration(comms, args)
+
 
 def is_ip_address(if_name):
     """
@@ -586,6 +594,36 @@ def run_upgrade(comms, fw_file_name, args):
         fail("Device rejected firmware upgrade")
 
 
+def best_fit(X, Y):
+    """
+    Calculate linear line of best fit coefficients (y = kx + c)
+    """
+    xbar = sum(X)/len(X)
+    ybar = sum(Y)/len(Y)
+    n = len(X)  # or len(Y)
+
+    numer = sum([xi*yi for xi, yi in zip(X, Y)]) - n * xbar * ybar
+    denum = sum([xi**2 for xi in X]) - n * xbar**2
+
+    if denum != 0:
+        k = numer / denum
+    else:
+        k = float('Inf')
+    c = ybar - k * xbar
+
+    return k, c
+
+
+def get_average_calibration_result(comms, variable, num_samples=20):
+    """
+    Get an averaged reading of 'variable' from a calibration report
+    """
+    data = []
+    for _ in range(num_samples):
+        data.append(communicate(comms, create_cmd(protocol.CMD_CAL_REPORT), args))
+    return sum(d[variable] for d in data) / num_samples
+
+
 def create_comms(args):
     """
     Create and return a communications interface object or None if no comms if
@@ -606,6 +644,362 @@ def create_comms(args):
     else:
         fail("no comms interface specified")
     return comms
+
+
+def do_calibration(comms, args):
+    """
+    Run DPS calibration prompts
+    """
+    print("For calibration you will need:")
+    print("\tA multimeter")
+    print("\tA known load capable of handling the required power")
+    print("\t2 stable input voltages\r\n")
+    print("Please ensure nothing is connected to the output of the DPS before starting calibration!\r\n")
+
+    t = raw_input("Would you like to proceed? (y/n): ")
+    if t.lower() != 'y':
+        return
+
+    # Change to the settings screen
+    communicate(comms, create_change_screen(protocol.CHANGE_SCREEN_SETTINGS), args)
+
+    print("Input Voltage Calibration:")
+    calibration_input_voltage = []
+    calibration_vin_adc = []
+
+    print("Please hook up the first lower supply voltage to the DPS now")
+    print("ensuring that the serial connection is connected after boot")
+    calibration_input_voltage.append(float(raw_input("Type input voltage in mV: ")))
+    calibration_vin_adc.append(get_average_calibration_result(comms, 'vin_adc'))
+
+    # Do second Voltage Hookup
+    print("\r\nPlease hook up the second higher supply voltage to the DPS now")
+    print("ensuring that the serial connection is connected after boot")
+    calibration_input_voltage.append(float(raw_input("Type input voltage in mV: ")))
+    calibration_vin_adc.append(get_average_calibration_result(comms, 'vin_adc'))
+
+    vin_adc_k, vin_adc_c = best_fit(calibration_vin_adc, calibration_input_voltage)
+
+    args.calibration_set = ['VIN_ADC_K={}'.format(vin_adc_k), 'VIN_ADC_C={}'.format(vin_adc_c)]
+    payload = create_set_calibration(args.calibration_set)
+    communicate(comms, payload, args)
+    print("Input Voltage Calibration Complete\r\n")
+
+    # Draw data in graph
+    if calibration_debug_plotting:
+        plt.title("Input Voltage Calibration")
+        ax = plt.gca()
+        plt.text(0.03, 0.97, 'y = {} * x + {}'.format(vin_adc_k, vin_adc_c), transform=ax.transAxes, fontsize=9, va='top')
+        plt.xlabel("Vin_adc")
+        x_data = list(calibration_vin_adc)
+        plt.ylabel("Input Voltage (V)")
+        y_data = list(calibration_input_voltage)
+        plt.plot(x_data, y_data, 'ro')
+        y_data = []
+        x_data.insert(0, 0)  # Ensure we have a x = 0 point on our line of best fit
+        for i in range(len(x_data)):
+            y_data.append(x_data[i] * vin_adc_k + vin_adc_c)
+        plt.plot(x_data, y_data, '-')  # Draw line of best fit
+        plt.axis(xmin=0, ymin=0)
+        plt.show()
+
+    print("Output Voltage Calibration:")
+    print("Finding maximum output V_DAC value")
+
+    args.parameter = ["V_DAC=0", "A_DAC=4095"]
+    payload = create_set_parameter(args.parameter)
+    communicate(comms, payload, args)
+    communicate(comms, create_enable_output("on"), args)  # Turn the output on
+    time.sleep(4)  # Ensure the device has settled, this can take a while with an open circuit output
+
+    # To find the maximum output V_DAC value we sweep through a range of output DAC values and read back the ADC values
+    num_steps = 100
+    output_adc = []
+    output_dac = []
+    output_gradient = []
+    for x in range(num_steps + 1):
+        output_dac.append(x*(4095/num_steps))
+        args.parameter = ["V_DAC={}".format(output_dac[-1])]
+        payload = create_set_parameter(args.parameter)
+        communicate(comms, payload, args)
+        time.sleep(0.01)
+        data = communicate(comms, create_cmd(protocol.CMD_CAL_REPORT), args)
+        output_adc.append(data['vout_adc'])
+
+    # Once this is complete we calculate the gradient between every other point
+    for x in range(num_steps):
+        k, _ = best_fit(output_dac[x:x+2], output_adc[x:x+2])
+        output_gradient.append(k)
+
+    # If the gradient is near zero then we know this is our maximum
+    for x in range(len(output_gradient)):
+        if output_gradient[x] < 0.1:
+            max_v_dac = output_dac[x-1]  # Use the one before this
+            break
+
+    # Draw data in graph
+    if calibration_debug_plotting:
+        plt.title("Output Voltage Sweep")
+        plt.xlabel("V_DAC")
+        x_data = list(output_dac)
+        plt.ylabel("V_ADC")
+        y_data = list(output_adc)
+        plt.plot(x_data, y_data, 'ro')
+        plt.axvline(x=max_v_dac)
+        plt.axis(xmin=0, ymin=0)
+        plt.show()
+
+    # Get the user to give us two output voltages readings
+    calibration_real_voltage = []
+    calibration_v_adc = []
+    calibration_v_dac = []
+
+    print("Calibration Point 1 of 2, 10% of Max")
+    output_dac = int(max_v_dac * 0.1)
+    args.parameter = ["V_DAC={}".format(output_dac)]
+    payload = create_set_parameter(args.parameter)
+    communicate(comms, payload, args)
+    calibration_real_voltage.append(float(raw_input("Type measured voltage on output in mV: ")))
+    calibration_v_adc.append(get_average_calibration_result(comms, 'vout_adc'))
+    calibration_v_dac.append(output_dac)
+
+    print("Calibration Point 1 of 2, 90% of Max")
+    output_dac = int(max_v_dac * 0.9)
+    args.parameter = ["V_DAC={}".format(output_dac)]
+    payload = create_set_parameter(args.parameter)
+    communicate(comms, payload, args)
+    calibration_real_voltage.append(float(raw_input("Type measured voltage on output in mV: ")))
+    calibration_v_adc.append(get_average_calibration_result(comms, 'vout_adc'))
+    calibration_v_dac.append(output_dac)
+
+    # Calculate and set the V_DAC coeffecients
+    v_dac_k, v_dac_c = best_fit(calibration_real_voltage, calibration_v_dac)
+    args.calibration_set = ['V_DAC_K={}'.format(v_dac_k), 'V_DAC_C={}'.format(v_dac_c)]
+    payload = create_set_calibration(args.calibration_set)
+    communicate(comms, payload, args)
+
+    # Calculate and set the V_ADC coeffecients
+    v_adc_k, v_adc_c = best_fit(calibration_v_adc, calibration_real_voltage)
+    args.calibration_set = ['V_ADC_K={}'.format(v_adc_k), 'V_ADC_C={}'.format(v_adc_c)]
+    payload = create_set_calibration(args.calibration_set)
+    communicate(comms, payload, args)
+
+    communicate(comms, create_enable_output("off"), args)  # Turn the output off
+    print("Output Voltage Calibration Complete\r\n")
+
+    # Draw data in graph
+    if calibration_debug_plotting:
+        plt.title("Output Voltage Calibration (V_DAC)")
+        ax = plt.gca()
+        plt.text(0.03, 0.97, 'y = {} * x + {}'.format(v_dac_k, v_dac_c), transform=ax.transAxes, fontsize=9, va='top')
+        plt.xlabel("Output Voltage (V)")
+        x_data = list(calibration_real_voltage)
+        plt.ylabel("V_DAC")
+        y_data = list(calibration_v_dac)
+        plt.plot(x_data, y_data, 'ro')
+        y_data = []
+        x_data.insert(0, 0)  # Ensure we have a x = 0 point on our line of best fit
+        for i in range(len(x_data)):
+            y_data.append(x_data[i] * v_dac_k + v_dac_c)
+        plt.plot(x_data, y_data, '-')  # Draw line of best fit
+        plt.axis(xmin=0, ymin=0)
+        plt.show()
+
+    # Draw data in graph
+    if calibration_debug_plotting:
+        plt.title("Output Voltage Calibration (V_ADC)")
+        ax = plt.gca()
+        plt.text(0.03, 0.97, 'y = {} * x + {}'.format(v_adc_k, v_adc_c), transform=ax.transAxes, fontsize=9, va='top')
+        plt.xlabel("V_ADC")
+        x_data = list(calibration_v_adc)
+        plt.ylabel("Output Voltage (V)")
+        y_data = list(calibration_real_voltage)
+        plt.plot(x_data, y_data, 'ro')
+        y_data = []
+        x_data.insert(0, 0)  # Ensure we have a x = 0 point on our line of best fit
+        for i in range(len(x_data)):
+            y_data.append(x_data[i] * v_adc_k + v_adc_c)
+        plt.plot(x_data, y_data, '-')  # Draw line of best fit
+        plt.axis(xmin=0, ymin=0)
+        plt.show()
+
+    print("Output Current Calibration:")
+    max_dps_current = float(raw_input("Max output current of your DPS (e.g 5 for the DPS5005) in amps: "))
+    load_resistance = float(raw_input("Load resistance in ohms: "))
+    load_max_wattage = float(raw_input("Load wattage rating in watts: "))
+
+    # There are three potential limiting factors for the output voltage, these are:
+    output_voltage_based_on_input_voltage_mv = calibration_input_voltage[1] * 0.9  # 90% of input voltage
+    output_voltage_based_on_max_wattage_of_load_mv = math.sqrt(load_max_wattage * load_resistance) * 1000  # Maximum supported voltage of the load V = Sqrt(W x R)
+    output_voltage_based_on_max_output_current_mv = max_dps_current * load_resistance * 1000  # V = I x R
+
+    max_output_voltage_mv = min(output_voltage_based_on_input_voltage_mv, output_voltage_based_on_max_wattage_of_load_mv, output_voltage_based_on_max_output_current_mv)
+
+    # The more max_output_voltage_mv is maximised the more accurate the results of the current calibration will be
+
+    raw_input("Please connect the load to the output of the DPS, then press enter")
+
+    # Take multiple current readings at different voltages and construct an Iout vs Iadc array
+    num_steps = 15
+    calibration_i_out = []
+    calibration_a_adc = []
+
+    for x in range(num_steps):
+        # Calculate our output voltage DAC value
+        output_voltage = max_output_voltage_mv * (x / num_steps)
+        output_dac = int(round(v_dac_k * output_voltage + v_dac_c))
+
+        # Set the output voltage
+        args.parameter = ["V_DAC={}".format(output_dac)]
+        payload = create_set_parameter(args.parameter)
+        communicate(comms, payload, args)
+        communicate(comms, create_enable_output("on"), args)
+        time.sleep(1)  # Wait for the DPS output to settle
+
+        # Add these readings to our array
+        calibration_i_out.append((get_average_calibration_result(comms, 'vout_adc') * v_adc_k + v_dac_c) / load_resistance)
+        calibration_a_adc.append(get_average_calibration_result(comms, 'iout_adc'))
+
+    communicate(comms, create_enable_output("off"), args)  # Turn the output off
+
+    # Calculate and set the A_ADC coeffecients
+    a_adc_k, a_adc_c = best_fit(calibration_a_adc, calibration_i_out)
+    args.calibration_set = ['A_ADC_K={}'.format(a_adc_k), 'A_ADC_C={}'.format(a_adc_c)]
+    payload = create_set_calibration(args.calibration_set)
+    communicate(comms, payload, args)
+    print("Output Current Calibration Complete\r\n")
+
+    # Draw data in graph
+    if calibration_debug_plotting:
+        plt.title("Output Current Calibration (A_ADC)")
+        ax = plt.gca()
+        plt.text(0.03, 0.97, 'y = {} * x + {}'.format(a_adc_k, a_adc_c), transform=ax.transAxes, fontsize=9, va='top')
+        plt.xlabel("A_ADC")
+        x_data = list(calibration_a_adc)
+        plt.ylabel("Output Current (A)")
+        y_data = list(calibration_i_out)
+        plt.plot(x_data, y_data, 'ro')
+        y_data = []
+        x_data.insert(0, 0)  # Ensure we have a x = 0 point on our line of best fit
+        for i in range(len(x_data)):
+            y_data.append(x_data[i] * a_adc_k + a_adc_c)
+        plt.plot(x_data, y_data, '-')  # Draw line of best fit
+        plt.axis(xmin=0, ymin=0)
+        plt.show()
+
+    print("Constant Current Calibration:")
+    # Set the V_DAC value to our safe maximum so we can't over current our load
+    output_dac = int(round(max_output_voltage_mv * v_dac_k + v_dac_c))
+    args.parameter = ["V_DAC={}".format(output_dac)]
+    payload = create_set_parameter(args.parameter)
+    communicate(comms, payload, args)
+
+    # Sweep the full range of the A_DAC so we can find out what its workable region is
+    num_steps = 100
+    calibration_a_adc = []
+    calibration_a_dac = []
+    output_gradient = []
+    for x in range(num_steps + 1):
+        calibration_a_dac.append(int(x*(4095/num_steps)))
+        args.parameter = ["A_DAC={}".format(calibration_a_dac[-1])]
+        payload = create_set_parameter(args.parameter)
+        communicate(comms, payload, args)
+        communicate(comms, create_enable_output("on"), args)
+        time.sleep(0.01)
+
+        data = communicate(comms, create_cmd(protocol.CMD_CAL_REPORT), args)
+        calibration_a_adc.append(data['iout_adc'])
+
+    communicate(comms, create_enable_output("off"), args)  # Turn the output off
+
+    # Once this is complete we calculate the gradient between every other point
+    for x in range(num_steps):
+        k, _ = best_fit(calibration_a_dac[x:x+2], calibration_a_adc[x:x+2])
+        output_gradient.append(k)
+
+    # Find the first point where the gradient is non-zero
+    first_point = 0
+    for x in range(len(output_gradient)):
+        if (output_gradient[x] > 0.1):
+            first_point = x
+            break
+
+    # Find the last point where the gradient is non-zero
+    last_point = len(output_gradient) - 1
+    for x in range(first_point, len(output_gradient)):
+        if (output_gradient[x] < 0.1):
+            last_point = x - 1
+            break
+
+    # Find the A_DAC output range. Bringing the points in by 20% to trim any edge values out
+    a_dac_lower_range = calibration_a_dac[first_point] + (calibration_a_dac[last_point] - calibration_a_dac[first_point]) * 0.1
+    a_dac_upper_range = calibration_a_dac[last_point] - (calibration_a_dac[last_point] - calibration_a_dac[first_point]) * 0.1
+
+    # Draw data in graph
+    if calibration_debug_plotting:
+        plt.title("Output Current Sweep")
+        plt.xlabel("A_DAC")
+        x_data = list(calibration_a_dac)
+        plt.ylabel("A_ADC")
+        y_data = list(calibration_a_adc)
+        plt.plot(x_data, y_data, 'ro')
+        plt.axvline(x=a_dac_lower_range)
+        plt.axvline(x=a_dac_upper_range)
+        plt.axis(xmin=0, ymin=0)
+        plt.show()
+
+    # Take multiple current readings in this range
+    num_steps = 15
+    calibration_i_out = []
+    calibration_a_dac = []
+
+    for x in range(num_steps):
+        # Calculate our output current DAC value
+        output_dac = int(a_dac_lower_range + ((a_dac_upper_range - a_dac_lower_range) * (x / num_steps)))
+
+        # Set the output current
+        args.parameter = ["A_DAC={}".format(output_dac)]
+        payload = create_set_parameter(args.parameter)
+        communicate(comms, payload, args)
+        communicate(comms, create_enable_output("on"), args)
+        time.sleep(1)  # Wait for the DPS output to settle
+
+        # Add these readings to our array
+        calibration_i_out.append((get_average_calibration_result(comms, 'vout_adc') * v_adc_k + v_dac_c) / load_resistance)
+        calibration_a_dac.append(output_dac)
+
+    communicate(comms, create_enable_output("off"), args)  # Turn the output off
+
+    # Calculate and set the A_DAC coeffecients
+    a_dac_k, a_dac_c = best_fit(calibration_i_out, calibration_a_dac)
+    args.calibration_set = ['A_DAC_K={}'.format(a_dac_k), 'A_DAC_C={}'.format(a_dac_c)]
+    payload = create_set_calibration(args.calibration_set)
+    communicate(comms, payload, args)
+    print("\r\nConstant Current Calibration Complete\r\n")
+
+    # Draw data in graph
+    if calibration_debug_plotting:
+        plt.title("Output Current Calibration (A_DAC)")
+        ax = plt.gca()
+        plt.text(0.03, 0.97, 'y = {} * x + {}'.format(a_dac_k, a_dac_c), transform=ax.transAxes, fontsize=9, va='top')
+        plt.xlabel("Output Current (A)")
+        x_data = list(calibration_i_out)
+        plt.ylabel("A_DAC")
+        y_data = list(calibration_a_dac)
+        plt.plot(x_data, y_data, 'ro')
+        y_data = []
+        x_data.insert(0, 0)  # Ensure we have a x = 0 point on our line of best fit
+        for i in range(len(x_data)):
+            y_data.append(x_data[i] * a_dac_k + a_dac_c)
+        plt.plot(x_data, y_data, '-')  # Draw line of best fit
+        plt.axis(xmin=0, ymin=0)
+        plt.show()
+
+    # Change to the main screen
+    communicate(comms, create_change_screen(protocol.CHANGE_SCREEN_MAIN), args)
+
+    print("Calibration Complete\r\n")
+    print("To restore the device to factory defaults use dpsctl.py --calibration_reset")
 
 
 def uhej_worker_thread():
@@ -699,6 +1093,7 @@ def main():
     parser.add_argument('-F', '--list-functions', action='store_true', help="List available functions")
     parser.add_argument('-p', '--parameter', nargs='+', help="Set function parameter <name>=<value>")
     parser.add_argument('-P', '--list-parameters', action='store_true', help="List function parameters of active function")
+    parser.add_argument('-C', '--calibrate', action="store_true", help="Starts System Calibration Routine")
     parser.add_argument('-c', '--calibration_set', nargs='+', help="Set the specified calibration coefficient <name>=<value>")
     parser.add_argument('-cr', '--calibration_report', action="store_true", help="Prints Calibration report")
     parser.add_argument('--calibration_reset', action='store_true', help="Resets the calibration to the default values")
