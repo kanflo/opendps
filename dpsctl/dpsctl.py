@@ -653,6 +653,7 @@ def do_calibration(comms, args):
     print("For calibration you will need:")
     print("\tA multimeter")
     print("\tA known load capable of handling the required power")
+    print("\tA thick wire for shorting the output of the DPS")
     print("\t2 stable input voltages\r\n")
     print("Please ensure nothing is connected to the output of the DPS before starting calibration!\r\n")
 
@@ -888,9 +889,10 @@ def do_calibration(comms, args):
         plt.show()
 
     print("Constant Current Calibration:")
-    # Set the V_DAC value to our safe maximum so we can't over current our load
-    output_dac = int(round(max_output_voltage_mv * v_dac_k + v_dac_c))
-    args.parameter = ["V_DAC={}".format(output_dac)]
+    raw_input("Please short the output of the DPS with a thick wire capable of carrying {}A, then press enter".format(max_dps_current))
+
+    # Set the V_DAC output to the maximum
+    args.parameter = ["V_DAC={}".format(4095)]
     payload = create_set_parameter(args.parameter)
     communicate(comms, payload, args)
 
@@ -965,7 +967,7 @@ def do_calibration(comms, args):
         time.sleep(1)  # Wait for the DPS output to settle
 
         # Add these readings to our array
-        calibration_i_out.append((get_average_calibration_result(comms, 'vout_adc') * v_adc_k + v_dac_c) / load_resistance)
+        calibration_i_out.append((get_average_calibration_result(comms, 'iout_adc') * a_adc_k + a_adc_c))
         calibration_a_dac.append(output_dac)
 
     communicate(comms, create_enable_output("off"), args)  # Turn the output off
@@ -999,7 +1001,7 @@ def do_calibration(comms, args):
     communicate(comms, create_change_screen(protocol.CHANGE_SCREEN_MAIN), args)
 
     print("Calibration Complete\r\n")
-    print("To restore the device to factory defaults use dpsctl.py --calibration_reset")
+    print("To restore the device to the OpenDPS defaults use dpsctl.py --calibration_reset")
 
 
 def uhej_worker_thread():
