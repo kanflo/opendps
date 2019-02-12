@@ -35,6 +35,7 @@ time, add it tht the environment variable DPSIF.
 
 """
 
+from __future__ import print_function
 from __future__ import division
 
 import argparse
@@ -246,7 +247,7 @@ def prefix_name(prefix):
     return "e{:d}".format(prefix)
 
 
-def handle_response(command, frame, args):
+def handle_response(command, frame, args, quiet=False):
     """
     Handle a response frame from the device.
     Return a dictionary of interesting information.
@@ -267,7 +268,8 @@ def handle_response(command, frame, args):
         _json["status"] = 1  # we're here aren't we?
 
     if resp_command == protocol.CMD_PING:
-        print("Got pong from device")
+        if not quiet:
+            print("Got pong from device")
     elif resp_command == protocol.CMD_QUERY:
         data = unpack_query_response(frame)
         enable_str = "on" if data['output_enabled'] else "temperature shutdown" if data['temp_shutdown'] == 1 else "off"
@@ -276,7 +278,7 @@ def handle_response(command, frame, args):
         i_out_str = "{:.3f}".format(data['i_out'] / 1000)
         if args.json:
             _json = data
-        else:
+        elif not quiet:
             print("{:<10} : {} ({})".format('Func', data['cur_func'], enable_str))
             for key, value in data['params'].items():
                 print("  {:<8} : {}".format(key, value))
@@ -304,7 +306,7 @@ def handle_response(command, frame, args):
         status = frame.unpack8()
         if not status:
             print("Function does not exist.")  # Never reached due to status == 0
-        else:
+        elif not quiet:
             print("Changed function.")
     elif resp_command == protocol.CMD_LIST_FUNCTIONS:
         cmd = frame.unpack8()
@@ -335,7 +337,8 @@ def handle_response(command, frame, args):
             status = frame.unpack8()
             parts = p.split("=")
             # TODO: handle json output
-            print("{}: {}".format(parts[0], "ok" if status == 0 else "unknown parameter" if status == 1 else "out of range" if status == 2 else "unsupported parameter" if status == 3 else "unknown error {:d}".format(status)))
+            if not quiet:
+                print("{}: {}".format(parts[0], "ok" if status == 0 else "unknown parameter" if status == 1 else "out of range" if status == 2 else "unsupported parameter" if status == 3 else "unknown error {:d}".format(status)))
     elif resp_command == protocol.CMD_SET_CALIBRATION:
         cmd = frame.unpack8()
         status = frame.unpack8()
@@ -343,7 +346,8 @@ def handle_response(command, frame, args):
             status = frame.unpack8()
             parts = p.split("=")
             # TODO: handle json output
-            print("{}: {}".format(parts[0], "ok" if status == 0 else "unknown coefficient" if status == 1 else "out of range" if status == 2 else "unsupported coefficient" if status == 3 else "flash write error" if status == 4 else "unknown error {:d}".format(status)))
+            if not quiet:
+                print("{}: {}".format(parts[0], "ok" if status == 0 else "unknown coefficient" if status == 1 else "out of range" if status == 2 else "unsupported coefficient" if status == 3 else "flash write error" if status == 4 else "unknown error {:d}".format(status)))
     elif resp_command == protocol.CMD_LIST_PARAMETERS:
         cmd = frame.unpack8()
         status = frame.unpack8()
@@ -361,16 +365,15 @@ def handle_response(command, frame, args):
             if args.json:
                 _json["current_function"] = cur_func
                 _json["parameters"] = parameters
+            if len(parameters) == 0:
+                print("Selected OpenDPS supports no parameters at all for the {} function".format(cur_func))
+            elif len(parameters) == 1:
+                print("Selected OpenDPS supports the {} parameter ({}{}) for the {} function.".format(parameters[0]['name'], parameters[0]['prefix'], parameters[0]['unit'], cur_func))
             else:
-                if len(parameters) == 0:
-                    print("Selected OpenDPS supports no parameters at all for the {} function".format(cur_func))
-                elif len(parameters) == 1:
-                    print("Selected OpenDPS supports the {} parameter ({}{}) for the {} function.".format(parameters[0]['name'], parameters[0]['prefix'], parameters[0]['unit'], cur_func))
-                else:
-                    temp = ""
-                    for p in parameters:
-                        temp += p['name'] + ' ({}{})'.format(p['prefix'], p['unit']) + " "
-                    print("Selected OpenDPS supports the {}parameters for the {} function.".format(temp, cur_func))
+                temp = ""
+                for p in parameters:
+                    temp += p['name'] + ' ({}{})'.format(p['prefix'], p['unit']) + " "
+                print("Selected OpenDPS supports the {}parameters for the {} function.".format(temp, cur_func))
     elif resp_command == protocol.CMD_ENABLE_OUTPUT:
         cmd = frame.unpack8()
         status = frame.unpack8()
@@ -399,7 +402,7 @@ def handle_response(command, frame, args):
     return ret_dict
 
 
-def communicate(comms, frame, args):
+def communicate(comms, frame, args, quiet=False):
     """
     Communicate with the DPS device according to the user's wishes
     """
@@ -427,7 +430,7 @@ def communicate(comms, frame, args):
     if res < 0:
         fail("protocol error ({:d})".format(res))
     else:
-        return handle_response(frame.get_frame()[1], f, args)
+        return handle_response(frame.get_frame()[1], f, args, quiet)
 
 
 def handle_commands(args):
@@ -620,7 +623,7 @@ def get_average_calibration_result(comms, variable, num_samples=20):
     """
     data = []
     for _ in range(num_samples):
-        data.append(communicate(comms, create_cmd(protocol.CMD_CAL_REPORT), args))
+        data.append(communicate(comms, create_cmd(protocol.CMD_CAL_REPORT), args, quiet=True))
     return sum(d[variable] for d in data) / num_samples
 
 
@@ -662,9 +665,9 @@ def do_calibration(comms, args):
         return
 
     # Change to the settings screen
-    communicate(comms, create_change_screen(protocol.CHANGE_SCREEN_SETTINGS), args)
+    communicate(comms, create_change_screen(protocol.CHANGE_SCREEN_SETTINGS), args, quiet=True)
 
-    print("Input Voltage Calibration:")
+    print("\r\nInput Voltage Calibration:")
     calibration_input_voltage = []
     calibration_vin_adc = []
 
@@ -679,12 +682,11 @@ def do_calibration(comms, args):
     calibration_input_voltage.append(float(raw_input("Type input voltage in mV: ")))
     calibration_vin_adc.append(get_average_calibration_result(comms, 'vin_adc'))
 
+    # Calculate and set the Vin_ADC coeffecients
     vin_adc_k, vin_adc_c = best_fit(calibration_vin_adc, calibration_input_voltage)
-
     args.calibration_set = ['VIN_ADC_K={}'.format(vin_adc_k), 'VIN_ADC_C={}'.format(vin_adc_c)]
     payload = create_set_calibration(args.calibration_set)
-    communicate(comms, payload, args)
-    print("Input Voltage Calibration Complete\r\n")
+    communicate(comms, payload, args, quiet=True)
 
     # Draw data in graph
     if calibration_debug_plotting:
@@ -704,13 +706,13 @@ def do_calibration(comms, args):
         plt.axis(xmin=0, ymin=0)
         plt.show()
 
-    print("Output Voltage Calibration:")
-    print("Finding maximum output V_DAC value")
+    print("\r\nOutput Voltage Calibration:")
+    print("Finding maximum output V_DAC value", end='')
 
     args.parameter = ["V_DAC=0", "A_DAC=4095"]
     payload = create_set_parameter(args.parameter)
-    communicate(comms, payload, args)
-    communicate(comms, create_enable_output("on"), args)  # Turn the output on
+    communicate(comms, payload, args, quiet=True)
+    communicate(comms, create_enable_output("on"), args, quiet=True)  # Turn the output on
     time.sleep(4)  # Ensure the device has settled, this can take a while with an open circuit output
 
     # To find the maximum output V_DAC value we sweep through a range of output DAC values and read back the ADC values
@@ -722,10 +724,13 @@ def do_calibration(comms, args):
         output_dac.append(x*(4095/num_steps))
         args.parameter = ["V_DAC={}".format(output_dac[-1])]
         payload = create_set_parameter(args.parameter)
-        communicate(comms, payload, args)
+        communicate(comms, payload, args, quiet=True)
         time.sleep(0.01)
-        data = communicate(comms, create_cmd(protocol.CMD_CAL_REPORT), args)
+        data = communicate(comms, create_cmd(protocol.CMD_CAL_REPORT), args, quiet=True)
         output_adc.append(data['vout_adc'])
+        if not x % 4:
+            print(".", end='')
+    print(" Done")
 
     # Once this is complete we calculate the gradient between every other point
     for x in range(num_steps):
@@ -755,20 +760,20 @@ def do_calibration(comms, args):
     calibration_v_adc = []
     calibration_v_dac = []
 
-    print("Calibration Point 1 of 2, 10% of Max")
+    print("\r\nCalibration Point 1 of 2, 10% of Max")
     output_dac = int(max_v_dac * 0.1)
     args.parameter = ["V_DAC={}".format(output_dac)]
     payload = create_set_parameter(args.parameter)
-    communicate(comms, payload, args)
+    communicate(comms, payload, args, quiet=True)
     calibration_real_voltage.append(float(raw_input("Type measured voltage on output in mV: ")))
     calibration_v_adc.append(get_average_calibration_result(comms, 'vout_adc'))
     calibration_v_dac.append(output_dac)
 
-    print("Calibration Point 1 of 2, 90% of Max")
+    print("\r\nCalibration Point 1 of 2, 90% of Max")
     output_dac = int(max_v_dac * 0.9)
     args.parameter = ["V_DAC={}".format(output_dac)]
     payload = create_set_parameter(args.parameter)
-    communicate(comms, payload, args)
+    communicate(comms, payload, args, quiet=True)
     calibration_real_voltage.append(float(raw_input("Type measured voltage on output in mV: ")))
     calibration_v_adc.append(get_average_calibration_result(comms, 'vout_adc'))
     calibration_v_dac.append(output_dac)
@@ -777,16 +782,15 @@ def do_calibration(comms, args):
     v_dac_k, v_dac_c = best_fit(calibration_real_voltage, calibration_v_dac)
     args.calibration_set = ['V_DAC_K={}'.format(v_dac_k), 'V_DAC_C={}'.format(v_dac_c)]
     payload = create_set_calibration(args.calibration_set)
-    communicate(comms, payload, args)
+    communicate(comms, payload, args, quiet=True)
 
     # Calculate and set the V_ADC coeffecients
     v_adc_k, v_adc_c = best_fit(calibration_v_adc, calibration_real_voltage)
     args.calibration_set = ['V_ADC_K={}'.format(v_adc_k), 'V_ADC_C={}'.format(v_adc_c)]
     payload = create_set_calibration(args.calibration_set)
-    communicate(comms, payload, args)
+    communicate(comms, payload, args, quiet=True)
 
-    communicate(comms, create_enable_output("off"), args)  # Turn the output off
-    print("Output Voltage Calibration Complete\r\n")
+    communicate(comms, create_enable_output("off"), args, quiet=True)  # Turn the output off
 
     # Draw data in graph
     if calibration_debug_plotting:
@@ -824,7 +828,7 @@ def do_calibration(comms, args):
         plt.axis(xmin=0, ymin=0)
         plt.show()
 
-    print("Output Current Calibration:")
+    print("\r\nOutput Current Calibration:")
     max_dps_current = float(raw_input("Max output current of your DPS (e.g 5 for the DPS5005) in amps: "))
     load_resistance = float(raw_input("Load resistance in ohms: "))
     load_max_wattage = float(raw_input("Load wattage rating in watts: "))
@@ -841,10 +845,10 @@ def do_calibration(comms, args):
     raw_input("Please connect the load to the output of the DPS, then press enter")
 
     # Take multiple current readings at different voltages and construct an Iout vs Iadc array
+    print("Calibrating output current ADC", end='')
     num_steps = 15
     calibration_i_out = []
     calibration_a_adc = []
-
     for x in range(num_steps):
         # Calculate our output voltage DAC value
         output_voltage = max_output_voltage_mv * (x / num_steps)
@@ -853,22 +857,23 @@ def do_calibration(comms, args):
         # Set the output voltage
         args.parameter = ["V_DAC={}".format(output_dac)]
         payload = create_set_parameter(args.parameter)
-        communicate(comms, payload, args)
-        communicate(comms, create_enable_output("on"), args)
+        communicate(comms, payload, args, quiet=True)
+        communicate(comms, create_enable_output("on"), args, quiet=True)
         time.sleep(1)  # Wait for the DPS output to settle
 
         # Add these readings to our array
         calibration_i_out.append((get_average_calibration_result(comms, 'vout_adc') * v_adc_k + v_dac_c) / load_resistance)
         calibration_a_adc.append(get_average_calibration_result(comms, 'iout_adc'))
+        print(".", end='')
+    print(" Done")
 
-    communicate(comms, create_enable_output("off"), args)  # Turn the output off
+    communicate(comms, create_enable_output("off"), args, quiet=True)  # Turn the output off
 
     # Calculate and set the A_ADC coeffecients
     a_adc_k, a_adc_c = best_fit(calibration_a_adc, calibration_i_out)
     args.calibration_set = ['A_ADC_K={}'.format(a_adc_k), 'A_ADC_C={}'.format(a_adc_c)]
     payload = create_set_calibration(args.calibration_set)
-    communicate(comms, payload, args)
-    print("Output Current Calibration Complete\r\n")
+    communicate(comms, payload, args, quiet=True)
 
     # Draw data in graph
     if calibration_debug_plotting:
@@ -888,15 +893,16 @@ def do_calibration(comms, args):
         plt.axis(xmin=0, ymin=0)
         plt.show()
 
-    print("Constant Current Calibration:")
+    print("\r\nConstant Current Calibration:")
     raw_input("Please short the output of the DPS with a thick wire capable of carrying {}A, then press enter".format(max_dps_current))
 
     # Set the V_DAC output to the maximum
     args.parameter = ["V_DAC={}".format(4095)]
     payload = create_set_parameter(args.parameter)
-    communicate(comms, payload, args)
+    communicate(comms, payload, args, quiet=True)
 
     # Sweep the full range of the A_DAC so we can find out what its workable region is
+    print("\r\nFinding maximum output A_DAC value", end='')
     num_steps = 100
     calibration_a_adc = []
     calibration_a_dac = []
@@ -905,14 +911,17 @@ def do_calibration(comms, args):
         calibration_a_dac.append(int(x*(4095/num_steps)))
         args.parameter = ["A_DAC={}".format(calibration_a_dac[-1])]
         payload = create_set_parameter(args.parameter)
-        communicate(comms, payload, args)
-        communicate(comms, create_enable_output("on"), args)
+        communicate(comms, payload, args, quiet=True)
+        communicate(comms, create_enable_output("on"), args, quiet=True)
         time.sleep(0.01)
 
-        data = communicate(comms, create_cmd(protocol.CMD_CAL_REPORT), args)
+        data = communicate(comms, create_cmd(protocol.CMD_CAL_REPORT), args, quiet=True)
         calibration_a_adc.append(data['iout_adc'])
+        if not x % 4:
+            print(".", end='')
+    print(" Done")
 
-    communicate(comms, create_enable_output("off"), args)  # Turn the output off
+    communicate(comms, create_enable_output("off"), args, quiet=True)  # Turn the output off
 
     # Once this is complete we calculate the gradient between every other point
     for x in range(num_steps):
@@ -951,10 +960,10 @@ def do_calibration(comms, args):
         plt.show()
 
     # Take multiple current readings in this range
+    print("Calibrating output current DAC", end='')
     num_steps = 15
     calibration_i_out = []
     calibration_a_dac = []
-
     for x in range(num_steps):
         # Calculate our output current DAC value
         output_dac = int(a_dac_lower_range + ((a_dac_upper_range - a_dac_lower_range) * (x / num_steps)))
@@ -962,22 +971,23 @@ def do_calibration(comms, args):
         # Set the output current
         args.parameter = ["A_DAC={}".format(output_dac)]
         payload = create_set_parameter(args.parameter)
-        communicate(comms, payload, args)
-        communicate(comms, create_enable_output("on"), args)
+        communicate(comms, payload, args, quiet=True)
+        communicate(comms, create_enable_output("on"), args, quiet=True)
         time.sleep(1)  # Wait for the DPS output to settle
 
         # Add these readings to our array
         calibration_i_out.append((get_average_calibration_result(comms, 'iout_adc') * a_adc_k + a_adc_c))
         calibration_a_dac.append(output_dac)
+        print(".", end='')
+    print(" Done")
 
-    communicate(comms, create_enable_output("off"), args)  # Turn the output off
+    communicate(comms, create_enable_output("off"), args, quiet=True)  # Turn the output off
 
     # Calculate and set the A_DAC coeffecients
     a_dac_k, a_dac_c = best_fit(calibration_i_out, calibration_a_dac)
     args.calibration_set = ['A_DAC_K={}'.format(a_dac_k), 'A_DAC_C={}'.format(a_dac_c)]
     payload = create_set_calibration(args.calibration_set)
-    communicate(comms, payload, args)
-    print("\r\nConstant Current Calibration Complete\r\n")
+    communicate(comms, payload, args, quiet=True)
 
     # Draw data in graph
     if calibration_debug_plotting:
@@ -998,9 +1008,9 @@ def do_calibration(comms, args):
         plt.show()
 
     # Change to the main screen
-    communicate(comms, create_change_screen(protocol.CHANGE_SCREEN_MAIN), args)
+    communicate(comms, create_change_screen(protocol.CHANGE_SCREEN_MAIN), args, quiet=True)
 
-    print("Calibration Complete\r\n")
+    print("\r\nCalibration Complete!\r\n")
     print("To restore the device to the OpenDPS defaults use dpsctl.py --calibration_reset")
 
 
