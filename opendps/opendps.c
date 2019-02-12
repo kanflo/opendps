@@ -60,6 +60,9 @@
 #ifdef CONFIG_CC_ENABLE
 #include "func_cc.h"
 #endif // CONFIG_CC_ENABLE
+#ifdef CONFIG_MERGED_ENABLE
+#include "func_merged.h"
+#endif // CONFIG_MERGED_ENABLE
 
 #ifdef DPS_EMULATOR
 #include "dpsemul.h"
@@ -423,6 +426,9 @@ static void ui_init(void)
 #ifdef CONFIG_CC_ENABLE
     func_cc_init(&func_ui);
 #endif // CONFIG_CC_ENABLE
+#ifdef CONFIG_MERGED_ENABLE
+    func_merged_init(&func_ui);
+#endif // CONFIG_MERGED_ENABLE
 
     /** Initialise the settings screens */
     uui_init(&settings_ui, &g_past);

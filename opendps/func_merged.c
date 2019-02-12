@@ -26,9 +26,11 @@
 #include <stdbool.h>
 #include <stdlib.h>
 #include <string.h>
+#include "gfx-cc.h"
 #include "gfx-cv.h"
+#include "gfx-merged.h"
 #include "hw.h"
-#include "func_cv.h"
+#include "func_merged.h"
 #include "uui.h"
 #include "uui_number.h"
 #include "dbg_printf.h"
@@ -44,10 +46,11 @@
  * Thid allows for ramping the voltage and obsering the current increase.
  */
 
-static void cv_enable(bool _enable);
+static void merged_enable(bool _enable);
 static void voltage_changed(ui_number_t *item);
 static void current_changed(ui_number_t *item);
-static void cv_tick(void);
+static void merged_tick(void);
+static void deactivated(void);
 static void past_save(past_t *past);
 static void past_restore(past_t *past);
 static set_param_status_t set_parameter(char *name, char *value);
@@ -58,12 +61,18 @@ static set_param_status_t get_parameter(char *name, char *value, uint32_t value_
  */
 static int32_t saved_u, saved_i;
 
-#define SCREEN_ID  (1)
+enum {
+    CUR_GFX_NOT_DRAWN, 
+    CUR_GFX_CV,
+    CUR_GFX_CC,
+} current_mode_gfx; 
+
+#define SCREEN_ID  (3)
 #define PAST_U     (0)
 #define PAST_I     (1)
 
 /* This is the definition of the voltage item in the UI */
-ui_number_t cv_voltage = {
+ui_number_t merged_voltage = {
     {
         .type = ui_item_number,
         .id = 10,
@@ -86,7 +95,7 @@ ui_number_t cv_voltage = {
 };
 
 /* This is the definition of the current item in the UI */
-ui_number_t cv_current = {
+ui_number_t merged_current = {
     {
         .type = ui_item_number,
         .id = 11,
@@ -109,19 +118,19 @@ ui_number_t cv_current = {
 };
 
 /* This is the screen definition */
-ui_screen_t cv_screen = {
+ui_screen_t merged_screen = {
     .id = SCREEN_ID,
-    .name = "cv",
-    .icon_data = (uint8_t *) gfx_cv,
-    .icon_data_len = sizeof(gfx_cv),
-    .icon_width = GFX_CV_WIDTH,
-    .icon_height = GFX_CV_HEIGHT,
+    .name = "merged",
+    .icon_data = (uint8_t *) gfx_merged,
+    .icon_data_len = sizeof(gfx_merged),
+    .icon_width = GFX_MERGED_WIDTH,
+    .icon_height = GFX_MERGED_HEIGHT,
     .activated = NULL,
-    .deactivated = NULL,
-    .enable = &cv_enable,
+    .deactivated = &deactivated,
+    .enable = &merged_enable,
     .past_save = &past_save,
     .past_restore = &past_restore,
-    .tick = &cv_tick,
+    .tick = &merged_tick,
     .set_parameter = &set_parameter,
     .get_parameter = &get_parameter,
     .num_items = 2,
@@ -140,7 +149,7 @@ ui_screen_t cv_screen = {
             .name = {'\0'} /** Terminator */
         },
     },
-    .items = { (ui_item_t*) &cv_voltage, (ui_item_t*) &cv_current }
+    .items = { (ui_item_t*) &merged_voltage, (ui_item_t*) &merged_current }
 };
 
 /**
@@ -155,22 +164,22 @@ static set_param_status_t set_parameter(char *name, char *value)
 {
     int32_t ivalue = atoi(value);
     if (strcmp("voltage", name) == 0 || strcmp("u", name) == 0) {
-        if (ivalue < cv_voltage.min || ivalue > cv_voltage.max) {
-            emu_printf("[CV] Voltage %d is out of range (min:%d max:%d)\n", ivalue, cv_voltage.min, cv_voltage.max);
+        if (ivalue < merged_voltage.min || ivalue > merged_voltage.max) {
+            emu_printf("[MERGED] Voltage %d is out of range (min:%d max:%d)\n", ivalue, merged_voltage.min, merged_voltage.max);
             return ps_range_error;
         }
-        emu_printf("[CV] Setting voltage to %d\n", ivalue);
-        cv_voltage.value = ivalue;
-        voltage_changed(&cv_voltage);
+        emu_printf("[MERGED] Setting voltage to %d\n", ivalue);
+        merged_voltage.value = ivalue;
+        voltage_changed(&merged_voltage);
         return ps_ok;
     } else if (strcmp("current", name) == 0 || strcmp("i", name) == 0) {
-        if (ivalue < cv_current.min || ivalue > cv_current.max) {
-            emu_printf("[CV] Current %d is out of range (min:%d max:%d)\n", ivalue, cv_current.min, cv_current.max);
+        if (ivalue < merged_current.min || ivalue > merged_current.max) {
+            emu_printf("[MERGED] Current %d is out of range (min:%d max:%d)\n", ivalue, merged_current.min, merged_current.max);
             return ps_range_error;
         }
-        emu_printf("[CV] Setting current to %d\n", ivalue);
-        cv_current.value = ivalue;
-        current_changed(&cv_current);
+        emu_printf("[MERGED] Setting current to %d\n", ivalue);
+        merged_current.value = ivalue;
+        current_changed(&merged_current);
         return ps_ok;
     }
     return ps_unknown_name;
@@ -189,10 +198,10 @@ static set_param_status_t get_parameter(char *name, char *value, uint32_t value_
 {
     if (strcmp("voltage", name) == 0 || strcmp("u", name) == 0) {
         /** value returned in millivolt, module internal representation is centivolt */
-        (void) mini_snprintf(value, value_len, "%d", (pwrctl_vout_enabled() ? saved_u : cv_voltage.value));
+        (void) mini_snprintf(value, value_len, "%d", (pwrctl_vout_enabled() ? saved_u : merged_voltage.value));
         return ps_ok;
     } else if (strcmp("current", name) == 0 || strcmp("i", name) == 0) {
-        (void) mini_snprintf(value, value_len, "%d", pwrctl_vout_enabled() ? saved_i : cv_current.value);
+        (void) mini_snprintf(value, value_len, "%d", pwrctl_vout_enabled() ? saved_i : merged_current.value);
         return ps_ok;
     }
     return ps_unknown_name;
@@ -203,25 +212,33 @@ static set_param_status_t get_parameter(char *name, char *value, uint32_t value_
  *
  * @param[in]  enabled  true when function is enabled
  */
-static void cv_enable(bool enabled)
+static void merged_enable(bool enabled)
 {
-    emu_printf("[CV] %s output\n", enabled ? "Enable" : "Disable");
+    emu_printf("[MERGED] %s output\n", enabled ? "Enable" : "Disable");
     if (enabled) {
         /** Display will now show the current values, keep the user setting saved */
-        saved_u = cv_voltage.value;
-        saved_i = cv_current.value;
-        (void) pwrctl_set_vout(cv_voltage.value);
-        (void) pwrctl_set_iout(CONFIG_DPS_MAX_CURRENT);
-        (void) pwrctl_set_ilimit(cv_current.value);
+        saved_u = merged_voltage.value;
+        saved_i = merged_current.value;
+        (void) pwrctl_set_vout(merged_voltage.value);
+        (void) pwrctl_set_iout(merged_current.value);
+        (void) pwrctl_set_ilimit(0xFFFF); /** Set the current limit to the maximum to prevent OCP (over current protection) firing */
         pwrctl_enable_vout(true);
     } else {
         pwrctl_enable_vout(false);
         /** Make sure we're displaying the settings and not the current
           * measurements when the power output is switched off */
-        cv_voltage.value = saved_u;
-        cv_voltage.ui.draw(&cv_voltage.ui);
-        cv_current.value = saved_i;
-        cv_current.ui.draw(&cv_current.ui);
+        merged_voltage.value = saved_u;
+        merged_voltage.ui.draw(&merged_voltage.ui);
+        merged_current.value = saved_i;
+        merged_current.ui.draw(&merged_current.ui);
+
+        /** Ensure the CC or CV logo has been cleared from the screen */
+        if (current_mode_gfx == CUR_GFX_CV) {
+            tft_fill(30, 128 - GFX_CV_HEIGHT, GFX_CV_WIDTH, GFX_CV_HEIGHT, BLACK);
+        } else if (current_mode_gfx == CUR_GFX_CC) {
+            tft_fill(30, 128 - GFX_CC_HEIGHT, GFX_CC_WIDTH, GFX_CC_HEIGHT, BLACK);
+        }
+        current_mode_gfx = CUR_GFX_NOT_DRAWN;
     }
 }
 
@@ -244,7 +261,21 @@ static void voltage_changed(ui_number_t *item)
 static void current_changed(ui_number_t *item)
 {
     saved_i = item->value;
-    (void) pwrctl_set_ilimit(item->value);
+    (void) pwrctl_set_iout(item->value);
+}
+
+/**
+ * @brief      Do any required clean up before changing away from this screen
+ */
+static void deactivated(void)
+{
+    /** Ensure the CC or CV logo has been cleared from the screen */
+    if (current_mode_gfx == CUR_GFX_CV) {
+        tft_fill(30, 128 - GFX_CV_HEIGHT, GFX_CV_WIDTH, GFX_CV_HEIGHT, BLACK);
+    } else if (current_mode_gfx == CUR_GFX_CC) {
+        tft_fill(30, 128 - GFX_CC_HEIGHT, GFX_CC_WIDTH, GFX_CC_HEIGHT, BLACK);
+    }
+    current_mode_gfx = CUR_GFX_NOT_DRAWN;
 }
 
 /**
@@ -255,10 +286,10 @@ static void current_changed(ui_number_t *item)
 static void past_save(past_t *past)
 {
     /** @todo: past bug causes corruption for units smaller than 4 bytes (#27) */
-    if (!past_write_unit(past, (SCREEN_ID << 24) | PAST_U, (void*) &saved_u, 4 /* sizeof(cv_voltage.value) */ )) {
+    if (!past_write_unit(past, (SCREEN_ID << 24) | PAST_U, (void*) &saved_u, 4 /* sizeof(merged_voltage.value) */ )) {
         /** @todo: handle past write failures */
     }
-    if (!past_write_unit(past, (SCREEN_ID << 24) | PAST_I, (void*) &saved_i, 4 /* sizeof(cv_current.value) */ )) {
+    if (!past_write_unit(past, (SCREEN_ID << 24) | PAST_I, (void*) &saved_i, 4 /* sizeof(merged_current.value) */ )) {
         /** @todo: handle past write failures */
     }
 }
@@ -273,11 +304,11 @@ static void past_restore(past_t *past)
     uint32_t length;
     uint32_t *p = 0;
     if (past_read_unit(past, (SCREEN_ID << 24) | PAST_U, (const void**) &p, &length)) {
-        saved_u = cv_voltage.value = *p;
+        saved_u = merged_voltage.value = *p;
         (void) length;
     }
     if (past_read_unit(past, (SCREEN_ID << 24) | PAST_I, (const void**) &p, &length)) {
-        saved_i = cv_current.value = *p;
+        saved_i = merged_current.value = *p;
         (void) length;
     }
 }
@@ -290,67 +321,85 @@ static void past_restore(past_t *past)
  *             Power on : show current output value unless the item has focus
  *                        in which case we shall display the current setting.
  */
-static void cv_tick(void)
+static void merged_tick(void)
 {
     uint16_t i_out_raw, v_in_raw, v_out_raw;
     hw_get_adc_values(&i_out_raw, &v_in_raw, &v_out_raw);
     /** Continously update max voltage output value
       * Max output voltage = Vin / VIN_VOUT_RATIO
       * Add 0.5f to ensure correct rounding when truncated */
-    cv_voltage.max = (float) pwrctl_calc_vin(v_in_raw) / VIN_VOUT_RATIO + 0.5f;
+    merged_voltage.max = (float) pwrctl_calc_vin(v_in_raw) / VIN_VOUT_RATIO + 0.5f;
     if (pwrctl_vout_enabled()) {
-        if (cv_voltage.ui.has_focus) {
+
+        int32_t vout_actual = pwrctl_calc_vout(v_out_raw);
+        int32_t cout_actual = pwrctl_calc_iout(i_out_raw);
+
+        if (merged_voltage.ui.has_focus) {
             /** If the voltage setting has focus, make sure we're displaying
               * the desired setting and not the current output value. */
-            if (cv_voltage.value != (int32_t) pwrctl_get_vout()) {
-                cv_voltage.value = pwrctl_get_vout();
-                cv_voltage.ui.draw(&cv_voltage.ui);
+            if (merged_voltage.value != saved_u) {
+                merged_voltage.value = saved_u;
+                merged_voltage.ui.draw(&merged_voltage.ui);
             }
         } else {
             /** No focus, update display if necessary */
-            int32_t new_u = pwrctl_calc_vout(v_out_raw);
-            if (new_u != cv_voltage.value) {
-                cv_voltage.value = new_u;
-                cv_voltage.ui.draw(&cv_voltage.ui);
+            if (merged_voltage.value != vout_actual) {
+                merged_voltage.value = vout_actual;
+                merged_voltage.ui.draw(&merged_voltage.ui);
             }
         }
 
-        if (cv_current.ui.has_focus) {
+        if (merged_current.ui.has_focus) {
             /** If the current setting has focus, make sure we're displaying
               * the desired setting and not the current output value. */
-            if (cv_current.value != saved_i) {
-                cv_current.value = saved_i;
-                cv_current.ui.draw(&cv_current.ui);
+            if (merged_current.value != saved_i) {
+                merged_current.value = saved_i;
+                merged_current.ui.draw(&merged_current.ui);
             }
         } else {
             /** No focus, update display if necessary */
-            int32_t new_i = pwrctl_calc_iout(i_out_raw);
-            if (new_i != cv_current.value) {
-                cv_current.value = new_i;
-                cv_current.ui.draw(&cv_current.ui);
+            if (merged_current.value != cout_actual) {
+                merged_current.value = cout_actual;
+                merged_current.ui.draw(&merged_current.ui);
+            }
+        }
+
+        /** Determine if we are in CV or CC mode and display it */
+        int32_t vout_diff = abs(saved_u - vout_actual);
+        int32_t cout_diff = abs(saved_i - cout_actual);
+
+        if (cout_diff < vout_diff) {
+            if (current_mode_gfx != CUR_GFX_CC) {
+                tft_blit((uint16_t*) gfx_cc, GFX_CC_WIDTH, GFX_CC_HEIGHT, 30, 128 - GFX_CC_HEIGHT);
+                current_mode_gfx = CUR_GFX_CC;
+            }
+        } else {
+            if (current_mode_gfx != CUR_GFX_CV) {
+                tft_blit((uint16_t*) gfx_cv, GFX_CV_WIDTH, GFX_CV_HEIGHT, 30, 128 - GFX_CV_HEIGHT);
+                current_mode_gfx = CUR_GFX_CV;
             }
         }
     }
 }
 
 /**
- * @brief      Initialise the CV module and add its screen to the UI
+ * @brief      Initialise the MERGED module and add its screen to the UI
  *
  * @param      ui    The user interface
  */
-void func_cv_init(uui_t *ui)
+void func_merged_init(uui_t *ui)
 {
-    cv_voltage.value = 0; /** read from past */
-    cv_current.value = 0; /** read from past */
+    merged_voltage.value = 0; /** read from past */
+    merged_current.value = 0; /** read from past */
     uint16_t i_out_raw, v_in_raw, v_out_raw;
     hw_get_adc_values(&i_out_raw, &v_in_raw, &v_out_raw);
     (void) i_out_raw;
     (void) v_out_raw;
-    cv_voltage.max = pwrctl_calc_vin(v_in_raw); /** @todo: subtract for LDO */
-    number_init(&cv_voltage); /** @todo: add guards for missing init calls */
+    merged_voltage.max = pwrctl_calc_vin(v_in_raw); /** @todo: subtract for LDO */
+    number_init(&merged_voltage); /** @todo: add guards for missing init calls */
     /** Start at the second most significant digit preventing the user from
         accidentally cranking up the setting 10V or more */
-    cv_voltage.cur_digit = 2;
-    number_init(&cv_current);
-    uui_add_screen(ui, &cv_screen);
+    merged_voltage.cur_digit = 2;
+    number_init(&merged_current);
+    uui_add_screen(ui, &merged_screen);
 }

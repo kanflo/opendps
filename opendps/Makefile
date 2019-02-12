@@ -46,6 +46,9 @@ TINT ?= ffffff
 # Enable CC mode
 CC_ENABLE ?= 1
 
+# Enable merged mode
+MERGED_ENABLE ?= 1
+
 GIT_VERSION := $(shell git describe --abbrev=4 --dirty --always --tags)
 CFLAGS = -I. -DGIT_VERSION=\"$(GIT_VERSION)\" -Wno-missing-braces
 
@@ -90,6 +93,7 @@ OBJS = \
     gfx-cc.o \
     gfx-crosshair.o \
     gfx-cv.o \
+    gfx-merged.o \
     gfx-padlock.o \
     gfx-power.o \
     gfx-thermometer.o \
@@ -107,6 +111,11 @@ endif
 ifeq ($(CC_ENABLE),1)
 	CFLAGS +=-DCONFIG_CC_ENABLE
 	OBJS += func_cc.o
+endif
+
+ifeq ($(MERGED_ENABLE),1)
+	CFLAGS +=-DCONFIG_MERGED_ENABLE
+	OBJS += func_merged.o
 endif
 
 ifeq ($(SPLASH_SCREEN),1)
