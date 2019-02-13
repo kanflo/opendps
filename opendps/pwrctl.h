@@ -30,6 +30,7 @@
 #include "past.h"
 
 extern uint32_t pwrctl_i_limit_raw;
+extern uint32_t pwrctl_v_limit_raw;
 extern float a_adc_k_coef;
 extern float a_adc_c_coef;
 extern float a_dac_k_coef;
@@ -87,6 +88,13 @@ bool pwrctl_set_ilimit(uint32_t value_ma);
 uint32_t pwrctl_get_ilimit(void);
 
 /**
+  * @brief Set voltage limit
+  * @param value_mv limit in millivolts
+  * @retval true requested voltage was within specs
+  */
+bool pwrctl_set_vlimit(uint32_t value_mv)
+
+/**
   * @brief Enable or disable power output
   * @param enable true for enable, false for disable
   * @retval none
@@ -133,6 +141,13 @@ uint32_t pwrctl_calc_iout(uint16_t raw);
   * @retval expected raw ADC value
   */
 uint16_t pwrctl_calc_ilimit_adc(uint16_t i_limit_ma);
+
+/**
+  * @brief Calculate expected raw ADC value based on selected V_limit
+  * @param v_limit_mv selected V_limit
+  * @retval expected raw ADC value
+  */
+uint16_t pwrctl_calc_vlimit_adc(uint16_t v_limit_mv)
 
 /**
   * @brief Calculate DAC setting for constant current mode

@@ -33,7 +33,7 @@
   * https://docs.google.com/spreadsheets/d/1AhGsU_gvZjqZyr2ZYrnkz6BeUqMquzh9UNYoTqy_Zp4/edit?usp=sharing
   */
 
-static uint32_t i_out, v_out, i_limit;
+static uint32_t i_out, v_out, i_limit, v_limit;
 static bool v_out_enabled;
 
 float a_adc_k_coef = A_ADC_K;
@@ -171,6 +171,28 @@ uint32_t pwrctl_get_ilimit(void)
 }
 
 /**
+  * @brief Set voltage limit
+  * @param value_mv limit in millivolts
+  * @retval true requested voltage was within specs
+  */
+bool pwrctl_set_vlimit(uint32_t value_mv)
+{
+    /** @todo Check with V_limit, currently filtered by ui.c */
+    v_limit = value_mv;
+    pwrctl_v_limit_raw = pwrctl_calc_vlimit_adc(v_limit);
+    return true;
+}
+
+/**
+  * @brief Get current limit setting
+  * @retval current setting in milliampere
+  */
+uint32_t pwrctl_get_vlimit(void)
+{
+    return v_limit;
+}
+
+/**
   * @brief Enable or disable power output
   * @param enable true for enable, false for disable
   * @retval none
@@ -276,6 +298,20 @@ uint32_t pwrctl_calc_iout(uint16_t raw)
 uint16_t pwrctl_calc_ilimit_adc(uint16_t i_limit_ma)
 {
     float value = (i_limit_ma - a_adc_c_coef) / a_adc_k_coef + 1;
+    if (value <= 0)
+        return 0;
+    else
+        return value + 0.5f; // Add 0.5 so it is correctly rounded when it is truncated
+}
+
+/**
+  * @brief Calculate expected raw ADC value based on selected V_limit
+  * @param v_limit_mv selected V_limit
+  * @retval expected raw ADC value
+  */
+uint16_t pwrctl_calc_vlimit_adc(uint16_t v_limit_mv)
+{
+    float value = (v_limit_mv - v_adc_c_coef) / v_adc_k_coef + 1;
     if (value <= 0)
         return 0;
     else

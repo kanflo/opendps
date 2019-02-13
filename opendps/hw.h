@@ -110,10 +110,16 @@ void hw_set_current_dac(uint16_t i_dac);
 void hw_enable_backlight(void);
 
 /**
-  * @brief Get the ADC valut that triggered the OCP
-  * @retval Trivver value in mA
+  * @brief Get the ADC value that triggered the OCP
+  * @retval Trigger value in mA
   */
 uint16_t hw_get_itrig_ma(void);
+
+/**
+  * @brief Get the ADC value that triggered the OVP
+  * @retval Trigger value in mV
+  */
+uint16_t hw_get_vtrig_mv(void);
 
 /**
   * @brief Check if it current press is a long press, inject event if so
