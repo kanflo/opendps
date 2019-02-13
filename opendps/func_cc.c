@@ -84,6 +84,7 @@ ui_number_t cc_voltage = {
     .num_digits = 2,
     .num_decimals = 2,
     .unit = unit_volt, /** Affects the unit printed on screen */
+    .changed = &voltage_changed,
 };
 
 /* This is the definition of the current item in the UI */

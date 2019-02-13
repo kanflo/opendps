@@ -49,6 +49,7 @@ float vin_adc_c_coef = VIN_ADC_C;
 
 /** not static as it is referred to from hw.c for performance reasons */
 uint32_t pwrctl_i_limit_raw;
+uint32_t pwrctl_v_limit_raw;
 
 /**
   * @brief Initialize the power control module

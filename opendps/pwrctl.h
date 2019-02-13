@@ -92,7 +92,13 @@ uint32_t pwrctl_get_ilimit(void);
   * @param value_mv limit in millivolts
   * @retval true requested voltage was within specs
   */
-bool pwrctl_set_vlimit(uint32_t value_mv)
+bool pwrctl_set_vlimit(uint32_t value_mv);
+
+/**
+  * @brief Get current limit setting
+  * @retval current setting in milliampere
+  */
+uint32_t pwrctl_get_vlimit(void);
 
 /**
   * @brief Enable or disable power output
@@ -147,7 +153,7 @@ uint16_t pwrctl_calc_ilimit_adc(uint16_t i_limit_ma);
   * @param v_limit_mv selected V_limit
   * @retval expected raw ADC value
   */
-uint16_t pwrctl_calc_vlimit_adc(uint16_t v_limit_mv)
+uint16_t pwrctl_calc_vlimit_adc(uint16_t v_limit_mv);
 
 /**
   * @brief Calculate DAC setting for constant current mode

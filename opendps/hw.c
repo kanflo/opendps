@@ -334,9 +334,10 @@ void adc1_2_isr(void)
             i_out_adc = i;
         }
     }
-    v_in_adc = adc_read_injected(ADC1, adc_cha_v_in + 1); // Yes, this is correct
 
+    v_in_adc = adc_read_injected(ADC1, adc_cha_v_in + 1); // Yes, this is correct
     v_out_adc = adc_read_injected(ADC1, adc_cha_v_out + 1); // Yes, this is correct
+
     /** Check to see if an over voltage limit has been triggered */
     if (pwrctl_v_limit_raw) {
         if (v_out_adc > pwrctl_v_limit_raw && pwrctl_vout_enabled()) { /** OVP! */
