@@ -262,21 +262,47 @@ void ili9163c_fill_rect(int16_t x, int16_t y, int16_t w, int16_t h, uint16_t col
 void ili9163c_set_window(uint16_t x0, uint16_t y0, uint16_t x1, uint16_t y1)
 {
     write_command(CMD_CLMADRS); // Column
-    if (rotation == 0 || rotation > 1) {
-        write_data16(x0);
-        write_data16(x1);
-    } else {
-        write_data16(x0 + __OFFSET);
-        write_data16(x1 + __OFFSET);
+    if (rotation == 3)
+    {
+        write_data16(x0 + 3);
+        write_data16(x1 + 3);
+    }
+    else if (rotation == 2)
+    {
+        write_data16(x0 + 2);
+        write_data16(x1 + 2);
+    }
+    else if (rotation == 1)
+    {
+        write_data16(x0 + 1);
+        write_data16(x1 + 1);
+    }
+    else
+    {
+        write_data16(x0 + 2);
+        write_data16(x1 + 2);
     }
 
     write_command(CMD_PGEADRS); // Page
-    if (rotation == 0) {
-        write_data16(y0 + __OFFSET);
-        write_data16(y1 + __OFFSET);
-    } else {
-        write_data16(y0);
-        write_data16(y1);
+    if (rotation == 3)
+    {
+        write_data16(y0 + 2);
+        write_data16(y1 + 2);
+    }
+    else if (rotation == 2)
+    {
+        write_data16(y0 + 3);
+        write_data16(y1 + 3);
+    }
+    else if (rotation == 1)
+    {
+        write_data16(y0 + 2);
+        write_data16(y1 + 2);
+    }
+    else
+    {
+        write_data16(y0 + 1);
+        write_data16(y1 + 1);
     }
     write_command(CMD_RAMWR); // Into RAM
 }
