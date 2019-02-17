@@ -158,6 +158,8 @@ struct ui_screen {
     uint8_t num_items;
     uint8_t cur_item;
     ui_parameter_t parameters[MAX_PARAMETERS];
+    void (*activated)(void); /** Called when the screen is switched to */
+    void (*deactivated)(void); /** Called when the screen is about to be changed from */
     void (*enable)(bool _enable); /** Called when the enable button is pressed */
     void (*tick)(void); /** Called periodically allowing the UI to do house keeping */
     void (*past_save)(past_t *past);

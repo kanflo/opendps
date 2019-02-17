@@ -49,6 +49,7 @@ static void calibration_enable(bool _enable);
 static void v_dac_changed(ui_number_t *item);
 static void a_dac_changed(ui_number_t *item);
 static void calibration_tick(void);
+static void activated(void);
 static void past_save(past_t *past);
 static void past_restore(past_t *past);
 static set_param_status_t set_parameter(char *name, char *value);
@@ -179,6 +180,8 @@ ui_screen_t calibration_screen = {
     .icon_data_len = sizeof(gfx_crosshair),
     .icon_width = GFX_CROSSHAIR_WIDTH,
     .icon_height = GFX_CROSSHAIR_HEIGHT,
+    .activated = &activated,
+    .deactivated = NULL,
     .enable = &calibration_enable,
     .past_save = &past_save,
     .past_restore = &past_restore,
@@ -303,6 +306,18 @@ static void a_dac_changed(ui_number_t *item)
 }
 
 /**
+ * @brief      Set up any static graphics when the screen is first drawn
+ */
+static void activated(void)
+{
+    tft_puts(FONT_FULL_SMALL, "Vout DAC:", 6, 22, 64, 20, WHITE, false);
+    tft_puts(FONT_FULL_SMALL, "Iout DAC:", 6, 40, 64, 20, WHITE, false);
+    tft_puts(FONT_FULL_SMALL, "Vin ADC:" , 6, 58, 64, 20, WHITE, false);
+    tft_puts(FONT_FULL_SMALL, "Vout ADC:", 6, 76, 64, 20, WHITE, false);
+    tft_puts(FONT_FULL_SMALL, "Iout ADC:", 6, 94, 64, 20, WHITE, false);
+}
+
+/**
  * @brief      Save persistent parameters
  *
  * @param      past  The past
@@ -350,12 +365,6 @@ static void calibration_tick(void)
         calibration_a_adc.value = i_out_raw;
         calibration_a_adc.ui.draw(&calibration_a_adc.ui);
     }
-
-    tft_puts(FONT_FULL_SMALL, "Vout DAC:", 6, 22, 64, 20, WHITE, false);
-    tft_puts(FONT_FULL_SMALL, "Iout DAC:", 6, 40, 64, 20, WHITE, false);
-    tft_puts(FONT_FULL_SMALL, "Vin ADC:" , 6, 58, 64, 20, WHITE, false);
-    tft_puts(FONT_FULL_SMALL, "Vout ADC:", 6, 76, 64, 20, WHITE, false);
-    tft_puts(FONT_FULL_SMALL, "Iout ADC:", 6, 94, 64, 20, WHITE, false);
 }
 
 /**
