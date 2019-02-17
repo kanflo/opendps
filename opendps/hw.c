@@ -74,15 +74,15 @@ const uint8_t channels[adc_cha_max] = { ADC_CHA_IOUT, ADC_CHA_VIN, ADC_CHA_VOUT 
 
 /** Used to handle long presses */
 #define LONGPRESS_TIME_MS (1000)
-static event_t longpress_event;
-static uint64_t longpress_start;
-static bool longpress_detected;
+static volatile event_t longpress_event;
+static volatile uint64_t longpress_start;
+static volatile bool longpress_detected;
 /** Used to filter SET press from SET + ROT */
-static bool set_pressed = false;
-static bool set_skip = false;
-static bool m1_pressed = false;
-static bool m2_pressed = false;
-static bool m1_and_m2_pressed = false;
+static volatile bool set_pressed = false;
+static volatile bool set_skip = false;
+static volatile bool m1_pressed = false;
+static volatile bool m2_pressed = false;
+static volatile bool m1_and_m2_pressed = false;
 
 /** We skip the first 40 samples. For a connected ESP8266 the first sample
   * will read a current draw of ~3A which will trigger the OCP.
