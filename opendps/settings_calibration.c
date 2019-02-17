@@ -274,6 +274,7 @@ static void calibration_enable(bool enabled)
 {
     emu_printf("[Calibration] %s output\n", enabled ? "Enable" : "Disable");
     if (enabled) {
+        pwrctl_set_vlimit(0xFFFF); /** Set the voltage limit to the maximum to prevent OVP (over voltage protection) firing */
         pwrctl_set_ilimit(0xFFFF); /** Set the current limit to the maximum to prevent OCP (over current protection) firing */
         pwrctl_enable_vout(true);
         hw_set_voltage_dac(calibration_v_dac.value);

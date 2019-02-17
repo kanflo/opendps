@@ -188,7 +188,6 @@ static set_param_status_t set_parameter(char *name, char *value)
 static set_param_status_t get_parameter(char *name, char *value, uint32_t value_len)
 {
     if (strcmp("voltage", name) == 0 || strcmp("u", name) == 0) {
-        /** value returned in millivolt, module internal representation is centivolt */
         (void) mini_snprintf(value, value_len, "%d", (pwrctl_vout_enabled() ? saved_u : cv_voltage.value));
         return ps_ok;
     } else if (strcmp("current", name) == 0 || strcmp("i", name) == 0) {
@@ -213,6 +212,7 @@ static void cv_enable(bool enabled)
         (void) pwrctl_set_vout(cv_voltage.value);
         (void) pwrctl_set_iout(CONFIG_DPS_MAX_CURRENT);
         (void) pwrctl_set_ilimit(cv_current.value);
+        (void) pwrctl_set_vlimit(0xFFFF); /** Set the voltage limit to the maximum to prevent OVP (over voltage protection) firing */
         pwrctl_enable_vout(true);
     } else {
         pwrctl_enable_vout(false);

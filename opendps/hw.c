@@ -60,6 +60,7 @@ static volatile uint16_t i_out_adc;
 static volatile uint16_t i_out_trig_adc;
 static volatile uint16_t v_in_adc;
 static volatile uint16_t v_out_adc;
+static volatile uint16_t v_out_trig_adc;
 
 typedef enum {
     adc_cha_i_out = 0,
@@ -96,6 +97,12 @@ static volatile bool m1_and_m2_pressed = false;
   */
 #define OCP_FILTER_COUNT (20)
 
+/** Once we are checking for OVP, we need 20 over voltages in a row to trigger
+  * OVP. This is due to spikes in the ADC readings.
+  * @todo Investigate if the spikes are real or is a DPS issue
+  */
+#define OVP_FILTER_COUNT (20)
+
 #ifdef CONFIG_ADC_BENCHMARK
 static uint64_t adc_tick_start;
 #endif // CONFIG_ADC_BENCHMARK
@@ -115,7 +122,7 @@ static uint32_t adc_counter;
 #define ADC_I_OFFSET_COUNT  (1000)
 /** Offset from golden value when measuring 0.00mA output current on this unit */
 static int32_t adc_i_offset;
-/** Are we measuring the offset not not? */
+/** Are we measuring the offset or not? */
 static bool measure_i_out = true;
 /** Used to calculate mean value of ADC_CHA_IOUT when power out is disabled */
 static uint32_t i_offset_calc;
@@ -194,11 +201,20 @@ void hw_enable_backlight(void)
 
 /**
   * @brief Get the ADC valut that triggered the OCP
-  * @retval Trivver value in mA
+  * @retval Trigger value in mA
   */
 uint16_t hw_get_itrig_ma(void)
 {
     return i_out_trig_adc;
+}
+
+/**
+  * @brief Get the ADC value that triggered the OVP
+  * @retval Trigger value in mV
+  */
+uint16_t hw_get_vtrig_mv(void)
+{
+    return v_out_trig_adc;
 }
 
 /**
@@ -260,6 +276,28 @@ static void handle_ocp(uint16_t raw)
 }
 
 /**
+  * @brief Add some filtering to OVPs
+  * @retval None
+  */
+static void handle_ovp(uint16_t raw)
+{
+    static uint32_t ovp_count = 0;
+    static uint32_t last_tick_counter = 0;
+    if (last_tick_counter+1 == adc_counter) {
+        ovp_count++;
+        last_tick_counter++;
+        if (ovp_count == OVP_FILTER_COUNT) {
+            v_out_trig_adc = raw;
+            pwrctl_enable_vout(false);
+            event_put(event_ovp, 0);
+        }
+    } else {
+        ovp_count = 0;
+        last_tick_counter = adc_counter;
+    }
+}
+
+/**
   * @brief ADC1 ISR
   * @retval None
   * @note ADC conversions are performed at a speed of ~21kHz
@@ -296,8 +334,16 @@ void adc1_2_isr(void)
             i_out_adc = i;
         }
     }
-    v_in_adc  = adc_read_injected(ADC1, adc_cha_v_in + 1); // Yes, this is correct
+
+    v_in_adc = adc_read_injected(ADC1, adc_cha_v_in + 1); // Yes, this is correct
     v_out_adc = adc_read_injected(ADC1, adc_cha_v_out + 1); // Yes, this is correct
+
+    /** Check to see if an over voltage limit has been triggered */
+    if (pwrctl_v_limit_raw) {
+        if (v_out_adc > pwrctl_v_limit_raw && pwrctl_vout_enabled()) { /** OVP! */
+            handle_ovp(v_out_adc);
+        }
+    }
 }
 
 /**

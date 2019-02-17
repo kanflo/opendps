@@ -497,6 +497,21 @@ static void ui_handle_event(event_t event, uint8_t data)
                 uui_handle_screen_event(current_ui, event);
             }
             break;
+        case event_ovp:
+            {
+#ifdef CONFIG_OVP_DEBUGGING
+                uint16_t i_out_raw, v_in_raw, v_out_raw;
+                hw_get_adc_values(&i_out_raw, &v_in_raw, &v_out_raw);
+                (void) i_out_raw;
+                (void) v_in_raw;
+                uint16_t trig = hw_get_vtrig_mv();
+                dbg_printf("%10u OVP: trig:%umV limit:%umV cur:%umV\n", (uint32_t) (get_ticks()), pwrctl_calc_iout(trig), pwrctl_calc_vout(pwrctl_v_limit_raw), pwrctl_calc_vout(v_out_raw));
+#endif // CONFIG_OVP_DEBUGGING
+                ui_flash(); /** @todo When OVP kicks in, show last V_out on screen */
+                opendps_update_power_status(false);
+                uui_handle_screen_event(current_ui, event);
+            }
+            break;
         case event_buttom_m1_and_m2: ;
             uint8_t target_screen_id = current_ui == &func_ui ? SETTINGS_UI_ID : FUNC_UI_ID; /** Change between the settings and functional screen */
             opendps_change_screen(target_screen_id);
