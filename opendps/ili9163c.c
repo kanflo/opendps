@@ -254,23 +254,47 @@ void ili9163c_fill_rect(int16_t x, int16_t y, int16_t w, int16_t h, uint16_t col
 void ili9163c_set_window(uint16_t x0, uint16_t y0, uint16_t x1, uint16_t y1)
 {
     write_command(CMD_CLMADRS); // Column
-    if (rotation == 0 || rotation > 1) {
-        /** @todo: find out why an offset is needed for correct drawing on the
-         *         DPS TFTs */
-        write_data16(x0 + __CONST_X_OFFSET);
-        write_data16(x1 + __CONST_X_OFFSET);
-    } else {
-        write_data16(x0 + __CONST_X_OFFSET);
-        write_data16(x1 + __CONST_X_OFFSET);
+    if (rotation == 3)
+    {
+        write_data16(x0 + 3);
+        write_data16(x1 + 3);
+    }
+    else if (rotation == 2)
+    {
+        write_data16(x0 + 2);
+        write_data16(x1 + 2);
+    }
+    else if (rotation == 1)
+    {
+        write_data16(x0 + 1);
+        write_data16(x1 + 1);
+    }
+    else
+    {
+        write_data16(x0 + 2);
+        write_data16(x1 + 2);
     }
 
     write_command(CMD_PGEADRS); // Page
-    if (rotation == 0) {
-        write_data16(y0 + __CONST_Y_OFFSET);
-        write_data16(y1 + __CONST_Y_OFFSET);
-    } else {
-        write_data16(y0 + __CONST_Y_OFFSET);
-        write_data16(y1 + __CONST_Y_OFFSET);
+    if (rotation == 3)
+    {
+        write_data16(y0 + 2);
+        write_data16(y1 + 2);
+    }
+    else if (rotation == 2)
+    {
+        write_data16(y0 + 3);
+        write_data16(y1 + 3);
+    }
+    else if (rotation == 1)
+    {
+        write_data16(y0 + 2);
+        write_data16(y1 + 2);
+    }
+    else
+    {
+        write_data16(y0 + 1);
+        write_data16(y1 + 1);
     }
     write_command(CMD_RAMWR); // Into RAM
 }
