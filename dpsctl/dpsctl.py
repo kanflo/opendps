@@ -39,6 +39,7 @@ from __future__ import print_function
 from __future__ import division
 
 import argparse
+import codecs
 import json
 import os
 import socket
@@ -556,7 +557,7 @@ def run_upgrade(comms, fw_file_name, args):
     with open(fw_file_name, mode='rb') as file:
         # crc = binascii.crc32(file.read()) % (1<<32)
         content = file.read()
-        if content.encode('hex')[6:8] != "20" and not args.force:
+        if codecs.encode(content, 'hex')[6:8] != b'20' and not args.force:
             fail("The firmware file does not seem valid, use --force to force upgrade")
         crc = CRCCCITT().calculate(content)
     chunk_size = 1024
