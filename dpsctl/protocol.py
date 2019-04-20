@@ -49,6 +49,7 @@ CMD_CAL_REPORT = 18
 CMD_SET_CALIBRATION = 19
 CMD_CLEAR_CALIBRATION = 20
 CMD_CHANGE_SCREEN = 21
+CMD_SET_BRIGHTNESS = 22
 CMD_RESPONSE = 0x80
 
 # wifi_status_t
@@ -207,6 +208,14 @@ def create_change_screen(screen):
     f = uFrame()
     f.pack8(CMD_CHANGE_SCREEN)
     f.pack8(screen)
+    f.end()
+    return f
+
+
+def create_set_brightness(brightness):
+    f = uFrame()
+    f.pack8(CMD_SET_BRIGHTNESS)
+    f.pack8(brightness)
     f.end()
     return f
 

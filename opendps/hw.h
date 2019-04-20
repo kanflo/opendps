@@ -107,7 +107,19 @@ void hw_set_current_dac(uint16_t i_dac);
   * @brief Initialize TIM4 that drives the backlight of the TFT
   * @retval None
   */
-void hw_enable_backlight(void);
+void hw_enable_backlight(uint8_t brighness);
+
+/**
+  * @brief Set TFT backlight value
+  * @retval None
+  */
+void hw_set_backlight(uint8_t brightness);
+
+/**
+  * @brief Get TFT backlight value
+  * @retval Brightness percentage
+  */
+uint8_t hw_get_backlight(void);
 
 /**
   * @brief Get the ADC value that triggered the OCP
