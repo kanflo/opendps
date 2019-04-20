@@ -130,6 +130,10 @@ static bool     last_tft_inv_setting;
 static int16_t temp1 = INVALID_TEMPERATURE;
 static int16_t temp2 = INVALID_TEMPERATURE;
 
+/** display brightness
+    73% is closest to previous default (0x5DC0) */
+static int8_t last_tft_brightness = 73;
+
 #ifndef CONFIG_TEMPERATURE_ALERT_LEVEL
  #define CONFIG_TEMPERATURE_ALERT_LEVEL  (500)
 #endif // CONFIG_TEMPERATURE_ALERT_LEVEL
@@ -609,7 +613,7 @@ static void ui_tick(void)
         // Light up the display now that the UI has been drawn
         static bool first = true;
         if (first) {
-            hw_enable_backlight();
+            hw_enable_backlight(last_tft_brightness);
             first = false;
         }
     }
@@ -820,6 +824,14 @@ static void read_past_settings(void)
     }
     tft_invert(inverse_setting);
 
+    if (past_read_unit(&g_past, past_tft_brightness, (const void**) &p, &length)) {
+        if (p) {
+            last_tft_brightness = *p;
+        }
+    }
+    hw_set_backlight(last_tft_brightness);
+
+
 #ifdef GIT_VERSION
     /** Update app git hash in past if needed */
     char *ver = 0;
@@ -852,6 +864,15 @@ static void write_past_settings(void)
         last_tft_inv_setting = tft_is_inverted();
         uint32_t setting = last_tft_inv_setting;
         if (!past_write_unit(&g_past, past_tft_inversion, (void*) &setting, sizeof(setting))) {
+            /** @todo Handle past write errors */
+            dbg_printf("Error: past write inv failed!\n");
+        }
+    }
+
+    if(hw_get_backlight() != last_tft_brightness) {
+        last_tft_brightness = hw_get_backlight();
+        uint32_t setting = last_tft_brightness;
+        if (!past_write_unit(&g_past, past_tft_brightness, (void*) &setting, sizeof(setting))) {
             /** @todo Handle past write errors */
             dbg_printf("Error: past write inv failed!\n");
         }
@@ -956,7 +977,7 @@ int main(int argc, char const *argv[])
 #ifdef CONFIG_SPLASH_SCREEN
     tft_clear();
     ui_draw_splash_screen();
-    hw_enable_backlight();
+    hw_enable_backlight(last_tft_brightness);
     delay_ms(750);
     tft_clear();
     uui_refresh(current_ui, true);

@@ -55,7 +55,7 @@ if calibration_debug_plotting:
 import protocol
 import uframe
 from protocol import (create_cmd, create_enable_output, create_lock, create_set_calibration,
-                      create_set_function, create_set_parameter, create_temperature,
+                      create_set_function, create_set_parameter, create_temperature, create_set_brightness,
                       create_upgrade_data, create_upgrade_start, create_change_screen,
                       unpack_cal_report, unpack_query_response, unpack_version_response)
 from uhej import uhej
@@ -394,6 +394,8 @@ def handle_response(command, frame, args, quiet=False):
         pass
     elif resp_command == protocol.CMD_CHANGE_SCREEN:
         pass
+    elif resp_command == protocol.CMD_SET_BRIGHTNESS:
+        pass
     else:
         print("Unknown response {:d} from device.".format(resp_command))
 
@@ -525,6 +527,13 @@ def handle_commands(args):
 
     if args.calibrate:
         do_calibration(comms, args)
+
+    if args.brightness:
+        if args.brightness >=0 and args.brightness <=100:
+            communicate(comms, create_set_brightness(args.brightness), args)
+        else:
+            fail("brightness must be between 0 and 100")
+
 
 
 def is_ip_address(if_name):
@@ -1101,6 +1110,7 @@ def main():
 
     parser.add_argument('-d', '--device', help="OpenDPS device to connect to. Can be a /dev/tty device or an IP number. If omitted, dpsctl.py will try the environment variable DPSIF", default='')
     parser.add_argument('-b', '--baudrate', type=int, dest="baudrate", help="Set baudrate used for serial communications", default=115200)
+    parser.add_argument('-B', '--brightness', type=int, help="Set display brightness (0..100)")
     parser.add_argument('-S', '--scan', action="store_true", help="Scan for OpenDPS wifi devices")
     parser.add_argument('-f', '--function', nargs='?', help="Set active function")
     parser.add_argument('-F', '--list-functions', action='store_true', help="List available functions")

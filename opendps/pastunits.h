@@ -45,6 +45,7 @@ typedef enum {
     past_V_ADC_C,
     past_VIN_ADC_K,
     past_VIN_ADC_C,
+    past_tft_brightness,
     /** A past unit who's precense indicates we have a non finished upgrade and
     must not boot */
     past_upgrade_started = 0xff

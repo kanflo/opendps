@@ -309,6 +309,20 @@ static command_status_t handle_enable_output(uint8_t *payload, uint32_t payload_
     }
 }
 
+static command_status_t handle_set_brightness(uint8_t *payload, uint32_t payload_len)
+{
+    emu_printf("%s\n", __FUNCTION__);
+    uint8_t cmd;
+    uint8_t brightness_pct;
+    DECLARE_UNPACK(payload, payload_len);
+    UNPACK8(cmd);
+    (void) cmd;
+    UNPACK8(brightness_pct);
+    hw_set_backlight(brightness_pct);
+    return cmd_success;
+}
+
+
 static command_status_t handle_temperature(uint8_t *payload, uint32_t payload_len)
 {
     emu_printf("%s\n", __FUNCTION__);
@@ -540,6 +554,9 @@ static void handle_frame(uint8_t *frame, uint32_t length)
                 break;
             case cmd_change_screen:
                 success = handle_change_screen(payload, payload_len);
+                break;
+            case cmd_set_brightness:
+                success = handle_set_brightness(payload, payload_len);
                 break;
             default:
                 emu_printf("Got unknown command %d (0x%02x)\n", cmd, cmd);

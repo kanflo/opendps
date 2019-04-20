@@ -185,7 +185,7 @@ void hw_set_current_dac(uint16_t i_dac)
   * @brief Initialize TIM4 that drives the backlight of the TFT
   * @retval None
   */
-void hw_enable_backlight(void)
+void hw_enable_backlight(uint8_t brightness)
 {
     rcc_periph_clock_enable(RCC_TIM4);
     TIM4_CNT = 1;
@@ -193,10 +193,29 @@ void hw_enable_backlight(void)
     TIM4_CCER = 0x10;
     TIM4_CCMR1 = 0x6800;
     TIM4_ARR = 0x8bdf;
-    TIM4_CCR2 = 0x5dc0;
+    //TIM4_CCR2 = 0x5dc0;
+    // no brightness increase above 0x7FFF, so 1% would be 0x147
+    TIM4_CCR2 = brightness * 0x147;
     TIM4_DMAR = 0x81;
     // Set auto reload, start timer.
     TIM4_CR1 |= TIM_CR1_ARPE | TIM_CR1_CEN;
+}
+/**
+  * @brief Set TFT backlight value
+  * @retval None
+  */
+void hw_set_backlight(uint8_t brightness)
+{
+    TIM4_CCR2 = brightness * 0x147;
+}
+
+/**
+  * @brief Get TFT backlight value
+  * @retval Brightness percentage
+  */
+uint8_t hw_get_backlight(void)
+{
+    return TIM4_CCR2 / 0x147;
 }
 
 /**
