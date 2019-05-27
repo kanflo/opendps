@@ -61,6 +61,7 @@ static volatile uint16_t i_out_trig_adc;
 static volatile uint16_t v_in_adc;
 static volatile uint16_t v_out_adc;
 static volatile uint16_t v_out_trig_adc;
+static volatile uint64_t last_button_down;
 
 typedef enum {
     adc_cha_i_out = 0,
@@ -84,6 +85,8 @@ static volatile bool set_skip = false;
 static volatile bool m1_pressed = false;
 static volatile bool m2_pressed = false;
 static volatile bool m1_and_m2_pressed = false;
+
+#define DEBOUNCE_TIME_MS    (30)
 
 /** We skip the first 40 samples. For a connected ESP8266 the first sample
   * will read a current draw of ~3A which will trigger the OCP.
@@ -749,6 +752,19 @@ static bool longpress_end(void)
 }
 
 /**
+  * @brief Detect if button is bouncing
+  * @retval true if button is bounding 
+  */
+static bool is_bouncing(void)
+{
+    uint64_t t = get_ticks();
+    if (t - last_button_down < DEBOUNCE_TIME_MS)
+        return true;
+    last_button_down = t;
+    return false;
+} 
+
+/**
   * @brief Select button ISR
   * @note BUTTON_SEL_isr & friends defined in hw.h
   * @retval None
@@ -758,6 +774,7 @@ void BUTTON_SEL_isr(void)
     static bool falling = true;
     exti_reset_request(BUTTON_SEL_EXTI);
     if (falling) {
+        if (is_bouncing()) return;
         set_pressed = true;
         set_skip = false;
         longpress_begin(event_button_sel);
@@ -784,6 +801,7 @@ void BUTTON_M1_isr(void)
     static bool falling = true;
     exti_reset_request(BUTTON_M1_EXTI);
     if (falling) {
+        if (is_bouncing()) return;
         m1_pressed = true;
         if (m2_pressed)
             m1_and_m2_pressed = true;
@@ -814,6 +832,7 @@ void BUTTON_M2_isr(void)
     static bool falling = true;
     exti_reset_request(BUTTON_M2_EXTI);
     if (falling) {
+        if (is_bouncing()) return;
         m2_pressed = true;
         if (m1_pressed)
             m1_and_m2_pressed = true;
@@ -844,6 +863,7 @@ void BUTTON_ENABLE_isr(void)
     static bool falling = true;
     exti_reset_request(BUTTON_ENABLE_EXTI);
     if (falling) {
+        if (is_bouncing()) return;
         exti_set_trigger(BUTTON_ENABLE_EXTI, EXTI_TRIGGER_RISING);
     } else {
         event_put(event_button_enable, press_short);
@@ -862,6 +882,7 @@ void BUTTON_ROTARY_isr(void)
         exti_reset_request(BUTTON_ROT_PRESS_EXTI);
         static bool falling = true;
         if (falling) {
+            if (is_bouncing()) return;
             longpress_begin(event_rot_press);
             exti_set_trigger(BUTTON_ROT_PRESS_EXTI, EXTI_TRIGGER_RISING);
         } else {
