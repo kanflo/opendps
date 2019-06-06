@@ -63,6 +63,9 @@
 #ifdef CONFIG_MERGED_ENABLE
 #include "func_merged.h"
 #endif // CONFIG_MERGED_ENABLE
+#ifdef CONFIG_FUNCGEN_ENABLE
+#include "func_gen.h"
+#endif // CONFIG_FUNCGEN_ENABLE
 
 #ifdef DPS_EMULATOR
 #include "dpsemul.h"
@@ -83,7 +86,8 @@
 
 /** Blit positions */
 #define XPOS_WIFI     (4)
-#define XPOS_LOCK    (30)
+#define XPOS_LOCK    (27)
+#define XPOS_INVOLT  (108) /* Right aligned to this position */
 
 /** Constants describing how certain things on the screen flash when needed */
 #define WIFI_CONNECTING_FLASHING_PERIOD  (1000)
@@ -433,6 +437,10 @@ static void ui_init(void)
 #ifdef CONFIG_MERGED_ENABLE
     func_merged_init(&func_ui);
 #endif // CONFIG_MERGED_ENABLE
+#ifdef CONFIG_FUNCGEN_ENABLE
+    func_gen_init(&func_ui);
+#endif // CONFIG_FUNCGEN_ENABLE
+
 
     /** Initialise the settings screens */
     uui_init(&settings_ui, &g_past);
@@ -441,7 +449,7 @@ static void ui_init(void)
     /** Initialise the main screens */
     uui_init(&main_ui, &g_past);
     number_init(&input_voltage);
-    input_voltage.ui.x = 105;
+    input_voltage.ui.x = XPOS_INVOLT;
     input_voltage.ui.y = ui_height - font_meter_small_height;
     uui_add_screen(&main_ui, &main_screen);
 

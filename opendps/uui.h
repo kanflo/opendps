@@ -36,7 +36,7 @@
 #ifdef CONFIG_UI_MAX_SCREENS
  #define MAX_SCREENS (CONFIG_UI_MAX_SCREENS)
 #else // CONFIG_UI_MAX_SCREENS
- #define MAX_SCREENS (5)
+ #define MAX_SCREENS (6)
 #endif // CONFIG_UI_MAX_SCREENS
 
 #ifdef CONFIG_UI_MAX_PARAMETERS
@@ -50,6 +50,10 @@
 #else // CONFIG_UI_MAX_PARAMETER_NAME
  #define MAX_PARAMETER_NAME (10)
 #endif // CONFIG_UI_MAX_PARAMETER_NAME
+
+/** The position for the screen icon on the status bar */ 
+#define XPOS_ICON    (43)   
+
 
 /**
  * Describes units in the user interface
@@ -86,6 +90,7 @@ typedef enum {
  */
 typedef enum {
     ui_item_number, /** A control for setting a value (ui_number_t) */
+    ui_item_icon, /** A control for showing a icon (ui_icon_t) */
     ui_item_last = 0xff
 } ui_item_type_t;
 

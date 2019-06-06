@@ -151,6 +151,17 @@ void tft_fill_pattern(uint32_t x1, uint32_t y1, uint32_t x2, uint32_t y2, uint8_
 void tft_fill(uint32_t x, uint32_t y, uint32_t w, uint32_t h, uint16_t color);
 
 /**
+  * @brief Draw a one pixel rectangle
+  * @param xpos x position
+  * @param ypos y position
+  * @param width width of frame
+  * @param height height of frame
+  * @param color color in bgr565 format
+  * @retval none
+  */
+void tft_rect(uint32_t xpos, uint32_t ypos, uint32_t width, uint32_t height, uint16_t color);
+
+/**
   * @brief Invert display
   * @param invert true to invert, false to restore
   * @retval none

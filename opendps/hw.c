@@ -46,6 +46,8 @@ extern uint32_t *_ram_vect_start;
 extern uint32_t *_ram_vect_end;
 extern uint32_t *vector_table;
 
+
+static void common_timer_init(enum rcc_periph_clken rcc, uint32_t timer, uint32_t period, uint32_t prescaler);
 static void tim2_init(void);
 static void clock_init(void);
 static void adc1_init(void);
@@ -55,6 +57,11 @@ static void exti_init(void);
 static void dac_init(void);
 static void button_irq_init(void);
 static void copy_vectors(void);
+#ifdef CONFIG_FUNCGEN_ENABLE
+static void tim3_init(void);
+void (*funcgen_tick)(void) = &fg_noop;
+volatile uint16_t cur_time_hiw;
+#endif
 
 static volatile uint16_t i_out_adc;
 static volatile uint16_t i_out_trig_adc;
@@ -146,6 +153,9 @@ void hw_init(void)
     spi_init();
     dac_init();
     button_irq_init();
+#ifdef CONFIG_FUNCGEN_ENABLE
+    tim3_init();
+#endif
 
 //    AFIO_MAPR |= AFIO_MAPR_PD01_REMAP; /** @todo The original DPS FW does this, things go south if I do it... */
 }
@@ -366,6 +376,10 @@ void adc1_2_isr(void)
             handle_ovp(v_out_adc);
         }
     }
+
+#ifdef CONFIG_FUNCGEN_ENABLE
+    (*funcgen_tick)();
+#endif
 }
 
 /**
@@ -710,21 +724,70 @@ static void dac_init(void)
 }
 
 /**
+  * @brief Common code to initialize a timer to avoid code duplication.
+  * @param timer      the timer to initialize
+  * @param period     the period to use
+  * @param prescaler  the prescaler divider - 1
+  */
+static void common_timer_init(enum rcc_periph_clken rcc, uint32_t timer, uint32_t period, uint32_t prescaler)
+{
+    rcc_periph_clock_enable(rcc);
+    rcc_periph_reset_pulse(((rcc >> 5) << 4) | (rcc & 0x1F)); /* There's no conversion macro here, but the formula is simple */
+    timer_set_mode(timer, TIM_CR1_CKD_CK_INT, TIM_CR1_CMS_EDGE, TIM_CR1_DIR_UP);
+    timer_set_period(timer, period);
+    timer_set_prescaler(timer, prescaler);
+    timer_set_clock_division(timer, 0x0);
+} 
+
+/**
   * @brief Set up TIM2 for injected ADC1 sampling
+  * This timer fires at 20915Hz (that is 48MHz / 9 / 255)
   * @retval None
   */
 static void tim2_init(void)
 {
     uint32_t timer = TIM2;
-    rcc_periph_clock_enable(RCC_TIM2);
-    rcc_periph_reset_pulse(RST_TIM2);
-    timer_set_mode(timer, TIM_CR1_CKD_CK_INT, TIM_CR1_CMS_EDGE, TIM_CR1_DIR_UP);
-    timer_set_period(timer, 0xFF);
-    timer_set_prescaler(timer, 0x8);
-    timer_set_clock_division(timer, 0x0);
+    common_timer_init(RCC_TIM2, timer, 0xFF, 8);
     timer_set_master_mode(timer, TIM_CR2_MMS_UPDATE); // Generate TRGO on every update.
     timer_enable_counter(timer);
 }
+
+#ifdef CONFIG_FUNCGEN_ENABLE
+/**
+  * @brief Set up TIM3 for function generator sampling
+  * This timer fires at 1000000Hz (that is 48MHz / 1 / 48) 
+  * @retval None
+  */
+static void tim3_init(void)
+{
+    uint32_t timer = TIM3;
+    common_timer_init(RCC_TIM3, timer, 0xFFFF, 47);
+    timer_enable_counter(timer);
+    nvic_enable_irq(NVIC_TIM3_IRQ);
+    nvic_set_priority(NVIC_TIM3_IRQ, 1);
+    timer_enable_irq(timer, TIM_DIER_UIE); /* Update IRQ enable */
+}
+
+void tim3_isr(void) {
+  if (timer_get_flag(TIM3, TIM_DIER_UIE)) {
+      timer_clear_flag(TIM3, TIM_DIER_UIE);
+  }
+  cur_time_hiw ++;
+}
+
+uint32_t cur_time_us(void)
+{
+    uint32_t t = timer_get_counter(TIM3);
+    t |= (cur_time_hiw << 16U);
+    return t;
+}
+/**
+  * @brief Do nothing
+  * This avoid to test a (shared) variable and branch in an isr, and instead, branch to a function in all cases
+  */
+void fg_noop(void) {
+}
+#endif
 
 /**
   * @brief Start a (possible) long press

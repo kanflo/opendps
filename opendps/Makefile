@@ -49,6 +49,9 @@ CC_ENABLE ?= 1
 # Enable merged mode
 MERGED_ENABLE ?= 1
 
+# Enable function generator mode
+FUNCGEN_ENABLE ?= 1
+
 GIT_VERSION := $(shell git describe --abbrev=4 --dirty --always --tags)
 CFLAGS = -I. -DGIT_VERSION=\"$(GIT_VERSION)\" -Wno-missing-braces
 
@@ -117,6 +120,12 @@ ifeq ($(MERGED_ENABLE),1)
 	CFLAGS +=-DCONFIG_MERGED_ENABLE
 	OBJS += func_merged.o
 endif
+
+ifeq ($(FUNCGEN_ENABLE),1)
+	CFLAGS +=-DCONFIG_FUNCGEN_ENABLE
+	OBJS += func_gen.o uui_icon.o gfx-square.o gfx-saw.o gfx-sin.o
+endif
+
 
 ifeq ($(SPLASH_SCREEN),1)
 	CFLAGS +=-DCONFIG_SPLASH_SCREEN

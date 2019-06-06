@@ -153,4 +153,22 @@ bool hw_sel_button_pressed(void);
 void hw_print_ticks(void);
 #endif // CONFIG_ADC_BENCHMARK
 
+#ifdef CONFIG_FUNCGEN_ENABLE
+/**
+  * @brief A pointer to the function generator's that's called upon each ADC update
+  * @retval none
+  */
+extern void (*funcgen_tick)(void);
+/** 
+  * @brief An empty function. This is used to avoid testing in the ISR and branch in all cases (fixed latency)
+  * @retval none
+  */  
+void fg_noop(void);
+
+/**
+  * @brief The current time in microsecond unit, updated by a timer
+  */
+uint32_t cur_time_us(void); 
+#endif
+
 #endif // __HW_H__
