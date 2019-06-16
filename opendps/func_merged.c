@@ -70,6 +70,7 @@ enum {
 #define SCREEN_ID  (3)
 #define PAST_U     (0)
 #define PAST_I     (1)
+#define XPOS_CCCV  (30)
 
 /* This is the definition of the voltage item in the UI */
 ui_number_t merged_voltage = {
@@ -234,9 +235,9 @@ static void merged_enable(bool enabled)
 
         /** Ensure the CC or CV logo has been cleared from the screen */
         if (current_mode_gfx == CUR_GFX_CV) {
-            tft_fill(30, 128 - GFX_CV_HEIGHT, GFX_CV_WIDTH, GFX_CV_HEIGHT, BLACK);
+            tft_fill(XPOS_ICON, 128 - GFX_CV_HEIGHT, GFX_CV_WIDTH, GFX_CV_HEIGHT, BLACK);
         } else if (current_mode_gfx == CUR_GFX_CC) {
-            tft_fill(30, 128 - GFX_CC_HEIGHT, GFX_CC_WIDTH, GFX_CC_HEIGHT, BLACK);
+            tft_fill(XPOS_ICON, 128 - GFX_CC_HEIGHT, GFX_CC_WIDTH, GFX_CC_HEIGHT, BLACK);
         }
         current_mode_gfx = CUR_GFX_NOT_DRAWN;
     }
@@ -271,9 +272,9 @@ static void deactivated(void)
 {
     /** Ensure the CC or CV logo has been cleared from the screen */
     if (current_mode_gfx == CUR_GFX_CV) {
-        tft_fill(30, 128 - GFX_CV_HEIGHT, GFX_CV_WIDTH, GFX_CV_HEIGHT, BLACK);
+        tft_fill(XPOS_CCCV, 128 - GFX_CV_HEIGHT, GFX_CV_WIDTH, GFX_CV_HEIGHT, BLACK);
     } else if (current_mode_gfx == CUR_GFX_CC) {
-        tft_fill(30, 128 - GFX_CC_HEIGHT, GFX_CC_WIDTH, GFX_CC_HEIGHT, BLACK);
+        tft_fill(XPOS_CCCV, 128 - GFX_CC_HEIGHT, GFX_CC_WIDTH, GFX_CC_HEIGHT, BLACK);
     }
     current_mode_gfx = CUR_GFX_NOT_DRAWN;
 }
@@ -370,12 +371,12 @@ static void merged_tick(void)
 
         if (cout_diff < vout_diff) {
             if (current_mode_gfx != CUR_GFX_CC) {
-                tft_blit((uint16_t*) gfx_cc, GFX_CC_WIDTH, GFX_CC_HEIGHT, 30, 128 - GFX_CC_HEIGHT);
+                tft_blit((uint16_t*) gfx_cc, GFX_CC_WIDTH, GFX_CC_HEIGHT, XPOS_CCCV, 128 - GFX_CC_HEIGHT);
                 current_mode_gfx = CUR_GFX_CC;
             }
         } else {
             if (current_mode_gfx != CUR_GFX_CV) {
-                tft_blit((uint16_t*) gfx_cv, GFX_CV_WIDTH, GFX_CV_HEIGHT, 30, 128 - GFX_CV_HEIGHT);
+                tft_blit((uint16_t*) gfx_cv, GFX_CV_WIDTH, GFX_CV_HEIGHT, XPOS_CCCV, 128 - GFX_CV_HEIGHT);
                 current_mode_gfx = CUR_GFX_CV;
             }
         }

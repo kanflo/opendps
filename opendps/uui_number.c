@@ -46,22 +46,6 @@ static uint32_t my_pow(uint32_t a, uint32_t b)
 }
 
 /**
-  * @brief Draw a one pixel frame around a glyph
-  * @param xpos x position
-  * @param ypos y position
-  * @param glyph_width width of frame
-  * @param glyph_height height of frame
-  * @param color color in bgr565 format
-  */
-static void frame_glyph(uint32_t xpos, uint32_t ypos, uint32_t glyph_width, uint32_t glyph_height, uint16_t color)
-{
-    ili9163c_draw_hline(xpos-1, ypos-1, glyph_width + 2, color);
-    ili9163c_draw_hline(xpos-1, ypos + glyph_height, glyph_width + 2, color);
-    ili9163c_draw_vline(xpos-1, ypos-1, glyph_height + 2, color);
-    ili9163c_draw_vline(xpos + glyph_width, ypos-1, glyph_height + 2, color);
-}
-
-/**
  * @brief      Handle event and update our state and value accordingly
  *
  * @param      _item  The item
@@ -178,6 +162,9 @@ static uint32_t number_draw_width(ui_item_t *_item)
         case unit_ampere:
             total_width += max_w;
             break;
+        case unit_hertz:
+            total_width += 2*FONT_FULL_SMALL_MAX_GLYPH_WIDTH;
+            break;
         default:
             assert(0);
     }
@@ -263,7 +250,7 @@ static void number_draw(ui_item_t *_item)
             if (spacing > 1)
             {
                 tft_fill(xpos, _item->y, digit_w, h, BLACK);
-                frame_glyph(xpos, _item->y, digit_w, h, BLACK); /** Remove any potential frame highlight */
+                tft_rect(xpos-1, _item->y-1, digit_w+1, h+1, BLACK); /** Remove any potential frame highlight */
             }
             else
                 tft_fill(xpos, _item->y, digit_w, h, BLACK); /** Black out any 0 that has previously been printed */
@@ -273,9 +260,9 @@ static void number_draw(ui_item_t *_item)
             if (spacing > 1) /** Dont frame tiny fonts */
             {
                 if (highlight) /** Draw an extra pixel wide border around the highlighted item */
-                    frame_glyph(xpos, _item->y, digit_w, h, WHITE);
+                    tft_rect(xpos-1, _item->y-1, digit_w+1, h+1, WHITE);
                 else
-                    frame_glyph(xpos, _item->y, digit_w, h, BLACK);
+                    tft_rect(xpos-1, _item->y-1, digit_w+1, h+1, BLACK);
             }
             tft_putch(item->font_size, '0' + digit, xpos, _item->y, digit_w, h, color, highlight);
         }
@@ -298,9 +285,9 @@ static void number_draw(ui_item_t *_item)
         if (spacing > 1) /** Dont frame tiny fonts */
         {
             if (highlight) /** Draw an extra pixel wide border around the highlighted item */
-                frame_glyph(xpos, _item->y, digit_w, h, WHITE);
+                tft_rect(xpos-1, _item->y-1, digit_w+1, h+1, WHITE);
             else
-                frame_glyph(xpos, _item->y, digit_w, h, BLACK);
+                tft_rect(xpos-1, _item->y-1, digit_w+1, h+1, BLACK);
         }
         tft_putch(item->font_size, '0' + digit, xpos, _item->y, digit_w, h, color, highlight);
         cur_digit--;
@@ -316,6 +303,9 @@ static void number_draw(ui_item_t *_item)
             break;
         case unit_ampere:
             tft_putch(item->font_size, 'A', xpos, _item->y, max_w, h, color, false);
+            break;
+        case unit_hertz:
+            tft_puts(FONT_FULL_SMALL, "Hz", xpos, _item->y + h, FONT_FULL_SMALL_MAX_GLYPH_WIDTH * 2, FONT_FULL_SMALL_MAX_GLYPH_HEIGHT, color, false);
             break;
         default:
             assert(0);
