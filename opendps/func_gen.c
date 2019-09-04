@@ -549,7 +549,7 @@ static void func_gen_tick(void)
 }
 
 /**
- * @brief      Initialise the MERGED module and add its screen to the UI
+ * @brief      Initialise the CL module and add its screen to the UI
  *
  * @param      ui    The user interface
  */
