@@ -1,4 +1,4 @@
-/** Gfx generated from gfx\png\merged.png */
+/** Gfx generated from gfx/png/merged.png */
 
 #ifndef __GFX_MERGED_H__
 #define __GFX_MERGED_H__
