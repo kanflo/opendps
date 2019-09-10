@@ -5,8 +5,15 @@ services:
 
 before_install:
   - docker build -t opendps docker
-  - docker run -t -u opendps -v $(readlink -f .):/parent:ro opendps /build.sh
 
 script:
-  - echo OK
+  - mkdir output
+  - docker run -t -u opendps -v $(readlink -f .):/parent:ro -v $(readlink -f .)/output:/output opendps /build.sh
+
+deploy:
+  provider: releases
+  api_key: $GITHUB_OAUTH_TOKEN
+  skip_cleanup: true
+  file:
+    - output/*
 
