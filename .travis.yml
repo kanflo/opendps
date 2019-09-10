@@ -1,0 +1,12 @@
+language: c
+
+services:
+  - docker
+
+before_install:
+  - docker build -t opendps docker
+  - docker run -t -u opendps -v $(readlink -f .):/parent:ro opendps /build.sh
+
+script:
+  - echo OK
+
