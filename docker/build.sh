@@ -15,8 +15,8 @@ make -C opendps fonts "$@"
 make -C opendps elf bin "$@"
 make -C dpsboot elf bin "$@"
 
-cp /home/opendps/code/opendps/opendps.elf /output/
-cp /home/opendps/code/opendps/opendps.bin /output/
-cp /home/opendps/code/dpsboot/dpsboot.elf /output/
-cp /home/opendps/code/dpsboot/dpsboot.bin /output/
+cp -f /home/opendps/code/opendps/opendps.elf /output/
+cp -f /home/opendps/code/opendps/opendps.bin /output/
+cp -f /home/opendps/code/dpsboot/dpsboot.elf /output/
+cp -f /home/opendps/code/dpsboot/dpsboot.bin /output/
 
