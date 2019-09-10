@@ -17,4 +17,6 @@ deploy:
   skip_cleanup: true
   file:
     - output/*
+  on:
+    tags: true
 
