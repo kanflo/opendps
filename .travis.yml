@@ -8,6 +8,7 @@ before_install:
 
 script:
   - mkdir output
+  - chmod 777 output
   - docker run -t -u opendps -v $(readlink -f .):/parent:ro -v $(readlink -f .)/output:/output opendps /build.sh
 
 deploy:
