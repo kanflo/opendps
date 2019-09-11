@@ -3,8 +3,8 @@ BINARY = opendps
 # Build with commandline interface rather than serial interface
 COMMANDLINE := 0
 
-# The baudrate used for serial communications, defaults to 115200
-BAUDRATE ?= 115200
+# The baudrate used for serial communications, defaults to 9600
+BAUDRATE ?= 9600
 
 # Set build model, defaults to DPS5005
 MODEL := DPS5005
