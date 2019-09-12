@@ -690,6 +690,12 @@ def do_calibration(comms, args):
     print("\r\nPlease hook up the second higher supply voltage to the DPS now")
     print("ensuring that the serial connection is connected after boot")
     calibration_input_voltage.append(float(raw_input("Type input voltage in mV: ")))
+    
+    # Ensure that we are still on the settings screen
+    communicate(comms, create_change_screen(protocol.CHANGE_SCREEN_SETTINGS), args, quiet=True)
+    time.sleep(1)
+    
+    # Measure and record the new input voltage
     calibration_vin_adc.append(get_average_calibration_result(comms, 'vin_adc'))
 
     # Calculate and set the Vin_ADC coeffecients
