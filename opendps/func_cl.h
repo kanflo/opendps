@@ -22,8 +22,8 @@
  * THE SOFTWARE.
  */
 
-#ifndef __FUNC_MERGED_H__
-#define __FUNC_MERGED_H__
+#ifndef __FUNC_CL_H__
+#define __FUNC_CL_H__
 
 #include "uui.h"
 
@@ -32,6 +32,6 @@
  *
  * @param      ui    The user interface
  */
-void func_merged_init(uui_t *ui);
+void func_cl_init(uui_t *ui);
 
-#endif // __FUNC_MERGED_H__
+#endif // __FUNC_CL_H__

@@ -46,8 +46,8 @@ TINT ?= ffffff
 # Enable CC mode
 CC_ENABLE ?= 1
 
-# Enable merged mode
-MERGED_ENABLE ?= 1
+# Enable cl mode
+CL_ENABLE ?= 1
 
 # Enable function generator mode
 FUNCGEN_ENABLE ?= 1
@@ -96,7 +96,7 @@ OBJS = \
     gfx-cc.o \
     gfx-crosshair.o \
     gfx-cv.o \
-    gfx-merged.o \
+    gfx-cl.o \
     gfx-padlock.o \
     gfx-power.o \
     gfx-thermometer.o \
@@ -116,9 +116,9 @@ ifeq ($(CC_ENABLE),1)
 	OBJS += func_cc.o
 endif
 
-ifeq ($(MERGED_ENABLE),1)
-	CFLAGS +=-DCONFIG_MERGED_ENABLE
-	OBJS += func_merged.o
+ifeq ($(CL_ENABLE),1)
+	CFLAGS +=-DCONFIG_CL_ENABLE
+	OBJS += func_cl.o
 endif
 
 ifeq ($(FUNCGEN_ENABLE),1)
