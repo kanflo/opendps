@@ -1,5 +1,3 @@
-BINARY = opendps
-
 # Build with commandline interface rather than serial interface
 COMMANDLINE := 0
 
@@ -8,6 +6,8 @@ BAUDRATE ?= 115200
 
 # Set build model, defaults to DPS5005
 MODEL := DPS5005
+
+BINARY = opendps_$(MODEL)
 
 # Include splash screen
 SPLASH_SCREEN := 0
@@ -157,3 +157,8 @@ test:
 
 doxygen:
 	@doxygen config.dox
+
+$(BINARY).o: opendps.c
+	@printf "  CC      $(*).c\n"
+	$(Q)$(CC) $(TGT_CFLAGS) $(CFLAGS) $(TGT_CPPFLAGS) $(CPPFLAGS) -o $(*).o -c opendps.c
+
