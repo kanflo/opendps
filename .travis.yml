@@ -1,0 +1,26 @@
+language: c
+
+services:
+  - docker
+
+before_install:
+  - docker build -t opendps docker
+
+jobs:
+  include:
+    - stage: GitHub Release
+      script:
+        - mkdir output
+        - chmod 777 output
+        - docker run -t -u opendps -v $(readlink -f .):/parent:ro -v $(readlink -f .)/output:/output opendps /parent/docker/build.sh
+      
+      deploy:
+        provider: releases
+        api_key: $GITHUB_OAUTH_TOKEN
+        skip_cleanup: true
+        file_glob: true
+        file:
+          - output/*
+        on:
+          tags: true
+      

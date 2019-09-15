@@ -10,7 +10,8 @@ CFLAGS = -I. -I../opendps -DGIT_VERSION=\"$(GIT_VERSION)\" -DCONFIG_PAST_NO_GC -
 
 OBJS = \
 	common.o \
-	hw.o
+	hw.o \
+	dpsboot.o
 
 # Bootloader linker script
 LDSCRIPT = stm32f100_boot.ld

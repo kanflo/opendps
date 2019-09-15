@@ -1,5 +1,3 @@
-BINARY = opendps
-
 # Build with commandline interface rather than serial interface
 COMMANDLINE := 0
 
@@ -8,6 +6,8 @@ BAUDRATE ?= 9600
 
 # Set build model, defaults to DPS5005
 MODEL := DPS5005
+
+BINARY = opendps_$(MODEL)
 
 # Include splash screen
 SPLASH_SCREEN := 0
@@ -100,7 +100,8 @@ OBJS = \
     gfx-padlock.o \
     gfx-power.o \
     gfx-thermometer.o \
-    gfx-wifi.o
+    gfx-wifi.o \
+    opendps.o
 
 ifdef MAX_CURRENT
 	CFLAGS +=-DCONFIG_DPS_MAX_CURRENT=$(MAX_CURRENT)
@@ -157,3 +158,4 @@ test:
 
 doxygen:
 	@doxygen config.dox
+
