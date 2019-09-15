@@ -100,7 +100,8 @@ OBJS = \
     gfx-padlock.o \
     gfx-power.o \
     gfx-thermometer.o \
-    gfx-wifi.o
+    gfx-wifi.o \
+    opendps.o
 
 ifdef MAX_CURRENT
 	CFLAGS +=-DCONFIG_DPS_MAX_CURRENT=$(MAX_CURRENT)
@@ -157,8 +158,4 @@ test:
 
 doxygen:
 	@doxygen config.dox
-
-$(BINARY).o: opendps.c
-	@printf "  CC      $(*).c\n"
-	$(Q)$(CC) $(TGT_CFLAGS) $(CFLAGS) $(TGT_CPPFLAGS) $(CPPFLAGS) -o $(*).o -c opendps.c
 
