@@ -70,7 +70,7 @@ enum {
 #define SCREEN_ID  (3)
 #define PAST_U     (0)
 #define PAST_I     (1)
-#define XPOS_CCCV  (30)
+#define XPOS_CCCV  (25)
 
 /* This is the definition of the voltage item in the UI */
 ui_number_t cl_voltage = {
@@ -235,9 +235,9 @@ static void cl_enable(bool enabled)
 
         /** Ensure the CC or CV logo has been cleared from the screen */
         if (current_mode_gfx == CUR_GFX_CV) {
-            tft_fill(XPOS_ICON, 128 - GFX_CV_HEIGHT, GFX_CV_WIDTH, GFX_CV_HEIGHT, BLACK);
+            tft_fill(XPOS_CCCV, 128 - GFX_CV_HEIGHT, GFX_CV_WIDTH, GFX_CV_HEIGHT, BLACK);
         } else if (current_mode_gfx == CUR_GFX_CC) {
-            tft_fill(XPOS_ICON, 128 - GFX_CC_HEIGHT, GFX_CC_WIDTH, GFX_CC_HEIGHT, BLACK);
+            tft_fill(XPOS_CCCV, 128 - GFX_CC_HEIGHT, GFX_CC_WIDTH, GFX_CC_HEIGHT, BLACK);
         }
         current_mode_gfx = CUR_GFX_NOT_DRAWN;
     }
