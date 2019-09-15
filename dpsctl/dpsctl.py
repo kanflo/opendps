@@ -1165,7 +1165,7 @@ def main():
     testing = '--testing' in sys.argv
     parser = argparse.ArgumentParser(description='Instrument an OpenDPS device')
 
-    parser.add_argument('-d', '--device', help="OpenDPS device to connect to. Can be a /dev/tty device or an IP number. If omitted, dpsctl.py will try the environment variable DPSIF", default='')
+    parser.add_argument('-d', '--device', help="OpenDPS device to connect to. Can be a /dev/tty device, IP address for UDP protocol or tcp:IP for TCP protocol. If omitted, dpsctl.py will try the environment variable DPSIF", default='')
     parser.add_argument('-b', '--baudrate', type=int, dest="baudrate", help="Set baudrate used for serial communications", default=9600)
     parser.add_argument('-B', '--brightness', type=int, help="Set display brightness (0..100)")
     parser.add_argument('-S', '--scan', action="store_true", help="Scan for OpenDPS wifi devices")
