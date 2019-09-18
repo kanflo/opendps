@@ -47,6 +47,7 @@ import sys
 import threading
 import time
 import math
+import numpy
 
 calibration_debug_plotting = False  # Change this to True to enable plotting of the calibration graphs during dpsctl -C
 if calibration_debug_plotting:
@@ -627,6 +628,24 @@ def best_fit(X, Y):
     return k, c
 
 
+def best_fit_through_origin(X, Y):
+    """
+    Calculate linear line of best fit coefficients passing through (0,0) (y = kx + 0)
+    """
+    xbar = sum(X)/len(X)
+    ybar = sum(Y)/len(Y)
+    n = len(X)  # or len(Y)
+    
+    x = np.array(X)
+    y = np.array(Y)
+    
+    x = x[:,np.newaxis] # Convert x to a column vector
+
+    k, _, _, _ = np.linalg.lstsq(x, y, rcond=None)
+
+    return k, 0
+
+
 def get_average_calibration_result(comms, variable, num_samples=20):
     """
     Get an averaged reading of 'variable' from a calibration report
@@ -693,7 +712,7 @@ def do_calibration(comms, args):
     calibration_vin_adc.append(get_average_calibration_result(comms, 'vin_adc'))
 
     # Calculate and set the Vin_ADC coeffecients
-    vin_adc_k, vin_adc_c = best_fit(calibration_vin_adc, calibration_input_voltage)
+    vin_adc_k, vin_adc_c = best_fit_through_origin(calibration_vin_adc, calibration_input_voltage)
     args.calibration_set = ['VIN_ADC_K={}'.format(vin_adc_k), 'VIN_ADC_C={}'.format(vin_adc_c)]
     payload = create_set_calibration(args.calibration_set)
     communicate(comms, payload, args, quiet=True)
@@ -789,13 +808,13 @@ def do_calibration(comms, args):
     calibration_v_dac.append(output_dac)
 
     # Calculate and set the V_DAC coeffecients
-    v_dac_k, v_dac_c = best_fit(calibration_real_voltage, calibration_v_dac)
+    v_dac_k, v_dac_c = best_fit_through_origin(calibration_real_voltage, calibration_v_dac)
     args.calibration_set = ['V_DAC_K={}'.format(v_dac_k), 'V_DAC_C={}'.format(v_dac_c)]
     payload = create_set_calibration(args.calibration_set)
     communicate(comms, payload, args, quiet=True)
 
     # Calculate and set the V_ADC coeffecients
-    v_adc_k, v_adc_c = best_fit(calibration_v_adc, calibration_real_voltage)
+    v_adc_k, v_adc_c = best_fit_through_origin(calibration_v_adc, calibration_real_voltage)
     args.calibration_set = ['V_ADC_K={}'.format(v_adc_k), 'V_ADC_C={}'.format(v_adc_c)]
     payload = create_set_calibration(args.calibration_set)
     communicate(comms, payload, args, quiet=True)
