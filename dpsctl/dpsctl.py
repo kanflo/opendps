@@ -47,7 +47,7 @@ import sys
 import threading
 import time
 import math
-import numpy
+import numpy as np
 
 calibration_debug_plotting = False  # Change this to True to enable plotting of the calibration graphs during dpsctl -C
 if calibration_debug_plotting:
