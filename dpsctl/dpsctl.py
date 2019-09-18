@@ -632,10 +632,6 @@ def best_fit_through_origin(X, Y):
     """
     Calculate linear line of best fit coefficients passing through (0,0) (y = kx + 0)
     """
-    xbar = sum(X)/len(X)
-    ybar = sum(Y)/len(Y)
-    n = len(X)  # or len(Y)
-    
     x = np.array(X)
     y = np.array(Y)
     
