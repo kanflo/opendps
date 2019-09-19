@@ -58,7 +58,6 @@ from protocol import (create_cmd, create_enable_output, create_lock, create_set_
                       create_set_function, create_set_parameter, create_temperature, create_set_brightness,
                       create_upgrade_data, create_upgrade_start, create_change_screen,
                       unpack_cal_report, unpack_query_response, unpack_version_response)
-from uhej import uhej
 
 try:
     from PyCRC.CRCCCITT import CRCCCITT
@@ -490,6 +489,7 @@ def handle_commands(args):
     Communicate with the DPS device according to the user's wishes
     """
     if args.scan:
+        from uhej import uhej
         uhej_scan()
         return
 
