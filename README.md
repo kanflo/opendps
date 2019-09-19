@@ -170,7 +170,7 @@ The project consists of four parts:
 * `dpsboot/` The OpenDPS bootloader.
 * `opendps/` The OpenDPS firmware.
 * `esp8266-proxy/` The ESP8266 firmware for wifi connected OpenDPS:es.
-* `dpsctl/` A Pyton script for controlling your OpenDPS via wifi or a serial port.
+* `dpsctl/` A Pyhton script for controlling your OpenDPS via wifi or a serial port.
 * `emu/` Xcode project and GNU makefile for running an emulated OpenDPS.
 
 
