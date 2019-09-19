@@ -23,4 +23,5 @@ jobs:
           - output/*
         on:
           tags: true
+          branch: master
       
