@@ -639,6 +639,8 @@ def best_fit_through_origin(X, Y):
 
     k, _, _, _ = np.linalg.lstsq(x, y, rcond=None)
 
+    k = k.tolist()[0] # Convert numpy array back to a float
+
     return k, 0
 
 
