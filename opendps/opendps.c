@@ -415,8 +415,13 @@ static void main_ui_tick(void)
     hw_get_adc_values(&i_out_raw, &v_in_raw, &v_out_raw);
     (void) i_out_raw;
     (void) v_out_raw;
+
+    // update input voltage value
     input_voltage.value = pwrctl_calc_vin(v_in_raw);
     input_voltage.ui.draw(&input_voltage.ui);
+
+    // Update power button
+    opendps_update_power_status(is_enabled);
 }
 
 /**
