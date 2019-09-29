@@ -42,7 +42,8 @@
 #include "ili9163c.h"
 #include "gfx-padlock.h"
 #include "gfx-thermometer.h"
-#include "gfx-power.h"
+#include "gfx-poweron.h"
+#include "gfx-poweroff.h"
 #include "gfx-wifi.h"
 #include "font-full_small.h"
 #include "font-meter_small.h"
@@ -723,14 +724,17 @@ void opendps_update_wifi_status(wifi_status_t status)
   */
 void opendps_update_power_status(bool enabled)
 {
-    if (is_enabled != enabled) {
-        is_enabled = enabled;
-        if (is_enabled) {
-            tft_blit((uint16_t*) gfx_power, GFX_POWER_WIDTH, GFX_POWER_HEIGHT, ui_width-GFX_POWER_WIDTH, ui_height-GFX_POWER_HEIGHT);
-        } else {
-            tft_fill(ui_width-GFX_POWER_WIDTH, ui_height-GFX_POWER_HEIGHT, GFX_POWER_WIDTH, GFX_POWER_HEIGHT, bg_color);
-        }
-    }
+	is_enabled = enabled;
+
+	if (is_enabled) {
+		tft_blit((uint16_t*) gfx_poweron,
+				GFX_POWERON_WIDTH, GFX_POWERON_HEIGHT,
+				TFT_WIDTH-GFX_POWERON_WIDTH, TFT_HEIGHT-GFX_POWERON_HEIGHT);
+	} else {
+		tft_blit((uint16_t*) gfx_poweroff,
+				GFX_POWERON_WIDTH, GFX_POWERON_HEIGHT,
+				TFT_WIDTH-GFX_POWERON_WIDTH, TFT_HEIGHT-GFX_POWERON_HEIGHT);
+	}
 }
 
 /**
