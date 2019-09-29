@@ -68,7 +68,6 @@ CFLAGS += \
           -DCOLOR_VOLTAGE=$(COLOR_VOLTAGE) \
           -DCOLOR_AMPERAGE=$(COLOR_AMPERAGE) \
           -DCOLOR_INPUT=$(COLOR_INPUT) \
-          -DCONFIG_INVERT_ENABLE=$(CONFIG_INVERT_ENABLE) \
           -D$(MODEL)
 
 # Application linker script
