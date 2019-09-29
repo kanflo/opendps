@@ -63,6 +63,9 @@
 #ifdef CONFIG_CL_ENABLE
 #include "func_cl.h"
 #endif // CONFIG_CL_ENABLE
+#ifdef CONFIG_DPSMODE_ENABLE
+#include "func_dpsmode.h"
+#endif // CONFIG_DPSMODE_ENABLE
 #ifdef CONFIG_FUNCGEN_ENABLE
 #include "func_gen.h"
 #endif // CONFIG_FUNCGEN_ENABLE
@@ -74,9 +77,6 @@
 #ifdef CONFIG_SPLASH_SCREEN
 #include "logo.h"
 #endif // CONFIG_SPLASH_SCREEN
-
-#define TFT_HEIGHT  (128)
-#define TFT_WIDTH   (128)
 
 /** How ofter we update the measurements in the UI (ms) */
 #define UI_UPDATE_INTERVAL_MS  (250)
@@ -437,6 +437,9 @@ static void ui_init(void)
 #ifdef CONFIG_CL_ENABLE
     func_cl_init(&func_ui);
 #endif // CONFIG_CL_ENABLE
+#ifdef CONFIG_DPSMODE_ENABLE
+    func_dpsmode_init(&func_ui);
+#endif // CONFIG_DPSMODE_ENABLE
 #ifdef CONFIG_FUNCGEN_ENABLE
     func_gen_init(&func_ui);
 #endif // CONFIG_FUNCGEN_ENABLE

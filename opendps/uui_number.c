@@ -160,6 +160,7 @@ static uint32_t number_draw_width(ui_item_t *_item)
             break;
         case unit_volt:
         case unit_ampere:
+        case unit_watt:
             total_width += max_w;
             break;
         case unit_hertz:
@@ -306,6 +307,9 @@ static void number_draw(ui_item_t *_item)
             break;
         case unit_hertz:
             tft_puts(FONT_FULL_SMALL, "Hz", xpos, _item->y + h, FONT_FULL_SMALL_MAX_GLYPH_WIDTH * 2, FONT_FULL_SMALL_MAX_GLYPH_HEIGHT, color, false);
+            break;
+        case unit_watt:
+            tft_putch(item->font_size, 'W', xpos, _item->y, max_w, h, color, false);
             break;
         default:
             assert(0);
