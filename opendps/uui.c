@@ -174,6 +174,13 @@ void uui_handle_screen_event(uui_t *ui, event_t event)
             uui_next_screen(ui);
             break;
 
+        case event_rot_left_m1:
+        case event_rot_right_m1:
+        case event_rot_left_m2:
+        case event_rot_right_m2:
+            // do nothing
+            break;
+
         case event_rot_left:
         case event_rot_right:
         case event_rot_press:

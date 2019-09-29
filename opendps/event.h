@@ -26,20 +26,24 @@
 #define __EVENT_H__
 
 typedef enum {
-	event_none = 0,
-	event_button_m1,
-	event_button_m2,
-  event_buttom_m1_and_m2,
-	event_button_sel,
-	event_button_enable,
-  event_rot_left,
-  event_rot_right,
-  event_rot_left_set,
-  event_rot_right_set,
-	event_rot_press,
-	event_uart_rx,
-	event_ocp,
-	event_ovp
+    event_none = 0,
+    event_button_m1,
+    event_button_m2,
+    event_buttom_m1_and_m2,
+    event_button_sel,
+    event_button_enable,
+    event_rot_left,
+    event_rot_right,
+    event_rot_left_set,
+    event_rot_right_set,
+    event_rot_left_m1,
+    event_rot_right_m1,
+    event_rot_left_m2,
+    event_rot_right_m2,
+    event_rot_press,
+    event_uart_rx,
+    event_ocp,
+    event_ovp
 } event_t;
 
 typedef enum {

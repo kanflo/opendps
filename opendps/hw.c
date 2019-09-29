@@ -967,6 +967,10 @@ void BUTTON_ROTARY_isr(void)
                 set_skip = true;
                 (void) longpress_end();
                 event_put(event_rot_left_set, press_short);
+            } else if (m1_pressed) {
+                event_put(event_rot_left_m1, press_short);
+            } else if (m2_pressed) {
+                event_put(event_rot_left_m2, press_short);
             } else {
                 event_put(event_rot_left, press_short);
             }
@@ -975,6 +979,10 @@ void BUTTON_ROTARY_isr(void)
                 set_skip = true;
                 (void) longpress_end();
                 event_put(event_rot_right_set, press_short);
+            } else if (m1_pressed) {
+                event_put(event_rot_right, press_short);
+            } else if (m2_pressed) {
+                event_put(event_rot_right, press_short);
             } else {
                 event_put(event_rot_right, press_short);
             }
