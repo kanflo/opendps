@@ -48,6 +48,7 @@ static void cv_enable(bool _enable);
 static void voltage_changed(ui_number_t *item);
 static void current_changed(ui_number_t *item);
 static void cv_tick(void);
+static void deactivated(void);
 static void past_save(past_t *past);
 static void past_restore(past_t *past);
 static set_param_status_t set_parameter(char *name, char *value);
