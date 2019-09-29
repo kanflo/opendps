@@ -42,8 +42,14 @@
 #include "ili9163c.h"
 #include "gfx-padlock.h"
 #include "gfx-thermometer.h"
+#ifdef CONFIG_POWER_COLORED
 #include "gfx-poweron.h"
+#ifdef CONFIG_POWER_OFF_VISIBLE
 #include "gfx-poweroff.h"
+#endif //CONFIG_POWER_OFF_VISIBLE
+#else
+#include "gfx-power.h"
+#endif //CONFIG_POWER_COLORED
 #include "gfx-wifi.h"
 #include "font-full_small.h"
 #include "font-meter_small.h"
@@ -727,13 +733,31 @@ void opendps_update_power_status(bool enabled)
     is_enabled = enabled;
 
     if (is_enabled) {
+#ifdef CONFIG_POWER_COLORED
         tft_blit((uint16_t*) gfx_poweron,
                 GFX_POWERON_WIDTH, GFX_POWERON_HEIGHT,
                 TFT_WIDTH-GFX_POWERON_WIDTH, TFT_HEIGHT-GFX_POWERON_HEIGHT);
+#else
+        tft_blit((uint16_t*) gfx_power,
+                GFX_POWER_WIDTH, GFX_POWER_HEIGHT,
+                TFT_WIDTH-GFX_POWER_WIDTH, TFT_HEIGHT-GFX_POWER_HEIGHT);
+#endif //CONFIG_POWER_COLORED
+
     } else {
+// red poweroff button visible only if colored and off_visible are set
+#ifdef CONFIG_POWER_COLORED
+#ifdef CONFIG_POWER_OFF_VISIBLE
         tft_blit((uint16_t*) gfx_poweroff,
                 GFX_POWEROFF_WIDTH, GFX_POWEROFF_HEIGHT,
                 TFT_WIDTH-GFX_POWEROFF_WIDTH, TFT_HEIGHT-GFX_POWEROFF_HEIGHT);
+#else //not CONFIG_POWER_OFF_VISIBLE
+        tft_fill(ui_width-GFX_POWERON_WIDTH, ui_height-GFX_POWERON_HEIGHT, GFX_POWERON_WIDTH, GFX_POWERON_HEIGHT, bg_color);
+#endif //CONFIG_POWER_OFF_VISIBLE
+
+#else //not CONFIG_POWER_COLORED
+        tft_fill(ui_width-GFX_POWER_WIDTH, ui_height-GFX_POWER_HEIGHT, GFX_POWER_WIDTH, GFX_POWER_HEIGHT, bg_color);
+#endif //CONFIG_POWER_COLORED
+
     }
 }
 
