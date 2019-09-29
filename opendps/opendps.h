@@ -32,6 +32,10 @@
 /** Max number of parameters to a function */
 #define OPENDPS_MAX_PARAMETERS  (8)
 
+/** UI Width/Height */
+#define TFT_WIDTH   (128)
+#define TFT_HEIGHT  (128)
+
 /**
  * @brief      Enable specified function
  *

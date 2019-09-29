@@ -28,7 +28,7 @@ DEBUG ?= 0
 METER_FONT_FILE ?= gfx/Ubuntu-C.ttf
 METER_FONT_SMALL_SIZE ?= 18
 METER_FONT_MEDIUM_SIZE ?= 24
-METER_FONT_LARGE_SIZE ?= 48
+METER_FONT_LARGE_SIZE ?= 40
 FULL_FONT_FILE ?= gfx/ProggyClean.ttf
 FULL_FONT_SMALL_SIZE ?= 16
 
@@ -38,10 +38,14 @@ COLORSPACE ?= 0
 # Colors for the main UI elements -- see ili9163c.h for list of colors
 COLOR_VOLTAGE ?= WHITE
 COLOR_AMPERAGE ?= WHITE
+COLOR_WATTAGE ?= WHITE
 COLOR_INPUT ?= WHITE
 
 # Optional tinting for UI elements
 TINT ?= ffffff
+
+# Enable DPS-look-alike mode
+DPSMODE_ENABLE ?= 1
 
 # Enable CC mode
 CC_ENABLE ?= 1
@@ -64,6 +68,7 @@ CFLAGS += \
           -DCOLORSPACE=$(COLORSPACE) \
           -DCOLOR_VOLTAGE=$(COLOR_VOLTAGE) \
           -DCOLOR_AMPERAGE=$(COLOR_AMPERAGE) \
+          -DCOLOR_WATTAGE=$(COLOR_WATTAGE) \
           -DCOLOR_INPUT=$(COLOR_INPUT) \
           -D$(MODEL)
 
@@ -97,6 +102,9 @@ OBJS = \
     gfx-crosshair.o \
     gfx-cv.o \
     gfx-cl.o \
+    gfx-iconpower.o \
+    gfx-cvbar.o \
+    gfx-ccbar.o \
     gfx-padlock.o \
     gfx-power.o \
     gfx-thermometer.o \
@@ -120,6 +128,11 @@ endif
 ifeq ($(CL_ENABLE),1)
 	CFLAGS +=-DCONFIG_CL_ENABLE
 	OBJS += func_cl.o
+endif
+
+ifeq ($(DPSMODE_ENABLE),1)
+	CFLAGS +=-DCONFIG_DPSMODE_ENABLE
+	OBJS += func_dpsmode.o
 endif
 
 ifeq ($(FUNCGEN_ENABLE),1)
