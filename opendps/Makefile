@@ -44,7 +44,10 @@ COLOR_INPUT ?= WHITE
 TINT ?= ffffff
 
 # Enable CC mode
-CC_ENABLE ?= 1
+CC_ENABLE ?= 0
+
+# Enable CV mode
+CV_ENABLE ?= 0
 
 # Enable cl mode
 CL_ENABLE ?= 1
@@ -115,6 +118,11 @@ endif
 ifeq ($(CC_ENABLE),1)
 	CFLAGS +=-DCONFIG_CC_ENABLE
 	OBJS += func_cc.o
+endif
+
+ifeq ($(CV_ENABLE),1)
+	CFLAGS +=-DCONFIG_CV_ENABLE
+	OBJS += func_cv.o
 endif
 
 ifeq ($(CL_ENABLE),1)
