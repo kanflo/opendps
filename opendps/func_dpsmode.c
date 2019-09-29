@@ -307,13 +307,8 @@ static void dpsmode_enable(bool enabled)
         /** Make sure we're displaying the settings and not the current
           * measurements when the power output is switched off */
         dpsmode_voltage.value = saved_v;
-        dpsmode_voltage.ui.draw(&dpsmode_voltage.ui);
-
         dpsmode_current.value = saved_i;
-        dpsmode_current.ui.draw(&dpsmode_current.ui);
-
         dpsmode_power.value = saved_p;
-        dpsmode_power.ui.draw(&dpsmode_power.ui);
     }
 }
 
@@ -361,7 +356,7 @@ static bool event(uui_t *ui, event_t event) {
             if (single_edit_mode) {
                 single_edit_mode = false;
 
-                // toggle focus on anything that is in focus
+                // toggle focus on anything that is in focus (to unfocus)
                 if (dpsmode_voltage.ui.has_focus) uui_focus(ui, (ui_item_t*) &dpsmode_voltage);
                 if (dpsmode_current.ui.has_focus) uui_focus(ui, (ui_item_t*) &dpsmode_current);
                 return true;
@@ -565,6 +560,12 @@ static void dpsmode_tick(void)
             dpsmode_graphics &= ~CUR_GFX_PP;
             dpsmode_graphics &= ~CUR_GFX_OPP;
         }
+
+    // No power. just redraw numbers
+    } else {
+        dpsmode_voltage.ui.draw(&dpsmode_voltage.ui);
+        dpsmode_current.ui.draw(&dpsmode_current.ui);
+        dpsmode_power.ui.draw(&dpsmode_power.ui);
     }
 
     // draw bars on right
