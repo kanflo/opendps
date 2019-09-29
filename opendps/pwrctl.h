@@ -109,7 +109,7 @@ void pwrctl_enable_vout(bool enable);
 
 /**
   * @brief Return power output status
-  * @retval true if power output is wnabled
+  * @retval true if power output is enabled
   */
 bool pwrctl_vout_enabled(void);
 

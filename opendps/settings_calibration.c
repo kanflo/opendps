@@ -42,7 +42,7 @@
  * constant voltage and current limit. When power is enabled it will continously
  * display the current output voltage and current draw. If the user edits one
  * of the values when power is eabled, the other will continue to be updated.
- * Thid allows for ramping the voltage and obsering the current increase.
+ * This allows for ramping the voltage and obsering the current increase.
  */
 
 static void calibration_enable(bool _enable);
