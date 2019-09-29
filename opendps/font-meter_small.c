@@ -3,7 +3,7 @@
 #include "font-meter_small.h"
 
 const uint32_t font_meter_small_height = 12;
-const uint8_t font_meter_small_pixdata[291] = {
+const uint8_t font_meter_small_pixdata[321] = {
   /* '0', offset=0 */
   0xe0, 0x0b, 0x2c, 0x2c, 0x0d, 0x3c, 0x0e, 0x7d, 0x0b, 0xb7, 0x8b, 0xb2, 0xcb, 0xb0, 0x7b, 0xb0,
   0x3e, 0x70, 0x1d, 0x34, 0x2c, 0x2c, 0xe0, 0x0b,
@@ -42,6 +42,9 @@ const uint8_t font_meter_small_pixdata[291] = {
   /* 'A', offset=264 */
   0x40, 0x0f, 0x00, 0x3e, 0x00, 0xec, 0x02, 0x70, 0x0e, 0xd0, 0x34, 0xc0, 0xc3, 0x01, 0x0b, 0x0b,
   0x1d, 0x38, 0xf8, 0xff, 0xb1, 0x00, 0xdb, 0x01, 0xb8, 0x03, 0xd0,
+  /* 'W', offset=291 */
+  0x0b, 0x00, 0xbb, 0x00, 0x70, 0x0e, 0x00, 0xd7, 0xb0, 0x34, 0x4d, 0x4f, 0xc3, 0xe8, 0x38, 0x9c,
+  0x9d, 0xc2, 0x8d, 0x2e, 0xec, 0xe4, 0x81, 0x0f, 0x1f, 0xb4, 0xf0, 0x40, 0x07, 0x0e,
 };
 
 const uint8_t font_meter_small_widths[96] = {
@@ -51,7 +54,7 @@ const uint8_t font_meter_small_widths[96] = {
      8u,    8u,    0u,    0u,    0u,    0u,    0u,    0u,
      0u,    9u,    0u,    0u,    0u,    0u,    0u,    0u,
      0u,    0u,    0u,    0u,    0u,    0u,    0u,    0u,
-     0u,    0u,    0u,    0u,    0u,    0u,    9u,    0u,
+     0u,    0u,    0u,    0u,    0u,    0u,    9u,   10u,
      0u,    0u,    0u,    0u,    0u,    0u,    0u,    0u,
      0u,    0u,    0u,    0u,    0u,    0u,    0u,    0u,
      0u,    0u,    0u,    0u,    0u,    0u,    0u,    0u,
@@ -66,7 +69,7 @@ const uint8_t font_meter_small_sizes[96] = {
     24u,   24u,    0u,    0u,    0u,    0u,    0u,    0u,
      0u,   27u,    0u,    0u,    0u,    0u,    0u,    0u,
      0u,    0u,    0u,    0u,    0u,    0u,    0u,    0u,
-     0u,    0u,    0u,    0u,    0u,    0u,   27u,    0u,
+     0u,    0u,    0u,    0u,    0u,    0u,   27u,   30u,
      0u,    0u,    0u,    0u,    0u,    0u,    0u,    0u,
      0u,    0u,    0u,    0u,    0u,    0u,    0u,    0u,
      0u,    0u,    0u,    0u,    0u,    0u,    0u,    0u,
@@ -81,7 +84,7 @@ const uint16_t font_meter_small_offsets[96] = {
    180u,  204u,    0u,    0u,    0u,    0u,    0u,    0u,
      0u,  264u,    0u,    0u,    0u,    0u,    0u,    0u,
      0u,    0u,    0u,    0u,    0u,    0u,    0u,    0u,
-     0u,    0u,    0u,    0u,    0u,    0u,  237u,    0u,
+     0u,    0u,    0u,    0u,    0u,    0u,  237u,  291u,
      0u,    0u,    0u,    0u,    0u,    0u,    0u,    0u,
      0u,    0u,    0u,    0u,    0u,    0u,    0u,    0u,
      0u,    0u,    0u,    0u,    0u,    0u,    0u,    0u,

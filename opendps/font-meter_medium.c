@@ -3,7 +3,7 @@
 #include "font-meter_medium.h"
 
 const uint32_t font_meter_medium_height = 18;
-const uint8_t font_meter_medium_pixdata[665] = {
+const uint8_t font_meter_medium_pixdata[728] = {
   /* '0', offset=0 */
   0x00, 0xfe, 0x01, 0xd0, 0xff, 0x0f, 0xf0, 0x42, 0x2f, 0xf8, 0x00, 0x3e, 0x7c, 0x00, 0x7f, 0x3c,
   0x80, 0xbf, 0x3d, 0xc0, 0xbb, 0x3d, 0xf0, 0xf8, 0x3d, 0x78, 0xf8, 0x3d, 0x3c, 0xf4, 0x3d, 0x0f,
@@ -67,6 +67,11 @@ const uint8_t font_meter_medium_pixdata[665] = {
   0x0f, 0x00, 0xf0, 0xf1, 0x01, 0x00, 0x0f, 0x2e, 0x00, 0xb4, 0xd0, 0x03, 0x80, 0x07, 0x3c, 0x00,
   0x3c, 0x80, 0x07, 0xd0, 0x03, 0xf4, 0x00, 0xfe, 0xff, 0x0f, 0xf0, 0xff, 0xff, 0x01, 0x0f, 0x00,
   0x2e, 0xf8, 0x00, 0xd0, 0xc3, 0x0b, 0x00, 0x7c, 0x7c, 0x00, 0xc0, 0xdb, 0x03, 0x00, 0xf8,
+  /* 'W', offset=665 */
+  0x1f, 0x00, 0x00, 0xff, 0x01, 0x00, 0xf0, 0x2e, 0x00, 0x00, 0xdf, 0x02, 0x00, 0xf4, 0x3d, 0xf0,
+  0x42, 0xcf, 0x43, 0x2f, 0xb4, 0x3c, 0xf4, 0x83, 0xcb, 0x83, 0x3b, 0x78, 0x7c, 0x7c, 0xc7, 0x83,
+  0xc7, 0xb2, 0x3c, 0xb4, 0x1d, 0xcb, 0x43, 0xdb, 0xf0, 0x3c, 0xf0, 0x0e, 0xde, 0x02, 0xff, 0xd0,
+  0x1e, 0xf0, 0x0b, 0xfc, 0x01, 0x7f, 0xc0, 0x0f, 0xe0, 0x03, 0xf8, 0x00, 0x3d, 0x80, 0x0f,
 };
 
 const uint8_t font_meter_medium_widths[96] = {
@@ -76,7 +81,7 @@ const uint8_t font_meter_medium_widths[96] = {
     12u,   12u,    0u,    0u,    0u,    0u,    0u,    0u,
      0u,   14u,    0u,    0u,    0u,    0u,    0u,    0u,
      0u,    0u,    0u,    0u,    0u,    0u,    0u,    0u,
-     0u,    0u,    0u,    0u,    0u,    0u,   13u,    0u,
+     0u,    0u,    0u,    0u,    0u,    0u,   13u,   14u,
      0u,    0u,    0u,    0u,    0u,    0u,    0u,    0u,
      0u,    0u,    0u,    0u,    0u,    0u,    0u,    0u,
      0u,    0u,    0u,    0u,    0u,    0u,    0u,    0u,
@@ -91,7 +96,7 @@ const uint8_t font_meter_medium_sizes[96] = {
     54u,   54u,    0u,    0u,    0u,    0u,    0u,    0u,
      0u,   63u,    0u,    0u,    0u,    0u,    0u,    0u,
      0u,    0u,    0u,    0u,    0u,    0u,    0u,    0u,
-     0u,    0u,    0u,    0u,    0u,    0u,   59u,    0u,
+     0u,    0u,    0u,    0u,    0u,    0u,   59u,   63u,
      0u,    0u,    0u,    0u,    0u,    0u,    0u,    0u,
      0u,    0u,    0u,    0u,    0u,    0u,    0u,    0u,
      0u,    0u,    0u,    0u,    0u,    0u,    0u,    0u,
@@ -106,7 +111,7 @@ const uint16_t font_meter_medium_offsets[96] = {
    412u,  466u,    0u,    0u,    0u,    0u,    0u,    0u,
      0u,  602u,    0u,    0u,    0u,    0u,    0u,    0u,
      0u,    0u,    0u,    0u,    0u,    0u,    0u,    0u,
-     0u,    0u,    0u,    0u,    0u,    0u,  543u,    0u,
+     0u,    0u,    0u,    0u,    0u,    0u,  543u,  665u,
      0u,    0u,    0u,    0u,    0u,    0u,    0u,    0u,
      0u,    0u,    0u,    0u,    0u,    0u,    0u,    0u,
      0u,    0u,    0u,    0u,    0u,    0u,    0u,    0u,

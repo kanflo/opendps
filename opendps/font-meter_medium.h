@@ -16,6 +16,6 @@ extern const uint32_t font_meter_medium_height;
 extern const uint8_t font_meter_medium_widths[96];
 extern const uint8_t font_meter_medium_sizes[96];
 extern const uint16_t font_meter_medium_offsets[96];
-extern const uint8_t font_meter_medium_pixdata[665];
+extern const uint8_t font_meter_medium_pixdata[728];
 
 #endif // __FONT_METER_MEDIUM_H__
