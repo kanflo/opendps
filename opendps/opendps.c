@@ -724,17 +724,17 @@ void opendps_update_wifi_status(wifi_status_t status)
   */
 void opendps_update_power_status(bool enabled)
 {
-	is_enabled = enabled;
+    is_enabled = enabled;
 
-	if (is_enabled) {
-		tft_blit((uint16_t*) gfx_poweron,
-				GFX_POWERON_WIDTH, GFX_POWERON_HEIGHT,
-				TFT_WIDTH-GFX_POWERON_WIDTH, TFT_HEIGHT-GFX_POWERON_HEIGHT);
-	} else {
-		tft_blit((uint16_t*) gfx_poweroff,
-				GFX_POWERON_WIDTH, GFX_POWERON_HEIGHT,
-				TFT_WIDTH-GFX_POWERON_WIDTH, TFT_HEIGHT-GFX_POWERON_HEIGHT);
-	}
+    if (is_enabled) {
+        tft_blit((uint16_t*) gfx_poweron,
+                GFX_POWERON_WIDTH, GFX_POWERON_HEIGHT,
+                TFT_WIDTH-GFX_POWERON_WIDTH, TFT_HEIGHT-GFX_POWERON_HEIGHT);
+    } else {
+        tft_blit((uint16_t*) gfx_poweroff,
+                GFX_POWEROFF_WIDTH, GFX_POWEROFF_HEIGHT,
+                TFT_WIDTH-GFX_POWEROFF_WIDTH, TFT_HEIGHT-GFX_POWEROFF_HEIGHT);
+    }
 }
 
 /**
