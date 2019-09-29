@@ -56,6 +56,9 @@ CL_ENABLE ?= 1
 # Enable function generator mode
 FUNCGEN_ENABLE ?= 1
 
+# Enable invert color feature
+CONFIG_INVERT_ENABLE ?= 0
+
 GIT_VERSION := $(shell git describe --abbrev=4 --dirty --always --tags)
 CFLAGS = -I. -DGIT_VERSION=\"$(GIT_VERSION)\" -Wno-missing-braces
 
@@ -70,6 +73,7 @@ CFLAGS += \
           -DCOLOR_AMPERAGE=$(COLOR_AMPERAGE) \
           -DCOLOR_WATTAGE=$(COLOR_WATTAGE) \
           -DCOLOR_INPUT=$(COLOR_INPUT) \
+          -DCONFIG_INVERT_ENABLE=$(CONFIG_INVERT_ENABLE) \
           -D$(MODEL)
 
 # Application linker script

@@ -473,10 +473,12 @@ static void ui_handle_event(event_t event, uint8_t data)
     if (event == event_rot_press && data == press_long) {
         opendps_lock(!is_locked);
         return;
+#ifdef CONFIG_INVERT_ENABLE
     } else if (event == event_button_sel && data == press_long) {
         tft_invert(!tft_is_inverted());
         write_past_settings();
         return;
+#endif // CONFIG_INVERT_ENABLE
     }
 
     if (is_locked) {
