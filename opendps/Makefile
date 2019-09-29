@@ -53,7 +53,7 @@ CL_ENABLE ?= 1
 FUNCGEN_ENABLE ?= 1
 
 # Enable invert color feature
-CONFIG_INVERT_ENABLE ?= 0
+INVERT_ENABLE ?= 0
 
 GIT_VERSION := $(shell git describe --abbrev=4 --dirty --always --tags)
 CFLAGS = -I. -DGIT_VERSION=\"$(GIT_VERSION)\" -Wno-missing-braces
@@ -114,6 +114,10 @@ endif
 ifeq ($(DEBUG),1)
 	CFLAGS +=-DCONFIG_DEBUG
 	OBJS += dbg_printf.o
+endif
+
+ifeq ($(INVERT_ENABLE),1)
+	CFLAGS +=-DCONFIG_INVERT_ENABLE
 endif
 
 ifeq ($(CC_ENABLE),1)
