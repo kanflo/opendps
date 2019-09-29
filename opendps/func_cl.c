@@ -277,6 +277,8 @@ static void deactivated(void)
         tft_fill(XPOS_CCCV, 128 - GFX_CC_HEIGHT, GFX_CC_WIDTH, GFX_CC_HEIGHT, BLACK);
     }
     current_mode_gfx = CUR_GFX_NOT_DRAWN;
+
+    tft_clear();
 }
 
 /**

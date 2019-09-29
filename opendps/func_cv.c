@@ -117,7 +117,7 @@ ui_screen_t cv_screen = {
     .icon_width = GFX_CV_WIDTH,
     .icon_height = GFX_CV_HEIGHT,
     .activated = NULL,
-    .deactivated = NULL,
+    .deactivated = &deactivated,
     .enable = &cv_enable,
     .past_save = &past_save,
     .past_restore = &past_restore,
@@ -245,6 +245,14 @@ static void current_changed(ui_number_t *item)
 {
     saved_i = item->value;
     (void) pwrctl_set_ilimit(item->value);
+}
+
+/**
+ * @brief      Do any required clean up before changing away from this screen
+ */
+static void deactivated(void)
+{
+    tft_clear();
 }
 
 /**
