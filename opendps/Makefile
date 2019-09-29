@@ -105,6 +105,8 @@ OBJS = \
     gfx-iconpower.o \
     gfx-cvbar.o \
     gfx-ccbar.o \
+    gfx-ppbar.o \
+    gfx-oppbar.o \
     gfx-padlock.o \
     gfx-power.o \
     gfx-thermometer.o \
