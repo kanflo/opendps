@@ -117,6 +117,8 @@ OBJS = \
     gfx-iconpower.o \
     gfx-cvbar.o \
     gfx-ccbar.o \
+    gfx-ppbar.o \
+    gfx-oppbar.o \
     gfx-padlock.o \
     gfx-thermometer.o \
     gfx-wifi.o \
