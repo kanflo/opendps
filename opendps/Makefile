@@ -62,6 +62,12 @@ FUNCGEN_ENABLE ?= 1
 # Enable invert color feature
 INVERT_ENABLE ?= 0
 
+# Power buttons in color
+POWER_COLORED ?= 1
+
+# Power off button visible
+POWER_OFF_VISIBLE ?= 0
+
 GIT_VERSION := $(shell git describe --abbrev=4 --dirty --always --tags)
 CFLAGS = -I. -DGIT_VERSION=\"$(GIT_VERSION)\" -Wno-missing-braces
 
@@ -112,8 +118,6 @@ OBJS = \
     gfx-cvbar.o \
     gfx-ccbar.o \
     gfx-padlock.o \
-    gfx-poweron.o \
-    gfx-poweroff.o \
     gfx-thermometer.o \
     gfx-wifi.o \
     opendps.o
@@ -129,6 +133,17 @@ endif
 
 ifeq ($(INVERT_ENABLE),1)
 	CFLAGS +=-DCONFIG_INVERT_ENABLE
+endif
+
+ifeq ($(POWER_COLORED),1)
+	CFLAGS +=-DCONFIG_POWER_COLORED
+	OBJS += gfx-poweron.o gfx-poweroff.o
+else
+	OBJS += gfx-power.o
+endif
+
+ifeq ($(POWER_OFF_VISIBLE),1)
+	CFLAGS +=-DCONFIG_POWER_OFF_VISIBLE
 endif
 
 ifeq ($(CC_ENABLE),1)
