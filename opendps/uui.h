@@ -150,6 +150,17 @@ typedef struct ui_item_t {
 #define MCALL(item, operation, ...) ((ui_item_t*) (item))->operation((ui_item_t*) item, ##__VA_ARGS__)
 
 /**
+ * A UI consists of several screens
+ */
+typedef struct {
+    uint8_t num_screens;
+    uint8_t cur_screen;
+    bool is_visible;
+    ui_screen_t *screens[MAX_SCREENS];
+    past_t *past;
+} uui_t;
+
+/**
  * A screen has a name and holds num_items UI items
  */
 struct ui_screen {
@@ -166,6 +177,7 @@ struct ui_screen {
     void (*activated)(void); /** Called when the screen is switched to */
     void (*deactivated)(void); /** Called when the screen is about to be changed from */
     void (*enable)(bool _enable); /** Called when the enable button is pressed */
+    bool (*event)(uui_t *ui, event_t event); /** Called when an event occurs (eg. button press). Return false if unhandled so main UI can handle it */
     void (*tick)(void); /** Called periodically allowing the UI to do house keeping */
     void (*past_save)(past_t *past);
     void (*past_restore)(past_t *past);
@@ -173,17 +185,6 @@ struct ui_screen {
     set_param_status_t (*get_parameter)(char *name, char *value, uint32_t value_len);
     ui_item_t *items[];
 };
-
-/**
- * A UI consists of several screens
- */
-typedef struct {
-    uint8_t num_screens;
-    uint8_t cur_screen;
-    bool is_visible;
-    ui_screen_t *screens[MAX_SCREENS];
-    past_t *past;
-} uui_t;
 
 /**
  * @brief      Initialize the UUI instance
@@ -272,5 +273,14 @@ void uui_show(uui_t *ui, bool show);
  * @param      ui    The user interface
  */
 void uui_disable_cur_screen(uui_t *ui);
+
+/**
+ * @brief      Focus on a given user interface item
+ *
+ * @param      ui    The user interface
+ * @param      item  The user interface item to focus on
+ */
+void uui_focus(uui_t *ui, ui_item_t *item);
+
 
 #endif // __UUI_H__

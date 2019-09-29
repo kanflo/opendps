@@ -129,6 +129,26 @@ static void focus_switch(ui_item_t *item)
     }
 }
 
+/**
+ * @brief      Focus on a given user interface item
+ *
+ * @param      ui    The user interface
+ * @param      item  The user interface item to focus on
+ */
+void uui_focus(uui_t *ui, ui_item_t *item) {
+    ui_screen_t *screen = ui->screens[ui->cur_screen];
+
+    for (uint8_t i = 0; i < screen->num_items; i++) {
+        if (screen->items[i] == item) {
+            screen->cur_item = i;
+            break;
+        }
+    }
+
+    focus_switch(item);
+}
+
+
 void uui_handle_screen_event(uui_t *ui, event_t event)
 {
     assert(ui);
@@ -140,6 +160,10 @@ void uui_handle_screen_event(uui_t *ui, event_t event)
     if (!ui->is_visible) {
         return;
     }
+
+    // If the screen handled the event, do nothing.
+    if (ui->screens[ui->cur_screen]->event && ui->screens[ui->cur_screen]->event(ui, event))
+        return;
 
     switch(event) {
         case event_rot_left_set:
