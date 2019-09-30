@@ -70,7 +70,7 @@ static set_param_status_t get_parameter(char *name, char *value, uint32_t value_
 
 static void clear_bars(bool all);
 static void draw_bars(void);
-static void determine_focused_item(uui_t *ui, bool search_ahead);
+static void determine_focused_item(uui_t *ui, int8_t direction);
 static void clear_third_region(void);
 
 /* We need to keep copies of the user settings as the value in the UI will
@@ -473,7 +473,7 @@ static bool event(uui_t *ui, event_t event) {
             // if in normal select mode, let parent handle it
             if (select_mode) {
                 // third item focused may have changed
-                determine_focused_item(ui, false);
+                determine_focused_item(ui, -1);
 
                 return false;
             }
@@ -489,7 +489,7 @@ static bool event(uui_t *ui, event_t event) {
 
         case event_button_m2:
             if (select_mode) { 
-                determine_focused_item(ui, true);
+                determine_focused_item(ui, 1);
                 return false;
             }
 
@@ -503,7 +503,7 @@ static bool event(uui_t *ui, event_t event) {
             select_mode = ! select_mode;
 
             if (select_mode) { 
-                determine_focused_item(ui, true);
+                determine_focused_item(ui, 0);
                 return false;
             }
 
@@ -527,7 +527,7 @@ static void activated(void) {
     dpsmode_watthour.value = 0;
 }
 
-static void determine_focused_item(uui_t *ui, bool search_ahead) {
+static void determine_focused_item(uui_t *ui, int8_t direction) {
     // determine what is now focused and change third to it.
     ui_screen_t *screen = ui->screens[ui->cur_screen];
 
@@ -539,14 +539,14 @@ static void determine_focused_item(uui_t *ui, bool search_ahead) {
         }
     }
 
-    if (search_ahead) {
+    if (direction > 0) {
         // if searching ahead
         for (focus_index++; focus_index < screen->num_items; focus_index++) {
             if (((ui_number_t *)screen->items[focus_index])->ui.can_focus) {
                 break;
             }
         }
-    } else {
+    } else if (direction < 0) {
         // if searching behind
         for (; ; focus_index--) {
             if (focus_index == 0) {
