@@ -558,7 +558,13 @@ static void determine_focused_item(uui_t *ui, int8_t direction) {
                 break;
             }
         }
+
+    // the current item on focus by the screen
+    } else {
+        // this item may not be a third item. The check below should catch it.
+        focus_index = screen->cur_item;
     }
+
 
     if (focus_index >= 2 && focus_index != screen->num_items) {
         third_item = (ui_item_t *)screen->items[focus_index];
