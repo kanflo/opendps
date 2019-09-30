@@ -75,8 +75,8 @@
  #define ADC_CHA_IOUT_GOLDEN_VALUE  (0x45)
  #define A_DAC_K (float)0.642339346880304f
  #define A_DAC_C (float)300.056571748685f
- #define A_ADC_K (float)1.719076520466f
- #define A_ADC_C (float)-119.687453381924f
+ #define A_ADC_K (float)1.72894209590626f
+ #define A_ADC_C (float)-122.667008351117f
  #define V_DAC_K (float)0.075587636839016f
  #define V_DAC_C (float)0.578377373449399f
  #define V_ADC_K (float)13.2451913879205f
