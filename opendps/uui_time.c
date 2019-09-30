@@ -257,8 +257,8 @@ static void number_draw(ui_item_t *_item)
     xpos += digit_w + spacing;
 
     // :
-    tft_putch(item->font_size, '.', xpos, _item->y, dot_width, h, color, false);
-    tft_putch(item->font_size, '.', xpos, _item->y - (h >> 1), dot_width, h, color, false);
+    tft_putch(item->font_size, '.', xpos, _item->y, dot_width, h >> 4, color, false);
+    tft_putch(item->font_size, '.', xpos, _item->y - (h >> 1), dot_width, h >> 4, color, false);
     xpos += dot_width + spacing;
 
     // MM
@@ -281,8 +281,8 @@ static void number_draw(ui_item_t *_item)
     xpos += digit_w + spacing;
 
     // :
-    tft_putch(item->font_size, '.', xpos, _item->y, dot_width, h, color, false);
-    tft_putch(item->font_size, '.', xpos, _item->y - (h >> 1), dot_width, h, color, false);
+    tft_putch(item->font_size, '.', xpos, _item->y, dot_width, h >> 4, color, false);
+    tft_putch(item->font_size, '.', xpos, _item->y - (h >> 1), dot_width, h >> 4, color, false);
     xpos += dot_width + spacing;
 
     // SS
