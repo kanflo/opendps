@@ -568,6 +568,7 @@ static void determine_focused_item(uui_t *ui, int8_t direction) {
 
     if (focus_index >= 2 && focus_index != screen->num_items) {
         third_item = (ui_item_t *)screen->items[focus_index];
+        third_row = focus_index - 2;
         third_invalidate = true;
         clear_third_region();
     }
