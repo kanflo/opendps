@@ -37,6 +37,7 @@
 #include "func_dpsmode.h"
 #include "uui.h"
 #include "uui_number.h"
+#include "uui_time.h"
 #include "dbg_printf.h"
 #include "mini-printf.h"
 #include "dps-model.h"
@@ -55,6 +56,7 @@ static void dpsmode_enable(bool _enable);
 static void voltage_changed(ui_number_t *item);
 static void current_changed(ui_number_t *item);
 static void power_changed(ui_number_t *item);
+static void timer_changed(ui_time_t *item);
 static void dpsmode_tick(void);
 static void activated(void);
 static void deactivated(void);
@@ -76,6 +78,10 @@ static int32_t saved_v, saved_i, saved_p;
 // pressing any other button when in this mode will exit the edit mode
 static bool single_edit_mode;
 static bool select_mode;
+
+// what is displayed on the 3rd row.
+static int8_t third_row = 0;
+ui_item_t *third_item;
 
 enum {
     CUR_GFX_NOT_DRAWN = 0, 
@@ -146,6 +152,7 @@ ui_number_t dpsmode_current = {
     .changed = &current_changed,
 };
 
+// 3rd row items
 ui_number_t dpsmode_power = {
     {
         .type = ui_item_number,
@@ -168,7 +175,46 @@ ui_number_t dpsmode_power = {
     .changed = &power_changed,
 };
 
+ui_number_t dpsmode_amphour = {
+    {
+        .type = ui_item_number,
+        .id = 13,
+        .x = XPOS_METER,
+        .y = YPOS_POWER,
+        .can_focus = false,
+    },
+    .font_size = FONT_METER_LARGE,
+    .alignment = ui_text_right_aligned,
+    .pad_dot = false,
+    .color = WHITE,
+    .value = 0,
+    .min = 0,
+    .max = 0,
+    .si_prefix = si_milli,
+    .num_digits = 2,
+    .num_decimals = 2,
+    .unit = unit_amphour,
+    .changed = NULL,
+};
 
+/*
+ui_time_t dpsmode_timer = {
+    {
+        .type = ui_item_time,
+        .id = 14,
+        .x = XPOS_METER,
+        .y = YPOS_POWER,
+        .can_focus = false,
+    },
+    .font_size = FONT_METER_LARGE,
+    .alignment = ui_text_right_aligned,
+    .pad_dot = false,
+    .color = WHITE,
+    .value = 0,
+    .changed = &timer_changed,
+};
+
+*/
 
 /* This is the screen definition */
 ui_screen_t dpsmode_screen = {
@@ -187,7 +233,13 @@ ui_screen_t dpsmode_screen = {
     .tick = &dpsmode_tick,
     .set_parameter = &set_parameter,
     .get_parameter = &get_parameter,
-    .num_items = 3,
+    .num_items = 4,
+    .items = { 
+        (ui_item_t*) &dpsmode_voltage, 
+        (ui_item_t*) &dpsmode_current, 
+        (ui_item_t*) &dpsmode_power,
+        (ui_item_t*) &dpsmode_amphour,
+    },
     .parameters = {
         {
             .name = "voltage",
@@ -202,16 +254,11 @@ ui_screen_t dpsmode_screen = {
         {
             .name = "power",
             .unit = unit_watt,
-            .prefix = si_milli
+            .prefix = si_milli // or micro?
         },
         {
             .name = {'\0'} /** Terminator */
         },
-    },
-    .items = { 
-        (ui_item_t*) &dpsmode_voltage, 
-        (ui_item_t*) &dpsmode_current, 
-        (ui_item_t*) &dpsmode_power
     }
 };
 
@@ -307,13 +354,8 @@ static void dpsmode_enable(bool enabled)
         /** Make sure we're displaying the settings and not the current
           * measurements when the power output is switched off */
         dpsmode_voltage.value = saved_v;
-        dpsmode_voltage.ui.draw(&dpsmode_voltage.ui);
-
         dpsmode_current.value = saved_i;
-        dpsmode_current.ui.draw(&dpsmode_current.ui);
-
         dpsmode_power.value = saved_p;
-        dpsmode_power.ui.draw(&dpsmode_power.ui);
     }
 }
 
@@ -351,21 +393,43 @@ static void power_changed(ui_number_t *item)
 }
 
 
+static void timer_changed(ui_time_t *item) {
+    // do nothing yet...
+    // TODO: Implement a timer
+}
+
+
 static bool event(uui_t *ui, event_t event) {
 
     switch(event) {
-        case event_button_m1:
-        case event_button_m2:
         case event_button_sel:
 
             if (single_edit_mode) {
                 single_edit_mode = false;
 
-                // toggle focus on anything that is in focus
+                // toggle focus on anything that is in focus (to unfocus)
                 if (dpsmode_voltage.ui.has_focus) uui_focus(ui, (ui_item_t*) &dpsmode_voltage);
                 if (dpsmode_current.ui.has_focus) uui_focus(ui, (ui_item_t*) &dpsmode_current);
                 return true;
             }
+            break;
+
+        case event_button_m1:
+        case event_button_m2:
+        case event_rot_left_m1:
+        case event_rot_right_m1:
+            // change what's visible on the 3rd row
+            {
+                ui_screen_t *screen = ui->screens[ui->cur_screen];
+
+                // rotate around the 3rd row objects (skip the 1st two)
+                third_row = ++third_row % (screen->num_items - 2);
+                third_item = screen->items[third_row];
+
+                dpsmode_graphics |= CUR_GFX_PP;
+
+            }
+            break;
 
         default:
             break;
@@ -496,34 +560,28 @@ static void dpsmode_tick(void)
         // Voltage setting has focus, update with the desired value and not output value
         if (dpsmode_voltage.ui.has_focus && dpsmode_voltage.value != saved_v) {
             dpsmode_voltage.value = saved_v;
-            dpsmode_voltage.ui.draw(&dpsmode_voltage.ui);
         }
         // Voltage setting is not focused, update with actual output voltage
         if ( ! dpsmode_voltage.ui.has_focus && dpsmode_voltage.value != vout_actual) {
             dpsmode_voltage.value = vout_actual;
-            dpsmode_voltage.ui.draw(&dpsmode_voltage.ui);
         }
 
         // Same for amperage. update with desired value if focused
         if (dpsmode_current.ui.has_focus && dpsmode_current.value != saved_i) {
             dpsmode_current.value = saved_i;
-            dpsmode_current.ui.draw(&dpsmode_current.ui);
         } 
         // Update with actual output voltage if not in focus
         if ( ! dpsmode_current.ui.has_focus && dpsmode_current.value != cout_actual) {
             dpsmode_current.value = cout_actual;
-            dpsmode_current.ui.draw(&dpsmode_current.ui);
         }
 
         // update the power with desired value if focused
         if (dpsmode_power.ui.has_focus && dpsmode_power.value != saved_i) {
             dpsmode_power.value = saved_p;
-            dpsmode_power.ui.draw(&dpsmode_power.ui);
         } 
         // Update with actual output power if not in focus
         if ( ! dpsmode_power.ui.has_focus && dpsmode_power.value != power_actual) {
             dpsmode_power.value = power_actual;
-            dpsmode_power.ui.draw(&dpsmode_power.ui);
         }
 
         /** Determine if we are in CV or CC mode and display it */
@@ -565,6 +623,19 @@ static void dpsmode_tick(void)
             dpsmode_graphics &= ~CUR_GFX_PP;
             dpsmode_graphics &= ~CUR_GFX_OPP;
         }
+
+    }
+
+
+    // redraw
+    dpsmode_voltage.ui.draw(&dpsmode_voltage.ui);
+    dpsmode_current.ui.draw(&dpsmode_current.ui);
+
+    // draw 3rd row item...
+    if ( third_item ) {
+        ((ui_number_t *)third_item)->ui.draw(& ((ui_number_t *)third_item)->ui);
+    } else {
+        // dpsmode_power.ui.draw(&dpsmode_power.ui);
     }
 
     // draw bars on right
@@ -681,6 +752,8 @@ void func_dpsmode_init(uui_t *ui)
 
     number_init(&dpsmode_current);
     number_init(&dpsmode_power);
+
+    number_init(&dpsmode_amphour);
 
     uui_add_screen(ui, &dpsmode_screen);
 }

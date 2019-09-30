@@ -866,8 +866,10 @@ void BUTTON_M1_isr(void)
     if (falling) {
         if (is_bouncing()) return;
         m1_pressed = true;
+
         if (m2_pressed)
             m1_and_m2_pressed = true;
+
         exti_set_trigger(BUTTON_M1_EXTI, EXTI_TRIGGER_RISING);
     } else {
         m1_pressed = false;
@@ -967,6 +969,10 @@ void BUTTON_ROTARY_isr(void)
                 set_skip = true;
                 (void) longpress_end();
                 event_put(event_rot_left_set, press_short);
+            } else if (m1_pressed) {
+                event_put(event_rot_left_m1, press_short);
+            } else if (m2_pressed) {
+                event_put(event_rot_left_m2, press_short);
             } else {
                 event_put(event_rot_left, press_short);
             }
@@ -975,6 +981,10 @@ void BUTTON_ROTARY_isr(void)
                 set_skip = true;
                 (void) longpress_end();
                 event_put(event_rot_right_set, press_short);
+            } else if (m1_pressed) {
+                event_put(event_rot_right_m1, press_short);
+            } else if (m2_pressed) {
+                event_put(event_rot_right_m2, press_short);
             } else {
                 event_put(event_rot_right, press_short);
             }
