@@ -33,26 +33,33 @@
 #include "font-meter_medium.h"
 #include "font-meter_large.h"
 
-// HH:MM:SS == 6
-#define DIGITS 6 
-
-// 99:59:59 == 359999 seconds
-#define MAX_TIME 359999
-
 #define MAX(a,b) (((a)>(b))?(a):(b))
 
 static uint32_t digit_scale(ui_time_t *item, uint32_t i) {
-    if (item->cur_digit == 0 || item->cur_digit == 1) {
-        // seconds
-        return i;
+    switch (item->cur_digit) {
+        case 0:
+            // seconds
+            return i;
+        case 1:
+            // 10s of seconds
+            return 10 * i;
+        case 2:
+            // minutes
+            return 60 * i;
+        case 3:
+            // 10s of minutes
+            return 600 * i;
+        case 4:
+            // hours
+            return 3600 * i;
+        case 5:
+            // tens of hours
+            return 36000 * i;
+        case 6:
+        default:
+            // hundreds of hours
+            return 360000 * i;
     }
-    if (item->cur_digit == 2 || item->cur_digit == 3) {
-        // minutes
-        return i * 60;
-    }
-
-    // hours
-    return i * 3600;
 }
 
 /**
@@ -148,7 +155,7 @@ static uint32_t number_draw_width(ui_item_t *_item)
 
     /** Start printing from left to right */
 
-    // total digits HH:MM:SS = 6, plus spacing, plus 2 :
+    // total digits HHH:MM:SS = 7, plus spacing, plus 2 :
     total_width += DIGITS * (digit_w + spacing);
     total_width += 2 * (dot_width + spacing);
 
@@ -213,14 +220,14 @@ static void number_draw(ui_item_t *_item)
         xpos -= number_draw_width(_item);
 
 
-    uint8_t hours = item->value / 3600;
+    uint16_t hours = item->value / 3600;
     uint8_t minutes = (item->value / 60) % 60;
     uint8_t seconds = item->value % 60;
     uint8_t digit = 0;
     bool highlight = false;
 
-    // HH
-    digit = hours / 10;
+    // HHH
+    digit = hours / 100;
     highlight =_item->has_focus && item->cur_digit == DIGITS - 1;
 
     tft_putch(item->font_size, '0' + digit, 
@@ -230,8 +237,9 @@ static void number_draw(ui_item_t *_item)
     cur_digit--;
     xpos += digit_w + spacing;
 
-    digit = hours % 10;
+    digit = (hours % 100) / 10;
     highlight =_item->has_focus && item->cur_digit == DIGITS - 2;
+
     tft_putch(item->font_size, '0' + digit, 
             xpos, _item->y,
             digit_w, h,
@@ -239,12 +247,7 @@ static void number_draw(ui_item_t *_item)
     cur_digit--;
     xpos += digit_w + spacing;
 
-    // :
-    tft_putch(item->font_size, '.', xpos, _item->y, dot_width, h, color, false);
-    xpos += dot_width + spacing;
-
-    // MM
-    digit = minutes / 10;
+    digit = hours % 10;
     highlight =_item->has_focus && item->cur_digit == DIGITS - 3;
     tft_putch(item->font_size, '0' + digit, 
             xpos, _item->y,
@@ -253,8 +256,23 @@ static void number_draw(ui_item_t *_item)
     cur_digit--;
     xpos += digit_w + spacing;
 
-    digit = minutes % 10;
+    // :
+    tft_putch(item->font_size, '.', xpos, _item->y, dot_width, h, color, false);
+    tft_putch(item->font_size, '.', xpos, _item->y - (h >> 1), dot_width, h, color, false);
+    xpos += dot_width + spacing;
+
+    // MM
+    digit = minutes / 10;
     highlight =_item->has_focus && item->cur_digit == DIGITS - 4;
+    tft_putch(item->font_size, '0' + digit, 
+            xpos, _item->y,
+            digit_w, h,
+            color, highlight);
+    cur_digit--;
+    xpos += digit_w + spacing;
+
+    digit = minutes % 10;
+    highlight =_item->has_focus && item->cur_digit == DIGITS - 5;
     tft_putch(item->font_size, '0' + digit, 
             xpos, _item->y,
             digit_w, h,
@@ -264,11 +282,12 @@ static void number_draw(ui_item_t *_item)
 
     // :
     tft_putch(item->font_size, '.', xpos, _item->y, dot_width, h, color, false);
+    tft_putch(item->font_size, '.', xpos, _item->y - (h >> 1), dot_width, h, color, false);
     xpos += dot_width + spacing;
 
     // SS
     digit = seconds / 10;
-    highlight =_item->has_focus && item->cur_digit == DIGITS - 5;
+    highlight =_item->has_focus && item->cur_digit == DIGITS - 6;
     tft_putch(item->font_size, '0' + digit, 
             xpos, _item->y,
             digit_w, h,
@@ -277,7 +296,7 @@ static void number_draw(ui_item_t *_item)
     xpos += digit_w + spacing;
 
     digit = seconds % 10;
-    highlight =_item->has_focus && item->cur_digit == DIGITS - 6;
+    highlight =_item->has_focus && item->cur_digit == DIGITS - 7;
     tft_putch(item->font_size, '0' + digit, 
             xpos, _item->y,
             digit_w, h,

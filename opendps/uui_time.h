@@ -31,6 +31,13 @@
 #include "tft.h"
 #include "uui.h"
 
+
+// HHH:MM:SS == 7
+#define DIGITS 7 
+
+// 999:59:59 == 3600000-1 seconds
+#define MAX_TIME 3600000-1
+
 /**
  * A UI item describing an editable time value formatted as HH:MM:SS
  */

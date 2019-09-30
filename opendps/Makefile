@@ -120,6 +120,7 @@ OBJS = \
     gfx-ccbar.o \
     gfx-ppbar.o \
     gfx-oppbar.o \
+    gfx-tmbar.o \
     gfx-padlock.o \
     gfx-power.o \
     gfx-poweron.o \

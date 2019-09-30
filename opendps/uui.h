@@ -64,7 +64,7 @@ typedef enum {
     unit_ampere,
     unit_volt,
     unit_watt,
-    unit_amphour,
+    unit_watthour,
     unit_second,
     unit_hertz,
     unit_furlong,
