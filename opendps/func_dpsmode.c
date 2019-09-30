@@ -502,6 +502,11 @@ static bool event(uui_t *ui, event_t event) {
             // keep track, so this screen will not do anything until we leave this mode
             select_mode = ! select_mode;
 
+            if (select_mode) { 
+                determine_focused_item(ui, true);
+                return false;
+            }
+
             return false;
 
         default:
