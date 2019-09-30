@@ -32,6 +32,7 @@
 #include "gfx-ccbar.h"
 #include "gfx-ppbar.h"
 #include "gfx-oppbar.h"
+#include "gfx-tmbar.h"
 #include "font-meter_large.h"
 #include "hw.h"
 #include "func_dpsmode.h"
@@ -56,6 +57,7 @@ static void dpsmode_enable(bool _enable);
 static void voltage_changed(ui_number_t *item);
 static void current_changed(ui_number_t *item);
 static void power_changed(ui_number_t *item);
+static void watthour_changed(ui_number_t *item);
 static void timer_changed(ui_time_t *item);
 static void dpsmode_tick(void);
 static void activated(void);
@@ -68,20 +70,26 @@ static set_param_status_t get_parameter(char *name, char *value, uint32_t value_
 
 static void clear_bars(bool all);
 static void draw_bars(void);
+static void determine_focused_item(uui_t *ui, bool search_ahead);
+static void clear_third_region(void);
 
 /* We need to keep copies of the user settings as the value in the UI will
  * be replaced with measurements when output is active
  */
-static int32_t saved_v, saved_i, saved_p;
+static int32_t saved_v, saved_i, saved_p, saved_t;
 
 // single edit mode, with M1/M2 buttons, not select.
 // pressing any other button when in this mode will exit the edit mode
 static bool single_edit_mode;
 static bool select_mode;
 
+// timer
+static int64_t tick_since_count;
+
 // what is displayed on the 3rd row.
 static int8_t third_row = 0;
 ui_item_t *third_item;
+static bool third_invalidate;
 
 enum {
     CUR_GFX_NOT_DRAWN = 0, 
@@ -89,12 +97,14 @@ enum {
     CUR_GFX_CC = 2,
     CUR_GFX_PP  = 4,
     CUR_GFX_OPP = 8,
+    CUR_GFX_TM = 16,
 } dpsmode_graphics; 
 
 #define SCREEN_ID  (6)
 #define PAST_V     (0)
 #define PAST_I     (1)
 #define PAST_P     (2)
+#define PAST_T     (3)
 #define XPOS_CCCV  (25)
 
 #define XPOS_METER   (117)
@@ -175,38 +185,37 @@ ui_number_t dpsmode_power = {
     .changed = &power_changed,
 };
 
-ui_number_t dpsmode_amphour = {
+ui_number_t dpsmode_watthour = {
     {
         .type = ui_item_number,
         .id = 13,
         .x = XPOS_METER,
-        .y = YPOS_POWER,
-        .can_focus = false,
+        .y = YPOS_POWER + 5, // +5 since we are using a smaller font
+        .can_focus = true,
     },
-    .font_size = FONT_METER_LARGE,
+    .font_size = FONT_METER_MEDIUM,
     .alignment = ui_text_right_aligned,
     .pad_dot = false,
     .color = WHITE,
     .value = 0,
     .min = 0,
-    .max = 0,
-    .si_prefix = si_milli,
-    .num_digits = 2,
-    .num_decimals = 2,
-    .unit = unit_amphour,
-    .changed = NULL,
+    .max = 99999000,
+    .si_prefix = si_milli, // milli watt hours
+    .num_digits = 5,
+    .num_decimals = 1,
+    .unit = unit_watthour,
+    .changed = &watthour_changed,
 };
 
-/*
 ui_time_t dpsmode_timer = {
     {
         .type = ui_item_time,
         .id = 14,
         .x = XPOS_METER,
-        .y = YPOS_POWER,
-        .can_focus = false,
+        .y = YPOS_POWER + 5, // +5 since we are using smaller font
+        .can_focus = true,
     },
-    .font_size = FONT_METER_LARGE,
+    .font_size = FONT_METER_MEDIUM,
     .alignment = ui_text_right_aligned,
     .pad_dot = false,
     .color = WHITE,
@@ -214,7 +223,6 @@ ui_time_t dpsmode_timer = {
     .changed = &timer_changed,
 };
 
-*/
 
 /* This is the screen definition */
 ui_screen_t dpsmode_screen = {
@@ -233,12 +241,13 @@ ui_screen_t dpsmode_screen = {
     .tick = &dpsmode_tick,
     .set_parameter = &set_parameter,
     .get_parameter = &get_parameter,
-    .num_items = 4,
+    .num_items = 5,
     .items = { 
         (ui_item_t*) &dpsmode_voltage, 
         (ui_item_t*) &dpsmode_current, 
         (ui_item_t*) &dpsmode_power,
-        (ui_item_t*) &dpsmode_amphour,
+        (ui_item_t*) &dpsmode_watthour,
+        (ui_item_t*) &dpsmode_timer,
     },
     .parameters = {
         {
@@ -331,6 +340,7 @@ static void dpsmode_enable(bool enabled)
         saved_v = dpsmode_voltage.value;
         saved_i = dpsmode_current.value;
         saved_p = dpsmode_power.value;
+        saved_t = dpsmode_timer.value;
 
         (void) pwrctl_set_vout(dpsmode_voltage.value);
         (void) pwrctl_set_iout(dpsmode_current.value);
@@ -339,6 +349,11 @@ static void dpsmode_enable(bool enabled)
 
         // clear all bars, including over power protection
         clear_bars(true);
+
+        // reset timer counter and start.
+        tick_since_count = get_ticks();
+        if (saved_t > 0)
+            dpsmode_timer.value--;
 
     } else {
         // already off, turning off again will reset any pp warnings
@@ -356,6 +371,7 @@ static void dpsmode_enable(bool enabled)
         dpsmode_voltage.value = saved_v;
         dpsmode_current.value = saved_i;
         dpsmode_power.value = saved_p;
+        dpsmode_timer.value = saved_t;
     }
 }
 
@@ -392,10 +408,18 @@ static void power_changed(ui_number_t *item)
     // (void) pwrctl_set_iout(item->value);
 }
 
+/**
+ * @brief      Callback for when value of the watthour item is changed
+ *
+ * @param      item  The current item
+ */
+static void watthour_changed(ui_number_t *item) {
+    //
+}
 
 static void timer_changed(ui_time_t *item) {
     // do nothing yet...
-    // TODO: Implement a timer
+    saved_t = item->value;
 }
 
 
@@ -403,6 +427,8 @@ static bool event(uui_t *ui, event_t event) {
 
     switch(event) {
         case event_button_sel:
+        case event_button_m1:
+        case event_button_m2:
 
             if (single_edit_mode) {
                 single_edit_mode = false;
@@ -414,8 +440,6 @@ static bool event(uui_t *ui, event_t event) {
             }
             break;
 
-        case event_button_m1:
-        case event_button_m2:
         case event_rot_left_m1:
         case event_rot_right_m1:
             // change what's visible on the 3rd row
@@ -423,11 +447,15 @@ static bool event(uui_t *ui, event_t event) {
                 ui_screen_t *screen = ui->screens[ui->cur_screen];
 
                 // rotate around the 3rd row objects (skip the 1st two)
-                third_row = ++third_row % (screen->num_items - 2);
-                third_item = screen->items[third_row];
+                if (event == event_rot_right_m1) {
+                    third_row = (third_row + 1) % (screen->num_items - 2);
+                } else {
+                    if (third_row == 0) third_row = screen->num_items - 3;
+                    else third_row--;
+                }
 
-                dpsmode_graphics |= CUR_GFX_PP;
-
+                third_item = screen->items[2 + third_row];
+                third_invalidate = true;
             }
             break;
 
@@ -439,7 +467,12 @@ static bool event(uui_t *ui, event_t event) {
     switch(event) {
         case event_button_m1:
             // if in normal select mode, let parent handle it
-            if (select_mode) return false;
+            if (select_mode) {
+                // third item focused may have changed
+                determine_focused_item(ui, false);
+
+                return false;
+            }
 
             // otherwise, enter single edit mode
             single_edit_mode = true;
@@ -451,7 +484,11 @@ static bool event(uui_t *ui, event_t event) {
             return true;
 
         case event_button_m2:
-            if (select_mode) return false;
+            if (select_mode) { 
+                determine_focused_item(ui, true);
+                return false;
+            }
+
             single_edit_mode = true;
             if ( ! dpsmode_current.ui.has_focus) uui_focus(ui, (ui_item_t*) &dpsmode_current);
             return true;
@@ -460,6 +497,7 @@ static bool event(uui_t *ui, event_t event) {
             // toggle select mode, so parent can deal with other UI elements
             // keep track, so this screen will not do anything until we leave this mode
             select_mode = ! select_mode;
+
             return false;
 
         default:
@@ -474,8 +512,51 @@ static bool event(uui_t *ui, event_t event) {
  */
 static void activated(void) {
     clear_bars(true);
+    clear_third_region();
+
+    // reset watthour value when we leave the screen.
+    dpsmode_watthour.value = 0;
 }
 
+static void determine_focused_item(uui_t *ui, bool search_ahead) {
+    // determine what is now focused and change third to it.
+    ui_screen_t *screen = ui->screens[ui->cur_screen];
+
+    uint8_t focus_index = 0;
+
+    for (uint8_t i = 0; i < screen->num_items; i++) {
+        if (((ui_number_t *)screen->items[i])->ui.has_focus) {
+            focus_index = i;
+        }
+    }
+
+    if (search_ahead) {
+        // if searching ahead
+        for (focus_index++; focus_index < screen->num_items; focus_index++) {
+            if (((ui_number_t *)screen->items[focus_index])->ui.can_focus) {
+                break;
+            }
+        }
+    } else {
+        // if searching behind
+        for (; ; focus_index--) {
+            if (focus_index == 0) {
+                focus_index = screen->num_items;
+            }
+
+            if (((ui_number_t *)screen->items[focus_index - 1])->ui.can_focus) {
+                focus_index--;
+                break;
+            }
+        }
+    }
+
+    if (focus_index >= 2 && focus_index != screen->num_items) {
+        third_item = (ui_item_t *)screen->items[focus_index];
+        third_invalidate = true;
+        clear_third_region();
+    }
+}
 
 /**
  * @brief      Do any required clean up before changing away from this screen
@@ -502,6 +583,9 @@ static void past_save(past_t *past)
     if (!past_write_unit(past, (SCREEN_ID << 24) | PAST_P, (void*) &saved_p, 4 /* sizeof(dpsmode_power.value) */ )) {
         /** @todo: handle past write failures */
     }
+    if (!past_write_unit(past, (SCREEN_ID << 24) | PAST_T, (void*) &saved_t, 4 /* sizeof(dpsmode_power.value) */ )) {
+        /** @todo: handle past write failures */
+    }
 }
 
 /**
@@ -523,6 +607,10 @@ static void past_restore(past_t *past)
     }
     if (past_read_unit(past, (SCREEN_ID << 24) | PAST_P, (const void**) &p, &length)) {
         saved_p = dpsmode_power.value = *p;
+        (void) length;
+    }
+    if (past_read_unit(past, (SCREEN_ID << 24) | PAST_T, (const void**) &p, &length)) {
+        saved_t = dpsmode_timer.value = *p;
         (void) length;
     }
 }
@@ -606,6 +694,8 @@ static void dpsmode_tick(void)
             // show opp warning
             dpsmode_graphics |= CUR_GFX_OPP;
             dpsmode_graphics &= ~CUR_GFX_PP;
+            // disable timer graphic
+            dpsmode_graphics &= ~CUR_GFX_TM;
 
             // power off
             dpsmode_enable(false);
@@ -624,6 +714,54 @@ static void dpsmode_tick(void)
             dpsmode_graphics &= ~CUR_GFX_OPP;
         }
 
+        // timer
+        int64_t diff = get_ticks() - tick_since_count;
+        int8_t secs = diff / 1000;
+
+        // update every second
+        if (secs > 0) {
+            // update timer. If 0, use the timer as a clock. Otherwise, count down
+            if (saved_t > 0) {
+                dpsmode_timer.value -= secs;
+                dpsmode_graphics |= CUR_GFX_TM;
+            } else {
+                dpsmode_timer.value += secs;
+
+                // overflow timer
+                if (dpsmode_timer.value > MAX_TIME) {
+                    dpsmode_timer.value = MAX_TIME;
+                }
+            }
+            diff = diff % 1000;
+
+            tick_since_count = get_ticks() - diff;
+
+            // calculate amount of power delivered as milli watt hours
+            dpsmode_watthour.value += ((power_actual * 1000.0 / 3600.0f) * secs) / 1000;
+
+            // 1000 == 1.0mWh
+            /*
+            if (dpsmode_watthour.value <= 1000000) {
+                dpsmode_watthour.num_decimals = 1;
+            }
+            if (dpsmode_watthour.value >= 1000000) {
+                dpsmode_watthour.num_decimals = 0;
+            }
+            */
+        }
+
+        // timer enabled, count down
+        if (saved_t > 0 && dpsmode_timer.value <= 0) {
+            // timer has counted down
+            // show the timer
+            third_item = &dpsmode_timer;
+            third_invalidate = true;
+
+            // power off
+            dpsmode_enable(false);
+            opendps_update_power_status(false);
+        }
+
     }
 
 
@@ -633,13 +771,26 @@ static void dpsmode_tick(void)
 
     // draw 3rd row item...
     if ( third_item ) {
+        // blank out the whole 3rd row area
+        if (third_invalidate) {
+            third_invalidate = false;
+            clear_third_region();
+        }
+
         ((ui_number_t *)third_item)->ui.draw(& ((ui_number_t *)third_item)->ui);
+
     } else {
         // dpsmode_power.ui.draw(&dpsmode_power.ui);
     }
 
     // draw bars on right
     draw_bars();
+}
+
+static void clear_third_region() {
+    tft_fill(0, YPOS_POWER,
+            TFT_WIDTH, FONT_METER_LARGE_MAX_GLYPH_HEIGHT,
+            BLACK);
 }
 
 
@@ -676,27 +827,48 @@ static void draw_bars() {
     }
 
 
+    // draw timer
+    if (dpsmode_graphics & CUR_GFX_TM) {
+        // blink the timer icon 
+        if ((get_ticks() >> 9) & 1)
+            tft_blit((uint16_t*) gfx_tmbar,
+                    GFX_TMBAR_WIDTH, GFX_TMBAR_HEIGHT,
+                    TFT_WIDTH - GFX_TMBAR_WIDTH,
+                    YPOS_POWER + FONT_METER_LARGE_MAX_GLYPH_HEIGHT - GFX_TMBAR_HEIGHT );
+        else
+            tft_fill(TFT_WIDTH - GFX_TMBAR_WIDTH, YPOS_POWER + FONT_METER_LARGE_MAX_GLYPH_HEIGHT - GFX_TMBAR_HEIGHT,
+                        GFX_TMBAR_WIDTH, GFX_TMBAR_HEIGHT,
+                        BLACK);
+    }
+
+
     // draw opp
     if (dpsmode_graphics & CUR_GFX_OPP) {
         // blink the opp warning
-        if ((get_ticks() >> 10) & 1)
+        if (((get_ticks() >> 9) & 1) == 0)
             tft_blit((uint16_t*) gfx_oppbar,
                     GFX_OPPBAR_WIDTH, GFX_OPPBAR_HEIGHT,
                     TFT_WIDTH - GFX_OPPBAR_WIDTH,
                     YPOS_POWER + FONT_METER_LARGE_MAX_GLYPH_HEIGHT - GFX_OPPBAR_HEIGHT );
-        else
-            tft_fill(TFT_WIDTH - GFX_PPBAR_WIDTH, YPOS_POWER + FONT_METER_LARGE_MAX_GLYPH_HEIGHT - GFX_PPBAR_HEIGHT,
-                        GFX_PPBAR_WIDTH, GFX_PPBAR_HEIGHT,
+        // no timer (or other icons), paint black over it.
+        else if ( (dpsmode_graphics & CUR_GFX_TM) != 1)
+            tft_fill(TFT_WIDTH - GFX_OPPBAR_WIDTH, YPOS_POWER + FONT_METER_LARGE_MAX_GLYPH_HEIGHT - GFX_OPPBAR_HEIGHT,
+                        GFX_OPPBAR_WIDTH, GFX_OPPBAR_HEIGHT,
                         BLACK);
     }
     // draw pp
     else if (dpsmode_graphics & CUR_GFX_PP) {
-        tft_blit((uint16_t*) gfx_ppbar,
-                GFX_PPBAR_WIDTH, GFX_PPBAR_HEIGHT,
-                TFT_WIDTH - GFX_PPBAR_WIDTH,
-                YPOS_POWER + FONT_METER_LARGE_MAX_GLYPH_HEIGHT - GFX_PPBAR_HEIGHT );
-    // or clear
-    } else {
+        // if timer (or other icons), blink it so it is visible.
+        if (((get_ticks() >> 9) & 1) == 0)
+            tft_blit((uint16_t*) gfx_ppbar,
+                    GFX_PPBAR_WIDTH, GFX_PPBAR_HEIGHT,
+                    TFT_WIDTH - GFX_PPBAR_WIDTH,
+                    YPOS_POWER + FONT_METER_LARGE_MAX_GLYPH_HEIGHT - GFX_PPBAR_HEIGHT );
+    }
+
+
+    // no graphics at 3rd location, clear it.
+    if (  ! (dpsmode_graphics & CUR_GFX_OPP || dpsmode_graphics & CUR_GFX_PP || dpsmode_graphics & CUR_GFX_TM)) {
         tft_fill(TFT_WIDTH - GFX_PPBAR_WIDTH, YPOS_POWER + FONT_METER_LARGE_MAX_GLYPH_HEIGHT - GFX_PPBAR_HEIGHT,
                     GFX_PPBAR_WIDTH, GFX_PPBAR_HEIGHT,
                     BLACK);
@@ -752,8 +924,12 @@ void func_dpsmode_init(uui_t *ui)
 
     number_init(&dpsmode_current);
     number_init(&dpsmode_power);
+    number_init(&dpsmode_watthour);
+    time_init(&dpsmode_timer);
 
-    number_init(&dpsmode_amphour);
+    // third item initialize
+    third_item = &dpsmode_power;
+    third_invalidate = true;
 
     uui_add_screen(ui, &dpsmode_screen);
 }

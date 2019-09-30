@@ -79,7 +79,7 @@
 #endif // CONFIG_SPLASH_SCREEN
 
 /** How ofter we update the measurements in the UI (ms) */
-#define UI_UPDATE_INTERVAL_MS  (250)
+#define UI_UPDATE_INTERVAL_MS  (100)
 
 /** Timeout for waiting for wifi connction (ms) */
 #define WIFI_CONNECT_TIMEOUT  (10000)
