@@ -319,7 +319,7 @@ void time_init(ui_time_t *item)
     item->ui.got_event = &number_got_event;
     item->ui.get_value = &number_get_value;
     item->ui.draw = &number_draw;
-    item->cur_digit = DIGITS - 1;
+    item->cur_digit = DIGITS - 3; // hour first
     item->ui.needs_redraw = true;
 }
 
