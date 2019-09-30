@@ -372,6 +372,9 @@ static void dpsmode_enable(bool enabled)
         dpsmode_current.value = saved_i;
         dpsmode_power.value = saved_p;
         dpsmode_timer.value = saved_t;
+
+        // disable timer graphic
+        dpsmode_graphics &= ~CUR_GFX_TM;
     }
 }
 
