@@ -111,8 +111,6 @@ OBJS = \
     gfx-tmbar.o \
     gfx-padlock.o \
     gfx-power.o \
-    gfx-poweron.o \
-    gfx-poweroff.o \
     gfx-thermometer.o \
     gfx-wifi.o \
     opendps.o
