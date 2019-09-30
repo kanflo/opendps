@@ -446,7 +446,8 @@ static bool event(uui_t *ui, event_t event) {
         case event_rot_left_m1:
         case event_rot_right_m1:
             // change what's visible on the 3rd row
-            {
+            // only if not in select mode, as we may be editing fields
+            if ( ! select_mode) {
                 ui_screen_t *screen = ui->screens[ui->cur_screen];
 
                 // rotate around the 3rd row objects (skip the 1st two)
@@ -649,29 +650,29 @@ static void dpsmode_tick(void)
         // TODO: Issue where focus causes a brief frame where value is incorrect
         
         // Voltage setting has focus, update with the desired value and not output value
-        if (dpsmode_voltage.ui.has_focus && dpsmode_voltage.value != saved_v) {
+        if (dpsmode_voltage.ui.has_focus) {
             dpsmode_voltage.value = saved_v;
         }
         // Voltage setting is not focused, update with actual output voltage
-        if ( ! dpsmode_voltage.ui.has_focus && dpsmode_voltage.value != vout_actual) {
+        if ( ! dpsmode_voltage.ui.has_focus) {
             dpsmode_voltage.value = vout_actual;
         }
 
         // Same for amperage. update with desired value if focused
-        if (dpsmode_current.ui.has_focus && dpsmode_current.value != saved_i) {
+        if (dpsmode_current.ui.has_focus) {
             dpsmode_current.value = saved_i;
         } 
         // Update with actual output voltage if not in focus
-        if ( ! dpsmode_current.ui.has_focus && dpsmode_current.value != cout_actual) {
+        if ( ! dpsmode_current.ui.has_focus) {
             dpsmode_current.value = cout_actual;
         }
 
         // update the power with desired value if focused
-        if (dpsmode_power.ui.has_focus && dpsmode_power.value != saved_i) {
+        if (dpsmode_power.ui.has_focus) {
             dpsmode_power.value = saved_p;
         } 
         // Update with actual output power if not in focus
-        if ( ! dpsmode_power.ui.has_focus && dpsmode_power.value != power_actual) {
+        if ( ! dpsmode_power.ui.has_focus) {
             dpsmode_power.value = power_actual;
         }
 

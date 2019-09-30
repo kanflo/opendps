@@ -541,8 +541,6 @@ static void ui_handle_event(event_t event, uint8_t data)
         case event_rot_press:
         case event_rot_left:
         case event_rot_right:
-        case event_rot_left_set:
-        case event_rot_right_set:
         case event_rot_left_m1:
         case event_rot_right_m1:
         case event_rot_left_m2:
@@ -550,6 +548,20 @@ static void ui_handle_event(event_t event, uint8_t data)
             uui_handle_screen_event(current_ui, event);
             uui_refresh(current_ui, false);
             break;
+
+        case event_rot_left_set:
+        case event_rot_right_set:
+            // lock out set+rotation when power is on
+            if (pwrctl_vout_enabled()) {
+                lock_flashing_period = LOCK_FLASHING_PERIOD;
+                lock_flash_counter = LOCK_FLASHING_COUNTER;
+                break;
+            }
+
+            uui_handle_screen_event(current_ui, event);
+            uui_refresh(current_ui, false);
+            break;
+
         default:
             break;
     }
