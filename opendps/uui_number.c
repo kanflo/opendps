@@ -336,6 +336,6 @@ void number_init(ui_number_t *item)
     item->ui.got_event = &number_got_event;
     item->ui.get_value = &number_get_value;
     item->ui.draw = &number_draw;
-    item->cur_digit = item->num_digits + item->num_decimals - 1; /** Most signinficant digit */
+    item->cur_digit = item->num_decimals; // edit least significant digit first
     item->ui.needs_redraw = true;
 }
