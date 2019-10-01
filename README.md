@@ -2,7 +2,7 @@
 
 #### Give your DPS5005 the upgrade it deserves
 
-OpenDPS is a FOSS firmware replacement for the DPS5005 (and DPS3003, DPS3005, DPS5015 and possibly others) that has the same functionality, has a less cluttered user interface and is remote controllable via wifi (ESP8266) or via a serial port.
+OpenDPS is a FOSS firmware replacement for the DPS5005 (and DPS3003, DPS3005, DPS5015, DP50V5A and possibly others) that has the same functionality, has a less cluttered user interface and is remote controllable via wifi (ESP8266) or via a serial port.
 
 <p align="center">
 <img src="https://raw.githubusercontent.com/kanflo/opendps/master/image.jpg" alt="A DPS5005 with wifi"/>
@@ -170,7 +170,7 @@ The project consists of four parts:
 * `dpsboot/` The OpenDPS bootloader.
 * `opendps/` The OpenDPS firmware.
 * `esp8266-proxy/` The ESP8266 firmware for wifi connected OpenDPS:es.
-* `dpsctl/` A pyton script for controlling your OpenDPS via wifi or a serial port.
+* `dpsctl/` A Python script for controlling your OpenDPS via wifi or a serial port.
 * `emu/` Xcode project and GNU makefile for running an emulated OpenDPS.
 
 

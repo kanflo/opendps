@@ -1,7 +1,7 @@
 PROGRAM=dpsproxy
 
-# The baudrate used for serial communications, defaults to 115200
-BAUDRATE ?= 115200
+# The baudrate used for serial communications, defaults to 9600
+BAUDRATE ?= 9600
 
 OTA=1
 EXTRA_COMPONENTS=extras/rboot-ota extras/stdin_uart_interrupt

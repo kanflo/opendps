@@ -1,13 +1,13 @@
-BINARY = opendps
-
 # Build with commandline interface rather than serial interface
 COMMANDLINE := 0
 
-# The baudrate used for serial communications, defaults to 115200
-BAUDRATE ?= 115200
+# The baudrate used for serial communications, defaults to 9600
+BAUDRATE ?= 9600
 
 # Set build model, defaults to DPS5005
 MODEL := DPS5005
+
+BINARY = opendps_$(MODEL)
 
 # Include splash screen
 SPLASH_SCREEN := 0
@@ -46,8 +46,8 @@ TINT ?= ffffff
 # Enable CC mode
 CC_ENABLE ?= 1
 
-# Enable merged mode
-MERGED_ENABLE ?= 1
+# Enable cl mode
+CL_ENABLE ?= 1
 
 # Enable function generator mode
 FUNCGEN_ENABLE ?= 1
@@ -96,11 +96,12 @@ OBJS = \
     gfx-cc.o \
     gfx-crosshair.o \
     gfx-cv.o \
-    gfx-merged.o \
+    gfx-cl.o \
     gfx-padlock.o \
     gfx-power.o \
     gfx-thermometer.o \
-    gfx-wifi.o
+    gfx-wifi.o \
+    opendps.o
 
 ifdef MAX_CURRENT
 	CFLAGS +=-DCONFIG_DPS_MAX_CURRENT=$(MAX_CURRENT)
@@ -116,9 +117,9 @@ ifeq ($(CC_ENABLE),1)
 	OBJS += func_cc.o
 endif
 
-ifeq ($(MERGED_ENABLE),1)
-	CFLAGS +=-DCONFIG_MERGED_ENABLE
-	OBJS += func_merged.o
+ifeq ($(CL_ENABLE),1)
+	CFLAGS +=-DCONFIG_CL_ENABLE
+	OBJS += func_cl.o
 endif
 
 ifeq ($(FUNCGEN_ENABLE),1)
@@ -157,3 +158,4 @@ test:
 
 doxygen:
 	@doxygen config.dox
+
