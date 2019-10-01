@@ -69,8 +69,8 @@
  #define V_DAC_K (float) 0.076447899114725f
  #define V_DAC_C (float) 3.22404026358549f
 
- #define V_ADC_K (float) 13.0935331433421f
- #define V_ADC_C (float) -105.218043662758f
+ #define V_ADC_K (float) 13.0802536979635f
+ #define V_ADC_C (float) -108.032224145859f
 #elif defined(DPS3005)
  #ifndef CONFIG_DPS_MAX_CURRENT
   #define CONFIG_DPS_MAX_CURRENT (5000)
