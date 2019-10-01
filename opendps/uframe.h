@@ -37,6 +37,7 @@
 #define E_FRM 2 // Received data has no framing
 #define E_CRC 3 // CRC mismatch
 
+#define FRAME_OVERHEAD(size) (1 + 2*(size) + 4 + 1)
 #define MAX_FRAME_LENGTH (128)
 
 typedef struct 

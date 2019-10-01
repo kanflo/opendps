@@ -68,7 +68,7 @@ static ringbuf_t rx_buf;
 static uint8_t buffer[2*RX_BUF_SIZE];
 
 /** UART frame buffer */
-static uint8_t frame_buffer[MAX_FRAME_LENGTH];
+static uint8_t frame_buffer[FRAME_OVERHEAD(MAX_CHUNK_SIZE)];
 static uint32_t rx_idx = 0;
 static bool receiving_frame = false;
 
