@@ -60,14 +60,17 @@
   #define CONFIG_DPS_MAX_CURRENT (5000)
  #endif
  #define ADC_CHA_IOUT_GOLDEN_VALUE  (0x45)
- #define A_ADC_K (float)1.713f
- #define A_ADC_C (float)-118.51f
- #define A_DAC_K (float)0.652f
- #define A_DAC_C (float)288.611f
- #define V_DAC_K (float)0.072f
- #define V_DAC_C (float)1.85f
- #define V_ADC_K (float)13.164f
- #define V_ADC_C (float)-100.751f
+ #define A_ADC_K (float) 1.71083908618961f
+ #define A_ADC_C (float) -120.124411804613f
+
+ #define A_DAC_K (float) 0.647948164146868f
+ #define A_DAC_C (float) 278.025917926566f
+
+ #define V_DAC_K (float) 0.076447899114725f
+ #define V_DAC_C (float) 3.22404026358549f
+
+ #define V_ADC_K (float) 13.0802536979635f
+ #define V_ADC_C (float) -108.032224145859f
 #elif defined(DP50V5A)
  #ifndef CONFIG_DPS_MAX_CURRENT
   #define CONFIG_DPS_MAX_CURRENT (5000)
