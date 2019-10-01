@@ -28,151 +28,123 @@
 #include "protocol.h"
 #include "uframe.h"
 
-
-// Boiler plate code
-#define COPY_FRAME_RETURN() \
-	if (_length <= length) { \
-		memcpy((void*) frame, (void*) _buffer, _length); \
-		return _length; \
-	} else { \
-		return 0; \
-	}
-
-uint32_t protocol_create_response(uint8_t *frame, uint32_t length, command_t cmd, uint8_t success)
+void protocol_create_response(frame_t *frame, command_t cmd, uint8_t success)
 {
-	DECLARE_FRAME(MAX_FRAME_LENGTH);
-	PACK8(cmd_response | cmd);
-	PACK8(success);
-	FINISH_FRAME();
-	COPY_FRAME_RETURN();
+	set_frame_header(frame);
+	pack8(frame, cmd_response | cmd);
+	pack8(frame, success);
+	end_frame(frame);
 }
 
-uint32_t protocol_create_ping(uint8_t *frame, uint32_t length)
+void protocol_create_ping(frame_t *frame)
 {
-	DECLARE_FRAME(MAX_FRAME_LENGTH);
-	PACK8(cmd_ping);
-	FINISH_FRAME();
-	COPY_FRAME_RETURN();
+	set_frame_header(frame);
+	pack8(frame, cmd_ping);
+	end_frame(frame);
 }
 
-uint32_t protocol_create_status(uint8_t *frame, uint32_t length)
+void protocol_create_status(frame_t *frame)
 {
-	DECLARE_FRAME(MAX_FRAME_LENGTH);
-	PACK8(cmd_query);
-	FINISH_FRAME();
-	COPY_FRAME_RETURN();
+	set_frame_header(frame);
+	pack8(frame, cmd_query);
+	end_frame(frame);
 }
 
-uint32_t protocol_create_wifi_status(uint8_t *frame, uint32_t length, wifi_status_t status)
+void protocol_create_wifi_status(frame_t *frame, wifi_status_t status)
 {
-	DECLARE_FRAME(MAX_FRAME_LENGTH);
-	PACK8(cmd_wifi_status);
-	PACK8(status);
-	FINISH_FRAME();
-	COPY_FRAME_RETURN();
+	set_frame_header(frame);
+	pack8(frame, cmd_wifi_status);
+	pack8(frame, status);
+	end_frame(frame);
 }
 
-uint32_t protocol_create_lock(uint8_t *frame, uint32_t length, uint8_t locked)
+void protocol_create_lock(frame_t *frame, uint8_t locked)
 {
-	DECLARE_FRAME(MAX_FRAME_LENGTH);
-	PACK8(cmd_lock);
-	PACK8(!!locked);
-	FINISH_FRAME();
-	COPY_FRAME_RETURN();
+	set_frame_header(frame);
+	pack8(frame, cmd_lock);
+	pack8(frame, !!locked);
+	end_frame(frame);
 }
 
-uint32_t protocol_create_ocp(uint8_t *frame, uint32_t length, uint16_t i_cut)
+void protocol_create_ocp(frame_t *frame, uint16_t i_cut)
 {
-	DECLARE_FRAME(MAX_FRAME_LENGTH);
-	PACK8(cmd_ocp_event);
-	PACK16(i_cut);
-	FINISH_FRAME();
-	COPY_FRAME_RETURN();
+	set_frame_header(frame);
+	pack8(frame, cmd_ocp_event);
+	pack16(frame, i_cut);
+	end_frame(frame);
 }
 
-bool protocol_unpack_response(uint8_t *payload, uint32_t length, command_t *cmd, uint8_t *success)
+bool protocol_unpack_response(frame_t *frame, command_t *cmd, uint8_t *success)
 {
-	DECLARE_UNPACK(payload, length);
-	UNPACK8(*cmd);
-	UNPACK8(*success);
-	return _remain == 0;
+	start_frame_unpacking(frame);
+	unpack8(frame, cmd);
+	unpack8(frame, success);
+	return frame->length == 0;
 }
 
-#if 0
-bool protocol_unpack_power_enable(uint8_t *payload, uint32_t length, uint8_t *enable)
-{
-    command_t cmd;
-    DECLARE_UNPACK(payload, length);
-    UNPACK8(cmd);
-    UNPACK8(*enable);
-    *enable = !!(*enable);
-    return _remain == 0 && cmd == cmd_power_enable;
-}
-
-bool protocol_unpack_vout(uint8_t *payload, uint32_t length, uint16_t *vout_mv)
-{
-	command_t cmd;
-	DECLARE_UNPACK(payload, length);
-	UNPACK8(cmd);
-	UNPACK16(*vout_mv);
-	return _remain == 0 && cmd == cmd_set_vout;
-}
-
-#endif
-
-bool protocol_unpack_query_response(uint8_t *payload, uint32_t length, uint16_t *v_in, uint16_t *v_out_setting, uint16_t *v_out, uint16_t *i_out, uint16_t *i_limit, uint8_t *power_enabled)
+bool protocol_unpack_query_response(frame_t *frame, uint16_t *v_in, uint16_t *v_out_setting, uint16_t *v_out, uint16_t *i_out, uint16_t *i_limit, uint8_t *power_enabled)
 {
 	command_t cmd;
 	uint8_t status;
-	DECLARE_UNPACK(payload, length);
-	UNPACK8(cmd);
-	UNPACK8(status);
-	UNPACK16(*v_in);
-	UNPACK16(*v_out_setting);
-	UNPACK16(*v_out);
-	UNPACK16(*i_out);
-	UNPACK16(*i_limit);
-	UNPACK8(*power_enabled);
+
+	start_frame_unpacking(frame);
+	unpack8(frame, &cmd);
+	unpack8(frame, &status);
+	unpack16(frame, v_in);
+	unpack16(frame, v_out_setting);
+	unpack16(frame, v_out);
+	unpack16(frame, i_out);
+	unpack16(frame, i_limit);
+	unpack8(frame, power_enabled);
 	*power_enabled = !!(*power_enabled);
 	(void) status;
-	return _remain == 0 && cmd == (cmd_response | cmd_query);
+
+	return frame->length == 0 && cmd == (cmd_response | cmd_query);
 }
 
-bool protocol_unpack_wifi_status(uint8_t *payload, uint32_t length, wifi_status_t *status)
+bool protocol_unpack_wifi_status(frame_t *frame, wifi_status_t *status)
 {
 	command_t cmd;
-	DECLARE_UNPACK(payload, length);
-	UNPACK8(cmd);
-	UNPACK8(*status);
-	return _remain == 0 && cmd == cmd_wifi_status;
+
+	start_frame_unpacking(frame);
+	unpack8(frame, &cmd);
+	unpack8(frame, status);
+
+	return frame->length == 0 && cmd == cmd_wifi_status;
 }
 
-bool protocol_unpack_lock(uint8_t *payload, uint32_t length, uint8_t *locked)
+bool protocol_unpack_lock(frame_t *frame, uint8_t *locked)
 {
 	command_t cmd;
-	DECLARE_UNPACK(payload, length);
-	UNPACK8(cmd);
-	UNPACK8(*locked);
+
+	start_frame_unpacking(frame);
+	unpack8(frame, &cmd);
+	unpack8(frame, locked);
 	*locked = !!(*locked);
-	return _remain == 0 && cmd == cmd_lock;
+
+	return frame->length == 0 && cmd == cmd_lock;
 }
 
-bool protocol_unpack_upgrade_start(uint8_t *payload, uint32_t length, uint16_t *chunk_size, uint16_t *crc)
+bool protocol_unpack_upgrade_start(frame_t *frame, uint16_t *chunk_size, uint16_t *crc)
 {
 	command_t cmd;
-	DECLARE_UNPACK(payload, length);
-	UNPACK8(cmd);
-	UNPACK16(*chunk_size);
-	UNPACK16(*crc);
-	return _remain == 0 && cmd == cmd_upgrade_start;
+
+	start_frame_unpacking(frame);
+	unpack8(frame, &cmd);
+	unpack16(frame, chunk_size);
+	unpack16(frame, crc);
+
+	return frame->length == 0 && cmd == cmd_upgrade_start;
 }
 
-bool protocol_unpack_ocp(uint8_t *payload, uint32_t length, uint16_t *i_cut)
+bool protocol_unpack_ocp(frame_t *frame, uint16_t *i_cut)
 {
 	command_t cmd;
-	DECLARE_UNPACK(payload, length);
-	UNPACK8(cmd);
-	UNPACK16(*i_cut);
-	return _remain == 0 && cmd == cmd_ocp_event;
+
+	start_frame_unpacking(frame);
+	unpack8(frame, &cmd);
+	unpack16(frame, i_cut);
+
+	return frame->length == 0 && cmd == cmd_ocp_event;
 }
 
