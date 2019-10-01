@@ -58,7 +58,6 @@ from protocol import (create_cmd, create_enable_output, create_lock, create_set_
                       create_set_function, create_set_parameter, create_temperature, create_set_brightness,
                       create_upgrade_data, create_upgrade_start, create_change_screen,
                       unpack_cal_report, unpack_query_response, unpack_version_response)
-from uhej import uhej
 
 try:
     from PyCRC.CRCCCITT import CRCCCITT
@@ -140,6 +139,55 @@ class tty_interface(comm_interface):
             b = self._port_handle.read(1)
             if not b:  # timeout
                 break
+            b = ord(b)
+            if b == uframe._SOF:
+                bytes_ = bytearray()
+                sof = True
+            if sof:
+                bytes_.append(b)
+            if b == uframe._EOF:
+                break
+        return bytes_
+
+
+class tcp_interface(comm_interface):
+    """
+    A class that describes a TCP interface
+    """
+
+    _socket = None
+
+    def __init__(self, if_name):
+        super(tcp_interface, self).__init__(if_name)
+
+        self._if_name = if_name
+
+    def open(self):
+        try:
+            self._socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            self._socket.settimeout(1.0)
+            self._socket.connect((self._if_name, 5005))
+        except socket.error:
+            return False
+        return True
+
+    def close(self):
+        self._socket.close()
+        self._socket = None
+        return True
+
+    def write(self, bytes_):
+        try:
+            self._socket.send(bytes_)
+        except socket.error as msg:
+            fail("{} ({:d})".format(str(msg[0]), msg[1]))
+        return True
+
+    def read(self):
+        bytes_ = bytearray()
+        sof = False
+        while True:
+            b = self._socket.recv(1)
             b = ord(b)
             if b == uframe._SOF:
                 bytes_ = bytearray()
@@ -441,6 +489,7 @@ def handle_commands(args):
     Communicate with the DPS device according to the user's wishes
     """
     if args.scan:
+        from uhej import uhej
         uhej_scan()
         return
 
@@ -652,6 +701,8 @@ def create_comms(args):
     if if_name is not None:
         if is_ip_address(if_name):
             comms = udp_interface(if_name)
+        elif if_name[0:4] == "tcp:":
+            comms = tcp_interface(if_name[4:])
         else:
             comms = tty_interface(if_name, args.baudrate)
     else:
@@ -690,6 +741,12 @@ def do_calibration(comms, args):
     print("\r\nPlease hook up the second higher supply voltage to the DPS now")
     print("ensuring that the serial connection is connected after boot")
     calibration_input_voltage.append(float(raw_input("Type input voltage in mV: ")))
+    
+    # Ensure that we are still on the settings screen
+    communicate(comms, create_change_screen(protocol.CHANGE_SCREEN_SETTINGS), args, quiet=True)
+    time.sleep(1)
+    
+    # Measure and record the new input voltage
     calibration_vin_adc.append(get_average_calibration_result(comms, 'vin_adc'))
 
     # Calculate and set the Vin_ADC coeffecients
@@ -1108,8 +1165,8 @@ def main():
     testing = '--testing' in sys.argv
     parser = argparse.ArgumentParser(description='Instrument an OpenDPS device')
 
-    parser.add_argument('-d', '--device', help="OpenDPS device to connect to. Can be a /dev/tty device or an IP number. If omitted, dpsctl.py will try the environment variable DPSIF", default='')
-    parser.add_argument('-b', '--baudrate', type=int, dest="baudrate", help="Set baudrate used for serial communications", default=115200)
+    parser.add_argument('-d', '--device', help="OpenDPS device to connect to. Can be a /dev/tty device, IP address for UDP protocol or tcp:IP for TCP protocol. If omitted, dpsctl.py will try the environment variable DPSIF", default='')
+    parser.add_argument('-b', '--baudrate', type=int, dest="baudrate", help="Set baudrate used for serial communications", default=9600)
     parser.add_argument('-B', '--brightness', type=int, help="Set display brightness (0..100)")
     parser.add_argument('-S', '--scan', action="store_true", help="Scan for OpenDPS wifi devices")
     parser.add_argument('-f', '--function', nargs='?', help="Set active function")

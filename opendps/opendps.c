@@ -60,9 +60,9 @@
 #ifdef CONFIG_CC_ENABLE
 #include "func_cc.h"
 #endif // CONFIG_CC_ENABLE
-#ifdef CONFIG_MERGED_ENABLE
-#include "func_merged.h"
-#endif // CONFIG_MERGED_ENABLE
+#ifdef CONFIG_CL_ENABLE
+#include "func_cl.h"
+#endif // CONFIG_CL_ENABLE
 #ifdef CONFIG_FUNCGEN_ENABLE
 #include "func_gen.h"
 #endif // CONFIG_FUNCGEN_ENABLE
@@ -434,9 +434,9 @@ static void ui_init(void)
 #ifdef CONFIG_CC_ENABLE
     func_cc_init(&func_ui);
 #endif // CONFIG_CC_ENABLE
-#ifdef CONFIG_MERGED_ENABLE
-    func_merged_init(&func_ui);
-#endif // CONFIG_MERGED_ENABLE
+#ifdef CONFIG_CL_ENABLE
+    func_cl_init(&func_ui);
+#endif // CONFIG_CL_ENABLE
 #ifdef CONFIG_FUNCGEN_ENABLE
     func_gen_init(&func_ui);
 #endif // CONFIG_FUNCGEN_ENABLE
