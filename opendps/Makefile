@@ -52,6 +52,9 @@ CL_ENABLE ?= 1
 # Enable function generator mode
 FUNCGEN_ENABLE ?= 1
 
+# Enable invert color feature
+INVERT_ENABLE ?= 0
+
 # Power buttons in color
 POWER_COLORED ?= 1
 
@@ -117,6 +120,10 @@ ifeq ($(DEBUG),1)
 	OBJS += dbg_printf.o
 endif
 
+ifeq ($(INVERT_ENABLE),1)
+	CFLAGS +=-DCONFIG_INVERT_ENABLE
+endif
+
 ifeq ($(POWER_COLORED),1)
 	CFLAGS +=-DCONFIG_POWER_COLORED
 	OBJS += gfx-poweron.o gfx-poweroff.o
@@ -142,7 +149,6 @@ ifeq ($(FUNCGEN_ENABLE),1)
 	CFLAGS +=-DCONFIG_FUNCGEN_ENABLE
 	OBJS += func_gen.o uui_icon.o gfx-square.o gfx-saw.o gfx-sin.o
 endif
-
 
 ifeq ($(SPLASH_SCREEN),1)
 	CFLAGS +=-DCONFIG_SPLASH_SCREEN
