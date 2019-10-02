@@ -1006,7 +1006,7 @@ static void draw_bars() {
                 GFX_M2BAR_WIDTH, GFX_M2BAR_HEIGHT,
                 5, 0);
     } else {
-        tft_fill(5, 0
+        tft_fill(5, 0,
             GFX_M2BAR_WIDTH, GFX_M2BAR_HEIGHT,
             BLACK);
     }
