@@ -82,7 +82,7 @@ static void clear_third_region(void);
  */
 static int32_t saved_v, saved_i, saved_p, saved_t;
 // the M1, M2 recall values
-static int32_t[2] recall_v, recall_i, recall_p, recall_t = {0, 0};
+static int32_t recall_v[2], recall_i[2], recall_p[2], recall_t[2] = {0, 0};
 
 // single edit mode, with M1/M2 buttons, not select.
 // pressing any other button when in this mode will exit the edit mode
@@ -394,7 +394,9 @@ static void dpsmode_enable(bool enabled)
  */
 static void voltage_changed(ui_number_t *item)
 {
-    dpsmode_graphics &= ~CUR_GFX_M1_RECALL & ~CUR_GFX_M2_RECALL;
+    dpsmode_graphics &= ~CUR_GFX_M1_RECALL;
+    dpsmode_graphics &= ~CUR_GFX_M2_RECALL;
+
     saved_v = item->value;
     (void) pwrctl_set_vout(item->value);
 }
@@ -406,7 +408,9 @@ static void voltage_changed(ui_number_t *item)
  */
 static void current_changed(ui_number_t *item)
 {
-    dpsmode_graphics &= ~CUR_GFX_M1_RECALL & ~CUR_GFX_M2_RECALL;
+    dpsmode_graphics &= ~CUR_GFX_M1_RECALL;
+    dpsmode_graphics &= ~CUR_GFX_M2_RECALL;
+
     saved_i = item->value;
     (void) pwrctl_set_iout(item->value);
 }
@@ -418,7 +422,9 @@ static void current_changed(ui_number_t *item)
  */
 static void power_changed(ui_number_t *item)
 {
-    dpsmode_graphics &= ~CUR_GFX_M1_RECALL & ~CUR_GFX_M2_RECALL;
+    dpsmode_graphics &= ~CUR_GFX_M1_RECALL;
+    dpsmode_graphics &= ~CUR_GFX_M2_RECALL;
+    
     saved_p = item->value;
     // (void) pwrctl_set_iout(item->value);
 }
@@ -433,6 +439,9 @@ static void watthour_changed(ui_number_t *item) {
 }
 
 static void timer_changed(ui_time_t *item) {
+    dpsmode_graphics &= ~CUR_GFX_M1_RECALL;
+    dpsmode_graphics &= ~CUR_GFX_M2_RECALL;
+
     // do nothing yet...
     saved_t = item->value;
 }
@@ -441,6 +450,23 @@ static void timer_changed(ui_time_t *item) {
 static bool event(uui_t *ui, event_t event, uint8_t data) {
 
     switch(event) {
+        case event_button_sel_m1:
+        case event_button_sel_m2:
+            // save values to recall
+            if (event == event_button_sel_m1) {
+                recall_v[0] = saved_v;
+                recall_i[0] = saved_i;
+                recall_p[0] = saved_p;
+                recall_t[0] = saved_t;
+            } else {
+                recall_v[1] = saved_v;
+                recall_i[1] = saved_i;
+                recall_p[1] = saved_p;
+                recall_t[1] = saved_t;
+            }
+
+            return true;
+
         case event_button_sel:
         case event_button_m1:
         case event_button_m2:
