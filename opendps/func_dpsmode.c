@@ -457,13 +457,13 @@ static bool event(uui_t *ui, event_t event, uint8_t data) {
             // do recall on press_long event_button_m1 or event_button_m2
             if (event == event_button_m1 && data == press_long) {
                 // TODO: recall M1 values.
-                saved_v = 510;
+                saved_v = 5100;
                 saved_i = 200;
                 saved_p = 0;
                 saved_t = 0;
 
                 // show the M1 recall note
-                note_timeout = 50;
+                note_timeout = 500;
                 dpsmode_graphics |= CUR_NOTE_M1_RECALL;
 
                 dpsmode_enable(false);
@@ -924,7 +924,7 @@ static void draw_bars() {
     if (dpsmode_graphics & CUR_NOTE_M1_RECALL) {
         note_timeout--;
         // expired
-        if (note_timeout == 0) {
+        if (note_timeout <= 0) {
             dpsmode_graphics &= ~CUR_NOTE_M1_RECALL;
 
         } else {
@@ -946,6 +946,23 @@ static void draw_bars() {
         }
 
     }
+
+
+            // border
+            tft_fill( 10, 50,
+                    TFT_WIDTH - 20,  50 + 40,
+                    WHITE );
+            // inside
+            tft_fill( 11, 51,
+                    TFT_WIDTH - 22,  51 + 38,
+                    BLACK );
+
+            // message
+            tft_puts(FONT_FULL_SMALL, "M1 Recalled",
+                    15,  60,
+                    TFT_WIDTH, FONT_FULL_SMALL_MAX_GLYPH_HEIGHT,
+                    WHITE, false);
+
 
 }
 
