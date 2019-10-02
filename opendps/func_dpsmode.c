@@ -922,7 +922,6 @@ static void draw_bars() {
         tft_fill(5, 0,
             GFX_M1BAR_WIDTH, GFX_M1BAR_HEIGHT,
             BLACK);
-        }
     }
 
 
