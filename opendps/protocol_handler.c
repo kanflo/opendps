@@ -42,7 +42,7 @@
 #include "opendps.h"
 
 #ifdef DPS_EMULATOR
- extern void dps_emul_send_frame(uint8_t *frame, uint32_t length);
+ extern void dps_emul_send_frame(frame_t *frame);
 #endif // DPS_EMULATOR
 
 typedef enum {
@@ -51,7 +51,7 @@ typedef enum {
     cmd_success_but_i_actually_sent_my_own_status_thank_you_very_much,
 } command_status_t;
 
-static uint8_t frame_buffer[FRAME_OVERHEAD(MAX_FRAME_LENGTH)];
+static uint8_t frame_buffer[MAX_FRAME_LENGTH];
 static uint32_t rx_idx = 0;
 static bool receiving_frame = false;
 
@@ -61,17 +61,15 @@ static bool receiving_frame = false;
   * @param length length of frame
   * @retval None
   */
-static void send_frame(uint8_t *frame, uint32_t length)
+static void send_frame(const frame_t *frame)
 {
 #ifdef DPS_EMULATOR
-    dps_emul_send_frame(frame, length);
+    dps_emul_send_frame(frame);
 #else // DPS_EMULATOR
-    do {
-        usart_send_blocking(USART1, *frame);
-        frame++;
-    } while(--length);
+    for (uint32_t i = 0; i < frame->length; ++i)
+        usart_send_blocking(USART1, frame->buffer[i]);
 #endif // DPS_EMULATOR
-  }
+}
 
 /**
   * @brief Handle a query command
@@ -96,35 +94,40 @@ static command_status_t handle_query(void)
     bool temp_shutdown;
     opendps_get_temperature(&temp1, &temp2, &temp_shutdown);
 //    uint32_t len = protocol_create_query_response(frame_buffer, sizeof(frame_buffer), v_in, v_out_setting, v_out, i_out, i_limit, power_enabled);
-    DECLARE_FRAME(64);
-    PACK8(cmd_response | cmd_query);
-    PACK8(1); // Always success
-    PACK16(v_in);
+
+    frame_t frame;
+
+    set_frame_header(&frame);
+    pack8(&frame, cmd_response | cmd_query);
+
+    
+    pack8(&frame, 1); // Always success
+    pack16(&frame, v_in);
     emu_printf("v_in = %d\n", v_in);
-    PACK16(v_out);
+    pack16(&frame, v_out);
     emu_printf("v_out = %d\n", v_out);
-    PACK16(i_out);
+    pack16(&frame, i_out);
     emu_printf("i_out = %d\n", i_out);
-    PACK8(output_enabled);
+    pack8(&frame, output_enabled);
     emu_printf("output_enabled = %d\n", output_enabled);
-    PACK16(temp1);
-    PACK16(temp2);
-    PACK8(temp_shutdown);
-    PACK_CSTR(curr_func);
+    pack16(&frame, temp1);
+    pack16(&frame, temp2);
+    pack8(&frame, temp_shutdown);
+    pack_cstr(&frame, curr_func);
     emu_printf("%s:\n", curr_func);
     for (uint32_t i=0; i < num_param; i++) {
         opendps_get_curr_function_param_value(params[i].name, value, sizeof(value));
         emu_printf(" %s = %s\n" , params[i].name, value);
-        PACK_CSTR(params[i].name);
-        PACK_CSTR(value);
+        pack_cstr(&frame, params[i].name);
+        pack_cstr(&frame, value);
     }
-    FINISH_FRAME();
+    end_frame(&frame);
 
-    send_frame(_buffer, _length);
+    send_frame(&frame);
     return cmd_success_but_i_actually_sent_my_own_status_thank_you_very_much;
 }
 
-static command_status_t handle_set_function(uint8_t *payload, uint32_t payload_len)
+static command_status_t handle_set_function(frame_t *frame)
 {
     emu_printf("%s\n", __FUNCTION__);
     uint32_t i = 0;
@@ -134,13 +137,13 @@ static command_status_t handle_set_function(uint8_t *payload, uint32_t payload_l
     memset(func_name, 0, sizeof(func_name));
     {
         command_t cmd;
-        DECLARE_UNPACK(payload, payload_len);
-        UNPACK8(cmd);
+        start_frame_unpacking(frame);
+        unpack8(frame, &cmd);
         (void) cmd;
         do {
-            UNPACK8(ch);
+            unpack8(frame, &ch);
             func_name[i++] = ch;
-        } while(i < sizeof(func_name) - 1 && ch && _remain);
+        } while(i < sizeof(func_name) - 1 && ch && frame->length);
 
         char *names[8];
         uint32_t num_funcs = opendps_get_function_names(names, 8);
@@ -159,11 +162,12 @@ static command_status_t handle_set_function(uint8_t *payload, uint32_t payload_l
     }
     
     {
-        DECLARE_FRAME(MAX_FRAME_LENGTH);
-        PACK8(cmd_response | cmd_set_function);
-        PACK8(success); // Always success
-        FINISH_FRAME();
-        send_frame(_buffer, _length);
+        frame_t frame_resp;
+        set_frame_header(&frame_resp);
+        pack8(&frame_resp, cmd_response | cmd_set_function);
+        pack8(&frame_resp, success); // Always success
+        end_frame(&frame_resp);
+        send_frame(&frame_resp);
     }
     return cmd_success_but_i_actually_sent_my_own_status_thank_you_very_much;
 }
@@ -174,19 +178,20 @@ static command_status_t handle_list_functions(void)
     char *names[OPENDPS_MAX_PARAMETERS];
     uint32_t num_funcs = opendps_get_function_names(names, OPENDPS_MAX_PARAMETERS);
     emu_printf("Got %d functions\n" , num_funcs);
-    DECLARE_FRAME(MAX_FRAME_LENGTH);
-    PACK8(cmd_response | cmd_list_functions);
-    PACK8(1); // Always success
+    frame_t frame;
+    set_frame_header(&frame);
+    pack8(&frame, cmd_response | cmd_list_functions);
+    pack8(&frame, 1); // Always success
     for (uint32_t i=0; i < num_funcs; i++) {
         emu_printf(" %s\n" , names[i]);
-        PACK_CSTR(names[i]);
+        pack_cstr(&frame, names[i]);
     }
-    FINISH_FRAME();
-    send_frame(_buffer, _length);
+    end_frame(&frame);
+    send_frame(&frame);
     return cmd_success_but_i_actually_sent_my_own_status_thank_you_very_much;
 }
 
-static command_status_t handle_set_parameters(uint8_t *payload, uint32_t payload_len)
+static command_status_t handle_set_parameters(frame_t *frame)
 {
     emu_printf("%s\n", __FUNCTION__);
     char *name = 0, *value = 0;
@@ -194,39 +199,40 @@ static command_status_t handle_set_parameters(uint8_t *payload, uint32_t payload
     set_param_status_t stats[OPENDPS_MAX_PARAMETERS];
     uint32_t status_index = 0;
     {
-        DECLARE_UNPACK(payload, payload_len);
-        UNPACK8(cmd);
+        start_frame_unpacking(frame);
+        unpack8(frame, &cmd);
         (void) cmd;
         do {
             /** Extract all occurences of <name>=<value>\0 ... */
             name = value = 0;
             /** This is quite ugly, please don't look */
-            name = (char*) &_buffer[_pos];
-            _pos += strlen(name) + 1;
-            _remain -= strlen(name) + 1;
-            value = (char*) &_buffer[_pos];
-            _pos += strlen(value) + 1;
-            _remain -= strlen(value) + 1;
+            name = (char*) &frame->buffer[frame->unpack_pos];
+            frame->unpack_pos += strlen(name) + 1;
+            frame->length -= strlen(name) + 1;
+            value = (char*) &frame->buffer[frame->unpack_pos];
+            frame->unpack_pos += strlen(value) + 1;
+            frame->length -= strlen(value) + 1;
             if (name && value) {
                 stats[status_index++] = opendps_set_parameter(name, value);
             }
-        } while(_remain && status_index < OPENDPS_MAX_PARAMETERS);
+        } while(frame->length && status_index < OPENDPS_MAX_PARAMETERS);
     }
 
     {
-        DECLARE_FRAME(MAX_FRAME_LENGTH);
-        PACK8(cmd_response | cmd_set_parameters);
-        PACK8(1); // Always success
+        frame_t frame_resp;
+        set_frame_header(&frame_resp);
+        pack8(&frame_resp, cmd_response | cmd_set_parameters);
+        pack8(&frame_resp, 1); // Always success
         for (uint32_t i = 0; i < status_index; i++) {
-            PACK8(stats[i]);
+            pack8(&frame_resp, stats[i]);
         }
-        FINISH_FRAME();
-        send_frame(_buffer, _length);
+        end_frame(&frame_resp);
+        send_frame(&frame_resp);
     }
     return cmd_success_but_i_actually_sent_my_own_status_thank_you_very_much;
 }
 
-static command_status_t handle_set_calibration(uint8_t *payload, uint32_t payload_len)
+static command_status_t handle_set_calibration(frame_t *frame)
 {
     emu_printf("%s\n", __FUNCTION__);
     char *name = 0;
@@ -235,34 +241,35 @@ static command_status_t handle_set_calibration(uint8_t *payload, uint32_t payloa
     set_param_status_t stats[OPENDPS_MAX_PARAMETERS];
     uint32_t status_index = 0;
     {
-        DECLARE_UNPACK(payload, payload_len);
-        UNPACK8(cmd);
+        start_frame_unpacking(frame);
+        unpack8(frame, &cmd);
         (void) cmd;
         do {
             /** Extract all occurences of <name>=<value> ... */
             name = 0;
             /** This is quite ugly (again), please don't look */
-            name = (char*) &_buffer[_pos];
-            _pos += strlen(name) + sizeof(char);
-            _remain -= strlen(name) + sizeof(char);
-            value = (float*) &_buffer[_pos];
-            _pos += sizeof(float);
-            _remain -= sizeof(float);
+            name = (char*) &frame->buffer[frame->unpack_pos];
+            frame->unpack_pos += strlen(name) + sizeof(char);
+            frame->length -= strlen(name) + sizeof(char);
+            value = (float*) &frame->buffer[frame->unpack_pos];
+            frame->unpack_pos += sizeof(float);
+            frame->length -= sizeof(float);
             if (name && value) {
                 stats[status_index++] = opendps_set_calibration(name, value);
             }
-        } while(_remain && status_index < OPENDPS_MAX_PARAMETERS);
+        } while(frame->length && status_index < OPENDPS_MAX_PARAMETERS);
     }
 
     {
-        DECLARE_FRAME(MAX_FRAME_LENGTH);
-        PACK8(cmd_response | cmd_set_calibration);
-        PACK8(1); // Always success
+        frame_t frame_resp;
+        set_frame_header(&frame_resp);
+        pack8(&frame_resp, cmd_response | cmd_set_calibration);
+        pack8(&frame_resp, 1); // Always success
         for (uint32_t i = 0; i < status_index; i++) {
-            PACK8(stats[i]);
+            pack8(&frame_resp, stats[i]);
         }
-        FINISH_FRAME();
-        send_frame(_buffer, _length);
+        end_frame(&frame_resp);
+        send_frame(&frame_resp);
     }
     return cmd_success_but_i_actually_sent_my_own_status_thank_you_very_much;
 }
@@ -275,33 +282,34 @@ static command_status_t handle_list_parameters(void)
 
     const char* name = opendps_get_curr_function_name();
     emu_printf("Got %d parameters for %s\n" , num_param, name);
-    DECLARE_FRAME(MAX_FRAME_LENGTH);
-    PACK8(cmd_response | cmd_list_parameters);
-    PACK8(1); // Always success
+    frame_t frame;
+    set_frame_header(&frame);
+    pack8(&frame, cmd_response | cmd_list_parameters);
+    pack8(&frame, 1); // Always success
     /** Pack name of current function */
-    PACK_CSTR(name);
+    pack_cstr(&frame, name);
 
     for (uint32_t i=0; i < num_param; i++) {
         emu_printf(" %s %d %d\n", params[i].name, params[i].unit, params[i].prefix);
-        PACK_CSTR(params[i].name);
-        PACK8(params[i].unit);
-        PACK8(params[i].prefix);
+        pack_cstr(&frame, params[i].name);
+        pack8(&frame, params[i].unit);
+        pack8(&frame, params[i].prefix);
     }
-    FINISH_FRAME();
-    send_frame(_buffer, _length);
+    end_frame(&frame);
+    send_frame(&frame);
     return cmd_success_but_i_actually_sent_my_own_status_thank_you_very_much;
 }
 
-static command_status_t handle_enable_output(uint8_t *payload, uint32_t payload_len)
+static command_status_t handle_enable_output(frame_t *frame)
 {
     emu_printf("%s\n", __FUNCTION__);
     uint8_t cmd;
-    bool enable;
-    DECLARE_UNPACK(payload, payload_len);
-    UNPACK8(cmd);
+    uint8_t enable_byte;
+    start_frame_unpacking(frame);
+    unpack8(frame, &cmd);
     (void) cmd;
-    UNPACK8(enable);
-    enable = !!enable;
+    unpack8(frame, &enable_byte);
+    bool enable = !!enable_byte;
     if (opendps_enable_output(enable)) {
         return cmd_success;
     } else {
@@ -309,30 +317,30 @@ static command_status_t handle_enable_output(uint8_t *payload, uint32_t payload_
     }
 }
 
-static command_status_t handle_set_brightness(uint8_t *payload, uint32_t payload_len)
+static command_status_t handle_set_brightness(frame_t *frame)
 {
     emu_printf("%s\n", __FUNCTION__);
     uint8_t cmd;
     uint8_t brightness_pct;
-    DECLARE_UNPACK(payload, payload_len);
-    UNPACK8(cmd);
+    start_frame_unpacking(frame);
+    unpack8(frame, &cmd);
     (void) cmd;
-    UNPACK8(brightness_pct);
+    unpack8(frame, &brightness_pct);
     hw_set_backlight(brightness_pct);
     return cmd_success;
 }
 
 
-static command_status_t handle_temperature(uint8_t *payload, uint32_t payload_len)
+static command_status_t handle_temperature(frame_t *frame)
 {
     emu_printf("%s\n", __FUNCTION__);
     command_t cmd;
     int16_t temp1, temp2;
-    DECLARE_UNPACK(payload, payload_len);
-    UNPACK8(cmd);
+    start_frame_unpacking(frame);
+    unpack8(frame, &cmd);
     (void) cmd;
-    UNPACK16(temp1);
-    UNPACK16(temp2);
+    unpack16(frame, (uint16_t*) &temp1);
+    unpack16(frame, (uint16_t*) &temp2);
     opendps_set_temperature(temp1, temp2);
     return cmd_success;
 }
@@ -348,23 +356,24 @@ static command_status_t handle_version(void)
     boot_str_len = opendps_get_boot_git_hash(&boot_git_hash);
     app_str_len = opendps_get_app_git_hash(&app_git_hash);
 
-    DECLARE_FRAME(boot_str_len + app_str_len + 4);
-    PACK8(cmd_response | cmd_version);
+    frame_t frame;
+    set_frame_header(&frame);
+    pack8(&frame, cmd_response | cmd_version);
     if (boot_str_len > 0 &&
         app_str_len > 0)
     {
-        PACK8(1);
-        PACK_CSTR(boot_git_hash);
-        PACK_CSTR(app_git_hash);
+        pack8(&frame, 1);
+        pack_cstr(&frame, boot_git_hash);
+        pack_cstr(&frame, app_git_hash);
     }
     else
     {
-        PACK8(0);
-        PACK8('\0'); PACK8('\0'); /** Pack two empty strings */ 
+        pack8(&frame, 0);
+        pack8(&frame, '\0'); pack8(&frame, '\0'); /** Pack two empty strings */ 
     }
-    FINISH_FRAME();
+    end_frame(&frame);
 
-    send_frame(_buffer, _length);
+    send_frame(&frame);
     return cmd_success_but_i_actually_sent_my_own_status_thank_you_very_much;
 }
 
@@ -377,26 +386,27 @@ static command_status_t handle_cal_report(void)
     uint16_t i_out_raw, v_in_raw, v_out_raw;
     hw_get_adc_values(&i_out_raw, &v_in_raw, &v_out_raw);
 
-    DECLARE_FRAME(64);
-    PACK8(cmd_response | cmd_cal_report);
-    PACK8(1); 
-    PACK16(v_out_raw);
-    PACK16(v_in_raw);
-    PACK16(i_out_raw);
-    PACK16(DAC_DHR12R2);
-    PACK16(DAC_DHR12R1);
-    PACKFLOAT(a_adc_k_coef);
-    PACKFLOAT(a_adc_c_coef);
-    PACKFLOAT(a_dac_k_coef);
-    PACKFLOAT(a_dac_c_coef);
-    PACKFLOAT(v_adc_k_coef);
-    PACKFLOAT(v_adc_c_coef);
-    PACKFLOAT(v_dac_k_coef);
-    PACKFLOAT(v_dac_c_coef);
-    PACKFLOAT(vin_adc_k_coef);
-    PACKFLOAT(vin_adc_c_coef);
-    FINISH_FRAME();
-    send_frame(_buffer, _length);
+    frame_t frame;
+    set_frame_header(&frame);
+    pack8(&frame, cmd_response | cmd_cal_report);
+    pack8(&frame, 1); 
+    pack16(&frame, v_out_raw);
+    pack16(&frame, v_in_raw);
+    pack16(&frame, i_out_raw);
+    pack16(&frame, DAC_DHR12R2);
+    pack16(&frame, DAC_DHR12R1);
+    pack_float(&frame, a_adc_k_coef);
+    pack_float(&frame, a_adc_c_coef);
+    pack_float(&frame, a_dac_k_coef);
+    pack_float(&frame, a_dac_c_coef);
+    pack_float(&frame, v_adc_k_coef);
+    pack_float(&frame, v_adc_c_coef);
+    pack_float(&frame, v_dac_k_coef);
+    pack_float(&frame, v_dac_c_coef);
+    pack_float(&frame, vin_adc_k_coef);
+    pack_float(&frame, vin_adc_c_coef);
+    end_frame(&frame);
+    send_frame(&frame);
     return cmd_success_but_i_actually_sent_my_own_status_thank_you_very_much;
 }
 
@@ -418,12 +428,12 @@ static command_status_t handle_clear_calibration(void)
   * @param payload_len length of payload
  * @retval command_status_t failed, success or "I sent my own frame"
   */
-static command_status_t handle_wifi_status(uint8_t *payload, uint32_t payload_len)
+static command_status_t handle_wifi_status(frame_t *frame)
 {
     emu_printf("%s\n", __FUNCTION__);
     command_status_t success = cmd_failed;
     wifi_status_t status;
-    if (protocol_unpack_wifi_status(payload, payload_len, &status)) {
+    if (protocol_unpack_wifi_status(frame, &status)) {
         success = cmd_success;
         opendps_update_wifi_status(status);
     }
@@ -436,12 +446,12 @@ static command_status_t handle_wifi_status(uint8_t *payload, uint32_t payload_le
   * @param payload_len length of payload
  * @retval command_status_t failed, success or "I sent my own frame"
   */
-static command_status_t handle_lock(uint8_t *payload, uint32_t payload_len)
+static command_status_t handle_lock(frame_t *frame)
 {
     emu_printf("%s\n", __FUNCTION__);
     command_status_t success = cmd_failed;
     uint8_t status;
-    if (protocol_unpack_lock(payload, payload_len, &status)) {
+    if (protocol_unpack_lock(frame, &status)) {
         success = cmd_success;
         opendps_lock(status);
     }
@@ -454,12 +464,12 @@ static command_status_t handle_lock(uint8_t *payload, uint32_t payload_len)
   * @param payload_len length of payload
   * @retval false in case of errors, if successful the device reboots
   */
-static command_status_t handle_upgrade_start(uint8_t *payload, uint32_t payload_len)
+static command_status_t handle_upgrade_start(frame_t *frame)
 {
     emu_printf("%s\n", __FUNCTION__);
     command_status_t success = cmd_failed;
     uint16_t chunk_size, crc;
-    if (protocol_unpack_upgrade_start(payload, payload_len, &chunk_size, &crc)) {
+    if (protocol_unpack_upgrade_start(frame, &chunk_size, &crc)) {
         bootcom_put(0xfedebeda, (chunk_size << 16) | crc);
         opendps_upgrade_start();
     }
@@ -472,14 +482,14 @@ static command_status_t handle_upgrade_start(uint8_t *payload, uint32_t payload_
   * @param payload_len length of payload
   * @retval false in case of errors, if successful the device reboots
   */
-static command_status_t handle_change_screen(uint8_t *payload, uint32_t payload_len)
+static command_status_t handle_change_screen(frame_t *frame)
 {
     emu_printf("%s\n", __FUNCTION__);
     uint8_t cmd, screen_id;
-    DECLARE_UNPACK(payload, payload_len);
-    UNPACK8(cmd);
+    start_frame_unpacking(frame);
+    unpack8(frame, &cmd);
     (void) cmd;
-    UNPACK8(screen_id);
+    unpack8(frame, &screen_id);
     if (opendps_change_screen(screen_id)) {
         return cmd_success;
     } else {
@@ -493,17 +503,19 @@ static command_status_t handle_change_screen(uint8_t *payload, uint32_t payload_
   * @param length length of frame
   * @retval None
   */
-static void handle_frame(uint8_t *frame, uint32_t length)
+static void handle_frame(uint8_t *data, uint32_t length)
 {
     command_status_t success = cmd_failed;
     command_t cmd = cmd_response;
-    uint8_t *payload;
-    int32_t payload_len = uframe_extract_payload(frame, length);
-    payload = frame; // Why? Well, frame now points to the payload
+
+    frame_t frame;
+
+    int32_t payload_len = uframe_extract_payload(&frame, data, length);
+
     if (payload_len <= 0) {
         dbg_printf("Frame error %ld\n", payload_len);
     } else {
-        cmd = frame[0];
+        cmd = frame.buffer[0];
         switch(cmd) {
             case cmd_ping:
                 success = 1; // Response will be sent below
@@ -511,13 +523,13 @@ static void handle_frame(uint8_t *frame, uint32_t length)
                 opendps_handle_ping();
                 break;
             case cmd_set_function:
-                success = handle_set_function(payload, payload_len);
+                success = handle_set_function(&frame);
                 break;
             case cmd_list_functions:
                 success = handle_list_functions();
                 break;
             case cmd_set_parameters:
-                success = handle_set_parameters(payload, payload_len);
+                success = handle_set_parameters(&frame);
                 break;
             case cmd_list_parameters:
                 success = handle_list_parameters();
@@ -526,19 +538,19 @@ static void handle_frame(uint8_t *frame, uint32_t length)
                 success = handle_query();
                 break;
             case cmd_wifi_status:
-                success = handle_wifi_status(payload, payload_len);
+                success = handle_wifi_status(&frame);
                 break;
             case cmd_lock:
-                success = handle_lock(payload, payload_len);
+                success = handle_lock(&frame);
                 break;
             case cmd_upgrade_start:
-                success = handle_upgrade_start(payload, payload_len);
+                success = handle_upgrade_start(&frame);
                 break;
             case cmd_enable_output:
-                success = handle_enable_output(payload, payload_len);
+                success = handle_enable_output(&frame);
                 break;
             case cmd_temperature_report:
-                success = handle_temperature(payload, payload_len);
+                success = handle_temperature(&frame);
                 break;
             case cmd_version:
                 success = handle_version();
@@ -547,16 +559,16 @@ static void handle_frame(uint8_t *frame, uint32_t length)
                 success = handle_cal_report();
                 break;
             case cmd_set_calibration:
-                success = handle_set_calibration(payload, payload_len);
+                success = handle_set_calibration(&frame);
                 break;
             case cmd_clear_calibration:
                 success = handle_clear_calibration();
                 break;
             case cmd_change_screen:
-                success = handle_change_screen(payload, payload_len);
+                success = handle_change_screen(&frame);
                 break;
             case cmd_set_brightness:
-                success = handle_set_brightness(payload, payload_len);
+                success = handle_set_brightness(&frame);
                 break;
             default:
                 emu_printf("Got unknown command %d (0x%02x)\n", cmd, cmd);
@@ -564,9 +576,10 @@ static void handle_frame(uint8_t *frame, uint32_t length)
         }
     }
     if (success != cmd_success_but_i_actually_sent_my_own_status_thank_you_very_much) {
-        length = protocol_create_response(frame_buffer, sizeof(frame_buffer), cmd, success);
-        if (length > 0 && cmd != cmd_response) {
-            send_frame(frame_buffer, length);
+        frame_t frame_resp;
+        protocol_create_response(&frame_resp, cmd, success);
+        if (frame_resp.length > 0 && cmd != cmd_response) {
+            send_frame(&frame_resp);
         }
     }
 }
