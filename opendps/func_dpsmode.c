@@ -33,6 +33,7 @@
 #include "gfx-ppbar.h"
 #include "gfx-oppbar.h"
 #include "gfx-tmbar.h"
+#include "gfx-m1bar.h"
 #include "font-meter_large.h"
 #include "font-full_small.h"
 #include "hw.h"
@@ -88,9 +89,6 @@ static bool select_mode;
 // timer
 static int64_t tick_since_count;
 
-// time for a note to appear in frames drawn
-static int32_t note_timeout = 0;
-
 // what is displayed on the 3rd row.
 static int8_t third_row = 0;
 ui_item_t *third_item;
@@ -104,11 +102,8 @@ enum {
     CUR_GFX_OPP = 8,
     CUR_GFX_TM = 16,
 
-    // not real graphics, but notices that overlay the screen temporarily
-    CUR_NOTE_M1_SAVED = 1024,
-    CUR_NOTE_M1_RECALL = 2048,
-    CUR_NOTE_M2_SAVED = 4096,
-    CUR_NOTE_M2_RECALL = 8192,
+    CUR_GFX_M1_RECALL = 1024,
+    CUR_GFX_M2_RECALL = 2048,
 } dpsmode_graphics; 
 
 #define SCREEN_ID  (6)
@@ -396,6 +391,7 @@ static void dpsmode_enable(bool enabled)
  */
 static void voltage_changed(ui_number_t *item)
 {
+    dpsmode_graphics &= ~CUR_GFX_M1_RECALL & ~CUR_GFX_M2_RECALL;
     saved_v = item->value;
     (void) pwrctl_set_vout(item->value);
 }
@@ -407,6 +403,7 @@ static void voltage_changed(ui_number_t *item)
  */
 static void current_changed(ui_number_t *item)
 {
+    dpsmode_graphics &= ~CUR_GFX_M1_RECALL & ~CUR_GFX_M2_RECALL;
     saved_i = item->value;
     (void) pwrctl_set_iout(item->value);
 }
@@ -418,6 +415,7 @@ static void current_changed(ui_number_t *item)
  */
 static void power_changed(ui_number_t *item)
 {
+    dpsmode_graphics &= ~CUR_GFX_M1_RECALL & ~CUR_GFX_M2_RECALL;
     saved_p = item->value;
     // (void) pwrctl_set_iout(item->value);
 }
@@ -463,8 +461,7 @@ static bool event(uui_t *ui, event_t event, uint8_t data) {
                 saved_t = 0;
 
                 // show the M1 recall note
-                note_timeout = 500;
-                dpsmode_graphics |= CUR_NOTE_M1_RECALL;
+                dpsmode_graphics |= CUR_GFX_M1_RECALL;
 
                 dpsmode_enable(false);
             }
@@ -921,47 +918,12 @@ static void draw_bars() {
 
 
     // draw any notes
-    if (dpsmode_graphics & CUR_NOTE_M1_RECALL) {
-        note_timeout--;
-        // expired
-        if (note_timeout <= 0) {
-            dpsmode_graphics &= ~CUR_NOTE_M1_RECALL;
-
-        } else {
-
-            // border
-            tft_fill( 10, 50,
-                    TFT_WIDTH - 20,  50 + 40,
-                    WHITE );
-            // inside
-            tft_fill( 11, 51,
-                    TFT_WIDTH - 22,  51 + 38,
-                    BLACK );
-
-            // message
-            tft_puts(FONT_FULL_SMALL, "M1 Recalled",
-                    15,  60,
-                    TFT_WIDTH, FONT_FULL_SMALL_MAX_GLYPH_HEIGHT,
-                    WHITE, false);
+    if (dpsmode_graphics & CUR_GFX_M1_RECALL) {
+        tft_fill(5, 0,
+            GFX_M1BAR_WIDTH, GFX_M1BAR_HEIGHT,
+            BLACK);
         }
-
     }
-
-
-            // border
-            tft_fill( 10, 50,
-                    TFT_WIDTH - 20,  50 + 40,
-                    WHITE );
-            // inside
-            tft_fill( 11, 51,
-                    TFT_WIDTH - 22,  51 + 38,
-                    BLACK );
-
-            // message
-            tft_puts(FONT_FULL_SMALL, "M1 Recalled",
-                    15,  60,
-                    TFT_WIDTH, FONT_FULL_SMALL_MAX_GLYPH_HEIGHT,
-                    WHITE, false);
 
 
 }
