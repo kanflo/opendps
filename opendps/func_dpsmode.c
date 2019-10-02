@@ -463,6 +463,7 @@ static bool event(uui_t *ui, event_t event, uint8_t data) {
                 saved_t = 0;
 
                 // show the M1 recall note
+                note_timeout = 50;
                 dpsmode_graphics |= CUR_NOTE_M1_RECALL;
 
                 dpsmode_enable(false);
