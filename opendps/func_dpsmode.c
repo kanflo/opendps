@@ -1028,7 +1028,7 @@ static void draw_bars() {
 static void clear_bars(bool all) {
     if (all) {
         // clears opp as well as the others
-        dpsmode_graphics = CUR_GFX_NOT_DRAWN;
+        dpsmode_graphics &= ~0x3ff; // exclude m1/m2, so not CUR_GFX_NOT_DRAWN;
         return;
     }
 
