@@ -178,6 +178,8 @@ void uui_handle_screen_event(uui_t *ui, event_t event, uint8_t data)
         case event_rot_right_m1:
         case event_rot_left_m2:
         case event_rot_right_m2:
+        case event_button_sel_m1:
+        case event_button_sel_m2:
             // do nothing
             break;
 
