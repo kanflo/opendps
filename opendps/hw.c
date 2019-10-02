@@ -1001,7 +1001,7 @@ void BUTTON_ROTARY_isr(void)
                 key_combo = true;
                 event_put(event_rot_left_down, press_short);
             } else {
-                if ( ! key_combo) event_put(event_rot_left, press_short);
+                event_put(event_rot_left, press_short);
             }
         } else {
             if (set_pressed) {
@@ -1017,7 +1017,7 @@ void BUTTON_ROTARY_isr(void)
                 key_combo = true;
                 event_put(event_rot_right_down, press_short);
             } else {
-                if ( ! key_combo) event_put(event_rot_right, press_short);
+                put(event_rot_right, press_short);
             }
         }
     }
