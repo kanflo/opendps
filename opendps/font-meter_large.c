@@ -1,4 +1,4 @@
-/** Font generated from gfx/Ubuntu-C.ttf 48pt */
+/** Font generated from `./gen_lookup.py -f gfx/Ubuntu-C.ttf -s 48 -o meter_large` */
 
 #include "font-meter_large.h"
 

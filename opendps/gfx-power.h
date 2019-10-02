@@ -1,4 +1,4 @@
-/** Gfx generated from gfx\png\power.png */
+/** Gfx generated from `./gen_lookup.py -i gfx/png/power.png -o power` */
 
 #ifndef __GFX_POWER_H__
 #define __GFX_POWER_H__

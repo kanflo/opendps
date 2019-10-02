@@ -1,4 +1,4 @@
-/** Gfx generated from gfx\png\padlock.png */
+/** Gfx generated from `./gen_lookup.py -i gfx/png/padlock.png -o padlock` */
 
 #ifndef __GFX_PADLOCK_H__
 #define __GFX_PADLOCK_H__

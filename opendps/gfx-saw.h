@@ -1,4 +1,4 @@
-/** Gfx generated from gfx/png/saw.png */
+/** Gfx generated from `./gen_lookup.py -i gfx/png/saw.png -o saw` */
 
 #ifndef __GFX_SAW_H__
 #define __GFX_SAW_H__

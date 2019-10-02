@@ -1,4 +1,4 @@
-/** Font generated from gfx/Ubuntu-C.ttf 24pt */
+/** Font generated from `./gen_lookup.py -f gfx/Ubuntu-C.ttf -s 24 -o meter_medium` */
 
 #include "font-meter_medium.h"
 

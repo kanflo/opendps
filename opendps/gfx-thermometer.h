@@ -1,4 +1,4 @@
-/** Gfx generated from gfx/png/thermometer.png */
+/** Gfx generated from `./gen_lookup.py -i gfx/png/thermometer.png -o thermometer` */
 
 #ifndef __GFX_THERMOMETER_H__
 #define __GFX_THERMOMETER_H__

@@ -1,4 +1,4 @@
-/** Gfx generated from gfx/png/poweroff.png */
+/** Gfx generated from `./gen_lookup.py -i gfx/png/poweroff.png -o poweroff` */
 
 #ifndef __GFX_POWEROFF_H__
 #define __GFX_POWEROFF_H__

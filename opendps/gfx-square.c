@@ -1,4 +1,4 @@
-/** Gfx generated from gfx/png/square.png */
+/** Gfx generated from `./gen_lookup.py -i gfx/png/square.png -o square` */
 
 #include "gfx-square.h"
 

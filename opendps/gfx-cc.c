@@ -1,4 +1,4 @@
-/** Gfx generated from gfx\png\cc.png */
+/** Gfx generated from `./gen_lookup.py -i gfx/png/cc.png -o cc` */
 
 #include "gfx-cc.h"
 
