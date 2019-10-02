@@ -917,6 +917,7 @@ void BUTTON_M2_isr(void)
         // do not fire button if rot rotated while down
         key_combo = false;
 
+        longpress_begin(event_button_m1);
         exti_set_trigger(BUTTON_M2_EXTI, EXTI_TRIGGER_RISING);
     } else {
         m2_pressed = false;
@@ -932,7 +933,7 @@ void BUTTON_M2_isr(void)
             event_put(event_button_m1_and_m2, press_short);
         }
 
-        if ( ! key_combo) event_put(event_button_m2, press_short);
+        if ( ! longpress_end() && ! key_combo) event_put(event_button_m2, press_short);
 
         exti_set_trigger(BUTTON_M2_EXTI, EXTI_TRIGGER_FALLING);
     }
