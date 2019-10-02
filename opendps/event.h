@@ -31,6 +31,10 @@ typedef enum {
     event_button_m2,
     event_buttom_m1_and_m2,
     event_button_sel,
+
+    event_button_sel_m1,
+    event_button_sel_m2,
+
     event_button_enable,
     event_rot_left,
     event_rot_right,
@@ -47,8 +51,8 @@ typedef enum {
 } event_t;
 
 typedef enum {
-	press_short = 0,
-	press_long,
+    press_short = 0,
+    press_long,
 } button_press_t;
 
 

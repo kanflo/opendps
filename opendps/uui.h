@@ -224,7 +224,7 @@ void uui_add_screen(uui_t *ui, ui_screen_t *screen);
  * @param      ui     The user interface
  * @param[in]  event  The event
  */
-void uui_handle_screen_event(uui_t *ui, event_t event);
+void uui_handle_screen_event(uui_t *ui, event_t event, uint8_t data);
 
 /**
  * @brief      Switch to next screen

@@ -88,11 +88,10 @@ static volatile uint64_t longpress_start;
 static volatile bool longpress_detected;
 /** Used to filter SET press from SET + ROT */
 static volatile bool set_pressed = false;
-static volatile bool set_skip = false;
 static volatile bool m1_pressed = false;
 static volatile bool m2_pressed = false;
 static volatile bool m1_and_m2_pressed = false;
-static volatile bool rot_turned = false;
+static volatile bool key_combo = false;
 
 #define DEBOUNCE_TIME_MS    (30)
 
@@ -837,20 +836,30 @@ void BUTTON_SEL_isr(void)
 {
     static bool falling = true;
     exti_reset_request(BUTTON_SEL_EXTI);
+
     if (falling) {
         if (is_bouncing()) return;
         set_pressed = true;
-        set_skip = false;
+        key_combo = false;
+
         longpress_begin(event_button_sel);
         exti_set_trigger(BUTTON_SEL_EXTI, EXTI_TRIGGER_RISING);
     } else {
         set_pressed = false;
-        if (!set_skip) {
-            if (!longpress_end()) {
-                // Not a long press, send short press
-                event_put(event_button_sel, press_short);
-            }
+
+        if ( ! key_combo && m1_pressed ) {
+            key_combo = true;
+            event_put(event_buttom_sel_m1, press_short);
+            return;
         }
+
+        if ( ! key_combo && m2_pressed ) {
+            key_combo = true;
+            event_put(event_buttom_sel_m1, press_short);
+        }
+
+        if ( ! longpress_end() && ! key_combo) event_put(event_button_set, press_short);
+
         exti_set_trigger(BUTTON_SEL_EXTI, EXTI_TRIGGER_FALLING);
     }
     falling = !falling;
@@ -866,26 +875,27 @@ void BUTTON_M1_isr(void)
     exti_reset_request(BUTTON_M1_EXTI);
     if (falling) {
         if (is_bouncing()) return;
+
         m1_pressed = true;
+        key_combo = false;
 
-        // do not fire button if rot rotated while down
-        rot_turned = false;
-
-        if (m2_pressed)
-            m1_and_m2_pressed = true;
-
+        longpress_begin(event_button_m1);
         exti_set_trigger(BUTTON_M1_EXTI, EXTI_TRIGGER_RISING);
     } else {
         m1_pressed = false;
 
-        if (!m2_pressed) {
-            if (m1_and_m2_pressed) {
-                m1_and_m2_pressed = false;
-                event_put(event_buttom_m1_and_m2, press_short);
-            } else {
-                if ( ! rot_turned) event_put(event_button_m1, press_short);
-            }
+        if ( ! key_combo && set_pressed ) {
+            key_combo = true;
+            event_put(event_buttom_sel_m1, press_short);
+            return;
         }
+
+        if ( ! key_combo && m2_pressed ) {
+            key_combo = true;
+            event_put(event_buttom_m1_and_m2, press_short);
+        }
+
+        if ( ! longpress_end() && ! key_combo) event_put(event_button_m1, press_short);
 
         exti_set_trigger(BUTTON_M1_EXTI, EXTI_TRIGGER_FALLING);
     }
@@ -905,22 +915,24 @@ void BUTTON_M2_isr(void)
         m2_pressed = true;
 
         // do not fire button if rot rotated while down
-        rot_turned = false;
+        key_combo = false;
 
-        if (m1_pressed)
-            m1_and_m2_pressed = true;
         exti_set_trigger(BUTTON_M2_EXTI, EXTI_TRIGGER_RISING);
     } else {
         m2_pressed = false;
 
-        if (!m1_pressed) {
-            if (m1_and_m2_pressed) {
-                m1_and_m2_pressed = false;
-                event_put(event_buttom_m1_and_m2, press_short);
-            } else {
-                if ( ! rot_turned) event_put(event_button_m2, press_short);
-            }
+        if ( ! key_combo && set_pressed ) {
+            key_combo = true;
+            event_put(event_buttom_sel_m2, press_short);
+            return;
         }
+
+        if ( ! key_combo && m1_pressed ) {
+            key_combo = true;
+            event_put(event_buttom_m1_and_m2, press_short);
+        }
+
+        if ( ! key_combo) event_put(event_button_m2, press_short);
 
         exti_set_trigger(BUTTON_M2_EXTI, EXTI_TRIGGER_FALLING);
     }
@@ -972,12 +984,10 @@ void BUTTON_ROTARY_isr(void)
         exti_reset_request(BUTTON_ROT_A_EXTI);
         bool a = (((uint16_t) GPIO_IDR(BUTTON_ROT_A_PORT)) & BUTTON_ROT_A_PIN) ? 1 : 0; // Slightly faster than gpio_get(...)
         bool b = (((uint16_t) GPIO_IDR(BUTTON_ROT_B_PORT)) & BUTTON_ROT_B_PIN) ? 1 : 0;
-        rot_turned = true;
+        key_combo = true;
 
         if (a == b) {
             if (set_pressed) {
-                set_skip = true;
-                (void) longpress_end();
                 event_put(event_rot_left_set, press_short);
             } else if (m1_pressed) {
                 event_put(event_rot_left_m1, press_short);
@@ -988,8 +998,6 @@ void BUTTON_ROTARY_isr(void)
             }
         } else {
             if (set_pressed) {
-                set_skip = true;
-                (void) longpress_end();
                 event_put(event_rot_right_set, press_short);
             } else if (m1_pressed) {
                 event_put(event_rot_right_m1, press_short);
