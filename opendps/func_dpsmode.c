@@ -34,6 +34,7 @@
 #include "gfx-oppbar.h"
 #include "gfx-tmbar.h"
 #include "gfx-m1bar.h"
+#include "gfx-m2bar.h"
 #include "font-meter_large.h"
 #include "font-full_small.h"
 #include "hw.h"
@@ -80,6 +81,8 @@ static void clear_third_region(void);
  * be replaced with measurements when output is active
  */
 static int32_t saved_v, saved_i, saved_p, saved_t;
+// the M1, M2 recall values
+static int32_t[2] recall_v, recall_i, recall_p, recall_t = {0, 0};
 
 // single edit mode, with M1/M2 buttons, not select.
 // pressing any other button when in this mode will exit the edit mode
@@ -444,17 +447,29 @@ static bool event(uui_t *ui, event_t event, uint8_t data) {
 
             // do recall on press_long event_button_m1 or event_button_m2
             if (event == event_button_m1 && data == press_long) {
-                // TODO: recall M1 values.
-                saved_v = 5100;
-                saved_i = 200;
-                saved_p = 0;
-                saved_t = 0;
+                saved_v = recall_v[0];
+                saved_i = recall_i[0];
+                saved_p = recall_p[0];
+                saved_t = recall_t[0];
 
-                // show the M1 recall note
-                dpsmode_graphics |= CUR_GFX_M1_RECALL;
-
+                // Turn off power
                 dpsmode_enable(false);
 
+                // show the M1 recall graphics
+                dpsmode_graphics |= CUR_GFX_M1_RECALL;
+                return true;
+            }
+            if (event == event_button_m2 && data == press_long) {
+                saved_v = recall_v[1];
+                saved_i = recall_i[1];
+                saved_p = recall_p[1];
+                saved_t = recall_t[1];
+
+                // Turn off power
+                dpsmode_enable(false);
+
+                // show the M2 recall graphics
+                dpsmode_graphics |= CUR_GFX_M2_RECALL;
                 return true;
             }
 
@@ -618,18 +633,27 @@ static void deactivated(void)
  */
 static void past_save(past_t *past)
 {
-    /** @todo: past bug causes corruption for units smaller than 4 bytes (#27) */
-    if (!past_write_unit(past, (SCREEN_ID << 24) | PAST_V, (void*) &saved_v, 4 /* sizeof(dpsmode_voltage.value) */ )) {
-        /** @todo: handle past write failures */
+    if (   past_write_unit(past, (SCREEN_ID << 24) | PAST_V, (void*) &saved_v, 4)
+        && past_write_unit(past, (SCREEN_ID << 24) | PAST_I, (void*) &saved_i, 4)
+        && past_write_unit(past, (SCREEN_ID << 24) | PAST_P, (void*) &saved_p, 4)
+        && past_write_unit(past, (SCREEN_ID << 24) | PAST_T, (void*) &saved_t, 4)) {
+        // write successful
     }
-    if (!past_write_unit(past, (SCREEN_ID << 24) | PAST_I, (void*) &saved_i, 4 /* sizeof(dpsmode_current.value) */ )) {
-        /** @todo: handle past write failures */
+
+    // recall m1
+    if (   past_write_unit(past, (SCREEN_ID << 24) | (PAST_V << 2), (void*) &recall_v[0], 4)
+        && past_write_unit(past, (SCREEN_ID << 24) | (PAST_I << 2), (void*) &recall_i[0], 4)
+        && past_write_unit(past, (SCREEN_ID << 24) | (PAST_P << 2), (void*) &recall_p[0], 4)
+        && past_write_unit(past, (SCREEN_ID << 24) | (PAST_T << 2), (void*) &recall_t[0], 4)) {
+        // write successful
     }
-    if (!past_write_unit(past, (SCREEN_ID << 24) | PAST_P, (void*) &saved_p, 4 /* sizeof(dpsmode_power.value) */ )) {
-        /** @todo: handle past write failures */
-    }
-    if (!past_write_unit(past, (SCREEN_ID << 24) | PAST_T, (void*) &saved_t, 4 /* sizeof(dpsmode_power.value) */ )) {
-        /** @todo: handle past write failures */
+
+    // recall m2
+    if (   past_write_unit(past, (SCREEN_ID << 24) | (PAST_V << 4), (void*) &recall_v[1], 4)
+        && past_write_unit(past, (SCREEN_ID << 24) | (PAST_I << 4), (void*) &recall_i[1], 4)
+        && past_write_unit(past, (SCREEN_ID << 24) | (PAST_P << 4), (void*) &recall_p[1], 4)
+        && past_write_unit(past, (SCREEN_ID << 24) | (PAST_T << 4), (void*) &recall_t[1], 4)) {
+        // write successful
     }
 }
 
@@ -642,22 +666,46 @@ static void past_restore(past_t *past)
 {
     uint32_t length;
     uint32_t *p = 0;
+
     if (past_read_unit(past, (SCREEN_ID << 24) | PAST_V, (const void**) &p, &length)) {
         saved_v = dpsmode_voltage.value = *p;
-        (void) length;
     }
     if (past_read_unit(past, (SCREEN_ID << 24) | PAST_I, (const void**) &p, &length)) {
         saved_i = dpsmode_current.value = *p;
-        (void) length;
     }
     if (past_read_unit(past, (SCREEN_ID << 24) | PAST_P, (const void**) &p, &length)) {
         saved_p = dpsmode_power.value = *p;
-        (void) length;
     }
     if (past_read_unit(past, (SCREEN_ID << 24) | PAST_T, (const void**) &p, &length)) {
         saved_t = dpsmode_timer.value = *p;
-        (void) length;
     }
+
+    if (past_read_unit(past, (SCREEN_ID << 24) | (PAST_V << 2), (const void**) &p, &length)) {
+        recall_v[0] = *p;
+    }
+    if (past_read_unit(past, (SCREEN_ID << 24) | (PAST_I << 2), (const void**) &p, &length)) {
+        recall_i[0] = *p;
+    }
+    if (past_read_unit(past, (SCREEN_ID << 24) | (PAST_P << 2), (const void**) &p, &length)) {
+        recall_p[0] = *p;
+    }
+    if (past_read_unit(past, (SCREEN_ID << 24) | (PAST_T << 2), (const void**) &p, &length)) {
+        recall_t[0] = *p;
+    }
+
+    if (past_read_unit(past, (SCREEN_ID << 24) | (PAST_V << 4), (const void**) &p, &length)) {
+        recall_v[1] = *p;
+    }
+    if (past_read_unit(past, (SCREEN_ID << 24) | (PAST_I << 4), (const void**) &p, &length)) {
+        recall_i[1] = *p;
+    }
+    if (past_read_unit(past, (SCREEN_ID << 24) | (PAST_P << 4), (const void**) &p, &length)) {
+        recall_p[1] = *p;
+    }
+    if (past_read_unit(past, (SCREEN_ID << 24) | (PAST_T << 4), (const void**) &p, &length)) {
+        recall_t[1] = *p;
+    }
+
 }
 
 /**
@@ -920,11 +968,15 @@ static void draw_bars() {
     }
 
 
-    // draw any notes
+    // draw any recall icons
     if (dpsmode_graphics & CUR_GFX_M1_RECALL) {
-        tft_fill(5, 0,
-            GFX_M1BAR_WIDTH, GFX_M1BAR_HEIGHT,
-            BLACK);
+        tft_blit((uint16_t*) gfx_m1bar,
+                GFX_M1BAR_WIDTH, GFX_M1BAR_HEIGHT,
+                5, 0);
+    } else if (dpsmode_graphics & CUR_GFX_M2_RECALL) {
+        tft_blit((uint16_t*) gfx_m2bar,
+                GFX_M2BAR_WIDTH, GFX_M2BAR_HEIGHT,
+                5, 0);
     }
 
 
