@@ -472,7 +472,7 @@ static void timer_changed(ui_time_t *item) {
 
 static void brightness_changed(ui_number_t *item) {
     // update brightness
-    hw_set_backlight(item->value << 1);
+    hw_set_backlight(item->value);
 }
 
 static bool event(uui_t *ui, event_t event, uint8_t data) {
@@ -633,6 +633,9 @@ static void activated(void) {
 
     // reset watthour value when we leave the screen.
     dpsmode_watthour.value = 0;
+
+    // get brightness
+    dpsmode_brightness.value = hw_get_backlight();
 }
 
 static void determine_focused_item(uui_t *ui, int8_t direction) {
@@ -1100,9 +1103,6 @@ void func_dpsmode_init(uui_t *ui)
     number_init(&dpsmode_watthour);
     time_init(&dpsmode_timer);
     number_init(&dpsmode_brightness);
-
-    // get brightness
-    dpsmode_brightness.value = hw_get_backlight();
 
     // third item initialize
     third_item = &dpsmode_power;
