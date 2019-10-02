@@ -849,16 +849,16 @@ void BUTTON_SEL_isr(void)
 
         if ( ! key_combo && m1_pressed ) {
             key_combo = true;
-            event_put(event_buttom_sel_m1, press_short);
+            event_put(event_button_sel_m1, press_short);
             return;
         }
 
         if ( ! key_combo && m2_pressed ) {
             key_combo = true;
-            event_put(event_buttom_sel_m1, press_short);
+            event_put(event_button_sel_m1, press_short);
         }
 
-        if ( ! longpress_end() && ! key_combo) event_put(event_button_set, press_short);
+        if ( ! longpress_end() && ! key_combo) event_put(event_button_sel, press_short);
 
         exti_set_trigger(BUTTON_SEL_EXTI, EXTI_TRIGGER_FALLING);
     }
@@ -886,13 +886,13 @@ void BUTTON_M1_isr(void)
 
         if ( ! key_combo && set_pressed ) {
             key_combo = true;
-            event_put(event_buttom_sel_m1, press_short);
+            event_put(event_button_sel_m1, press_short);
             return;
         }
 
         if ( ! key_combo && m2_pressed ) {
             key_combo = true;
-            event_put(event_buttom_m1_and_m2, press_short);
+            event_put(event_button_m1_and_m2, press_short);
         }
 
         if ( ! longpress_end() && ! key_combo) event_put(event_button_m1, press_short);
@@ -923,13 +923,13 @@ void BUTTON_M2_isr(void)
 
         if ( ! key_combo && set_pressed ) {
             key_combo = true;
-            event_put(event_buttom_sel_m2, press_short);
+            event_put(event_button_sel_m2, press_short);
             return;
         }
 
         if ( ! key_combo && m1_pressed ) {
             key_combo = true;
-            event_put(event_buttom_m1_and_m2, press_short);
+            event_put(event_button_m1_and_m2, press_short);
         }
 
         if ( ! key_combo) event_put(event_button_m2, press_short);
