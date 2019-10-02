@@ -245,9 +245,9 @@ ui_number_t dpsmode_brightness = {
     .alignment = ui_text_right_aligned,
     .pad_dot = false,
     .color = WHITE,
-    .value = 0,
+    .value = 70,
     .min = 0,
-    .max = 100,
+    .max = 120,
     .si_prefix = si_none, // percentage, so 0-100
     .num_digits = 3,
     .num_decimals = 0,
@@ -472,7 +472,7 @@ static void timer_changed(ui_time_t *item) {
 
 static void brightness_changed(ui_number_t *item) {
     // update brightness
-    hw_set_backlight(item->value);
+    hw_set_backlight(item->value << 1);
 }
 
 static bool event(uui_t *ui, event_t event, uint8_t data) {
