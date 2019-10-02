@@ -36,6 +36,7 @@
 #include "font-meter_large.h"
 #include "hw.h"
 #include "func_dpsmode.h"
+#include "event.h"
 #include "uui.h"
 #include "uui_number.h"
 #include "uui_time.h"
@@ -86,6 +87,9 @@ static bool select_mode;
 // timer
 static int64_t tick_since_count;
 
+// time for a note to appear in frames drawn
+static int32_t note_timeout = 0;
+
 // what is displayed on the 3rd row.
 static int8_t third_row = 0;
 ui_item_t *third_item;
@@ -98,6 +102,12 @@ enum {
     CUR_GFX_PP  = 4,
     CUR_GFX_OPP = 8,
     CUR_GFX_TM = 16,
+
+    // not real graphics, but notices that overlay the screen temporarily
+    CUR_NOTE_M1_SAVED = 1024,
+    CUR_NOTE_M1_RECALL = 2048,
+    CUR_NOTE_M1_SAVED = 4096,
+    CUR_NOTE_M1_RECALL = 8192,
 } dpsmode_graphics; 
 
 #define SCREEN_ID  (6)
@@ -426,13 +436,14 @@ static void timer_changed(ui_time_t *item) {
 }
 
 
-static bool event(uui_t *ui, event_t event) {
+static bool event(uui_t *ui, event_t event, uint8_t data) {
 
     switch(event) {
         case event_button_sel:
         case event_button_m1:
         case event_button_m2:
 
+            // leave single edit mode on any button press
             if (single_edit_mode) {
                 single_edit_mode = false;
 
@@ -441,6 +452,22 @@ static bool event(uui_t *ui, event_t event) {
                 if (dpsmode_current.ui.has_focus) uui_focus(ui, (ui_item_t*) &dpsmode_current);
                 return true;
             }
+
+            // do recall on press_long event_button_m1 or event_button_m2
+            if (event == event_button_m1 && data = press_long) {
+                // TODO: recall M1 values.
+                saved_v = 510;
+                saved_i = 200;
+                saved_p = 0;
+                saved_t = 0;
+
+                // show the M1 recall note
+                dpsmode_graphics |= CUR_NOTE_M1_RECALL;
+
+                dpsmode_enable(false);
+            }
+
+
             break;
 
         case event_rot_left_m1:
@@ -890,6 +917,33 @@ static void draw_bars() {
                     BLACK);
     }
 
+
+    // draw any notes
+    if (dpsmode_graphics & CUR_NOTE_M1_RECALL) {
+        note_timeout--;
+        // expired
+        if (note_timeout == 0) {
+            dpsmode_graphics &= ~CUR_NOTE_M1_RECALL;
+
+        } else {
+
+            // border
+            tft_fill( 10, 50,
+                    TFT_WIDTH - 20,  50 + 40,
+                    WHITE );
+            // inside
+            tft_fill( 11, 51,
+                    TFT_WIDTH - 22,  51 + 38,
+                    BLACK );
+
+            // message
+            tft_puts(FONT_FULL_SMALL, "M1 Recalled",
+                    15,  60,
+                    TFT_WIDTH, FONT_FULL_SMALL_MAX_GLYPH_HEIGHT,
+                    WHITE, false);
+        }
+
+    }
 
 }
 
