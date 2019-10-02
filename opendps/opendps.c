@@ -41,7 +41,6 @@
 #include "serialhandler.h"
 #include "ili9163c.h"
 #include "gfx-padlock.h"
-#include "gfx-thermometer.h"
 #include "gfx-poweron.h"
 #include "gfx-poweroff.h"
 #include "gfx-wifi.h"
@@ -617,7 +616,7 @@ void opendps_temperature_lock(bool lock)
             tft_clear();
             uui_show(current_ui, false);
             uui_show(&main_ui, false);
-            tft_blit((uint16_t*) gfx_thermometer, GFX_THERMOMETER_WIDTH, GFX_THERMOMETER_HEIGHT, 1+(ui_width-GFX_THERMOMETER_WIDTH)/2, 30);
+            // tft_blit((uint16_t*) gfx_thermometer, GFX_THERMOMETER_WIDTH, GFX_THERMOMETER_HEIGHT, 1+(ui_width-GFX_THERMOMETER_WIDTH)/2, 30);
         } else {
             emu_printf("DPS enabled due to temperature\n");
             tft_clear();

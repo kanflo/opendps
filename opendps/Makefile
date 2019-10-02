@@ -125,7 +125,6 @@ OBJS = \
     gfx-m2bar.o \
     gfx-padlock.o \
     gfx-power.o \
-    gfx-thermometer.o \
     gfx-wifi.o \
     opendps.o
 
