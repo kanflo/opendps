@@ -1017,7 +1017,7 @@ void BUTTON_ROTARY_isr(void)
                 key_combo = true;
                 event_put(event_rot_right_down, press_short);
             } else {
-                put(event_rot_right, press_short);
+                event_put(event_rot_right, press_short);
             }
         }
     }
