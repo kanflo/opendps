@@ -1006,11 +1006,11 @@ static void draw_bars() {
     if (dpsmode_graphics & CUR_GFX_M1_RECALL) {
         tft_blit((uint16_t*) gfx_m1bar,
                 GFX_M1BAR_WIDTH, GFX_M1BAR_HEIGHT,
-                TFT_WIDTH - GFXM1BAR_WIDTH - 5, 0);
+                TFT_WIDTH - GFX_M1BAR_WIDTH - 5, 0);
     } else if (dpsmode_graphics & CUR_GFX_M2_RECALL) {
         tft_blit((uint16_t*) gfx_m2bar,
                 GFX_M2BAR_WIDTH, GFX_M2BAR_HEIGHT,
-                TFT_WIDTH - GFXM2BAR_WIDTH - 5, 0);
+                TFT_WIDTH - GFX_M2BAR_WIDTH - 5, 0);
     } else {
         tft_fill(5, 0,
             GFX_M2BAR_WIDTH, GFX_M2BAR_HEIGHT,
