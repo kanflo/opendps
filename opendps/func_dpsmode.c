@@ -62,6 +62,7 @@ static void voltage_changed(ui_number_t *item);
 static void current_changed(ui_number_t *item);
 static void power_changed(ui_number_t *item);
 static void watthour_changed(ui_number_t *item);
+static void brightness_changed(ui_number_t *item);
 static void timer_changed(ui_time_t *item);
 static void dpsmode_tick(void);
 static void activated(void);
@@ -230,6 +231,28 @@ ui_time_t dpsmode_timer = {
     .color = WHITE,
     .value = 0,
     .changed = &timer_changed,
+};
+
+ui_number_t dpsmode_brightness = {
+    {
+        .type = ui_item_number,
+        .id = 15,
+        .x = XPOS_METER,
+        .y = YPOS_POWER + 5, // +5 since we are using a smaller font
+        .can_focus = true,
+    },
+    .font_size = FONT_METER_MEDIUM,
+    .alignment = ui_text_right_aligned,
+    .pad_dot = false,
+    .color = WHITE,
+    .value = 0,
+    .min = 0,
+    .max = 100,
+    .si_prefix = si_milli, // milli watt hours
+    .num_digits = 3,
+    .num_decimals = 0,
+    .unit = unit_percent,
+    .changed = &brightness_changed,
 };
 
 
@@ -446,6 +469,10 @@ static void timer_changed(ui_time_t *item) {
     saved_t = item->value;
 }
 
+static void brightness_changed(ui_number_t *item) {
+    // update brightness
+    hw_set_backlight(item->value);
+}
 
 static bool event(uui_t *ui, event_t event, uint8_t data) {
 
@@ -1071,10 +1098,13 @@ void func_dpsmode_init(uui_t *ui)
     number_init(&dpsmode_power);
     number_init(&dpsmode_watthour);
     time_init(&dpsmode_timer);
+    number_init(&dpsmode_brightness);
 
     // third item initialize
     third_item = &dpsmode_power;
     third_invalidate = true;
+
+    dpsmode_brightness->value = hw_get_backlight();
 
     uui_add_screen(ui, &dpsmode_screen);
 }
