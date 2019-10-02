@@ -273,13 +273,14 @@ ui_screen_t dpsmode_screen = {
     .tick = &dpsmode_tick,
     .set_parameter = &set_parameter,
     .get_parameter = &get_parameter,
-    .num_items = 5,
+    .num_items = 6,
     .items = { 
         (ui_item_t*) &dpsmode_voltage, 
         (ui_item_t*) &dpsmode_current, 
         (ui_item_t*) &dpsmode_power,
         (ui_item_t*) &dpsmode_watthour,
         (ui_item_t*) &dpsmode_timer,
+        (ui_item_t*) &dpsmode_brightness,
     },
     .parameters = {
         {
