@@ -1100,11 +1100,13 @@ void func_dpsmode_init(uui_t *ui)
     time_init(&dpsmode_timer);
     number_init(&dpsmode_brightness);
 
+    // get brightness
+    dpsmode_brightness.value = hw_get_backlight();
+
     // third item initialize
     third_item = &dpsmode_power;
     third_invalidate = true;
 
-    dpsmode_brightness->value = hw_get_backlight();
 
     uui_add_screen(ui, &dpsmode_screen);
 }
