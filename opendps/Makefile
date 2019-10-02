@@ -109,9 +109,10 @@ OBJS = \
     gfx-ppbar.o \
     gfx-oppbar.o \
     gfx-tmbar.o \
+    gfx-m1bar.o \
+    gfx-m2bar.o \
     gfx-padlock.o \
     gfx-power.o \
-    gfx-thermometer.o \
     gfx-wifi.o \
     opendps.o
 

@@ -41,7 +41,7 @@
 #include "serialhandler.h"
 #include "ili9163c.h"
 #include "gfx-padlock.h"
-#include "gfx-thermometer.h"
+// #include "gfx-thermometer.h"
 #include "gfx-power.h"
 #include "gfx-wifi.h"
 #include "font-full_small.h"
@@ -509,7 +509,7 @@ static void ui_handle_event(event_t event, uint8_t data)
 #endif // CONFIG_OCP_DEBUGGING
                 ui_flash(); /** @todo When OCP kicks in, show last I_out on screen */
                 opendps_update_power_status(false);
-                uui_handle_screen_event(current_ui, event);
+                uui_handle_screen_event(current_ui, event, data);
             }
             break;
         case event_ovp:
@@ -524,10 +524,10 @@ static void ui_handle_event(event_t event, uint8_t data)
 #endif // CONFIG_OVP_DEBUGGING
                 ui_flash(); /** @todo When OVP kicks in, show last V_out on screen */
                 opendps_update_power_status(false);
-                uui_handle_screen_event(current_ui, event);
+                uui_handle_screen_event(current_ui, event, data);
             }
             break;
-        case event_buttom_m1_and_m2: ;
+        case event_button_m1_and_m2: ;
             uint8_t target_screen_id = current_ui == &func_ui ? SETTINGS_UI_ID : FUNC_UI_ID; /** Change between the settings and functional screen */
             opendps_change_screen(target_screen_id);
             break;
@@ -538,6 +538,8 @@ static void ui_handle_event(event_t event, uint8_t data)
         case event_button_m1:
         case event_button_m2:
         case event_button_sel:
+        case event_button_sel_m1:
+        case event_button_sel_m2:
         case event_rot_press:
         case event_rot_left:
         case event_rot_right:
@@ -545,7 +547,9 @@ static void ui_handle_event(event_t event, uint8_t data)
         case event_rot_right_m1:
         case event_rot_left_m2:
         case event_rot_right_m2:
-            uui_handle_screen_event(current_ui, event);
+        case event_rot_left_down:
+        case event_rot_right_down:
+            uui_handle_screen_event(current_ui, event, data);
             uui_refresh(current_ui, false);
             break;
 
@@ -558,7 +562,7 @@ static void ui_handle_event(event_t event, uint8_t data)
                 break;
             }
 
-            uui_handle_screen_event(current_ui, event);
+            uui_handle_screen_event(current_ui, event, data);
             uui_refresh(current_ui, false);
             break;
 
@@ -603,7 +607,7 @@ void opendps_temperature_lock(bool lock)
             tft_clear();
             uui_show(current_ui, false);
             uui_show(&main_ui, false);
-            tft_blit((uint16_t*) gfx_thermometer, GFX_THERMOMETER_WIDTH, GFX_THERMOMETER_HEIGHT, 1+(ui_width-GFX_THERMOMETER_WIDTH)/2, 30);
+            // tft_blit((uint16_t*) gfx_thermometer, GFX_THERMOMETER_WIDTH, GFX_THERMOMETER_HEIGHT, 1+(ui_width-GFX_THERMOMETER_WIDTH)/2, 30);
         } else {
             emu_printf("DPS enabled due to temperature\n");
             tft_clear();

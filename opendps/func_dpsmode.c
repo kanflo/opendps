@@ -33,9 +33,13 @@
 #include "gfx-ppbar.h"
 #include "gfx-oppbar.h"
 #include "gfx-tmbar.h"
+#include "gfx-m1bar.h"
+#include "gfx-m2bar.h"
 #include "font-meter_large.h"
+#include "font-full_small.h"
 #include "hw.h"
 #include "func_dpsmode.h"
+#include "event.h"
 #include "uui.h"
 #include "uui_number.h"
 #include "uui_time.h"
@@ -58,11 +62,12 @@ static void voltage_changed(ui_number_t *item);
 static void current_changed(ui_number_t *item);
 static void power_changed(ui_number_t *item);
 static void watthour_changed(ui_number_t *item);
+static void brightness_changed(ui_number_t *item);
 static void timer_changed(ui_time_t *item);
 static void dpsmode_tick(void);
 static void activated(void);
 static void deactivated(void);
-static bool event(uui_t *ui, event_t event);
+static bool event(uui_t *ui, event_t event, uint8_t data);
 static void past_save(past_t *past);
 static void past_restore(past_t *past);
 static set_param_status_t set_parameter(char *name, char *value);
@@ -77,6 +82,8 @@ static void clear_third_region(void);
  * be replaced with measurements when output is active
  */
 static int32_t saved_v, saved_i, saved_p, saved_t;
+// the M1, M2 recall values
+static int32_t recall_v[2], recall_i[2], recall_p[2], recall_t[2] = {0, 0};
 
 // single edit mode, with M1/M2 buttons, not select.
 // pressing any other button when in this mode will exit the edit mode
@@ -98,6 +105,9 @@ enum {
     CUR_GFX_PP  = 4,
     CUR_GFX_OPP = 8,
     CUR_GFX_TM = 16,
+
+    CUR_GFX_M1_RECALL = 1024,
+    CUR_GFX_M2_RECALL = 2048,
 } dpsmode_graphics; 
 
 #define SCREEN_ID  (6)
@@ -108,8 +118,8 @@ enum {
 #define XPOS_CCCV  (25)
 
 #define XPOS_METER   (117)
-#define YPOS_VOLTAGE (10)
-#define YPOS_CURRENT (45)
+#define YPOS_VOLTAGE (11)
+#define YPOS_CURRENT (46)
 #define YPOS_POWER   (80)
 
 /* Overriding white color */
@@ -223,6 +233,28 @@ ui_time_t dpsmode_timer = {
     .changed = &timer_changed,
 };
 
+ui_number_t dpsmode_brightness = {
+    {
+        .type = ui_item_number,
+        .id = 15,
+        .x = XPOS_METER,
+        .y = YPOS_POWER + 5, // +5 since we are using a smaller font
+        .can_focus = true,
+    },
+    .font_size = FONT_METER_MEDIUM,
+    .alignment = ui_text_right_aligned,
+    .pad_dot = false,
+    .color = WHITE,
+    .value = 70,
+    .min = 0,
+    .max = 120,
+    .si_prefix = si_none, // percentage, so 0-100
+    .num_digits = 3,
+    .num_decimals = 0,
+    .unit = unit_percent,
+    .changed = &brightness_changed,
+};
+
 
 /* This is the screen definition */
 ui_screen_t dpsmode_screen = {
@@ -241,13 +273,14 @@ ui_screen_t dpsmode_screen = {
     .tick = &dpsmode_tick,
     .set_parameter = &set_parameter,
     .get_parameter = &get_parameter,
-    .num_items = 5,
+    .num_items = 6,
     .items = { 
         (ui_item_t*) &dpsmode_voltage, 
         (ui_item_t*) &dpsmode_current, 
         (ui_item_t*) &dpsmode_power,
         (ui_item_t*) &dpsmode_watthour,
         (ui_item_t*) &dpsmode_timer,
+        (ui_item_t*) &dpsmode_brightness,
     },
     .parameters = {
         {
@@ -385,6 +418,9 @@ static void dpsmode_enable(bool enabled)
  */
 static void voltage_changed(ui_number_t *item)
 {
+    dpsmode_graphics &= ~CUR_GFX_M1_RECALL;
+    dpsmode_graphics &= ~CUR_GFX_M2_RECALL;
+
     saved_v = item->value;
     (void) pwrctl_set_vout(item->value);
 }
@@ -396,6 +432,9 @@ static void voltage_changed(ui_number_t *item)
  */
 static void current_changed(ui_number_t *item)
 {
+    dpsmode_graphics &= ~CUR_GFX_M1_RECALL;
+    dpsmode_graphics &= ~CUR_GFX_M2_RECALL;
+
     saved_i = item->value;
     (void) pwrctl_set_iout(item->value);
 }
@@ -407,6 +446,9 @@ static void current_changed(ui_number_t *item)
  */
 static void power_changed(ui_number_t *item)
 {
+    dpsmode_graphics &= ~CUR_GFX_M1_RECALL;
+    dpsmode_graphics &= ~CUR_GFX_M2_RECALL;
+    
     saved_p = item->value;
     // (void) pwrctl_set_iout(item->value);
 }
@@ -421,18 +463,82 @@ static void watthour_changed(ui_number_t *item) {
 }
 
 static void timer_changed(ui_time_t *item) {
+    dpsmode_graphics &= ~CUR_GFX_M1_RECALL;
+    dpsmode_graphics &= ~CUR_GFX_M2_RECALL;
+
     // do nothing yet...
     saved_t = item->value;
 }
 
+static void brightness_changed(ui_number_t *item) {
+    // update brightness
+    hw_set_backlight(item->value);
+}
 
-static bool event(uui_t *ui, event_t event) {
+static bool event(uui_t *ui, event_t event, uint8_t data) {
 
     switch(event) {
+        case event_button_sel_m1:
+        case event_button_sel_m2:
+            // save values to recall
+            if (event == event_button_sel_m1) {
+                // save values to m1, show m1 graphics
+                recall_v[0] = saved_v;
+                recall_i[0] = saved_i;
+                recall_p[0] = saved_p;
+                recall_t[0] = saved_t;
+                dpsmode_graphics &= ~CUR_GFX_M2_RECALL;
+                dpsmode_graphics |= CUR_GFX_M1_RECALL;
+            } else {
+                // save values to m2, show m2 graphics
+                recall_v[1] = saved_v;
+                recall_i[1] = saved_i;
+                recall_p[1] = saved_p;
+                recall_t[1] = saved_t;
+                dpsmode_graphics &= ~CUR_GFX_M1_RECALL;
+                dpsmode_graphics |= CUR_GFX_M2_RECALL;
+            }
+
+            return true;
+
         case event_button_sel:
         case event_button_m1:
         case event_button_m2:
 
+            // do recall on press_long event_button_m1 or event_button_m2
+            if (event == event_button_m1 && data == press_long) {
+                saved_v = recall_v[0];
+                saved_i = recall_i[0];
+                saved_p = recall_p[0];
+                saved_t = recall_t[0];
+
+                // Turn off power
+                dpsmode_enable(false);
+                opendps_update_power_status(false);
+
+                // show the M1 recall graphics
+                dpsmode_graphics &= ~CUR_GFX_M2_RECALL;
+                dpsmode_graphics |= CUR_GFX_M1_RECALL;
+                return true;
+            }
+            if (event == event_button_m2 && data == press_long) {
+                saved_v = recall_v[1];
+                saved_i = recall_i[1];
+                saved_p = recall_p[1];
+                saved_t = recall_t[1];
+
+                // Turn off power
+                dpsmode_enable(false);
+                opendps_update_power_status(false);
+
+                // show the M2 recall graphics
+                dpsmode_graphics &= ~CUR_GFX_M1_RECALL;
+                dpsmode_graphics |= CUR_GFX_M2_RECALL;
+                return true;
+            }
+
+
+            // leave single edit mode on any button press
             if (single_edit_mode) {
                 single_edit_mode = false;
 
@@ -441,17 +547,19 @@ static bool event(uui_t *ui, event_t event) {
                 if (dpsmode_current.ui.has_focus) uui_focus(ui, (ui_item_t*) &dpsmode_current);
                 return true;
             }
+
+
             break;
 
-        case event_rot_left_m1:
-        case event_rot_right_m1:
+        case event_rot_left_down:
+        case event_rot_right_down:
             // change what's visible on the 3rd row
             // only if not in select mode, as we may be editing fields
             if ( ! select_mode) {
                 ui_screen_t *screen = ui->screens[ui->cur_screen];
 
                 // rotate around the 3rd row objects (skip the 1st two)
-                if (event == event_rot_right_m1) {
+                if (event == event_rot_right_down) {
                     third_row = (third_row + 1) % (screen->num_items - 2);
                 } else {
                     if (third_row == 0) third_row = screen->num_items - 3;
@@ -525,6 +633,9 @@ static void activated(void) {
 
     // reset watthour value when we leave the screen.
     dpsmode_watthour.value = 0;
+
+    // get brightness
+    dpsmode_brightness.value = hw_get_backlight();
 }
 
 static void determine_focused_item(uui_t *ui, int8_t direction) {
@@ -589,18 +700,27 @@ static void deactivated(void)
  */
 static void past_save(past_t *past)
 {
-    /** @todo: past bug causes corruption for units smaller than 4 bytes (#27) */
-    if (!past_write_unit(past, (SCREEN_ID << 24) | PAST_V, (void*) &saved_v, 4 /* sizeof(dpsmode_voltage.value) */ )) {
-        /** @todo: handle past write failures */
+    if (   past_write_unit(past, (SCREEN_ID << 24) | PAST_V, (void*) &saved_v, 4)
+        && past_write_unit(past, (SCREEN_ID << 24) | PAST_I, (void*) &saved_i, 4)
+        && past_write_unit(past, (SCREEN_ID << 24) | PAST_P, (void*) &saved_p, 4)
+        && past_write_unit(past, (SCREEN_ID << 24) | PAST_T, (void*) &saved_t, 4)) {
+        // write successful
     }
-    if (!past_write_unit(past, (SCREEN_ID << 24) | PAST_I, (void*) &saved_i, 4 /* sizeof(dpsmode_current.value) */ )) {
-        /** @todo: handle past write failures */
+
+    // recall m1
+    if (   past_write_unit(past, (SCREEN_ID << 24) | (PAST_V << 2), (void*) &recall_v[0], 4)
+        && past_write_unit(past, (SCREEN_ID << 24) | (PAST_I << 2), (void*) &recall_i[0], 4)
+        && past_write_unit(past, (SCREEN_ID << 24) | (PAST_P << 2), (void*) &recall_p[0], 4)
+        && past_write_unit(past, (SCREEN_ID << 24) | (PAST_T << 2), (void*) &recall_t[0], 4)) {
+        // write successful
     }
-    if (!past_write_unit(past, (SCREEN_ID << 24) | PAST_P, (void*) &saved_p, 4 /* sizeof(dpsmode_power.value) */ )) {
-        /** @todo: handle past write failures */
-    }
-    if (!past_write_unit(past, (SCREEN_ID << 24) | PAST_T, (void*) &saved_t, 4 /* sizeof(dpsmode_power.value) */ )) {
-        /** @todo: handle past write failures */
+
+    // recall m2
+    if (   past_write_unit(past, (SCREEN_ID << 24) | (PAST_V << 4), (void*) &recall_v[1], 4)
+        && past_write_unit(past, (SCREEN_ID << 24) | (PAST_I << 4), (void*) &recall_i[1], 4)
+        && past_write_unit(past, (SCREEN_ID << 24) | (PAST_P << 4), (void*) &recall_p[1], 4)
+        && past_write_unit(past, (SCREEN_ID << 24) | (PAST_T << 4), (void*) &recall_t[1], 4)) {
+        // write successful
     }
 }
 
@@ -613,22 +733,46 @@ static void past_restore(past_t *past)
 {
     uint32_t length;
     uint32_t *p = 0;
+
     if (past_read_unit(past, (SCREEN_ID << 24) | PAST_V, (const void**) &p, &length)) {
         saved_v = dpsmode_voltage.value = *p;
-        (void) length;
     }
     if (past_read_unit(past, (SCREEN_ID << 24) | PAST_I, (const void**) &p, &length)) {
         saved_i = dpsmode_current.value = *p;
-        (void) length;
     }
     if (past_read_unit(past, (SCREEN_ID << 24) | PAST_P, (const void**) &p, &length)) {
         saved_p = dpsmode_power.value = *p;
-        (void) length;
     }
     if (past_read_unit(past, (SCREEN_ID << 24) | PAST_T, (const void**) &p, &length)) {
         saved_t = dpsmode_timer.value = *p;
-        (void) length;
     }
+
+    if (past_read_unit(past, (SCREEN_ID << 24) | (PAST_V << 2), (const void**) &p, &length)) {
+        recall_v[0] = *p;
+    }
+    if (past_read_unit(past, (SCREEN_ID << 24) | (PAST_I << 2), (const void**) &p, &length)) {
+        recall_i[0] = *p;
+    }
+    if (past_read_unit(past, (SCREEN_ID << 24) | (PAST_P << 2), (const void**) &p, &length)) {
+        recall_p[0] = *p;
+    }
+    if (past_read_unit(past, (SCREEN_ID << 24) | (PAST_T << 2), (const void**) &p, &length)) {
+        recall_t[0] = *p;
+    }
+
+    if (past_read_unit(past, (SCREEN_ID << 24) | (PAST_V << 4), (const void**) &p, &length)) {
+        recall_v[1] = *p;
+    }
+    if (past_read_unit(past, (SCREEN_ID << 24) | (PAST_I << 4), (const void**) &p, &length)) {
+        recall_i[1] = *p;
+    }
+    if (past_read_unit(past, (SCREEN_ID << 24) | (PAST_P << 4), (const void**) &p, &length)) {
+        recall_p[1] = *p;
+    }
+    if (past_read_unit(past, (SCREEN_ID << 24) | (PAST_T << 4), (const void**) &p, &length)) {
+        recall_t[1] = *p;
+    }
+
 }
 
 /**
@@ -891,6 +1035,22 @@ static void draw_bars() {
     }
 
 
+    // draw any recall icons
+    if (dpsmode_graphics & CUR_GFX_M1_RECALL) {
+        tft_blit((uint16_t*) gfx_m1bar,
+                GFX_M1BAR_WIDTH, GFX_M1BAR_HEIGHT,
+                TFT_WIDTH - GFX_M1BAR_WIDTH - 10, 0);
+    } else if (dpsmode_graphics & CUR_GFX_M2_RECALL) {
+        tft_blit((uint16_t*) gfx_m2bar,
+                GFX_M2BAR_WIDTH, GFX_M2BAR_HEIGHT,
+                TFT_WIDTH - GFX_M2BAR_WIDTH - 10, 0);
+    } else {
+        tft_fill(TFT_WIDTH - GFX_M1BAR_WIDTH - 10, 0,
+            GFX_M2BAR_WIDTH, GFX_M2BAR_HEIGHT,
+            BLACK);
+    }
+
+
 }
 
 /*
@@ -901,7 +1061,7 @@ static void draw_bars() {
 static void clear_bars(bool all) {
     if (all) {
         // clears opp as well as the others
-        dpsmode_graphics = CUR_GFX_NOT_DRAWN;
+        dpsmode_graphics &= ~0x3ff; // exclude m1/m2, so not CUR_GFX_NOT_DRAWN;
         return;
     }
 
@@ -942,10 +1102,12 @@ void func_dpsmode_init(uui_t *ui)
     number_init(&dpsmode_power);
     number_init(&dpsmode_watthour);
     time_init(&dpsmode_timer);
+    number_init(&dpsmode_brightness);
 
     // third item initialize
     third_item = &dpsmode_power;
     third_invalidate = true;
+
 
     uui_add_screen(ui, &dpsmode_screen);
 }
