@@ -255,7 +255,8 @@ uint16_t hw_get_vtrig_mv(void)
   */
 void hw_longpress_check(void)
 {
-    if (longpress_event != event_none) {
+    // skip long presses that are part of a key combination
+    if ( ! key_combo && longpress_event != event_none) {
         if (get_ticks() - longpress_start > LONGPRESS_TIME_MS) {
             event_put(longpress_event, press_long);
             longpress_detected = true;
@@ -985,31 +986,38 @@ void BUTTON_ROTARY_isr(void)
         exti_reset_request(BUTTON_ROT_A_EXTI);
         bool a = (((uint16_t) GPIO_IDR(BUTTON_ROT_A_PORT)) & BUTTON_ROT_A_PIN) ? 1 : 0; // Slightly faster than gpio_get(...)
         bool b = (((uint16_t) GPIO_IDR(BUTTON_ROT_B_PORT)) & BUTTON_ROT_B_PIN) ? 1 : 0;
-        key_combo = true;
 
         if (a == b) {
             if (set_pressed) {
+                key_combo = true;
                 event_put(event_rot_left_set, press_short);
             } else if (m1_pressed) {
+                key_combo = true;
                 event_put(event_rot_left_m1, press_short);
             } else if (m2_pressed) {
+                key_combo = true;
                 event_put(event_rot_left_m2, press_short);
             } else if (rot_pressed) {
+                key_combo = true;
                 event_put(event_rot_left_down, press_short);
             } else {
-                event_put(event_rot_left, press_short);
+                if ( ! key_combo) event_put(event_rot_left, press_short);
             }
         } else {
             if (set_pressed) {
+                key_combo = true;
                 event_put(event_rot_right_set, press_short);
             } else if (m1_pressed) {
+                key_combo = true;
                 event_put(event_rot_right_m1, press_short);
             } else if (m2_pressed) {
+                key_combo = true;
                 event_put(event_rot_right_m2, press_short);
             } else if (rot_pressed) {
+                key_combo = true;
                 event_put(event_rot_right_down, press_short);
             } else {
-                event_put(event_rot_right, press_short);
+                if ( ! key_combo) event_put(event_rot_right, press_short);
             }
         }
     }
