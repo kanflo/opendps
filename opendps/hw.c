@@ -90,7 +90,7 @@ static volatile bool longpress_detected;
 static volatile bool set_pressed = false;
 static volatile bool m1_pressed = false;
 static volatile bool m2_pressed = false;
-static volatile bool m1_and_m2_pressed = false;
+static volatile bool rot_pressed = false;
 static volatile bool key_combo = false;
 
 #define DEBOUNCE_TIME_MS    (30)
@@ -969,13 +969,13 @@ void BUTTON_ROTARY_isr(void)
         static bool falling = true;
         if (falling) {
             if (is_bouncing()) return;
+            rot_pressed = true;
+            key_combo = false;
             longpress_begin(event_rot_press);
             exti_set_trigger(BUTTON_ROT_PRESS_EXTI, EXTI_TRIGGER_RISING);
         } else {
-            if (!longpress_end()) {
-                // Not a long press, send short press
-                event_put(event_rot_press, press_short);
-            }
+            rot_pressed = false;
+            if ( ! longpress_end() && ! key_combo) event_put(event_rot_press, press_short);
             exti_set_trigger(BUTTON_ROT_PRESS_EXTI, EXTI_TRIGGER_FALLING);
         }
         falling = !falling;
@@ -994,6 +994,8 @@ void BUTTON_ROTARY_isr(void)
                 event_put(event_rot_left_m1, press_short);
             } else if (m2_pressed) {
                 event_put(event_rot_left_m2, press_short);
+            } else if (rot_pressed) {
+                event_put(event_rot_left_down, press_short);
             } else {
                 event_put(event_rot_left, press_short);
             }
@@ -1004,6 +1006,8 @@ void BUTTON_ROTARY_isr(void)
                 event_put(event_rot_right_m1, press_short);
             } else if (m2_pressed) {
                 event_put(event_rot_right_m2, press_short);
+            } else if (rot_pressed) {
+                event_put(event_rot_right_down, press_short);
             } else {
                 event_put(event_rot_right, press_short);
             }

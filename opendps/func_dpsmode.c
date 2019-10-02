@@ -523,15 +523,15 @@ static bool event(uui_t *ui, event_t event, uint8_t data) {
 
             break;
 
-        case event_rot_left_m1:
-        case event_rot_right_m1:
+        case event_rot_left_down:
+        case event_rot_right_down:
             // change what's visible on the 3rd row
             // only if not in select mode, as we may be editing fields
             if ( ! select_mode) {
                 ui_screen_t *screen = ui->screens[ui->cur_screen];
 
                 // rotate around the 3rd row objects (skip the 1st two)
-                if (event == event_rot_right_m1) {
+                if (event == event_rot_right_down) {
                     third_row = (third_row + 1) % (screen->num_items - 2);
                 } else {
                     if (third_row == 0) third_row = screen->num_items - 3;
