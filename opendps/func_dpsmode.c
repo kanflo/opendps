@@ -107,8 +107,8 @@ enum {
     // not real graphics, but notices that overlay the screen temporarily
     CUR_NOTE_M1_SAVED = 1024,
     CUR_NOTE_M1_RECALL = 2048,
-    CUR_NOTE_M1_SAVED = 4096,
-    CUR_NOTE_M1_RECALL = 8192,
+    CUR_NOTE_M2_SAVED = 4096,
+    CUR_NOTE_M2_RECALL = 8192,
 } dpsmode_graphics; 
 
 #define SCREEN_ID  (6)
