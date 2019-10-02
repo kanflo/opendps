@@ -34,6 +34,7 @@
 #include "gfx-oppbar.h"
 #include "gfx-tmbar.h"
 #include "font-meter_large.h"
+#include "font-full_small.h"
 #include "hw.h"
 #include "func_dpsmode.h"
 #include "event.h"
@@ -63,7 +64,7 @@ static void timer_changed(ui_time_t *item);
 static void dpsmode_tick(void);
 static void activated(void);
 static void deactivated(void);
-static bool event(uui_t *ui, event_t event);
+static bool event(uui_t *ui, event_t event, uint8_t data);
 static void past_save(past_t *past);
 static void past_restore(past_t *past);
 static set_param_status_t set_parameter(char *name, char *value);
@@ -454,7 +455,7 @@ static bool event(uui_t *ui, event_t event, uint8_t data) {
             }
 
             // do recall on press_long event_button_m1 or event_button_m2
-            if (event == event_button_m1 && data = press_long) {
+            if (event == event_button_m1 && data == press_long) {
                 // TODO: recall M1 values.
                 saved_v = 510;
                 saved_i = 200;
