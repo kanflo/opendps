@@ -35,6 +35,7 @@
 
 #include <stdint.h>
 #include <stdbool.h>
+#include "uframe.h"
 
 typedef enum {
     cmd_ping = 1,
@@ -98,9 +99,6 @@ typedef enum {
     sp_illegal_value
 } set_parameter_status_t;
 
-
-#define MAX_FRAME_LENGTH (2*16) // Based on the cmd_status reponse frame (fully escaped)
-
 #define INVALID_TEMPERATURE (0xffff)
 
 /*
@@ -111,16 +109,16 @@ typedef enum {
  * the frame buffer is not sufficient, the return value will be zero and the 
  * 'frame' buffer is left untouched.
  */
-uint32_t protocol_create_response(uint8_t *frame, uint32_t length, command_t cmd, uint8_t success);
-uint32_t protocol_create_ping(uint8_t *frame, uint32_t length);
-uint32_t protocol_create_power_enable(uint8_t *frame, uint32_t length, uint8_t enable);
-uint32_t protocol_create_vout(uint8_t *frame, uint32_t length, uint16_t vout_mv);
-uint32_t protocol_create_ilimit(uint8_t *frame, uint32_t length, uint16_t ilimit_ma);
-uint32_t protocol_create_status(uint8_t *frame, uint32_t length);
-uint32_t protocol_create_query_response(uint8_t *frame, uint32_t length, uint16_t v_in, uint16_t v_out_setting, uint16_t v_out, uint16_t i_out, uint16_t i_limit, uint8_t power_enabled);
-uint32_t protocol_create_wifi_status(uint8_t *frame, uint32_t length, wifi_status_t status);
-uint32_t protocol_create_lock(uint8_t *frame, uint32_t length, uint8_t locked);
-uint32_t protocol_create_ocp(uint8_t *frame, uint32_t length, uint16_t i_cut);
+void protocol_create_response(frame_t *frame, command_t cmd, uint8_t success);
+void protocol_create_ping(frame_t *frame);
+void protocol_create_power_enable(frame_t *frame, uint8_t enable);
+void protocol_create_vout(frame_t *frame, uint16_t vout_mv);
+void protocol_create_ilimit(frame_t *frame, uint16_t ilimit_ma);
+void protocol_create_status(frame_t *frame);
+void protocol_create_query_response(frame_t *frame, uint16_t v_in, uint16_t v_out_setting, uint16_t v_out, uint16_t i_out, uint16_t i_limit, uint8_t power_enabled);
+void protocol_create_wifi_status(frame_t *frame, wifi_status_t status);
+void protocol_create_lock(frame_t *frame, uint8_t locked);
+void protocol_create_ocp(frame_t *frame, uint16_t i_cut);
 
 /*
  * Helpers for unpacking frames.
@@ -129,15 +127,15 @@ uint32_t protocol_create_ocp(uint8_t *frame, uint32_t length, uint16_t i_cut);
  * true. If the command byte of the frame does not match the expectation or the
  * frame is too short to unpack the expected payload, false will be returned.
  */
-bool protocol_unpack_response(uint8_t *payload, uint32_t length, command_t *cmd, uint8_t *success);
-bool protocol_unpack_power_enable(uint8_t *payload, uint32_t length, uint8_t *enable);
-bool protocol_unpack_vout(uint8_t *payload, uint32_t length, uint16_t *vout_mv);
-bool protocol_unpack_ilimit(uint8_t *payload, uint32_t length, uint16_t *ilimit_ma);
-bool protocol_unpack_query_response(uint8_t *payload, uint32_t length, uint16_t *v_in, uint16_t *v_out_setting, uint16_t *v_out, uint16_t *i_out, uint16_t *i_limit, uint8_t *power_enabled);
-bool protocol_unpack_wifi_status(uint8_t *payload, uint32_t length, wifi_status_t *status);
-bool protocol_unpack_lock(uint8_t *payload, uint32_t length, uint8_t *locked);
-bool protocol_unpack_ocp(uint8_t *payload, uint32_t length, uint16_t *i_cut);
-bool protocol_unpack_upgrade_start(uint8_t *payload, uint32_t length, uint16_t *chunk_size, uint16_t *crc);
+bool protocol_unpack_response(frame_t *frame, command_t *cmd, uint8_t *success);
+bool protocol_unpack_power_enable(frame_t *frame, uint8_t *enable);
+bool protocol_unpack_vout(frame_t *frame, uint16_t *vout_mv);
+bool protocol_unpack_ilimit(frame_t *frame, uint16_t *ilimit_ma);
+bool protocol_unpack_query_response(frame_t *frame, uint16_t *v_in, uint16_t *v_out_setting, uint16_t *v_out, uint16_t *i_out, uint16_t *i_limit, uint8_t *power_enabled);
+bool protocol_unpack_wifi_status(frame_t *frame, wifi_status_t *status);
+bool protocol_unpack_lock(frame_t *frame, uint8_t *locked);
+bool protocol_unpack_ocp(frame_t *frame, uint16_t *i_cut);
+bool protocol_unpack_upgrade_start(frame_t *frame, uint16_t *chunk_size, uint16_t *crc);
 
 
 /*
