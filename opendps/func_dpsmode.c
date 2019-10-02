@@ -454,15 +454,21 @@ static bool event(uui_t *ui, event_t event, uint8_t data) {
         case event_button_sel_m2:
             // save values to recall
             if (event == event_button_sel_m1) {
+                // save values to m1, show m1 graphics
                 recall_v[0] = saved_v;
                 recall_i[0] = saved_i;
                 recall_p[0] = saved_p;
                 recall_t[0] = saved_t;
+                dpsmode_graphics &= ~CUR_GFX_M2_RECALL;
+                dpsmode_graphics |= CUR_GFX_M1_RECALL;
             } else {
+                // save values to m2, show m2 graphics
                 recall_v[1] = saved_v;
                 recall_i[1] = saved_i;
                 recall_p[1] = saved_p;
                 recall_t[1] = saved_t;
+                dpsmode_graphics &= ~CUR_GFX_M1_RECALL;
+                dpsmode_graphics |= CUR_GFX_M2_RECALL;
             }
 
             return true;
@@ -1000,11 +1006,11 @@ static void draw_bars() {
     if (dpsmode_graphics & CUR_GFX_M1_RECALL) {
         tft_blit((uint16_t*) gfx_m1bar,
                 GFX_M1BAR_WIDTH, GFX_M1BAR_HEIGHT,
-                5, 0);
+                TFT_WIDTH - GFXM1BAR_WIDTH - 5, 0);
     } else if (dpsmode_graphics & CUR_GFX_M2_RECALL) {
         tft_blit((uint16_t*) gfx_m2bar,
                 GFX_M2BAR_WIDTH, GFX_M2BAR_HEIGHT,
-                5, 0);
+                TFT_WIDTH - GFXM2BAR_WIDTH - 5, 0);
     } else {
         tft_fill(5, 0,
             GFX_M2BAR_WIDTH, GFX_M2BAR_HEIGHT,
