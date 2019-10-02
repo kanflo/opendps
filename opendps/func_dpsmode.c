@@ -482,6 +482,7 @@ static bool event(uui_t *ui, event_t event, uint8_t data) {
                 dpsmode_enable(false);
 
                 // show the M1 recall graphics
+                dpsmode_graphics &= ~CUR_GFX_M2_RECALL;
                 dpsmode_graphics |= CUR_GFX_M1_RECALL;
                 return true;
             }
@@ -495,6 +496,7 @@ static bool event(uui_t *ui, event_t event, uint8_t data) {
                 dpsmode_enable(false);
 
                 // show the M2 recall graphics
+                dpsmode_graphics &= ~CUR_GFX_M1_RECALL;
                 dpsmode_graphics |= CUR_GFX_M2_RECALL;
                 return true;
             }
@@ -1003,6 +1005,10 @@ static void draw_bars() {
         tft_blit((uint16_t*) gfx_m2bar,
                 GFX_M2BAR_WIDTH, GFX_M2BAR_HEIGHT,
                 5, 0);
+    } else {
+        tft_fill(5, 0
+            GFX_M2BAR_WIDTH, GFX_M2BAR_HEIGHT,
+            BLACK);
     }
 
 
