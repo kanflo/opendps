@@ -486,6 +486,7 @@ static bool event(uui_t *ui, event_t event, uint8_t data) {
 
                 // Turn off power
                 dpsmode_enable(false);
+                opendps_update_power_status(false);
 
                 // show the M1 recall graphics
                 dpsmode_graphics &= ~CUR_GFX_M2_RECALL;
@@ -500,6 +501,7 @@ static bool event(uui_t *ui, event_t event, uint8_t data) {
 
                 // Turn off power
                 dpsmode_enable(false);
+                opendps_update_power_status(false);
 
                 // show the M2 recall graphics
                 dpsmode_graphics &= ~CUR_GFX_M1_RECALL;
@@ -1006,13 +1008,13 @@ static void draw_bars() {
     if (dpsmode_graphics & CUR_GFX_M1_RECALL) {
         tft_blit((uint16_t*) gfx_m1bar,
                 GFX_M1BAR_WIDTH, GFX_M1BAR_HEIGHT,
-                TFT_WIDTH - GFX_M1BAR_WIDTH - 5, 0);
+                TFT_WIDTH - GFX_M1BAR_WIDTH - 10, 0);
     } else if (dpsmode_graphics & CUR_GFX_M2_RECALL) {
         tft_blit((uint16_t*) gfx_m2bar,
                 GFX_M2BAR_WIDTH, GFX_M2BAR_HEIGHT,
-                TFT_WIDTH - GFX_M2BAR_WIDTH - 5, 0);
+                TFT_WIDTH - GFX_M2BAR_WIDTH - 10, 0);
     } else {
-        tft_fill(TFT_WIDTH - GFX_M1BAR_WIDTH - 5, 0,
+        tft_fill(TFT_WIDTH - GFX_M1BAR_WIDTH - 10, 0,
             GFX_M2BAR_WIDTH, GFX_M2BAR_HEIGHT,
             BLACK);
     }
