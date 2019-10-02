@@ -442,16 +442,6 @@ static bool event(uui_t *ui, event_t event, uint8_t data) {
         case event_button_m1:
         case event_button_m2:
 
-            // leave single edit mode on any button press
-            if (single_edit_mode) {
-                single_edit_mode = false;
-
-                // toggle focus on anything that is in focus (to unfocus)
-                if (dpsmode_voltage.ui.has_focus) uui_focus(ui, (ui_item_t*) &dpsmode_voltage);
-                if (dpsmode_current.ui.has_focus) uui_focus(ui, (ui_item_t*) &dpsmode_current);
-                return true;
-            }
-
             // do recall on press_long event_button_m1 or event_button_m2
             if (event == event_button_m1 && data == press_long) {
                 // TODO: recall M1 values.
@@ -464,6 +454,19 @@ static bool event(uui_t *ui, event_t event, uint8_t data) {
                 dpsmode_graphics |= CUR_GFX_M1_RECALL;
 
                 dpsmode_enable(false);
+
+                return true;
+            }
+
+
+            // leave single edit mode on any button press
+            if (single_edit_mode) {
+                single_edit_mode = false;
+
+                // toggle focus on anything that is in focus (to unfocus)
+                if (dpsmode_voltage.ui.has_focus) uui_focus(ui, (ui_item_t*) &dpsmode_voltage);
+                if (dpsmode_current.ui.has_focus) uui_focus(ui, (ui_item_t*) &dpsmode_current);
+                return true;
             }
 
 
