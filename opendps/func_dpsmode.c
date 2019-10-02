@@ -117,8 +117,8 @@ enum {
 #define XPOS_CCCV  (25)
 
 #define XPOS_METER   (117)
-#define YPOS_VOLTAGE (10)
-#define YPOS_CURRENT (45)
+#define YPOS_VOLTAGE (11)
+#define YPOS_CURRENT (46)
 #define YPOS_POWER   (80)
 
 /* Overriding white color */
