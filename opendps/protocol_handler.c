@@ -89,10 +89,12 @@ static command_status_t handle_query(void)
     uint16_t v_in = pwrctl_calc_vin(v_in_raw);
     uint16_t v_out = pwrctl_calc_vout(v_out_raw);
     uint16_t i_out = pwrctl_calc_iout(i_out_raw);
-    uint8_t output_enabled = pwrctl_vout_enabled();
-    int16_t temp1, temp2;
-    bool temp_shutdown;
+    uint8_t output_enabled = pwrctl_vout_enabled();  
+    int16_t temp1 = INVALID_TEMPERATURE, temp2 = INVALID_TEMPERATURE;
+    bool temp_shutdown = 0;
+#ifdef CONFIG_THERMAL_LOCKOUT
     opendps_get_temperature(&temp1, &temp2, &temp_shutdown);
+#endif // CONFIG_THERMAL_LOCKOUT
 //    uint32_t len = protocol_create_query_response(frame_buffer, sizeof(frame_buffer), v_in, v_out_setting, v_out, i_out, i_limit, power_enabled);
 
     frame_t frame;
@@ -330,7 +332,7 @@ static command_status_t handle_set_brightness(frame_t *frame)
     return cmd_success;
 }
 
-
+#ifdef CONFIG_THERMAL_LOCKOUT
 static command_status_t handle_temperature(frame_t *frame)
 {
     emu_printf("%s\n", __FUNCTION__);
@@ -344,6 +346,7 @@ static command_status_t handle_temperature(frame_t *frame)
     opendps_set_temperature(temp1, temp2);
     return cmd_success;
 }
+#endif // CONFIG_THERMAL_LOCKOUT
 
 static command_status_t handle_version(void)
 {
@@ -549,9 +552,11 @@ static void handle_frame(uint8_t *data, uint32_t length)
             case cmd_enable_output:
                 success = handle_enable_output(&frame);
                 break;
+#ifdef CONFIG_THERMAL_LOCKOUT
             case cmd_temperature_report:
                 success = handle_temperature(&frame);
                 break;
+#endif // CONFIG_THERMAL_LOCKOUT
             case cmd_version:
                 success = handle_version();
                 break;

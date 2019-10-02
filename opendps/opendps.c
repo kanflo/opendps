@@ -41,7 +41,9 @@
 #include "serialhandler.h"
 #include "ili9163c.h"
 #include "gfx-padlock.h"
+#ifdef CONFIG_THERMAL_LOCKOUT
 #include "gfx-thermometer.h"
+#endif // CONFIG_THERMAL_LOCKOUT
 #ifdef CONFIG_POWER_COLORED
 #include "gfx-poweron.h"
 #ifdef CONFIG_POWER_OFF_VISIBLE
@@ -137,9 +139,11 @@ static bool is_enabled;
 /** Last settings written to past */
 static bool     last_tft_inv_setting;
 
+#ifdef CONFIG_THERMAL_LOCKOUT
 /** Temperature readings, invalid at start */
 static int16_t temp1 = INVALID_TEMPERATURE;
 static int16_t temp2 = INVALID_TEMPERATURE;
+#endif // CONFIG_THERMAL_LOCKOUT
 
 /** display brightness
     73% is closest to previous default (0x5DC0) */
@@ -149,9 +153,11 @@ static int8_t last_tft_brightness = 73;
  #define CONFIG_TEMPERATURE_ALERT_LEVEL  (500)
 #endif // CONFIG_TEMPERATURE_ALERT_LEVEL
 
+#ifdef CONFIG_THERMAL_LOCKOUT
 /** Temperature when the DPS goes into shutdown mode,
     in x10 degrees whatever-temperature-unit-you-prefer */
 static int16_t shutdown_temperature = CONFIG_TEMPERATURE_ALERT_LEVEL;
+#endif // CONFIG_THERMAL_LOCKOUT
 
 /** Our parameter storage */
 static past_t g_past = {
@@ -582,6 +588,7 @@ void opendps_lock(bool lock)
     }
 }
 
+#ifdef CONFIG_THERMAL_LOCKOUT
 /**
   * @brief Lock or unlock the UI due to a temperature alarm
   * @param lock true for lock, false for unlock
@@ -609,6 +616,7 @@ void opendps_temperature_lock(bool lock)
         }
     }
 }
+#endif // CONFIG_THERMAL_LOCKOUT
 
 /**
   * @brief Do periodical updates in the UI
@@ -763,6 +771,7 @@ void opendps_update_power_status(bool enabled)
     }
 }
 
+#ifdef CONFIG_THERMAL_LOCKOUT
 /**
   * @brief Set temperatures
   * @param temp1 first temperature we can deal with
@@ -793,6 +802,7 @@ void opendps_get_temperature(int16_t *_temp1, int16_t *_temp2, bool *temp_shutdo
     *_temp2 = temp2;
     *temp_shutdown = is_temperature_locked;
 }
+#endif // CONFIG_THERMAL_LOCKOUT
 
 /**
  * @brief      Upgrade was requested by the protocol handler
