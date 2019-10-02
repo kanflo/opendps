@@ -81,7 +81,7 @@
 #endif // DPS_EMULATOR
 
 #ifdef CONFIG_SPLASH_SCREEN
-#include "logo.h"
+#include "gfx-logo.h"
 #endif // CONFIG_SPLASH_SCREEN
 
 #define TFT_HEIGHT  (128)
@@ -847,7 +847,7 @@ bool opendps_change_screen(uint8_t screen_id)
   */
 static void ui_draw_splash_screen(void)
 {
-    tft_blit((uint16_t*) logo, logo_width, logo_height, (ui_width-logo_width)/2, (ui_height-logo_height)/2);
+    tft_blit((uint16_t*) gfx_logo, GFX_LOGO_WIDTH, GFX_LOGO_HEIGHT, (ui_width-GFX_LOGO_WIDTH)/2, (ui_height-GFX_LOGO_HEIGHT)/2);
 }
 #endif // CONFIG_SPLASH_SCREEN
 

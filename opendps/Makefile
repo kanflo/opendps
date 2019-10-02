@@ -155,6 +155,7 @@ endif
 
 ifeq ($(SPLASH_SCREEN),1)
 	CFLAGS +=-DCONFIG_SPLASH_SCREEN
+    OBJS += gfx-logo.o
 endif
 
 ifeq ($(WIFI),1)
@@ -181,6 +182,23 @@ fonts:
 	@python ./gen_lookup.py -f $(METER_FONT_FILE) -s $(METER_FONT_SMALL_SIZE) -o meter_small
 	@python ./gen_lookup.py -f $(METER_FONT_FILE) -s $(METER_FONT_MEDIUM_SIZE) -o meter_medium
 	@python ./gen_lookup.py -f $(METER_FONT_FILE) -s $(METER_FONT_LARGE_SIZE) -o meter_large
+
+graphics:
+	@python ./gen_lookup.py -i gfx/png/cc.png -o cc
+	@python ./gen_lookup.py -i gfx/png/wifi.png -o wifi
+	@python ./gen_lookup.py -i gfx/png/thermometer.png -o thermometer
+	@python ./gen_lookup.py -i gfx/png/square.png -o square
+	@python ./gen_lookup.py -i gfx/png/sin.png -o sin
+	@python ./gen_lookup.py -i gfx/png/saw.png -o saw
+	@python ./gen_lookup.py -i gfx/png/poweron.png -o poweron
+	@python ./gen_lookup.py -i gfx/png/poweroff.png -o poweroff
+	@python ./gen_lookup.py -i gfx/png/power.png -o power
+	@python ./gen_lookup.py -i gfx/png/padlock.png -o padlock
+	@python ./gen_lookup.py -i gfx/png/cv.png -o cv
+	@python ./gen_lookup.py -i gfx/png/crosshair.png -o crosshair
+	@python ./gen_lookup.py -i gfx/png/cl.png -o cl
+	@python ./gen_lookup.py -i gfx/png/cc.png -o cc
+	@python ./gen_lookup.py -i gfx/png/logo.png -o logo
 
 test:
 	@make -C tests
