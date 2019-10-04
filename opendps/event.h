@@ -47,9 +47,12 @@ typedef enum {
     event_rot_left_down,
     event_rot_right_down,
     event_rot_press,
+
     event_uart_rx,
     event_ocp,
-    event_ovp
+    event_ovp,
+
+    event_shutoff
 } event_t;
 
 typedef enum {

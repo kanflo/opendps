@@ -174,17 +174,6 @@ void uui_handle_screen_event(uui_t *ui, event_t event, uint8_t data)
             uui_next_screen(ui);
             break;
 
-        case event_rot_left_m1:
-        case event_rot_right_m1:
-        case event_rot_left_m2:
-        case event_rot_right_m2:
-        case event_rot_left_down:
-        case event_rot_right_down:
-        case event_button_sel_m1:
-        case event_button_sel_m2:
-            // do nothing
-            break;
-
         case event_rot_left:
         case event_rot_right:
         case event_rot_press:
@@ -227,6 +216,7 @@ void uui_handle_screen_event(uui_t *ui, event_t event, uint8_t data)
             }
             break;
 
+        case event_shutoff:
         case event_button_enable:
         case event_ocp:
         case event_ovp:
@@ -239,6 +229,19 @@ void uui_handle_screen_event(uui_t *ui, event_t event, uint8_t data)
                 screen->enable(screen->is_enabled);
                 opendps_update_power_status(screen->is_enabled); /** @todo: move */
             }
+            break;
+
+        case event_rot_left_m1:
+        case event_rot_right_m1:
+        case event_rot_left_m2:
+        case event_rot_right_m2:
+        case event_rot_left_down:
+        case event_rot_right_down:
+        case event_button_sel_m1:
+        case event_button_sel_m2:
+        case event_shutoff:
+        case event_lock:
+            // do nothing
             break;
 
         default:

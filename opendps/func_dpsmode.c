@@ -50,11 +50,15 @@
 #include "opendps.h"
 
 /*
- * This is the implementation of the DPS look-alike screen. It has 3 editable
+ * This is the implementation of the DPS look-alike screen. It has 3+ editable
  * properties.
  *   Voltage limit (constant voltage)
  *   Current limit (constant current)
- *   Power limit (over power protection, 0 to disable)
+ *   Third Item. Displays one of:
+ *      * Power limit (over power protection, 0 to disable)
+ *      * Timer
+ *      * Watt-hour
+ *      * Brightness
  */
 
 static void dpsmode_enable(bool _enable);
@@ -513,8 +517,7 @@ static bool event(uui_t *ui, event_t event, uint8_t data) {
                 saved_t = recall_t[0];
 
                 // Turn off power
-                dpsmode_enable(false);
-                opendps_update_power_status(false);
+                event_put(event_shutoff, 0);
 
                 // show the M1 recall graphics
                 dpsmode_graphics &= ~CUR_GFX_M2_RECALL;
@@ -528,8 +531,7 @@ static bool event(uui_t *ui, event_t event, uint8_t data) {
                 saved_t = recall_t[1];
 
                 // Turn off power
-                dpsmode_enable(false);
-                opendps_update_power_status(false);
+                event_put(event_shutoff, 0);
 
                 // show the M2 recall graphics
                 dpsmode_graphics &= ~CUR_GFX_M1_RECALL;
@@ -858,8 +860,7 @@ static void dpsmode_tick(void)
             dpsmode_graphics &= ~CUR_GFX_TM;
 
             // power off
-            dpsmode_enable(false);
-            opendps_update_power_status(false);
+            event_put(event_shutoff, 0);
         }
 
         // over 80% power (if defined, or absolute maximum), show warning
@@ -909,8 +910,7 @@ static void dpsmode_tick(void)
             third_invalidate = true;
 
             // power off
-            dpsmode_enable(false);
-            opendps_update_power_status(false);
+            event_put(event_shutoff, 0);
         }
 
     }

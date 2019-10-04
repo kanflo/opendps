@@ -473,6 +473,7 @@ static void ui_handle_event(event_t event, uint8_t data)
     if (event == event_rot_press && data == press_long) {
         opendps_lock(!is_locked);
         return;
+
     } else if (event == event_button_sel && data == press_long) {
         tft_invert(!tft_is_inverted());
         write_past_settings();
@@ -480,20 +481,8 @@ static void ui_handle_event(event_t event, uint8_t data)
     }
 
     if (is_locked) {
-        switch(event) {
-            case event_button_m1:
-            case event_button_m2:
-            case event_button_sel:
-            case event_rot_press:
-            case event_rot_left:
-            case event_rot_right:
-            case event_button_enable:
-                lock_flashing_period = LOCK_FLASHING_PERIOD;
-                lock_flash_counter = LOCK_FLASHING_COUNTER;
-                return;
-            default:
-                break;
-        }
+        lock_flashing_period = LOCK_FLASHING_PERIOD;
+        lock_flash_counter = LOCK_FLASHING_COUNTER;
     }
 
     switch(event) {
@@ -509,7 +498,6 @@ static void ui_handle_event(event_t event, uint8_t data)
 #endif // CONFIG_OCP_DEBUGGING
                 ui_flash(); /** @todo When OCP kicks in, show last I_out on screen */
                 opendps_update_power_status(false);
-                uui_handle_screen_event(current_ui, event, data);
             }
             break;
 
@@ -525,7 +513,6 @@ static void ui_handle_event(event_t event, uint8_t data)
 #endif // CONFIG_OVP_DEBUGGING
                 ui_flash(); /** @todo When OVP kicks in, show last V_out on screen */
                 opendps_update_power_status(false);
-                uui_handle_screen_event(current_ui, event, data);
             }
             break;
 
@@ -534,44 +521,24 @@ static void ui_handle_event(event_t event, uint8_t data)
             opendps_change_screen(target_screen_id);
             break;
 
-        case event_button_enable:
-#pragma GCC diagnostic ignored "-Wimplicit-fallthrough"
-            write_past_settings();
-            /** Deliberate fallthrough */
-        case event_button_m1:
-        case event_button_m2:
-        case event_button_sel:
-        case event_button_sel_m1:
-        case event_button_sel_m2:
-        case event_rot_press:
-        case event_rot_left:
-        case event_rot_right:
-        case event_rot_left_m1:
-        case event_rot_right_m1:
-        case event_rot_left_m2:
-        case event_rot_right_m2:
-        case event_rot_left_down:
-        case event_rot_right_down:
-            uui_handle_screen_event(current_ui, event, data);
-            //uui_refresh(current_ui, false);
-            break;
-
         case event_rot_left_set:
         case event_rot_right_set:
             // lock out set+rotation when power is on
             if (pwrctl_vout_enabled()) {
+                // TODO: Show only briefly?
                 lock_flashing_period = LOCK_FLASHING_PERIOD;
                 lock_flash_counter = LOCK_FLASHING_COUNTER;
                 break;
             }
 
-            uui_handle_screen_event(current_ui, event, data);
-            //uui_refresh(current_ui, false);
             break;
 
-        default:
+        case event_button_enable:
+            write_past_settings();
             break;
     }
+
+    uui_handle_screen_event(current_ui, event, data);
 }
 
 /**
@@ -584,9 +551,11 @@ void opendps_lock(bool lock)
     if (is_locked != lock) {
         is_locked = lock;
         lock_flashing_period = 0;
+
         if (is_locked) {
             lock_visible = true;
             tft_blit((uint16_t*) gfx_padlock, GFX_PADLOCK_WIDTH, GFX_PADLOCK_HEIGHT, XPOS_LOCK, ui_height-GFX_PADLOCK_HEIGHT);
+
         } else {
             lock_visible = false;
             tft_fill(XPOS_LOCK, ui_height-GFX_PADLOCK_HEIGHT, GFX_PADLOCK_WIDTH, GFX_PADLOCK_HEIGHT, bg_color);
