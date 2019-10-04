@@ -245,9 +245,9 @@ ui_number_t dpsmode_brightness = {
     .alignment = ui_text_right_aligned,
     .pad_dot = false,
     .color = WHITE,
-    .value = 70,
+    .value = 0,
     .min = 0,
-    .max = 120,
+    .max = 100,
     .si_prefix = si_none, // percentage, so 0-100
     .num_digits = 3,
     .num_decimals = 0,
@@ -472,7 +472,7 @@ static void timer_changed(ui_time_t *item) {
 
 static void brightness_changed(ui_number_t *item) {
     // update brightness
-    hw_set_backlight(item->value);
+    hw_set_backlight(item->value * 1.28f);
 }
 
 static bool event(uui_t *ui, event_t event, uint8_t data) {
@@ -633,9 +633,6 @@ static void activated(void) {
 
     // reset watthour value when we leave the screen.
     dpsmode_watthour.value = 0;
-
-    // get brightness
-    dpsmode_brightness.value = hw_get_backlight();
 }
 
 static void determine_focused_item(uui_t *ui, int8_t direction) {
@@ -796,6 +793,10 @@ static void dpsmode_tick(void)
     // set the maximum power based on max voltage and max amps
     dpsmode_power.max = dpsmode_voltage.max * CONFIG_DPS_MAX_CURRENT;
 
+    // update brightness if 0 (because it's most likely not set)
+    if (dpsmode_brightness.value == 0)
+        dpsmode_brightness.value = hw_get_backlight();
+
     // power enabled
     if (pwrctl_vout_enabled()) {
         // get the actual voltage and current being supplied
@@ -897,17 +898,8 @@ static void dpsmode_tick(void)
             tick_since_count = get_ticks() - diff;
 
             // calculate amount of power delivered as milli watt hours
-            dpsmode_watthour.value += ((power_actual * 1000.0 / 3600.0f) * secs) / 1000;
-
             // 1000 == 1.0mWh
-            /*
-            if (dpsmode_watthour.value <= 1000000) {
-                dpsmode_watthour.num_decimals = 1;
-            }
-            if (dpsmode_watthour.value >= 1000000) {
-                dpsmode_watthour.num_decimals = 0;
-            }
-            */
+            dpsmode_watthour.value += ((power_actual * 1000.0 / 3600.0f) * secs) / 1000;
         }
 
         // timer enabled, count down
@@ -940,7 +932,7 @@ static void dpsmode_tick(void)
         ((ui_number_t *)third_item)->ui.draw(& ((ui_number_t *)third_item)->ui);
 
     } else {
-        // dpsmode_power.ui.draw(&dpsmode_power.ui);
+        dpsmode_power.ui.draw(&dpsmode_power.ui);
     }
 
     // draw bars on right
@@ -1103,11 +1095,6 @@ void func_dpsmode_init(uui_t *ui)
     number_init(&dpsmode_watthour);
     time_init(&dpsmode_timer);
     number_init(&dpsmode_brightness);
-
-    // third item initialize
-    third_item = &dpsmode_power;
-    third_invalidate = true;
-
 
     uui_add_screen(ui, &dpsmode_screen);
 }
