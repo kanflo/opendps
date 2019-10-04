@@ -674,11 +674,10 @@ static void determine_focused_item(uui_t *ui, int8_t direction) {
     }
 
 
-    if (focus_index >= 2 && focus_index != screen->num_items) {
+    if (focus_index >= 2 && focus_index < screen->num_items) {
         third_item = (ui_item_t *)screen->items[focus_index];
         third_row = focus_index - 2;
         third_invalidate = true;
-        clear_third_region();
     }
 }
 
@@ -940,8 +939,8 @@ static void dpsmode_tick(void)
 }
 
 static void clear_third_region() {
-    tft_fill(0, YPOS_POWER,
-            TFT_WIDTH, FONT_METER_LARGE_MAX_GLYPH_HEIGHT,
+    tft_fill(0, YPOS_POWER - 1,
+            TFT_WIDTH, FONT_METER_LARGE_MAX_GLYPH_HEIGHT + 2,
             BLACK);
 }
 
