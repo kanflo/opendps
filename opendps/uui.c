@@ -102,7 +102,6 @@ void uui_activate(uui_t *ui)
 {
     assert(ui);
     assert(ui->num_screens);
-
     if (ui->num_screens > 0) {
         ui_screen_t *screen = ui->screens[ui->cur_screen];
         /** Find the first focusable item */
@@ -112,13 +111,9 @@ void uui_activate(uui_t *ui)
                 break;
             }
         }
-
         /** @todo: add activation callback for each screen allowing for updating of U/I settings */
-
-        // do not immediately redraw the screen. The next ui tick should do this.
-        // uui_refresh(ui, true);
-        // tft_blit((uint16_t*) screen->icon_data, screen->icon_width, screen->icon_height, XPOS_ICON, 128-screen->icon_height);
-
+        uui_refresh(ui, true);
+        tft_blit((uint16_t*) screen->icon_data, screen->icon_width, screen->icon_height, XPOS_ICON, 128-screen->icon_height);
         if (screen->activated) {
             screen->activated();
         }
@@ -279,7 +274,6 @@ void uui_set_screen(uui_t *ui, uint32_t screen_idx)
     ui->cur_screen = screen_idx;
     ui_screen_t *new_screen = ui->screens[ui->cur_screen];
     assert(new_screen);
-
     if (new_screen != cur_screen) {
 //        cur_screen->enable(false); /** Alway disable current function when switching */
         opendps_update_power_status(false); /** @todo: move */

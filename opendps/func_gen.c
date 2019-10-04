@@ -463,6 +463,10 @@ static void func_changed(ui_icon_t *item)
  */
 static void activated(void)
 {
+    for (uint32_t i = 0; i < gen_screen.num_items; i++) {
+        gen_screen.items[i]->draw(gen_screen.items[i]);
+    }
+
     tft_puts(FONT_FULL_SMALL, "Vout:", 6, 15+FONT_FULL_SMALL_MAX_GLYPH_HEIGHT, 64, 20, WHITE, false);
     tft_puts(FONT_FULL_SMALL, "Freq:", 6, 42+FONT_FULL_SMALL_MAX_GLYPH_HEIGHT, 64, 20, WHITE, false);
     tft_puts(FONT_FULL_SMALL, "Func:", 6, 69+FONT_FULL_SMALL_MAX_GLYPH_HEIGHT, 64, 20, WHITE, false);
