@@ -512,6 +512,7 @@ static void ui_handle_event(event_t event, uint8_t data)
                 uui_handle_screen_event(current_ui, event, data);
             }
             break;
+
         case event_ovp:
             {
 #ifdef CONFIG_OVP_DEBUGGING
@@ -527,10 +528,12 @@ static void ui_handle_event(event_t event, uint8_t data)
                 uui_handle_screen_event(current_ui, event, data);
             }
             break;
+
         case event_button_m1_and_m2: ;
             uint8_t target_screen_id = current_ui == &func_ui ? SETTINGS_UI_ID : FUNC_UI_ID; /** Change between the settings and functional screen */
             opendps_change_screen(target_screen_id);
             break;
+
         case event_button_enable:
 #pragma GCC diagnostic ignored "-Wimplicit-fallthrough"
             write_past_settings();
@@ -629,13 +632,6 @@ static void ui_tick(void)
     static uint64_t last_tft_flash = 0;
     static uint64_t last_lock_flash = 0;
 
-    static uint64_t last = 0;
-    /** Update on the first call and every UI_UPDATE_INTERVAL_MS ms */
-    if (last > 0 && get_ticks() - last < UI_UPDATE_INTERVAL_MS) {
-        return;
-    }
-
-    last = get_ticks();
     uui_tick(current_ui);
     uui_tick(&main_ui);
 
@@ -932,12 +928,22 @@ static void check_master_reset(void)
   */
 static void event_handler(void)
 {
+    static uint64_t last = 0;
+
     while(1) {
         event_t event;
         uint8_t data = 0;
-        if (!event_get(&event, &data)) {
+
+        if ( ! event_get(&event, &data)) {
             hw_longpress_check();
-            ui_tick();
+
+            /** Update on the first call and every UI_UPDATE_INTERVAL_MS ms */
+            if (last <= 0 || get_ticks() - last >= UI_UPDATE_INTERVAL_MS) {
+                ui_tick();
+            }
+
+            last = get_ticks();
+
         } else {
             if (event) {
                 emu_printf(" Event %d 0x%02x\n", event, data);
@@ -954,7 +960,11 @@ static void event_handler(void)
                 default:
                     break;
             }
+
             ui_handle_event(event, data);
+
+            // call ui_tick immediately because event could have caused UI changes
+            ui_tick();
         }
     }
 }
