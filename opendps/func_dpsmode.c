@@ -813,7 +813,7 @@ static void dpsmode_tick(void)
 
     // update brightness if 0 (because it's most likely not set)
     if (dpsmode_brightness.value == 0)
-        dpsmode_brightness.value = hw_get_backlight();
+        dpsmode_brightness.value = hw_get_backlight() / 1.28f;
 
     // power enabled
     if (pwrctl_vout_enabled()) {
@@ -947,7 +947,7 @@ static void dpsmode_tick(void)
 
         // if drawing brightness, show "Brightness:" before value.
         if (third_item == (ui_item_t *)&dpsmode_brightness) {
-            tft_puts(FONT_FULL_SMALL, "Brightness:", 5, YPOS_POWER + (FONT_FULL_SMALL_MAX_GLYPH_HEIGHT << 1) + 5,
+            tft_puts(FONT_FULL_SMALL, "Brightness:", 5, YPOS_POWER + (FONT_FULL_SMALL_MAX_GLYPH_HEIGHT << 1) - 10,
                     FONT_FULL_SMALL_MAX_GLYPH_WIDTH * 12, FONT_FULL_SMALL_MAX_GLYPH_HEIGHT,
                     WHITE, false);
         }
