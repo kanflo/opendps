@@ -550,7 +550,7 @@ static void ui_handle_event(event_t event, uint8_t data)
         case event_rot_left_down:
         case event_rot_right_down:
             uui_handle_screen_event(current_ui, event, data);
-            uui_refresh(current_ui, false);
+            //uui_refresh(current_ui, false);
             break;
 
         case event_rot_left_set:
@@ -563,7 +563,7 @@ static void ui_handle_event(event_t event, uint8_t data)
             }
 
             uui_handle_screen_event(current_ui, event, data);
-            uui_refresh(current_ui, false);
+            //uui_refresh(current_ui, false);
             break;
 
         default:
