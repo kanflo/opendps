@@ -220,12 +220,21 @@ void uui_handle_screen_event(uui_t *ui, event_t event, uint8_t data)
         case event_button_enable:
         case event_ocp:
         case event_ovp:
+
             /** If current screen can be enabled */
             if (screen->enable) {
-                screen->is_enabled = !screen->is_enabled;
+                if (event == event_shutoff) {
+                    // always turn off with shutoff event
+                    screen->is_enabled = false;
+                } else {
+                    // toggle 
+                    screen->is_enabled = ! screen->is_enabled;
+                }
+
                 if (screen->is_enabled && screen->past_save) {
                     screen->past_save(ui->past);
                 }
+
                 screen->enable(screen->is_enabled);
                 opendps_update_power_status(screen->is_enabled); /** @todo: move */
             }

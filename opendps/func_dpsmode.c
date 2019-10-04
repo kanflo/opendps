@@ -944,7 +944,7 @@ static void dpsmode_tick(void)
 
         // if drawing brightness, show "Brightness:" before value.
         if (third_item == (ui_item_t *)&dpsmode_brightness) {
-            tft_puts(FONT_FULL_SMALL, "Brightness:", 5, YPOS_POWER + (FONT_FULL_SMALL_MAX_GLYPH_HEIGHT << 2),
+            tft_puts(FONT_FULL_SMALL, "Brightness:", 5, YPOS_POWER + (FONT_FULL_SMALL_MAX_GLYPH_HEIGHT << 1) + 5,
                     FONT_FULL_SMALL_MAX_GLYPH_WIDTH * 12, FONT_FULL_SMALL_MAX_GLYPH_HEIGHT,
                     WHITE, false);
         }
