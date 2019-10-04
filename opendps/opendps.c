@@ -922,9 +922,8 @@ static void event_handler(void)
             /** Update on the first call and every UI_UPDATE_INTERVAL_MS ms */
             if (last <= 0 || get_ticks() - last >= UI_UPDATE_INTERVAL_MS) {
                 ui_tick();
+                last = get_ticks();
             }
-
-            last = get_ticks();
 
         } else {
             if (event) {
