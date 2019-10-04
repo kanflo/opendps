@@ -493,6 +493,7 @@ static void ui_handle_event(event_t event, uint8_t data)
     if (is_locked) {
         lock_flashing_period = LOCK_FLASHING_PERIOD;
         lock_flash_counter = LOCK_FLASHING_COUNTER;
+        return;
     }
 
     switch(event) {
