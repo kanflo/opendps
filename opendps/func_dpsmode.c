@@ -939,6 +939,12 @@ static void dpsmode_tick(void)
             clear_third_region();
         }
 
+        // if drawing brightness, show "Brightness:" before value.
+        if (third_item == dpsmode_brightness) {
+            tft_puts(FONT_FULL_SMALL, "Brightness:", 5, YPOS_POWER, FONT_FULL_SMALL_MAX_GLYPH_WIDTH * 12, FONT_FULL_SMALL_MAX_GLYPH_HEIGHT, color, false);
+        }
+
+        // draw 3rd item
         ((ui_number_t *)third_item)->ui.draw(& ((ui_number_t *)third_item)->ui);
 
     } else {
