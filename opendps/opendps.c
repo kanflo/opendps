@@ -539,7 +539,7 @@ static void ui_handle_event(event_t event, uint8_t data)
                 // TODO: Show only briefly?
                 lock_flashing_period = LOCK_FLASHING_PERIOD;
                 lock_flash_counter = LOCK_FLASHING_COUNTER;
-                break;
+                return;
             }
 
             break;
