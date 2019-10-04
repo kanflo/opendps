@@ -581,6 +581,7 @@ static bool event(uui_t *ui, event_t event, uint8_t data) {
                     select_mode = true;
                     return false;
                 }
+            }
             break;
 
         default:
