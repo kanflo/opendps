@@ -503,6 +503,9 @@ static bool event(uui_t *ui, event_t event, uint8_t data) {
                 dpsmode_graphics |= CUR_GFX_M2_RECALL;
             }
 
+            // Turn off power
+            event_put(event_shutoff, 0);
+
             return true;
 
         case event_button_sel:
@@ -940,8 +943,10 @@ static void dpsmode_tick(void)
         }
 
         // if drawing brightness, show "Brightness:" before value.
-        if (third_item == dpsmode_brightness) {
-            tft_puts(FONT_FULL_SMALL, "Brightness:", 5, YPOS_POWER, FONT_FULL_SMALL_MAX_GLYPH_WIDTH * 12, FONT_FULL_SMALL_MAX_GLYPH_HEIGHT, color, false);
+        if (third_item == (ui_item_t *)&dpsmode_brightness) {
+            tft_puts(FONT_FULL_SMALL, "Brightness:", 5, YPOS_POWER + (FONT_FULL_SMALL_MAX_GLYPH_HEIGHT << 2),
+                    FONT_FULL_SMALL_MAX_GLYPH_WIDTH * 12, FONT_FULL_SMALL_MAX_GLYPH_HEIGHT,
+                    WHITE, false);
         }
 
         // draw 3rd item
