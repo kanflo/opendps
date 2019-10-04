@@ -54,9 +54,9 @@ void systick_init(void)
   */
 void delay_ms(uint32_t delay)
 {
-	uint32_t start = ticks_lower;
+    uint32_t start = ticks_lower;
 
-	while ((ticks_lower - start) < delay)
+    while ((ticks_lower - start) < delay)
     {}
 }
 
