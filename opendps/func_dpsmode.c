@@ -573,7 +573,7 @@ static bool event(uui_t *ui, event_t event, uint8_t data) {
             }
             break;
 
-        case event_rot_presse:
+        case event_rot_press:
             // pressing rot should focus on 3rd item if not already in select mode
             if (third_item && ! select_mode) {
                 if (((ui_number_t *)third_item)->ui.can_focus) {
