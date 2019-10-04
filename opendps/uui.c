@@ -230,22 +230,6 @@ void uui_handle_screen_event(uui_t *ui, event_t event, uint8_t data)
                 opendps_update_power_status(screen->is_enabled); /** @todo: move */
             }
             break;
-
-        case event_rot_left_m1:
-        case event_rot_right_m1:
-        case event_rot_left_m2:
-        case event_rot_right_m2:
-        case event_rot_left_down:
-        case event_rot_right_down:
-        case event_button_sel_m1:
-        case event_button_sel_m2:
-        case event_shutoff:
-        case event_lock:
-            // do nothing
-            break;
-
-        default:
-            assert(0);
     }
 }
 
