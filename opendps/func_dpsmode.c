@@ -647,6 +647,10 @@ static void activated(void) {
     clear_bars(true);
     clear_third_region();
 
+    // reset any odd modes
+    single_edit_mode = false;
+    select_mode = false;
+
     // reset watthour value when we leave the screen.
     dpsmode_watthour.value = 0;
 }
@@ -944,7 +948,7 @@ static void dpsmode_tick(void)
 
         // if drawing brightness, show "Brightness:" before value.
         if (third_item == (ui_item_t *)&dpsmode_brightness) {
-            tft_puts(FONT_FULL_SMALL, "Brightness:", 5, YPOS_POWER + (FONT_FULL_SMALL_MAX_GLYPH_HEIGHT << 1) - 10,
+            tft_puts(FONT_FULL_SMALL, "Brightness:", 5, YPOS_POWER + (FONT_FULL_SMALL_MAX_GLYPH_HEIGHT << 1) - 7,
                     FONT_FULL_SMALL_MAX_GLYPH_WIDTH * 12, FONT_FULL_SMALL_MAX_GLYPH_HEIGHT,
                     WHITE, false);
         }
