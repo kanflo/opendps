@@ -600,8 +600,6 @@ static bool event(uui_t *ui, event_t event, uint8_t data) {
 
                 // focus on voltage if not already focused
                 if ( ! dpsmode_voltage.ui.has_focus) uui_focus(ui, (ui_item_t*) &dpsmode_voltage);
-                determine_focused_item(ui, 0);
-
             }
             if (event == event_button_m2) {
                 if (select_mode) { 
@@ -610,7 +608,6 @@ static bool event(uui_t *ui, event_t event, uint8_t data) {
                 }
 
                 if ( ! dpsmode_current.ui.has_focus) uui_focus(ui, (ui_item_t*) &dpsmode_current);
-                determine_focused_item(ui, 0);
             }
 
             // otherwise, enter single edit mode
@@ -641,7 +638,7 @@ static bool event(uui_t *ui, event_t event, uint8_t data) {
 
         case event_rot_press:
             // pressing rot should focus on 3rd item if not already in select mode
-            if (third_item && ! select_mode) {
+            if (third_item && ! single_edit_mode && ! select_mode) {
                 if (((ui_number_t *)third_item)->ui.can_focus) {
                     uui_focus(ui, (ui_item_t *)third_item);
                     select_mode = true;
