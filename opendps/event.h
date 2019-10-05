@@ -52,7 +52,8 @@ typedef enum {
     event_ocp,
     event_ovp,
 
-    event_shutoff
+    event_shutoff,
+    event_timer
 } event_t;
 
 typedef enum {

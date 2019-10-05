@@ -587,12 +587,6 @@ static bool event(uui_t *ui, event_t event, uint8_t data) {
             }
             break;
 
-        default:
-            break;
-    }
-
-
-    switch(event) {
         case event_button_m1:
             // if in normal select mode, let parent handle it
             if (select_mode) {
@@ -632,6 +626,17 @@ static bool event(uui_t *ui, event_t event, uint8_t data) {
             }
 
             return false;
+
+        case event_timer:
+            // timer has counted down
+            // show the timer and ensure it's focused
+            third_item = &dpsmode_timer;
+            third_invalidate = true;
+
+            uui_focus(ui, (ui_item_t *)third_item);
+            if (dpsmode_voltage.ui.has_focus) uui_focus(ui, (ui_item_t*) &dpsmode_voltage);
+
+            return true;
 
         default:
             return false;
@@ -927,18 +932,9 @@ static void dpsmode_tick(void)
 
         // timer enabled, count down
         if (saved_t > 0 && dpsmode_timer.value <= 0) {
-            // timer has counted down
-            // show the timer and ensure it's focused
-            uui_focus(ui, (ui_item_t *)third_item);
-            if (dpsmode_voltage.ui.has_focus) uui_focus(ui, (ui_item_t*) &dpsmode_voltage);
-
-            third_item = &dpsmode_timer;
-            third_invalidate = true;
-
-            // power off
-            event_put(event_shutoff, 0);
+            // timer event will cause a power off
+            event_put(event_timer, 0);
         }
-
     }
 
 

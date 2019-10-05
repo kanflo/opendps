@@ -216,6 +216,7 @@ void uui_handle_screen_event(uui_t *ui, event_t event, uint8_t data)
             }
             break;
 
+        case event_timer:
         case event_shutoff:
         case event_button_enable:
         case event_ocp:
