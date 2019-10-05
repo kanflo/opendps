@@ -464,8 +464,7 @@ static void func_changed(ui_icon_t *item)
 static void activated(void)
 {
     /** The screen is different here, let's clear it */
-    // tft_clear();
-    
+    tft_clear();
     for (uint32_t i = 0; i < gen_screen.num_items; i++) {
         gen_screen.items[i]->draw(gen_screen.items[i]);
     }
