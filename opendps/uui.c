@@ -149,7 +149,7 @@ void uui_focus(uui_t *ui, ui_item_t *item) {
 }
 
 
-void uui_handle_screen_event(uui_t *ui, event_t event)
+void uui_handle_screen_event(uui_t *ui, event_t event, uint8_t data)
 {
     assert(ui);
     ui_screen_t *screen = ui->screens[ui->cur_screen];
@@ -172,13 +172,6 @@ void uui_handle_screen_event(uui_t *ui, event_t event)
 
         case event_rot_right_set:
             uui_next_screen(ui);
-            break;
-
-        case event_rot_left_m1:
-        case event_rot_right_m1:
-        case event_rot_left_m2:
-        case event_rot_right_m2:
-            // do nothing
             break;
 
         case event_rot_left:
@@ -223,22 +216,29 @@ void uui_handle_screen_event(uui_t *ui, event_t event)
             }
             break;
 
+        case event_shutoff:
         case event_button_enable:
         case event_ocp:
         case event_ovp:
+
             /** If current screen can be enabled */
             if (screen->enable) {
-                screen->is_enabled = !screen->is_enabled;
+                if (event == event_shutoff) {
+                    // always turn off with shutoff event
+                    screen->is_enabled = false;
+                } else {
+                    // toggle 
+                    screen->is_enabled = ! screen->is_enabled;
+                }
+
                 if (screen->is_enabled && screen->past_save) {
                     screen->past_save(ui->past);
                 }
+
                 screen->enable(screen->is_enabled);
                 opendps_update_power_status(screen->is_enabled); /** @todo: move */
             }
             break;
-
-        default:
-            assert(0);
     }
 }
 

@@ -500,20 +500,9 @@ static void ui_handle_event(event_t event, uint8_t data)
     }
 
     if (is_locked) {
-        switch(event) {
-            case event_button_m1:
-            case event_button_m2:
-            case event_button_sel:
-            case event_rot_press:
-            case event_rot_left:
-            case event_rot_right:
-            case event_button_enable:
-                lock_flashing_period = LOCK_FLASHING_PERIOD;
-                lock_flash_counter = LOCK_FLASHING_COUNTER;
-                return;
-            default:
-                break;
-        }
+        lock_flashing_period = LOCK_FLASHING_PERIOD;
+        lock_flash_counter = LOCK_FLASHING_COUNTER;
+        return;
     }
 
     switch(event) {
@@ -529,9 +518,9 @@ static void ui_handle_event(event_t event, uint8_t data)
 #endif // CONFIG_OCP_DEBUGGING
                 ui_flash(); /** @todo When OCP kicks in, show last I_out on screen */
                 opendps_update_power_status(false);
-                uui_handle_screen_event(current_ui, event);
             }
             break;
+
         case event_ovp:
             {
 #ifdef CONFIG_OVP_DEBUGGING
@@ -544,47 +533,33 @@ static void ui_handle_event(event_t event, uint8_t data)
 #endif // CONFIG_OVP_DEBUGGING
                 ui_flash(); /** @todo When OVP kicks in, show last V_out on screen */
                 opendps_update_power_status(false);
-                uui_handle_screen_event(current_ui, event);
             }
             break;
-        case event_buttom_m1_and_m2: ;
+
+        case event_button_m1_and_m2: ;
             uint8_t target_screen_id = current_ui == &func_ui ? SETTINGS_UI_ID : FUNC_UI_ID; /** Change between the settings and functional screen */
             opendps_change_screen(target_screen_id);
-            break;
-        case event_button_enable:
-#pragma GCC diagnostic ignored "-Wimplicit-fallthrough"
-            write_past_settings();
-            /** Deliberate fallthrough */
-        case event_button_m1:
-        case event_button_m2:
-        case event_button_sel:
-        case event_rot_press:
-        case event_rot_left:
-        case event_rot_right:
-        case event_rot_left_m1:
-        case event_rot_right_m1:
-        case event_rot_left_m2:
-        case event_rot_right_m2:
-            uui_handle_screen_event(current_ui, event);
-            uui_refresh(current_ui, false);
             break;
 
         case event_rot_left_set:
         case event_rot_right_set:
             // lock out set+rotation when power is on
             if (pwrctl_vout_enabled()) {
+                // TODO: Show only briefly?
                 lock_flashing_period = LOCK_FLASHING_PERIOD;
                 lock_flash_counter = LOCK_FLASHING_COUNTER;
-                break;
+                return;
             }
 
-            uui_handle_screen_event(current_ui, event);
-            uui_refresh(current_ui, false);
             break;
 
-        default:
+        case event_button_enable:
+            write_past_settings();
             break;
     }
+
+    uui_handle_screen_event(current_ui, event, data);
+    uui_refresh(current_ui, false);
 }
 
 /**
@@ -597,9 +572,11 @@ void opendps_lock(bool lock)
     if (is_locked != lock) {
         is_locked = lock;
         lock_flashing_period = 0;
+
         if (is_locked) {
             lock_visible = true;
             tft_blit((uint16_t*) gfx_padlock, GFX_PADLOCK_WIDTH, GFX_PADLOCK_HEIGHT, XPOS_LOCK, ui_height-GFX_PADLOCK_HEIGHT);
+
         } else {
             lock_visible = false;
             tft_fill(XPOS_LOCK, ui_height-GFX_PADLOCK_HEIGHT, GFX_PADLOCK_WIDTH, GFX_PADLOCK_HEIGHT, bg_color);
@@ -624,7 +601,7 @@ void opendps_temperature_lock(bool lock)
             tft_clear();
             uui_show(current_ui, false);
             uui_show(&main_ui, false);
-            tft_blit((uint16_t*) gfx_thermometer, GFX_THERMOMETER_WIDTH, GFX_THERMOMETER_HEIGHT, 1+(ui_width-GFX_THERMOMETER_WIDTH)/2, 30);
+            // tft_blit((uint16_t*) gfx_thermometer, GFX_THERMOMETER_WIDTH, GFX_THERMOMETER_HEIGHT, 1+(ui_width-GFX_THERMOMETER_WIDTH)/2, 30);
         } else {
             emu_printf("DPS enabled due to temperature\n");
             tft_clear();
@@ -647,13 +624,6 @@ static void ui_tick(void)
     static uint64_t last_tft_flash = 0;
     static uint64_t last_lock_flash = 0;
 
-    static uint64_t last = 0;
-    /** Update on the first call and every UI_UPDATE_INTERVAL_MS ms */
-    if (last > 0 && get_ticks() - last < UI_UPDATE_INTERVAL_MS) {
-        return;
-    }
-
-    last = get_ticks();
     uui_tick(current_ui);
     uui_tick(&main_ui);
 
@@ -973,12 +943,21 @@ static void check_master_reset(void)
   */
 static void event_handler(void)
 {
+    static uint64_t last = 0;
+
     while(1) {
         event_t event;
         uint8_t data = 0;
-        if (!event_get(&event, &data)) {
+
+        if ( ! event_get(&event, &data)) {
             hw_longpress_check();
-            ui_tick();
+
+            /** Update on the first call and every UI_UPDATE_INTERVAL_MS ms */
+            if (last <= 0 || get_ticks() - last >= UI_UPDATE_INTERVAL_MS) {
+                ui_tick();
+                last = get_ticks();
+            }
+
         } else {
             if (event) {
                 emu_printf(" Event %d 0x%02x\n", event, data);
@@ -995,7 +974,11 @@ static void event_handler(void)
                 default:
                     break;
             }
+
             ui_handle_event(event, data);
+
+            // call ui_tick immediately because event could have caused UI changes
+            ui_tick();
         }
     }
 }

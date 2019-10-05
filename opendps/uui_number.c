@@ -163,6 +163,9 @@ static uint32_t number_draw_width(ui_item_t *_item)
         case unit_watt:
             total_width += max_w;
             break;
+        case unit_percent:
+            total_width += FONT_FULL_SMALL_MAX_GLYPH_WIDTH;
+            break;
         case unit_hertz:
             total_width += 2*FONT_FULL_SMALL_MAX_GLYPH_WIDTH;
             break;
@@ -318,6 +321,9 @@ static void number_draw(ui_item_t *_item)
             break;
         case unit_watt:
             tft_putch(item->font_size, 'W', xpos, _item->y, max_w, h, color, false);
+            break;
+        case unit_percent:
+            tft_puts(FONT_FULL_SMALL, "%", xpos, _item->y + h, FONT_FULL_SMALL_MAX_GLYPH_WIDTH * 2, FONT_FULL_SMALL_MAX_GLYPH_HEIGHT, color, false);
             break;
         default:
             assert(0);
