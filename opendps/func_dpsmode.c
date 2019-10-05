@@ -1007,7 +1007,7 @@ static void draw_bars() {
     // draw timer
     if (dpsmode_graphics & CUR_GFX_TM) {
         // blink the timer icon 
-        if ((get_ticks() >> 9) & 1)
+        if ((get_ticks() % 500) == 0)
             tft_blit((uint16_t*) gfx_tmbar,
                     GFX_TMBAR_WIDTH, GFX_TMBAR_HEIGHT,
                     TFT_WIDTH - GFX_TMBAR_WIDTH,
@@ -1022,7 +1022,7 @@ static void draw_bars() {
     // draw opp
     if (dpsmode_graphics & CUR_GFX_OPP) {
         // blink the opp warning
-        if (((get_ticks() >> 9) & 1) == 0)
+        if ((get_ticks() % 500) == 0)
             tft_blit((uint16_t*) gfx_oppbar,
                     GFX_OPPBAR_WIDTH, GFX_OPPBAR_HEIGHT,
                     TFT_WIDTH - GFX_OPPBAR_WIDTH,
@@ -1036,7 +1036,7 @@ static void draw_bars() {
     // draw pp
     else if (dpsmode_graphics & CUR_GFX_PP) {
         // if timer (or other icons), blink it so it is visible.
-        if (((get_ticks() >> 9) & 1) == 0)
+        if ((get_ticks() % 500) == 0)
             tft_blit((uint16_t*) gfx_ppbar,
                     GFX_PPBAR_WIDTH, GFX_PPBAR_HEIGHT,
                     TFT_WIDTH - GFX_PPBAR_WIDTH,
