@@ -1,4 +1,4 @@
-/** Gfx generated from gfx/png/sin.png */
+/** Gfx generated from `./gen_lookup.py -i gfx/png/sin.png -o sin` */
 
 #include "gfx-sin.h"
 

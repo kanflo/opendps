@@ -1,4 +1,4 @@
-/** Gfx generated from gfx\png\wifi.png */
+/** Gfx generated from `./gen_lookup.py -i gfx/png/wifi.png -o wifi` */
 
 #ifndef __GFX_WIFI_H__
 #define __GFX_WIFI_H__

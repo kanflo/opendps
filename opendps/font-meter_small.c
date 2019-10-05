@@ -1,4 +1,4 @@
-/** Font generated from gfx/Ubuntu-C.ttf 18pt */
+/** Font generated from `./gen_lookup.py -f gfx/Ubuntu-C.ttf -s 18 -o meter_small` */
 
 #include "font-meter_small.h"
 

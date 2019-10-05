@@ -180,7 +180,7 @@ def convert_font_to_c(font_fname, characters, font_size, font_spacing, output_fi
     # Generate the C source file
     font_source_file = open(font_source_filename, "w")
 
-    font_source_file.write("/** Font generated from %s %dpt */\n\n" % (font_fname, font_size))
+    font_source_file.write("/** Font generated from `%s` */\n\n" % (" ".join(sys.argv)))
     font_source_file.write("#include \"%s\"\n\n" % (font_header_filename))
     font_source_file.write("const uint32_t font_%s_height = %d;\n" % (output_filename, character_heights))
 
@@ -260,7 +260,7 @@ def convert_font_to_c(font_fname, characters, font_size, font_spacing, output_fi
     # Generate the C header file
     font_header_file = open(font_header_filename, "w")
 
-    font_header_file.write("/** Font generated from %s %dpt */\n\n" % (font_fname, font_size))
+    font_header_file.write("/** Font generated from `%s` */\n\n" % (" ".join(sys.argv)))
 
     font_header_file.write("#ifndef __FONT_%s_H__\n" % (output_filename.upper()))
     font_header_file.write("#define __FONT_%s_H__\n\n" % (output_filename.upper()))
@@ -311,7 +311,7 @@ def convert_graphic_to_c(graphic_fname, output_filename):
     # Generate the C source file
     gfx_source_file = open(gfx_source_filename, "w")
 
-    gfx_source_file.write("/** Gfx generated from %s */\n\n" % (graphic_fname))
+    gfx_source_file.write("/** Gfx generated from `%s` */\n\n" % (" ".join(sys.argv)))
 
     gfx_source_file.write("#include \"%s\"\n\n" % (gfx_header_filename))
 
@@ -332,7 +332,7 @@ def convert_graphic_to_c(graphic_fname, output_filename):
     # Generate the C header file
     gfx_header_file = open(gfx_header_filename, "w")
 
-    gfx_header_file.write("/** Gfx generated from %s */\n\n" % (graphic_fname))
+    gfx_header_file.write("/** Gfx generated from `%s` */\n\n" % (" ".join(sys.argv)))
 
     gfx_header_file.write("#ifndef __GFX_%s_H__\n" % (output_filename.upper()))
     gfx_header_file.write("#define __GFX_%s_H__\n\n" % (output_filename.upper()))

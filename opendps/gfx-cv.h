@@ -1,4 +1,4 @@
-/** Gfx generated from gfx\png\cv.png */
+/** Gfx generated from `./gen_lookup.py -i gfx/png/cv.png -o cv` */
 
 #ifndef __GFX_CV_H__
 #define __GFX_CV_H__

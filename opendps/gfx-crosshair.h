@@ -1,4 +1,4 @@
-/** Gfx generated from gfx\png\crosshair.png */
+/** Gfx generated from `./gen_lookup.py -i gfx/png/crosshair.png -o crosshair` */
 
 #ifndef __GFX_CROSSHAIR_H__
 #define __GFX_CROSSHAIR_H__

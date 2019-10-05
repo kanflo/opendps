@@ -1,4 +1,4 @@
-/** Font generated from gfx/ProggyClean.ttf 16pt */
+/** Font generated from `./gen_lookup.py -f gfx/ProggyClean.ttf -s 16 -o full_small -a` */
 
 #include "font-full_small.h"
 
