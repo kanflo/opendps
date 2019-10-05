@@ -648,15 +648,19 @@ static bool event(uui_t *ui, event_t event, uint8_t data) {
             break;
 
 
+        case event_opp:
+            // opp mode
+            if ( ! single_edit_mode && ! select_mode) {
+                third_item = &dpsmode_power;
+                third_invalidate = true;
+            }
+
+            // let uui also handle event_opp to turn off power
+            return false;
+
         case event_timer:
             // timer has counted down to zero
-            // Ensure that the timer is focused but not selected so it is obvious why power stopped
-            // leave any edit modes
             if ( ! single_edit_mode && ! select_mode) {
-                uui_focus(ui, (ui_item_t *)third_item);
-                if (((ui_number_t *)third_item)->ui.has_focus) uui_focus(ui, (ui_item_t *)third_item);
-                determine_focused_item(ui, 0);
-
                 third_item = &dpsmode_timer;
                 third_invalidate = true;
             }
@@ -914,7 +918,7 @@ static void dpsmode_tick(void)
             dpsmode_graphics &= ~CUR_GFX_TM;
 
             // power off
-            event_put(event_shutoff, 0);
+            event_put(event_opp, 0);
         }
 
         // over 80% power (if defined, or absolute maximum), show warning

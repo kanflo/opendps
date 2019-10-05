@@ -221,6 +221,7 @@ void uui_handle_screen_event(uui_t *ui, event_t event, uint8_t data)
         case event_button_enable:
         case event_ocp:
         case event_ovp:
+        case event_opp:
 
             /** If current screen can be enabled */
             if (screen->enable) {
