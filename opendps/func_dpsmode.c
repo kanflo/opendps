@@ -473,6 +473,14 @@ static void timer_changed(ui_time_t *item) {
     dpsmode_graphics &= ~CUR_GFX_M1_RECALL;
     dpsmode_graphics &= ~CUR_GFX_M2_RECALL;
 
+    if (pwrctl_vout_enabled()) {
+        if (saved_t > 0 && dpsmode_timer.value <= 0) {
+            // fire a event_timer event to stop power
+            event_put(event_timer, 0);
+        }
+        return;
+    }
+
     // update saved timer value
     saved_t = item->value;
 }
@@ -648,9 +656,10 @@ static bool event(uui_t *ui, event_t event, uint8_t data) {
             third_invalidate = true;
 
             uui_focus(ui, (ui_item_t *)third_item);
-            if (dpsmode_voltage.ui.has_focus) uui_focus(ui, (ui_item_t*) &dpsmode_voltage);
+            if ((ui_item_t *)third_item.ui.has_focus) uui_focus(ui, (ui_item_t*) &third_item);
 
-            return true;
+            // let uui also handle event_timer to turn off power
+            return false;
 
         default:
             return false;
