@@ -473,12 +473,7 @@ static void timer_changed(ui_time_t *item) {
     dpsmode_graphics &= ~CUR_GFX_M1_RECALL;
     dpsmode_graphics &= ~CUR_GFX_M2_RECALL;
 
-    // If timer changed from non-zero to zero, trigger timer event to stop power
-    if (saved_t > 0 && item->value <= 0) {
-        event_put(event_timer, 0);
-    }
-
-    // update timer value
+    // update saved timer value
     saved_t = item->value;
 }
 
