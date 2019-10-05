@@ -2,7 +2,7 @@
  * The MIT License (MIT)
  *
  * Copyright (c) 2019 Johan Kanflo (github.com/kanflo)
- * Modifications made by Leo Leung <leo@steamr.com>
+ *                    Leo Leung <leo@steamr.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -422,6 +422,7 @@ static void dpsmode_enable(bool enabled)
  */
 static void voltage_changed(ui_number_t *item)
 {
+    // clear recall as values no longer match
     dpsmode_graphics &= ~CUR_GFX_M1_RECALL;
     dpsmode_graphics &= ~CUR_GFX_M2_RECALL;
 
@@ -436,6 +437,7 @@ static void voltage_changed(ui_number_t *item)
  */
 static void current_changed(ui_number_t *item)
 {
+    // clear recall as values no longer match
     dpsmode_graphics &= ~CUR_GFX_M1_RECALL;
     dpsmode_graphics &= ~CUR_GFX_M2_RECALL;
 
@@ -450,11 +452,11 @@ static void current_changed(ui_number_t *item)
  */
 static void power_changed(ui_number_t *item)
 {
+    // clear recall as values no longer match
     dpsmode_graphics &= ~CUR_GFX_M1_RECALL;
     dpsmode_graphics &= ~CUR_GFX_M2_RECALL;
     
     saved_p = item->value;
-    // (void) pwrctl_set_iout(item->value);
 }
 
 /**
@@ -467,15 +469,22 @@ static void watthour_changed(ui_number_t *item) {
 }
 
 static void timer_changed(ui_time_t *item) {
+    // clear recall as values no longer match
     dpsmode_graphics &= ~CUR_GFX_M1_RECALL;
     dpsmode_graphics &= ~CUR_GFX_M2_RECALL;
 
-    // do nothing yet...
+    // If timer changed from non-zero to zero, trigger timer event to stop power
+    if (saved_t > 0 && item->value <= 0) {
+        event_put(event_timer, 0);
+    }
+
+    // update timer value
     saved_t = item->value;
 }
 
 static void brightness_changed(ui_number_t *item) {
     // update brightness
+    // 100% = 128, 0% = 0
     hw_set_backlight(item->value * 1.28f);
 }
 
@@ -516,6 +525,9 @@ static bool event(uui_t *ui, event_t event, uint8_t data) {
                 // toggle focus on anything that is in focus (to unfocus)
                 if (dpsmode_voltage.ui.has_focus) uui_focus(ui, (ui_item_t*) &dpsmode_voltage);
                 if (dpsmode_current.ui.has_focus) uui_focus(ui, (ui_item_t*) &dpsmode_current);
+
+                // do nothing in uui
+                return true;
             }
 
             // toggle select mode, so parent can deal with other UI elements
@@ -531,7 +543,6 @@ static bool event(uui_t *ui, event_t event, uint8_t data) {
 
         case event_button_m1:
         case event_button_m2:
-
             // do recall on press_long event_button_m1 or event_button_m2
             if (event == event_button_m1 && data == press_long) {
                 saved_v = recall_v[0];
@@ -636,8 +647,8 @@ static bool event(uui_t *ui, event_t event, uint8_t data) {
 
 
         case event_timer:
-            // timer has counted down
-            // show the timer and ensure it's focused
+            // timer has counted down to zero
+            // Ensure that the timer is focused so it is obvious why power stopped
             third_item = &dpsmode_timer;
             third_invalidate = true;
 
@@ -938,9 +949,9 @@ static void dpsmode_tick(void)
             dpsmode_watthour.value += ((power_actual * 1000.0 / 3600.0f) * secs) / 1000;
         }
 
-        // timer enabled, count down
+        // timer started with a non-zero value and it has counted to 0.
         if (saved_t > 0 && dpsmode_timer.value <= 0) {
-            // timer event will cause a power off
+            // fire a event_timer event to stop power
             event_put(event_timer, 0);
         }
     }
