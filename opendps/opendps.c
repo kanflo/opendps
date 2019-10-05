@@ -88,7 +88,7 @@
 #endif // CONFIG_SPLASH_SCREEN
 
 /** How ofter we update the measurements in the UI (ms) */
-#define UI_UPDATE_INTERVAL_MS  (100)
+#define UI_UPDATE_INTERVAL_MS  (250)
 
 /** Timeout for waiting for wifi connction (ms) */
 #define WIFI_CONNECT_TIMEOUT  (10000)
@@ -520,7 +520,6 @@ static void ui_handle_event(event_t event, uint8_t data)
                 opendps_update_power_status(false);
             }
             break;
-
         case event_ovp:
             {
 #ifdef CONFIG_OVP_DEBUGGING
@@ -535,8 +534,7 @@ static void ui_handle_event(event_t event, uint8_t data)
                 opendps_update_power_status(false);
             }
             break;
-
-        case event_button_m1_and_m2: ;
+        case event_buttom_m1_and_m2:
             uint8_t target_screen_id = current_ui == &func_ui ? SETTINGS_UI_ID : FUNC_UI_ID; /** Change between the settings and functional screen */
             opendps_change_screen(target_screen_id);
             break;
@@ -551,14 +549,13 @@ static void ui_handle_event(event_t event, uint8_t data)
                 return;
             }
 
-            break;
-
         case event_button_enable:
             write_past_settings();
+        default:
             break;
     }
 
-    uui_handle_screen_event(current_ui, event, data);
+    uui_handle_screen_event(current_ui, event);
     uui_refresh(current_ui, false);
 }
 
@@ -572,11 +569,9 @@ void opendps_lock(bool lock)
     if (is_locked != lock) {
         is_locked = lock;
         lock_flashing_period = 0;
-
         if (is_locked) {
             lock_visible = true;
             tft_blit((uint16_t*) gfx_padlock, GFX_PADLOCK_WIDTH, GFX_PADLOCK_HEIGHT, XPOS_LOCK, ui_height-GFX_PADLOCK_HEIGHT);
-
         } else {
             lock_visible = false;
             tft_fill(XPOS_LOCK, ui_height-GFX_PADLOCK_HEIGHT, GFX_PADLOCK_WIDTH, GFX_PADLOCK_HEIGHT, bg_color);
@@ -601,7 +596,7 @@ void opendps_temperature_lock(bool lock)
             tft_clear();
             uui_show(current_ui, false);
             uui_show(&main_ui, false);
-            // tft_blit((uint16_t*) gfx_thermometer, GFX_THERMOMETER_WIDTH, GFX_THERMOMETER_HEIGHT, 1+(ui_width-GFX_THERMOMETER_WIDTH)/2, 30);
+            tft_blit((uint16_t*) gfx_thermometer, GFX_THERMOMETER_WIDTH, GFX_THERMOMETER_HEIGHT, 1+(ui_width-GFX_THERMOMETER_WIDTH)/2, 30);
         } else {
             emu_printf("DPS enabled due to temperature\n");
             tft_clear();
@@ -948,16 +943,14 @@ static void event_handler(void)
     while(1) {
         event_t event;
         uint8_t data = 0;
-
-        if ( ! event_get(&event, &data)) {
+        if (!event_get(&event, &data)) {
             hw_longpress_check();
 
-            /** Update on the first call and every UI_UPDATE_INTERVAL_MS ms */
+            // update every UI_UPDATE_INTERVAL_MS
             if (last <= 0 || get_ticks() - last >= UI_UPDATE_INTERVAL_MS) {
                 ui_tick();
                 last = get_ticks();
             }
-
         } else {
             if (event) {
                 emu_printf(" Event %d 0x%02x\n", event, data);
@@ -974,10 +967,8 @@ static void event_handler(void)
                 default:
                     break;
             }
-
             ui_handle_event(event, data);
-
-            // call ui_tick immediately because event could have caused UI changes
+            // update UI immediately on event
             ui_tick();
         }
     }

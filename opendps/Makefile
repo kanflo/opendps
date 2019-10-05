@@ -115,14 +115,6 @@ OBJS = \
     gfx-crosshair.o \
     gfx-cv.o \
     gfx-cl.o \
-    gfx-iconpower.o \
-    gfx-cvbar.o \
-    gfx-ccbar.o \
-    gfx-ppbar.o \
-    gfx-oppbar.o \
-    gfx-tmbar.o \
-    gfx-m1bar.o \
-    gfx-m2bar.o \
     gfx-padlock.o \
     gfx-thermometer.o \
     gfx-wifi.o \
@@ -164,7 +156,7 @@ endif
 
 ifeq ($(DPSMODE_ENABLE),1)
 	CFLAGS +=-DCONFIG_DPSMODE_ENABLE
-	OBJS += func_dpsmode.o
+	OBJS += func_dpsmode.o gfx-cvbar.o gfx-ccbar.o gfx-ppbar.o gfx-oppbar.o gfx-tmbar.o gfx-m1bar.o gfx-m2bar.o gfx-iconpower.o
 endif
 
 ifeq ($(FUNCGEN_ENABLE),1)
