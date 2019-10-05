@@ -550,6 +550,7 @@ static void ui_handle_event(event_t event, uint8_t data)
     }
 
     uui_handle_screen_event(current_ui, event, data);
+	uui_refresh(current_ui, false);
 }
 
 /**

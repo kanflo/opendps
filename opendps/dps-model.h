@@ -60,11 +60,12 @@
   #define CONFIG_DPS_MAX_CURRENT (5000)
  #endif
  #define ADC_CHA_IOUT_GOLDEN_VALUE  (0x45)
- #define A_ADC_K (float) 1.71083908618961f
- #define A_ADC_C (float) -120.124411804613f
+ #define A_ADC_K (float) 1.7068604363612f
+ #define A_ADC_C (float) -127.302771802896f
 
- #define A_DAC_K (float) 0.647948164146868f
- #define A_DAC_C (float) 278.025917926566f
+
+ #define A_DAC_K (float) 0.65093572009764f
+ #define A_DAC_C (float) 271.440195280716f
 
  #define V_DAC_K (float) 0.076447899114725f
  #define V_DAC_C (float) 3.22404026358549f
