@@ -64,6 +64,7 @@ typedef enum {
     unit_ampere,
     unit_volt,
     unit_watt,
+    unit_watthour,
     unit_second,
     unit_hertz,
     unit_furlong,
@@ -91,6 +92,7 @@ typedef enum {
 typedef enum {
     ui_item_number, /** A control for setting a value (ui_number_t) */
     ui_item_icon, /** A control for showing a icon (ui_icon_t) */
+    ui_item_time, /** A control for showing time (ui_time_t) */
     ui_item_last = 0xff
 } ui_item_type_t;
 

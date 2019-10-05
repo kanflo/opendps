@@ -166,6 +166,9 @@ static uint32_t number_draw_width(ui_item_t *_item)
         case unit_hertz:
             total_width += 2*FONT_FULL_SMALL_MAX_GLYPH_WIDTH;
             break;
+        case unit_watthour:
+            total_width += 3*FONT_FULL_SMALL_MAX_GLYPH_WIDTH;
+            break;
         default:
             assert(0);
     }
@@ -241,7 +244,7 @@ static void number_draw(ui_item_t *_item)
         bool highlight = _item->has_focus && item->cur_digit == cur_digit;
         uint8_t digit = item->value / my_pow(10, (item->si_prefix * -1) + i) % 10;
 
-        if (!digit /** If current digit is a 0 */
+        if ( ! digit /** If current digit is a 0 */
             && !_item->has_focus /** and its not in focus (selected) */
             && cur_digit != item->num_decimals /** to prevent 0.123 becoming .123 */
             && my_pow(10, cur_digit + (item->si_prefix * -1)) > (uint32_t) item->value) /** to prevent 4023 becoming 4 23 */
@@ -258,6 +261,7 @@ static void number_draw(ui_item_t *_item)
         }
         else
         {
+
             if (spacing > 1) /** Dont frame tiny fonts */
             {
                 if (highlight) /** Draw an extra pixel wide border around the highlighted item */
@@ -308,6 +312,10 @@ static void number_draw(ui_item_t *_item)
         case unit_hertz:
             tft_puts(FONT_FULL_SMALL, "Hz", xpos, _item->y + h, FONT_FULL_SMALL_MAX_GLYPH_WIDTH * 2, FONT_FULL_SMALL_MAX_GLYPH_HEIGHT, color, false);
             break;
+        case unit_watthour:
+            // units here are milliwatt hours
+            tft_puts(FONT_FULL_SMALL, "mWh", xpos, _item->y + h, FONT_FULL_SMALL_MAX_GLYPH_WIDTH * 3, FONT_FULL_SMALL_MAX_GLYPH_HEIGHT, color, false);
+            break;
         case unit_watt:
             tft_putch(item->font_size, 'W', xpos, _item->y, max_w, h, color, false);
             break;
@@ -328,6 +336,6 @@ void number_init(ui_number_t *item)
     item->ui.got_event = &number_got_event;
     item->ui.get_value = &number_get_value;
     item->ui.draw = &number_draw;
-    item->cur_digit = item->num_digits + item->num_decimals - 1; /** Most signinficant digit */
+    item->cur_digit = item->num_decimals; // edit least significant digit first
     item->ui.needs_redraw = true;
 }

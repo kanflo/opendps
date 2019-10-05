@@ -92,6 +92,7 @@ static volatile bool set_skip = false;
 static volatile bool m1_pressed = false;
 static volatile bool m2_pressed = false;
 static volatile bool m1_and_m2_pressed = false;
+static volatile bool rot_turned = false;
 
 #define DEBOUNCE_TIME_MS    (30)
 
@@ -866,8 +867,13 @@ void BUTTON_M1_isr(void)
     if (falling) {
         if (is_bouncing()) return;
         m1_pressed = true;
+
+        // do not fire button if rot rotated while down
+        rot_turned = false;
+
         if (m2_pressed)
             m1_and_m2_pressed = true;
+
         exti_set_trigger(BUTTON_M1_EXTI, EXTI_TRIGGER_RISING);
     } else {
         m1_pressed = false;
@@ -877,7 +883,7 @@ void BUTTON_M1_isr(void)
                 m1_and_m2_pressed = false;
                 event_put(event_buttom_m1_and_m2, press_short);
             } else {
-                event_put(event_button_m1, press_short);
+                if ( ! rot_turned) event_put(event_button_m1, press_short);
             }
         }
 
@@ -897,6 +903,10 @@ void BUTTON_M2_isr(void)
     if (falling) {
         if (is_bouncing()) return;
         m2_pressed = true;
+
+        // do not fire button if rot rotated while down
+        rot_turned = false;
+
         if (m1_pressed)
             m1_and_m2_pressed = true;
         exti_set_trigger(BUTTON_M2_EXTI, EXTI_TRIGGER_RISING);
@@ -908,7 +918,7 @@ void BUTTON_M2_isr(void)
                 m1_and_m2_pressed = false;
                 event_put(event_buttom_m1_and_m2, press_short);
             } else {
-                event_put(event_button_m2, press_short);
+                if ( ! rot_turned) event_put(event_button_m2, press_short);
             }
         }
 
@@ -962,6 +972,8 @@ void BUTTON_ROTARY_isr(void)
         exti_reset_request(BUTTON_ROT_A_EXTI);
         bool a = (((uint16_t) GPIO_IDR(BUTTON_ROT_A_PORT)) & BUTTON_ROT_A_PIN) ? 1 : 0; // Slightly faster than gpio_get(...)
         bool b = (((uint16_t) GPIO_IDR(BUTTON_ROT_B_PORT)) & BUTTON_ROT_B_PIN) ? 1 : 0;
+        rot_turned = true;
+
         if (a == b) {
             if (set_pressed) {
                 set_skip = true;
@@ -980,9 +992,9 @@ void BUTTON_ROTARY_isr(void)
                 (void) longpress_end();
                 event_put(event_rot_right_set, press_short);
             } else if (m1_pressed) {
-                event_put(event_rot_right, press_short);
+                event_put(event_rot_right_m1, press_short);
             } else if (m2_pressed) {
-                event_put(event_rot_right, press_short);
+                event_put(event_rot_right_m2, press_short);
             } else {
                 event_put(event_rot_right, press_short);
             }

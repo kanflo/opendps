@@ -93,6 +93,7 @@ OBJS = \
     crc16.o \
     uui.o \
     uui_number.o \
+    uui_time.o \
     func_cv.o \
     settings_calibration.o \
     hw.o \
@@ -119,6 +120,7 @@ OBJS = \
     gfx-ccbar.o \
     gfx-ppbar.o \
     gfx-oppbar.o \
+    gfx-tmbar.o \
     gfx-padlock.o \
     gfx-thermometer.o \
     gfx-wifi.o \
