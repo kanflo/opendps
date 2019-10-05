@@ -250,7 +250,7 @@ ui_number_t dpsmode_brightness = {
     .pad_dot = false,
     .color = WHITE,
     .value = 0,
-    .min = 0,
+    .min = 1,
     .max = 100,
     .si_prefix = si_none, // percentage, so 0-100
     .num_digits = 3,
@@ -698,6 +698,11 @@ static void determine_focused_item(uui_t *ui, int8_t direction) {
         third_item = (ui_item_t *)screen->items[focus_index];
         third_row = focus_index - 2;
         third_invalidate = true;
+    } else if (focus_index == 1) {
+        // because timer can change the screen's focused item, but not the screen's cur_item
+        // when moving to the 2nd item, both the timer and the last 3rd item are displayed
+        // invalidate this case to ensure this does not happen
+        third_invalidate = true;
     }
 }
 
@@ -923,7 +928,10 @@ static void dpsmode_tick(void)
         // timer enabled, count down
         if (saved_t > 0 && dpsmode_timer.value <= 0) {
             // timer has counted down
-            // show the timer
+            // show the timer and ensure it's focused
+            uui_focus(ui, (ui_item_t *)third_item);
+            if (dpsmode_voltage.ui.has_focus) uui_focus(ui, (ui_item_t*) &dpsmode_voltage);
+
             third_item = &dpsmode_timer;
             third_invalidate = true;
 
@@ -1007,7 +1015,7 @@ static void draw_bars() {
     // draw timer
     if (dpsmode_graphics & CUR_GFX_TM) {
         // blink the timer icon 
-        if ((get_ticks() % 500) == 0)
+        if ((get_ticks() % 2000) <= 1000)
             tft_blit((uint16_t*) gfx_tmbar,
                     GFX_TMBAR_WIDTH, GFX_TMBAR_HEIGHT,
                     TFT_WIDTH - GFX_TMBAR_WIDTH,
@@ -1022,7 +1030,7 @@ static void draw_bars() {
     // draw opp
     if (dpsmode_graphics & CUR_GFX_OPP) {
         // blink the opp warning
-        if ((get_ticks() % 500) == 0)
+        if ((get_ticks() % 2000) > 1000)
             tft_blit((uint16_t*) gfx_oppbar,
                     GFX_OPPBAR_WIDTH, GFX_OPPBAR_HEIGHT,
                     TFT_WIDTH - GFX_OPPBAR_WIDTH,
@@ -1036,7 +1044,7 @@ static void draw_bars() {
     // draw pp
     else if (dpsmode_graphics & CUR_GFX_PP) {
         // if timer (or other icons), blink it so it is visible.
-        if ((get_ticks() % 500) == 0)
+        if ((get_ticks() % 2000) > 1000)
             tft_blit((uint16_t*) gfx_ppbar,
                     GFX_PPBAR_WIDTH, GFX_PPBAR_HEIGHT,
                     TFT_WIDTH - GFX_PPBAR_WIDTH,
