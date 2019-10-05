@@ -509,6 +509,26 @@ static bool event(uui_t *ui, event_t event, uint8_t data) {
             return true;
 
         case event_button_sel:
+            // leave single edit mode on any button press
+            if (single_edit_mode) {
+                single_edit_mode = false;
+
+                // toggle focus on anything that is in focus (to unfocus)
+                if (dpsmode_voltage.ui.has_focus) uui_focus(ui, (ui_item_t*) &dpsmode_voltage);
+                if (dpsmode_current.ui.has_focus) uui_focus(ui, (ui_item_t*) &dpsmode_current);
+            }
+
+            // toggle select mode, so parent can deal with other UI elements
+            // keep track, so this screen will not do anything until we leave this mode
+            select_mode = ! select_mode;
+
+            if (select_mode) { 
+                determine_focused_item(ui, 0);
+                return false;
+            }
+
+            return false;
+
         case event_button_m1:
         case event_button_m2:
 
@@ -527,6 +547,7 @@ static bool event(uui_t *ui, event_t event, uint8_t data) {
                 dpsmode_graphics |= CUR_GFX_M1_RECALL;
                 return true;
             }
+
             if (event == event_button_m2 && data == press_long) {
                 saved_v = recall_v[1];
                 saved_i = recall_i[1];
@@ -542,7 +563,6 @@ static bool event(uui_t *ui, event_t event, uint8_t data) {
                 return true;
             }
 
-
             // leave single edit mode on any button press
             if (single_edit_mode) {
                 single_edit_mode = false;
@@ -550,11 +570,38 @@ static bool event(uui_t *ui, event_t event, uint8_t data) {
                 // toggle focus on anything that is in focus (to unfocus)
                 if (dpsmode_voltage.ui.has_focus) uui_focus(ui, (ui_item_t*) &dpsmode_voltage);
                 if (dpsmode_current.ui.has_focus) uui_focus(ui, (ui_item_t*) &dpsmode_current);
+
                 return true;
             }
 
+            // for either m1/m2 buttons:
+            if (event == event_button_m1) {
+                // if in normal select mode, let parent handle it
+                if (select_mode) {
+                    // third item focused may have changed
+                    determine_focused_item(ui, -1);
 
-            break;
+                    return false;
+                }
+
+                // focus on voltage if not already focused
+                if ( ! dpsmode_voltage.ui.has_focus) uui_focus(ui, (ui_item_t*) &dpsmode_voltage);
+
+            }
+            if (event == event_button_m2) {
+                if (select_mode) { 
+                    determine_focused_item(ui, 1);
+                    return false;
+                }
+
+                if ( ! dpsmode_current.ui.has_focus) uui_focus(ui, (ui_item_t*) &dpsmode_current);
+            }
+
+            // otherwise, enter single edit mode
+            single_edit_mode = true;
+
+            // we handled it, parent should do nothing
+            return true;
 
         case event_rot_left_down:
         case event_rot_right_down:
@@ -587,45 +634,6 @@ static bool event(uui_t *ui, event_t event, uint8_t data) {
             }
             break;
 
-        case event_button_m1:
-            // if in normal select mode, let parent handle it
-            if (select_mode) {
-                // third item focused may have changed
-                determine_focused_item(ui, -1);
-
-                return false;
-            }
-
-            // otherwise, enter single edit mode
-            single_edit_mode = true;
-
-            // focus on voltage if not already focused
-            if ( ! dpsmode_voltage.ui.has_focus) uui_focus(ui, (ui_item_t*) &dpsmode_voltage);
-
-            // we handled it, parent should do nothing
-            return true;
-
-        case event_button_m2:
-            if (select_mode) { 
-                determine_focused_item(ui, 1);
-                return false;
-            }
-
-            single_edit_mode = true;
-            if ( ! dpsmode_current.ui.has_focus) uui_focus(ui, (ui_item_t*) &dpsmode_current);
-            return true;
-
-        case event_button_sel:
-            // toggle select mode, so parent can deal with other UI elements
-            // keep track, so this screen will not do anything until we leave this mode
-            select_mode = ! select_mode;
-
-            if (select_mode) { 
-                determine_focused_item(ui, 0);
-                return false;
-            }
-
-            return false;
 
         case event_timer:
             // timer has counted down
