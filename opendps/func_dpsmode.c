@@ -600,6 +600,7 @@ static bool event(uui_t *ui, event_t event, uint8_t data) {
 
                 // focus on voltage if not already focused
                 if ( ! dpsmode_voltage.ui.has_focus) uui_focus(ui, (ui_item_t*) &dpsmode_voltage);
+                determine_focused_item(ui, 0);
 
             }
             if (event == event_button_m2) {
@@ -609,6 +610,7 @@ static bool event(uui_t *ui, event_t event, uint8_t data) {
                 }
 
                 if ( ! dpsmode_current.ui.has_focus) uui_focus(ui, (ui_item_t*) &dpsmode_current);
+                determine_focused_item(ui, 0);
             }
 
             // otherwise, enter single edit mode
@@ -651,12 +653,16 @@ static bool event(uui_t *ui, event_t event, uint8_t data) {
 
         case event_timer:
             // timer has counted down to zero
-            // Ensure that the timer is focused so it is obvious why power stopped
-            third_item = &dpsmode_timer;
-            third_invalidate = true;
+            // Ensure that the timer is focused but not selected so it is obvious why power stopped
+            // leave any edit modes
+            if ( ! single_edit_mode && ! select_mode) {
+                uui_focus(ui, (ui_item_t *)third_item);
+                if (((ui_number_t *)third_item)->ui.has_focus) uui_focus(ui, (ui_item_t *)third_item);
+                determine_focused_item(ui, 0);
 
-            uui_focus(ui, (ui_item_t *)third_item);
-            if ((ui_item_t *)third_item.ui.has_focus) uui_focus(ui, (ui_item_t*) &third_item);
+                third_item = &dpsmode_timer;
+                third_invalidate = true;
+            }
 
             // let uui also handle event_timer to turn off power
             return false;
