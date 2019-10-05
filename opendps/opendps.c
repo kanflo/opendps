@@ -534,7 +534,7 @@ static void ui_handle_event(event_t event, uint8_t data)
                 opendps_update_power_status(false);
             }
             break;
-        case event_buttom_m1_and_m2:
+        case event_button_m1_and_m2:
             uint8_t target_screen_id = current_ui == &func_ui ? SETTINGS_UI_ID : FUNC_UI_ID; /** Change between the settings and functional screen */
             opendps_change_screen(target_screen_id);
             break;
@@ -555,7 +555,7 @@ static void ui_handle_event(event_t event, uint8_t data)
             break;
     }
 
-    uui_handle_screen_event(current_ui, event);
+    uui_handle_screen_event(current_ui, event, data);
     uui_refresh(current_ui, false);
 }
 
