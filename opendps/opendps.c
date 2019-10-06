@@ -941,7 +941,7 @@ static void write_past_settings(void)
     }
 
     // save the update interval value
-    if ( ! past_write_unit(past, past_UPDATE_INTERVAL, (void*) &opendps_update_interval, sizeof(opendps_update_interval))) {
+    if ( ! past_write_unit(&g_past, past_UPDATE_INTERVAL, (void*) &opendps_update_interval, sizeof(opendps_update_interval))) {
         dbg_printf("Error: past write inv failed!\n");
     }
 
