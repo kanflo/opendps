@@ -48,6 +48,13 @@ extern float vin_adc_c_coef;
   */
 void pwrctl_init(past_t *past);
 
+
+/**
+  * @brief Saves past data
+  * @retval none
+  */
+void pwrctl_past_save(past_t *past);
+
 /**
   * @brief Set voltage output
   * @param value_mv voltage in millivolt

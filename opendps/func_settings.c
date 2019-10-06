@@ -37,6 +37,7 @@
 #include "font-full_small.h"
 #include "opendps.h"
 #include "gfx-crosshair.h"
+#include "pastunits.h"
 
 
 #define SCREEN_ID  (7)
@@ -48,6 +49,7 @@
 
 static void settings_enable(bool _enable);
 static void settings_tick(void);
+static void settings_reset(void);
 
 static void past_save(past_t *past);
 static void past_restore(past_t *past);
@@ -160,7 +162,7 @@ typedef int32_t (*get_func)();
 #define PAGES 3 // 12 / 5  = 3 pages worth
 #define ROW_HEIGHT 20
 #define FIELD_Y_OFFSET 0 // 15
-#define FIELD_X_OFFSET 64 // half of screen
+#define FIELD_X_OFFSET 128 // 64 // half of screen
 
 // which page we are currently on.
 static int8_t current_page = 0;
@@ -334,7 +336,7 @@ ui_screen_t settings_screen = {
     .activated = NULL,
     .deactivated = NULL,
     .enable = &settings_enable,
-    .past_save = NULL,
+    .past_save = &past_save,
     .past_restore = NULL,
     .tick = &settings_tick,
     .num_items = ITEMS_PER_PAGE,
@@ -438,6 +440,12 @@ static bool event(uui_t *ui, event_t event, uint8_t data) {
             }
 
         case event_button_sel:
+            // long SET press will reest all values
+            if (data == press_long) {
+                settings_reset();
+                return true;
+            }
+
             select_mode = ! select_mode;
             return false;
 
@@ -520,6 +528,25 @@ static void settings_tick(void) {
         }
     }
 }
+
+
+static void settings_reset() {
+    a_adc_k_coef = A_ADC_K;
+    a_adc_c_coef = A_ADC_C;
+    a_dac_k_coef = A_DAC_K;
+    a_dac_c_coef = A_DAC_C;
+    v_adc_k_coef = V_ADC_K;
+    v_adc_c_coef = V_ADC_C;
+    v_dac_k_coef = V_DAC_K;
+    v_dac_c_coef = V_DAC_C;
+    vin_adc_k_coef = VIN_ADC_K;
+    vin_adc_c_coef = VIN_ADC_C;
+}
+
+static void past_save(past_t *past) {
+    pwrctl_past_save(past);
+}
+
 
 /**
  * @brief      Initialise the CV module and add its screen to the UI
