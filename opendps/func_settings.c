@@ -75,13 +75,15 @@ static int32_t get_v_adc_k() {
     return v_adc_k_coef * 1000;
 }
 static void set_v_adc_k(ui_number_t *item) {
-    v_adc_k_coef = (float)item->value / (item->color == RED) ? -1000.0f : 1000.0f;
+    v_adc_k_coef = item->value / 1000.0f;
+    if (item->color == RED) v_adc_k_coef = - v_adc_k_coef;
 }
 static int32_t get_v_adc_c() {
     return v_adc_c_coef * 1000;
 }
 static void set_v_adc_c(ui_number_t *item) {
-    v_adc_c_coef = (float)item->value / (item->color == RED) ? -1000.0f : 1000.0f;
+    v_adc_c_coef = item->value / 1000.0f;
+    if (item->color == RED) v_adc_c_coef = - v_adc_c_coef;
 }
 
 
@@ -89,13 +91,15 @@ static int32_t get_v_dac_k() {
     return v_dac_k_coef * 1000;
 }
 static void set_v_dac_k(ui_number_t *item) {
-    v_adc_k_coef = (float)item->value / (item->color == RED) ? -1000.0f : 1000.0f;
+    v_adc_k_coef = item->value / 1000.0f;
+    if (item->color == RED) v_adc_k_coef = - v_adc_k_coef;
 }
 static int32_t get_v_dac_c() {
     return v_dac_c_coef * 1000;
 }
 static void set_v_dac_c(ui_number_t *item) {
-    v_dac_c_coef = (float)item->value / (item->color == RED) ? -1000.0f : 1000.0f;
+    v_dac_c_coef = item->value / 1000.0f;
+    if (item->color == RED) v_dac_c_coef = - v_dac_c_coef;
 }
 
 
@@ -104,13 +108,15 @@ static int32_t get_a_adc_k() {
     return a_adc_k_coef * 1000;
 }
 static void set_a_adc_k(ui_number_t *item) {
-    a_adc_k_coef = (float)item->value / (item->color == RED) ? -1000.0f : 1000.0f;
+    a_adc_k_coef = item->value / 1000.0f;
+    if (item->color == RED) a_adc_k_coef = - a_adc_k_coef;
 }
 static int32_t get_a_adc_c() {
     return a_adc_c_coef * 1000;
 }
 static void set_a_adc_c(ui_number_t *item) {
-    a_adc_c_coef = (float)item->value / (item->color == RED) ? -1000.0f : 1000.0f;
+    a_adc_c_coef = item->value / 1000.0f;
+    if (item->color == RED) a_adc_c_coef = - a_adc_c_coef;
 }
 
 
@@ -118,13 +124,15 @@ static int32_t get_a_dac_k() {
     return a_dac_k_coef * 1000;
 }
 static void set_a_dac_k(ui_number_t *item) {
-    a_dac_k_coef = (float)item->value / (item->color == RED) ? -1000.0f : 1000.0f;
+    a_dac_k_coef = item->value / 1000.0f;
+    if (item->color == RED) a_dac_k_coef = - a_dac_k_coef;
 }
 static int32_t get_a_dac_c() {
     return a_dac_c_coef * 1000;
 }
 static void set_a_dac_c(ui_number_t *item) {
-    a_dac_c_coef = (float)item->value / (item->color == RED) ? -1000.0f : 1000.0f;
+    a_dac_c_coef = item->value / 1000.0f;
+    if (item->color == RED) a_dac_c_coef = - a_dac_c_coef;
 }
 
 
@@ -132,13 +140,15 @@ static int32_t get_vin_adc_k() {
     return vin_adc_k_coef * 1000;
 }
 static void set_vin_adc_k(ui_number_t *item) {
-    vin_adc_k_coef = (float)item->value / (item->color == RED) ? -1000.0f : 1000.0f;
+    vin_adc_k_coef = item->value / 1000.0f;
+    if (item->color == RED) vin_adc_k_coef = - vin_adc_k_coef;
 }
 static int32_t get_vin_adc_c() {
     return vin_adc_c_coef * 1000;
 }
 static void set_vin_adc_c(ui_number_t *item) {
-    vin_adc_c_coef = (float)item->value / (item->color == RED) ? -1000.0f : 1000.0f;
+    vin_adc_c_coef = item->value / 1000.0f;
+    if (item->color == RED) vin_adc_c_coef = - vin_adc_c_coef;
 }
 
 
@@ -245,8 +255,8 @@ ui_number_t settings_field[] = {
     .pad_dot = false,
     .color = WHITE,
     .value = 0,
-    .min = -1000000,
-    .max = 1000000,
+    .min = -999999,
+    .max = 999999,
     .si_prefix = si_milli,
     .num_digits = 3,
     .num_decimals = 3,
@@ -266,8 +276,8 @@ ui_number_t settings_field[] = {
     .pad_dot = false,
     .color = WHITE,
     .value = 0,
-    .min = -1000000,
-    .max = 1000000,
+    .min = -999999,
+    .max = 999999,
     .si_prefix = si_milli,
     .num_digits = 3,
     .num_decimals = 3,
@@ -287,8 +297,8 @@ ui_number_t settings_field[] = {
     .pad_dot = false,
     .color = WHITE,
     .value = 0,
-    .min = -1000000,
-    .max = 1000000,
+    .min = -999999,
+    .max = 999999,
     .si_prefix = si_milli,
     .num_digits = 3,
     .num_decimals = 3,
@@ -308,8 +318,8 @@ ui_number_t settings_field[] = {
     .pad_dot = false,
     .color = WHITE,
     .value = 0,
-    .min = -1000000,
-    .max = 1000000,
+    .min = -999999,
+    .max = 999999,
     .si_prefix = si_milli,
     .num_digits = 3,
     .num_decimals = 3,
@@ -329,8 +339,8 @@ ui_number_t settings_field[] = {
     .pad_dot = false,
     .color = WHITE,
     .value = 0,
-    .min = -1000000,
-    .max = 1000000,
+    .min = -999999,
+    .max = 999999,
     .si_prefix = si_milli,
     .num_digits = 3,
     .num_decimals = 3,
@@ -350,8 +360,8 @@ ui_number_t settings_field[] = {
     .pad_dot = false,
     .color = WHITE,
     .value = 0,
-    .min = -1000000,
-    .max = 1000000,
+    .min = -999999,
+    .max = 999999,
     .si_prefix = si_milli,
     .num_digits = 3,
     .num_decimals = 3,
