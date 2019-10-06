@@ -81,3 +81,41 @@ bool hw_sel_button_pressed(void)
 {
     return false;
 }
+
+/**
+  * @brief Set TFT backlight value
+  * @retval None
+  */
+void hw_set_backlight(uint8_t brightness)
+{
+    (void) brightness;
+}
+
+/**
+  * @brief Get TFT backlight value
+  * @retval Brightness percentage
+  */
+uint8_t hw_get_backlight(void)
+{
+    return 0;
+}
+
+/**
+  * @brief Set the output voltage DAC value
+  * @param v_dac the value to set to
+  * @retval none
+  */
+void hw_set_voltage_dac(uint16_t v_dac)
+{
+    (void) v_dac;
+}
+
+/**
+  * @brief Set the output current DAC value
+  * @param i_dac the value to set to
+  * @retval none
+  */
+void hw_set_current_dac(uint16_t i_dac)
+{
+    (void) i_dac;
+}

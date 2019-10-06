@@ -1,4 +1,4 @@
-/** Gfx generated from gfx\png\crosshair.png */
+/** Gfx generated from `./gen_lookup.py -i gfx/png/crosshair.png -o crosshair` */
 
 #include "gfx-crosshair.h"
 

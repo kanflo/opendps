@@ -1,4 +1,4 @@
-/** Gfx generated from gfx\png\cl.png */
+/** Gfx generated from `./gen_lookup.py -i gfx/png/cl.png -o cl` */
 
 #ifndef __GFX_CL_H__
 #define __GFX_CL_H__

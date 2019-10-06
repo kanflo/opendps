@@ -1,4 +1,4 @@
-/** Gfx generated from gfx/png/square.png */
+/** Gfx generated from `./gen_lookup.py -i gfx/png/square.png -o square` */
 
 #ifndef __GFX_SQUARE_H__
 #define __GFX_SQUARE_H__

@@ -1,4 +1,4 @@
-/** Gfx generated from gfx/png/poweron.png */
+/** Gfx generated from `./gen_lookup.py -i gfx/png/poweron.png -o poweron` */
 
 #ifndef __GFX_POWERON_H__
 #define __GFX_POWERON_H__

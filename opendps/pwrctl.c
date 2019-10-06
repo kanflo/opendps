@@ -97,6 +97,24 @@ void pwrctl_init(past_t *past)
     pwrctl_enable_vout(false);
 }
 
+
+void pwrctl_past_save(past_t *past) {
+    if (   past_write_unit(past, past_A_ADC_K, (void*) &a_adc_k_coef, 4)
+        && past_write_unit(past, past_A_ADC_C, (void*) &a_adc_c_coef, 4)
+        && past_write_unit(past, past_A_DAC_K, (void*) &a_dac_k_coef, 4)
+        && past_write_unit(past, past_A_DAC_C, (void*) &a_dac_c_coef, 4)
+        && past_write_unit(past, past_V_ADC_K, (void*) &v_adc_k_coef, 4)
+        && past_write_unit(past, past_V_ADC_C, (void*) &v_adc_c_coef, 4)
+        && past_write_unit(past, past_V_DAC_K, (void*) &v_dac_k_coef, 4)
+        && past_write_unit(past, past_V_DAC_C, (void*) &v_dac_c_coef, 4)
+        && past_write_unit(past, past_VIN_ADC_K, (void*) &vin_adc_k_coef, 4)
+        && past_write_unit(past, past_VIN_ADC_C, (void*) &vin_adc_c_coef, 4)
+       ) {
+        // write ok
+    }
+}
+
+
 /**
   * @brief Set voltage output
   * @param value_mv voltage in milli volt

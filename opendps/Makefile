@@ -12,6 +12,9 @@ BINARY = opendps_$(MODEL)
 # Include splash screen
 SPLASH_SCREEN := 0
 
+# Include support for thermal lockout via the serial interface
+THERMAL_LOCKOUT := 0
+
 # Build wifi version (only change being that the wifi icon will start flashing
 # on power up)
 WIFI := 1
@@ -58,6 +61,9 @@ CL_ENABLE ?= 1
 
 # Enable function generator mode
 FUNCGEN_ENABLE ?= 1
+
+# Enable settings 
+SETTINGS_ENABLE ?= 1
 
 # Enable invert color feature
 INVERT_ENABLE ?= 0
@@ -124,7 +130,7 @@ OBJS = \
     gfx-m1bar.o \
     gfx-m2bar.o \
     gfx-padlock.o \
-    gfx-power.o \
+    gfx-thermometer.o \
     gfx-wifi.o \
     opendps.o
 
@@ -177,6 +183,10 @@ ifeq ($(FUNCGEN_ENABLE),1)
 	OBJS += func_gen.o uui_icon.o gfx-square.o gfx-saw.o gfx-sin.o
 endif
 
+ifeq ($(SETTINGS_ENABLE),1)
+	CFLAGS +=-DCONFIG_SETTINGS_ENABLE
+	OBJS += func_settings.o
+endif
 
 ifeq ($(SPLASH_SCREEN),1)
 	CFLAGS +=-DCONFIG_SPLASH_SCREEN
@@ -192,6 +202,10 @@ ifeq ($(COMMANDLINE),1)
 else
 	CFLAGS +=-DCONFIG_SERIAL_PROTOCOL
 	OBJS += uframe.o protocol.o protocol_handler.o
+endif
+
+ifeq ($(THERMAL_LOCKOUT),1)
+	CFLAGS +=-DCONFIG_THERMAL_LOCKOUT
 endif
 
 include ../libopencm3.target.mk

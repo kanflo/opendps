@@ -41,8 +41,17 @@
 #include "serialhandler.h"
 #include "ili9163c.h"
 #include "gfx-padlock.h"
+#ifdef CONFIG_THERMAL_LOCKOUT
+#include "gfx-thermometer.h"
+#endif // CONFIG_THERMAL_LOCKOUT
+#ifdef CONFIG_POWER_COLORED
 #include "gfx-poweron.h"
+#ifdef CONFIG_POWER_OFF_VISIBLE
 #include "gfx-poweroff.h"
+#endif //CONFIG_POWER_OFF_VISIBLE
+#else
+#include "gfx-power.h"
+#endif //CONFIG_POWER_COLORED
 #include "gfx-wifi.h"
 #include "font-full_small.h"
 #include "font-meter_small.h"
@@ -71,6 +80,9 @@
 #ifdef CONFIG_FUNCGEN_ENABLE
 #include "func_gen.h"
 #endif // CONFIG_FUNCGEN_ENABLE
+#ifdef CONFIG_SETTINGS_ENABLE
+#include "func_settings.h"
+#endif // CONFIG_SETTINGS_ENABLE
 
 #ifdef DPS_EMULATOR
 #include "dpsemul.h"
@@ -79,9 +91,6 @@
 #ifdef CONFIG_SPLASH_SCREEN
 #include "logo.h"
 #endif // CONFIG_SPLASH_SCREEN
-
-/** How ofter we update the measurements in the UI (ms) */
-#define UI_UPDATE_INTERVAL_MS  (100)
 
 /** Timeout for waiting for wifi connction (ms) */
 #define WIFI_CONNECT_TIMEOUT  (10000)
@@ -109,6 +118,7 @@ static void check_master_reset(void);
 static uint16_t bg_color;
 static uint32_t ui_width;
 static uint32_t ui_height;
+uint32_t opendps_update_interval = 250;
 
 /** Used to make the screen flash */
 static uint32_t tft_flashing_period;
@@ -132,9 +142,11 @@ static bool is_enabled;
 /** Last settings written to past */
 static bool     last_tft_inv_setting;
 
+#ifdef CONFIG_THERMAL_LOCKOUT
 /** Temperature readings, invalid at start */
 static int16_t temp1 = INVALID_TEMPERATURE;
 static int16_t temp2 = INVALID_TEMPERATURE;
+#endif // CONFIG_THERMAL_LOCKOUT
 
 /** display brightness
     73% is closest to previous default (0x5DC0) */
@@ -144,9 +156,11 @@ static int8_t last_tft_brightness = 73;
  #define CONFIG_TEMPERATURE_ALERT_LEVEL  (500)
 #endif // CONFIG_TEMPERATURE_ALERT_LEVEL
 
+#ifdef CONFIG_THERMAL_LOCKOUT
 /** Temperature when the DPS goes into shutdown mode,
     in x10 degrees whatever-temperature-unit-you-prefer */
 static int16_t shutdown_temperature = CONFIG_TEMPERATURE_ALERT_LEVEL;
+#endif // CONFIG_THERMAL_LOCKOUT
 
 /** Our parameter storage */
 static past_t g_past = {
@@ -452,6 +466,9 @@ static void ui_init(void)
 #ifdef CONFIG_FUNCGEN_ENABLE
     func_gen_init(&func_ui);
 #endif // CONFIG_FUNCGEN_ENABLE
+#ifdef CONFIG_SETTINGS_ENABLE
+    func_settings_init(&func_ui);
+#endif // CONFIG_SETTINGS_ENABLE
 
 
     /** Initialise the settings screens */
@@ -575,6 +592,7 @@ void opendps_lock(bool lock)
     }
 }
 
+#ifdef CONFIG_THERMAL_LOCKOUT
 /**
   * @brief Lock or unlock the UI due to a temperature alarm
   * @param lock true for lock, false for unlock
@@ -602,6 +620,7 @@ void opendps_temperature_lock(bool lock)
         }
     }
 }
+#endif // CONFIG_THERMAL_LOCKOUT
 
 /**
   * @brief Do periodical updates in the UI
@@ -718,19 +737,38 @@ void opendps_update_wifi_status(wifi_status_t status)
   */
 void opendps_update_power_status(bool enabled)
 {
-	is_enabled = enabled;
+    is_enabled = enabled;
 
-	if (is_enabled) {
-		tft_blit((uint16_t*) gfx_poweron,
-				GFX_POWERON_WIDTH, GFX_POWERON_HEIGHT,
-				TFT_WIDTH-GFX_POWERON_WIDTH, TFT_HEIGHT-GFX_POWERON_HEIGHT);
-	} else {
-		tft_blit((uint16_t*) gfx_poweroff,
-				GFX_POWERON_WIDTH, GFX_POWERON_HEIGHT,
-				TFT_WIDTH-GFX_POWERON_WIDTH, TFT_HEIGHT-GFX_POWERON_HEIGHT);
-	}
+    if (is_enabled) {
+#ifdef CONFIG_POWER_COLORED
+        tft_blit((uint16_t*) gfx_poweron,
+                GFX_POWERON_WIDTH, GFX_POWERON_HEIGHT,
+                TFT_WIDTH-GFX_POWERON_WIDTH, TFT_HEIGHT-GFX_POWERON_HEIGHT);
+#else
+        tft_blit((uint16_t*) gfx_power,
+                GFX_POWER_WIDTH, GFX_POWER_HEIGHT,
+                TFT_WIDTH-GFX_POWER_WIDTH, TFT_HEIGHT-GFX_POWER_HEIGHT);
+#endif //CONFIG_POWER_COLORED
+
+    } else {
+// red poweroff button visible only if colored and off_visible are set
+#ifdef CONFIG_POWER_COLORED
+#ifdef CONFIG_POWER_OFF_VISIBLE
+        tft_blit((uint16_t*) gfx_poweroff,
+                GFX_POWEROFF_WIDTH, GFX_POWEROFF_HEIGHT,
+                TFT_WIDTH-GFX_POWEROFF_WIDTH, TFT_HEIGHT-GFX_POWEROFF_HEIGHT);
+#else //not CONFIG_POWER_OFF_VISIBLE
+        tft_fill(ui_width-GFX_POWERON_WIDTH, ui_height-GFX_POWERON_HEIGHT, GFX_POWERON_WIDTH, GFX_POWERON_HEIGHT, bg_color);
+#endif //CONFIG_POWER_OFF_VISIBLE
+
+#else //not CONFIG_POWER_COLORED
+        tft_fill(ui_width-GFX_POWER_WIDTH, ui_height-GFX_POWER_HEIGHT, GFX_POWER_WIDTH, GFX_POWER_HEIGHT, bg_color);
+#endif //CONFIG_POWER_COLORED
+
+    }
 }
 
+#ifdef CONFIG_THERMAL_LOCKOUT
 /**
   * @brief Set temperatures
   * @param temp1 first temperature we can deal with
@@ -761,6 +799,7 @@ void opendps_get_temperature(int16_t *_temp1, int16_t *_temp2, bool *temp_shutdo
     *_temp2 = temp2;
     *temp_shutdown = is_temperature_locked;
 }
+#endif // CONFIG_THERMAL_LOCKOUT
 
 /**
  * @brief      Upgrade was requested by the protocol handler
@@ -842,6 +881,11 @@ static void read_past_settings(void)
     }
     hw_set_backlight(last_tft_brightness);
 
+    if (past_read_unit(&g_past, past_UPDATE_INTERVAL, (const void**) &p, &length)) {
+        if (p) {
+            opendps_update_interval = *p;
+        }
+    }
 
 #ifdef GIT_VERSION
     /** Update app git hash in past if needed */
@@ -888,6 +932,12 @@ static void write_past_settings(void)
             dbg_printf("Error: past write inv failed!\n");
         }
     }
+
+    // save the update interval value
+    if ( ! past_write_unit(&g_past, past_UPDATE_INTERVAL, (void*) &opendps_update_interval, sizeof(opendps_update_interval))) {
+        dbg_printf("Error: past write inv failed!\n");
+    }
+
 }
 
 /**
