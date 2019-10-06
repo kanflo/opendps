@@ -66,30 +66,30 @@ static bool select_mode;
 // possibly want OCP, OVP, OPP?
 
 static int32_t get_v_adc_k() {
-    return v_adc_k_coef * 1000;
+    return v_adc_k_coef * 1000000;
 }
 static void set_v_adc_k(ui_number_t *item) {
-    v_adc_k_coef = item->value / 1000.0f;
+    v_adc_k_coef = item->value / 1000000.0f;
 }
 static int32_t get_v_adc_c() {
-    return v_adc_c_coef * 1000;
+    return v_adc_c_coef * 1000000;
 }
 static void set_v_adc_c(ui_number_t *item) {
-    v_adc_c_coef = item->value / 1000.0f;
+    v_adc_c_coef = item->value / 1000000.0f;
 }
 
 
 static int32_t get_v_dac_k() {
-    return v_dac_k_coef * 1000;
+    return v_dac_k_coef * 1000000;
 }
 static void set_v_dac_k(ui_number_t *item) {
-    v_adc_k_coef = item->value / 1000.0f;
+    v_adc_k_coef = item->value / 1000000.0f;
 }
 static int32_t get_v_dac_c() {
-    return v_dac_c_coef * 1000;
+    return v_dac_c_coef * 1000000;
 }
 static void set_v_dac_c(ui_number_t *item) {
-    v_adc_c_coef = item->value / 1000.0f;
+    v_adc_c_coef = item->value / 1000000.0f;
 }
 
 
@@ -159,6 +159,7 @@ typedef int32_t (*get_func)();
 #define ITEMS 12
 #define PAGES 3 // 12 / 5  = 3 pages worth
 #define ROW_HEIGHT 30
+#define FIELD_Y_OFFSET 20
 
 // which page we are currently on.
 static int8_t current_page = 0;
@@ -218,7 +219,7 @@ ui_number_t settings_field[] = {
         .type = ui_item_number,
         .id = 10,
         .x = 5,
-        .y = FONT_FULL_SMALL_MAX_GLYPH_HEIGHT,
+        .y = FIELD_Y_OFFSET,
         .can_focus = true,
     },
     .font_size = FONT_FULL_SMALL,
@@ -239,7 +240,7 @@ ui_number_t settings_field[] = {
         .type = ui_item_number,
         .id = 11,
         .x = 5,
-        .y = FONT_FULL_SMALL_MAX_GLYPH_HEIGHT + (1 * ROW_HEIGHT),
+        .y = FIELD_Y_OFFSET + (1 * ROW_HEIGHT),
         .can_focus = true,
     },
     .font_size = FONT_FULL_SMALL,
@@ -260,7 +261,7 @@ ui_number_t settings_field[] = {
         .type = ui_item_number,
         .id = 12,
         .x = 5,
-        .y = FONT_FULL_SMALL_MAX_GLYPH_HEIGHT + (2*ROW_HEIGHT),
+        .y = FIELD_Y_OFFSET + (2*ROW_HEIGHT),
         .can_focus = true,
     },
     .font_size = FONT_FULL_SMALL,
@@ -281,7 +282,7 @@ ui_number_t settings_field[] = {
         .type = ui_item_number,
         .id = 13,
         .x = 5,
-        .y = FONT_FULL_SMALL_MAX_GLYPH_HEIGHT + (3*ROW_HEIGHT),
+        .y = FIELD_Y_OFFSET + (3*ROW_HEIGHT),
         .can_focus = true,
     },
     .font_size = FONT_FULL_SMALL,
@@ -302,7 +303,7 @@ ui_number_t settings_field[] = {
         .type = ui_item_number,
         .id = 14,
         .x = 5,
-        .y = FONT_FULL_SMALL_MAX_GLYPH_HEIGHT + (4*ROW_HEIGHT),
+        .y = FIELD_Y_OFFSET + (4*ROW_HEIGHT),
         .can_focus = true,
     },
     .font_size = FONT_FULL_SMALL,
@@ -486,8 +487,9 @@ static void settings_tick(void) {
                 BLACK);
         } else {
             tft_puts(FONT_FULL_SMALL, 
-                    field_label[page_offset + i], 0 /* x */, i * ROW_HEIGHT /* y */ ,
-                    FONT_FULL_SMALL_MAX_GLYPH_WIDTH * 15, FONT_FULL_SMALL_MAX_GLYPH_HEIGHT,
+                    field_label[page_offset + i], 
+                    0 /* x */,    (i * ROW_HEIGHT) + FONT_FULL_SMALL_MAX_GLYPH_HEIGHT  /* y */ ,
+                    TFT_WIDTH, FONT_FULL_SMALL_MAX_GLYPH_HEIGHT,
                     WHITE, false);
 
             settings_field[page_offset + i].ui.draw(&settings_field[page_offset + i].ui);
