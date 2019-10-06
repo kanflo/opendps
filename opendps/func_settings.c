@@ -139,14 +139,14 @@ static void set_vin_adc_c(ui_number_t *item) {
 
 
 static int32_t get_brightness() {
-    return 100;
+    return 100 * 1000;
 }
 static void set_brightness(ui_number_t *item) {
     // 
 }
 
 static int32_t get_refresh() {
-    return 250;
+    return 250 * 1000;
 }
 static void set_refresh(ui_number_t *item) {
     // 
@@ -157,10 +157,10 @@ static void set_refresh(ui_number_t *item) {
 typedef void (*set_func)(struct ui_number_t *item);
 typedef int32_t (*get_func)();
 
-#define ITEMS_PER_PAGE 5
+#define ITEMS_PER_PAGE 6
 #define ITEMS 12
-#define PAGES 3 // 12 / 5  = 3 pages worth
-#define ROW_HEIGHT 20
+#define PAGES 2 // 12 / 6  = 2 pages worth
+#define ROW_HEIGHT 17 
 #define FIELD_Y_OFFSET 0 // 15
 #define FIELD_X_OFFSET 128 // 64 // half of screen
 
@@ -215,7 +215,6 @@ const char* const field_label[] = {
 };
 
 
-// 5 fields
 ui_number_t settings_field[] = {
 {
     {
@@ -230,8 +229,8 @@ ui_number_t settings_field[] = {
     .pad_dot = false,
     .color = WHITE,
     .value = 0,
-    .min = 0,
-    .max = 0,
+    .min = -1000000,
+    .max = 1000000,
     .si_prefix = si_milli,
     .num_digits = 3,
     .num_decimals = 3,
@@ -251,8 +250,8 @@ ui_number_t settings_field[] = {
     .pad_dot = false,
     .color = WHITE,
     .value = 0,
-    .min = 0,
-    .max = 0,
+    .min = -1000000,
+    .max = 1000000,
     .si_prefix = si_milli,
     .num_digits = 3,
     .num_decimals = 3,
@@ -272,8 +271,8 @@ ui_number_t settings_field[] = {
     .pad_dot = false,
     .color = WHITE,
     .value = 0,
-    .min = 0,
-    .max = 0,
+    .min = -1000000,
+    .max = 1000000,
     .si_prefix = si_milli,
     .num_digits = 3,
     .num_decimals = 3,
@@ -293,8 +292,8 @@ ui_number_t settings_field[] = {
     .pad_dot = false,
     .color = WHITE,
     .value = 0,
-    .min = 0,
-    .max = 0,
+    .min = -1000000,
+    .max = 1000000,
     .si_prefix = si_milli,
     .num_digits = 3,
     .num_decimals = 3,
@@ -314,8 +313,29 @@ ui_number_t settings_field[] = {
     .pad_dot = false,
     .color = WHITE,
     .value = 0,
-    .min = 0,
-    .max = 0,
+    .min = -1000000,
+    .max = 1000000,
+    .si_prefix = si_milli,
+    .num_digits = 3,
+    .num_decimals = 3,
+    .unit = unit_none,
+    .changed = NULL,
+},
+{
+    {
+        .type = ui_item_number,
+        .id = 15,
+        .x = FIELD_X_OFFSET,
+        .y = FIELD_Y_OFFSET + (5*ROW_HEIGHT),
+        .can_focus = true,
+    },
+    .font_size = FONT_FULL_SMALL,
+    .alignment = ui_text_right_aligned,
+    .pad_dot = false,
+    .color = WHITE,
+    .value = 0,
+    .min = -1000000,
+    .max = 1000000,
     .si_prefix = si_milli,
     .num_digits = 3,
     .num_decimals = 3,
@@ -345,7 +365,8 @@ ui_screen_t settings_screen = {
         (ui_item_t*) &settings_field[1], 
         (ui_item_t*) &settings_field[2], 
         (ui_item_t*) &settings_field[3], 
-        (ui_item_t*) &settings_field[4]
+        (ui_item_t*) &settings_field[4],
+        (ui_item_t*) &settings_field[5]
     },
     .set_parameter = &set_parameter,
     .get_parameter = &get_parameter,

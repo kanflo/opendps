@@ -99,9 +99,6 @@ void pwrctl_init(past_t *past)
 
 
 void pwrctl_past_save(past_t *past) {
-
-    float *v = a_adc_k_coef;
-
     if (   past_write_unit(past, past_A_ADC_K, (void*) &a_adc_k_coef, 4)
         && past_write_unit(past, past_A_ADC_C, (void*) &a_adc_c_coef, 4)
         && past_write_unit(past, past_A_DAC_K, (void*) &a_dac_k_coef, 4)
