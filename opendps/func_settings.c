@@ -587,10 +587,12 @@ static void past_save(past_t *past) {
 }
 
 static void activated() {
+    set_page(0);
     current_item = 0;
 }
 
 static void deactivated() {
+    tft_clear();
 }
 
 /**
