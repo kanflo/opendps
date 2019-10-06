@@ -158,6 +158,7 @@ typedef int32_t (*get_func)();
 #define ITEMS_PER_PAGE 5
 #define ITEMS 12
 #define PAGES 3 // 12 / 5  = 3 pages worth
+#define ROW_HEIGHT 30
 
 // which page we are currently on.
 static int8_t current_page = 0;
@@ -216,12 +217,12 @@ ui_number_t settings_field[] = {
     {
         .type = ui_item_number,
         .id = 10,
-        .x = 120,
-        .y = 15,
+        .x = 5,
+        .y = FONT_FULL_SMALL_MAX_GLYPH_HEIGHT,
         .can_focus = true,
     },
     .font_size = FONT_FULL_SMALL,
-    .alignment = ui_text_right_aligned,
+    .alignment = ui_text_left_aligned,
     .pad_dot = false,
     .color = WHITE,
     .value = 0,
@@ -237,12 +238,12 @@ ui_number_t settings_field[] = {
     {
         .type = ui_item_number,
         .id = 11,
-        .x = 120,
-        .y = 30,
+        .x = 5,
+        .y = FONT_FULL_SMALL_MAX_GLYPH_HEIGHT + (1 * ROW_HEIGHT),
         .can_focus = true,
     },
     .font_size = FONT_FULL_SMALL,
-    .alignment = ui_text_right_aligned,
+    .alignment = ui_text_left_aligned,
     .pad_dot = false,
     .color = WHITE,
     .value = 0,
@@ -258,12 +259,12 @@ ui_number_t settings_field[] = {
     {
         .type = ui_item_number,
         .id = 12,
-        .x = 120,
-        .y = 45,
+        .x = 5,
+        .y = FONT_FULL_SMALL_MAX_GLYPH_HEIGHT + (2*ROW_HEIGHT),
         .can_focus = true,
     },
     .font_size = FONT_FULL_SMALL,
-    .alignment = ui_text_right_aligned,
+    .alignment = ui_text_left_aligned,
     .pad_dot = false,
     .color = WHITE,
     .value = 0,
@@ -279,12 +280,12 @@ ui_number_t settings_field[] = {
     {
         .type = ui_item_number,
         .id = 13,
-        .x = 120,
-        .y = 60,
+        .x = 5,
+        .y = FONT_FULL_SMALL_MAX_GLYPH_HEIGHT + (3*ROW_HEIGHT),
         .can_focus = true,
     },
     .font_size = FONT_FULL_SMALL,
-    .alignment = ui_text_right_aligned,
+    .alignment = ui_text_left_aligned,
     .pad_dot = false,
     .color = WHITE,
     .value = 0,
@@ -300,12 +301,12 @@ ui_number_t settings_field[] = {
     {
         .type = ui_item_number,
         .id = 14,
-        .x = 120,
-        .y = 65,
+        .x = 5,
+        .y = FONT_FULL_SMALL_MAX_GLYPH_HEIGHT + (4*ROW_HEIGHT),
         .can_focus = true,
     },
     .font_size = FONT_FULL_SMALL,
-    .alignment = ui_text_right_aligned,
+    .alignment = ui_text_left_aligned,
     .pad_dot = false,
     .color = WHITE,
     .value = 0,
@@ -389,18 +390,36 @@ static bool event(uui_t *ui, event_t event, uint8_t data) {
             }
 
             // go up
-            if ( event == event_button_m1 && current_item <= 0) {
-                // wrap around to bottom
-                current_item = ITEMS_PER_PAGE - 1;
-                if (current_page >= 1) set_page(current_page - 1);
-                if (current_page <= 0) set_page(PAGES - 1);
+            if ( event == event_button_m1 ) {
+                // first item selected, going up will wrap around to previous page
+                if (current_item <= 0) {
+                    // wrap around to bottom of previous page
+                    current_item = ITEMS_PER_PAGE - 1;
+
+                    // previous page being the last page (if we're on page 0)
+                    if (current_page <= 0) set_page(PAGES - 1);
+                    else set_page(current_page - 1);
+
+                // otherwise, go up one item
+                } else {
+                    current_item--;
+                }
 
             // go down
-            } else if (event == event_button_m2 && current_item >= ITEMS_PER_PAGE - 1) {
-                // wrap around to top
-                current_item = 0;
-                if (current_page < PAGES - 1) set_page(current_page+1);
-                if (current_page > 0)         set_page(current_page-1);
+            } else if (event == event_button_m2) {
+                // last item selected, going down will go to the next page and first item
+                if (current_item >= ITEMS_PER_PAGE - 1) {
+                    // wrap to first item
+                    current_item = 0;
+
+                    // of the next page
+                    if (current_page >= PAGES - 1) set_page(0);
+                    else set_page(current_page + 1);
+
+                // otherwise go to the next item
+                } else {
+                    current_item++;
+                }
             }
 
             return false;
@@ -462,12 +481,12 @@ static void settings_tick(void) {
 
         // if greater than total number of items, clear the area
         if (page_offset + i >= ITEMS) {
-            tft_fill(0, y,
-                TFT_WIDTH, FONT_FULL_SMALL_MAX_GLYPH_HEIGHT,
+            tft_fill(0 /* x */, i * ROW_HEIGHT /* y */,
+                TFT_WIDTH, ROW_HEIGHT,
                 BLACK);
         } else {
             tft_puts(FONT_FULL_SMALL, 
-                    field_label[page_offset + i], 5 /* x */, y,
+                    field_label[page_offset + i], 0 /* x */, i * ROW_HEIGHT /* y */ ,
                     FONT_FULL_SMALL_MAX_GLYPH_WIDTH * 15, FONT_FULL_SMALL_MAX_GLYPH_HEIGHT,
                     WHITE, false);
 
