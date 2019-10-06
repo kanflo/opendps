@@ -589,6 +589,7 @@ static void past_save(past_t *past) {
 static void activated() {
     set_page(0);
     current_item = 0;
+    select_mode = 0;
 }
 
 static void deactivated() {
@@ -608,6 +609,7 @@ void func_settings_init(uui_t *ui) {
     // init to page 0
     set_page(0);
     current_item = 0;
+    select_mode = 0;
 
     uui_add_screen(ui, &settings_screen);
 }
