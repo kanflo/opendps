@@ -75,13 +75,13 @@ static int32_t get_v_adc_k() {
     return v_adc_k_coef * 1000;
 }
 static void set_v_adc_k(ui_number_t *item) {
-    v_adc_k_coef = item->value / (item->color == RED) ? -1000.0f : 1000.0f;
+    v_adc_k_coef = (float)item->value / (item->color == RED) ? -1000.0f : 1000.0f;
 }
 static int32_t get_v_adc_c() {
     return v_adc_c_coef * 1000;
 }
 static void set_v_adc_c(ui_number_t *item) {
-    v_adc_c_coef = item->value / (item->color == RED) ? -1000.0f : 1000.0f;
+    v_adc_c_coef = (float)item->value / (item->color == RED) ? -1000.0f : 1000.0f;
 }
 
 
@@ -89,13 +89,13 @@ static int32_t get_v_dac_k() {
     return v_dac_k_coef * 1000;
 }
 static void set_v_dac_k(ui_number_t *item) {
-    v_adc_k_coef = item->value / (item->color == RED) ? -1000.0f : 1000.0f;
+    v_adc_k_coef = (float)item->value / (item->color == RED) ? -1000.0f : 1000.0f;
 }
 static int32_t get_v_dac_c() {
     return v_dac_c_coef * 1000;
 }
 static void set_v_dac_c(ui_number_t *item) {
-    v_adc_c_coef = item->value / (item->color == RED) ? -1000.0f : 1000.0f;
+    v_dac_c_coef = (float)item->value / (item->color == RED) ? -1000.0f : 1000.0f;
 }
 
 
@@ -104,13 +104,13 @@ static int32_t get_a_adc_k() {
     return a_adc_k_coef * 1000;
 }
 static void set_a_adc_k(ui_number_t *item) {
-    a_adc_k_coef = item->value / (item->color == RED) ? -1000.0f : 1000.0f;
+    a_adc_k_coef = (float)item->value / (item->color == RED) ? -1000.0f : 1000.0f;
 }
 static int32_t get_a_adc_c() {
     return a_adc_c_coef * 1000;
 }
 static void set_a_adc_c(ui_number_t *item) {
-    a_adc_c_coef = item->value / (item->color == RED) ? -1000.0f : 1000.0f;
+    a_adc_c_coef = (float)item->value / (item->color == RED) ? -1000.0f : 1000.0f;
 }
 
 
@@ -118,13 +118,13 @@ static int32_t get_a_dac_k() {
     return a_dac_k_coef * 1000;
 }
 static void set_a_dac_k(ui_number_t *item) {
-    a_adc_k_coef = item->value / (item->color == RED) ? -1000.0f : 1000.0f;
+    a_dac_k_coef = (float)item->value / (item->color == RED) ? -1000.0f : 1000.0f;
 }
 static int32_t get_a_dac_c() {
     return a_dac_c_coef * 1000;
 }
 static void set_a_dac_c(ui_number_t *item) {
-    a_adc_c_coef = item->value / (item->color == RED) ? -1000.0f : 1000.0f;
+    a_dac_c_coef = (float)item->value / (item->color == RED) ? -1000.0f : 1000.0f;
 }
 
 
@@ -132,13 +132,13 @@ static int32_t get_vin_adc_k() {
     return vin_adc_k_coef * 1000;
 }
 static void set_vin_adc_k(ui_number_t *item) {
-    vin_adc_k_coef = item->value / (item->color == RED) ? -1000.0f : 1000.0f;
+    vin_adc_k_coef = (float)item->value / (item->color == RED) ? -1000.0f : 1000.0f;
 }
 static int32_t get_vin_adc_c() {
     return vin_adc_c_coef * 1000;
 }
 static void set_vin_adc_c(ui_number_t *item) {
-    vin_adc_c_coef = item->value / (item->color == RED) ? -1000.0f : 1000.0f;
+    vin_adc_c_coef = (float)item->value / (item->color == RED) ? -1000.0f : 1000.0f;
 }
 
 
