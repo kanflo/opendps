@@ -146,6 +146,7 @@ static void set_brightness(ui_number_t *item) {
 }
 
 static int32_t get_refresh() {
+    return opendps_update_interval;
     return 250 * 1000;
 }
 static void set_refresh(ui_number_t *item) {

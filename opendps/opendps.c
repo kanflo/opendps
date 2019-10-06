@@ -90,9 +90,6 @@
 #define TFT_HEIGHT  (128)
 #define TFT_WIDTH   (128)
 
-/** How ofter we update the measurements in the UI (ms) */
-#define UI_UPDATE_INTERVAL_MS  (250)
-
 /** Timeout for waiting for wifi connction (ms) */
 #define WIFI_CONNECT_TIMEOUT  (10000)
 
@@ -119,6 +116,7 @@ static void check_master_reset(void);
 static uint16_t bg_color;
 static uint32_t ui_width;
 static uint32_t ui_height;
+uint16_t opendps_update_interval = 250;
 
 /** Used to make the screen flash */
 static uint32_t tft_flashing_period;
@@ -635,8 +633,8 @@ static void ui_tick(void)
     static uint64_t last_lock_flash = 0;
 
     static uint64_t last = 0;
-    /** Update on the first call and every UI_UPDATE_INTERVAL_MS ms */
-    if (last > 0 && get_ticks() - last < UI_UPDATE_INTERVAL_MS) {
+    /** Update on the first call and every opendps_update_interval ms */
+    if (last > 0 && get_ticks() - last < opendps_update_interval) {
         return;
     }
 
