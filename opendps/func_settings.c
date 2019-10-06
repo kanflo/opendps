@@ -47,7 +47,7 @@
 /*
  * This is the implementation of the Settings screen.
  */
-
+static void settings_enable(bool _enable);
 static void settings_tick(void);
 static void settings_reset(void);
 
@@ -299,7 +299,7 @@ ui_screen_t settings_screen = {
     .event = event,
     .activated = &activated,
     .deactivated = &deactivated,
-    .enable = NULL,
+    .enable = &settings_enable,
     .past_save = &past_save,
     .past_restore = NULL,
     .tick = &settings_tick,
@@ -657,6 +657,9 @@ static void activated() {
  */
 static void deactivated() {
     tft_clear();
+}
+
+static void settings_enable(bool enabled) {
 }
 
 /**
