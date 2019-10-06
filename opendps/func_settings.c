@@ -464,6 +464,8 @@ static bool event(uui_t *ui, event_t event, uint8_t data) {
             // long SET press will reest all values
             if (data == press_long) {
                 settings_reset();
+                // update page to update values
+                set_page(current_page);
                 return true;
             }
 
