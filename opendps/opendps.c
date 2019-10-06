@@ -888,7 +888,7 @@ static void read_past_settings(void)
     }
     hw_set_backlight(last_tft_brightness);
 
-    if (past_read_unit(&g_past, opendps_update_interval, (const void**) &p, &length)) {
+    if (past_read_unit(&g_past, past_UPDATE_INTERVAL, (const void**) &p, &length)) {
         if (p) {
             opendps_update_interval = *p;
         }
