@@ -69,13 +69,13 @@ static int32_t get_v_adc_k() {
     return v_adc_k_coef * 1000;
 }
 static void set_v_adc_k(ui_number_t *item) {
-    v_adc_k_coef = item->value / 1000.0f;
+    v_adc_k_coef = item->value / (item->color == RED) ? -1000.0f : 1000.0f;
 }
 static int32_t get_v_adc_c() {
     return v_adc_c_coef * 1000;
 }
 static void set_v_adc_c(ui_number_t *item) {
-    v_adc_c_coef = item->value / 1000.0f;
+    v_adc_c_coef = item->value / (item->color == RED) ? -1000.0f : 1000.0f;
 }
 
 
@@ -83,13 +83,13 @@ static int32_t get_v_dac_k() {
     return v_dac_k_coef * 1000;
 }
 static void set_v_dac_k(ui_number_t *item) {
-    v_adc_k_coef = item->value / 1000.0f;
+    v_adc_k_coef = item->value / (item->color == RED) ? -1000.0f : 1000.0f;
 }
 static int32_t get_v_dac_c() {
     return v_dac_c_coef * 1000;
 }
 static void set_v_dac_c(ui_number_t *item) {
-    v_adc_c_coef = item->value / 1000.0f;
+    v_adc_c_coef = item->value / (item->color == RED) ? -1000.0f : 1000.0f;
 }
 
 
@@ -98,13 +98,13 @@ static int32_t get_a_adc_k() {
     return a_adc_k_coef * 1000;
 }
 static void set_a_adc_k(ui_number_t *item) {
-    a_adc_k_coef = item->value / 1000.0f;
+    a_adc_k_coef = item->value / (item->color == RED) ? -1000.0f : 1000.0f;
 }
 static int32_t get_a_adc_c() {
     return a_adc_c_coef * 1000;
 }
 static void set_a_adc_c(ui_number_t *item) {
-    a_adc_c_coef = item->value / 1000.0f;
+    a_adc_c_coef = item->value / (item->color == RED) ? -1000.0f : 1000.0f;
 }
 
 
@@ -112,13 +112,13 @@ static int32_t get_a_dac_k() {
     return a_dac_k_coef * 1000;
 }
 static void set_a_dac_k(ui_number_t *item) {
-    a_adc_k_coef = item->value / 1000.0f;
+    a_adc_k_coef = item->value / (item->color == RED) ? -1000.0f : 1000.0f;
 }
 static int32_t get_a_dac_c() {
     return a_dac_c_coef * 1000;
 }
 static void set_a_dac_c(ui_number_t *item) {
-    a_adc_c_coef = item->value / 1000.0f;
+    a_adc_c_coef = item->value / (item->color == RED) ? -1000.0f : 1000.0f;
 }
 
 
@@ -126,13 +126,13 @@ static int32_t get_vin_adc_k() {
     return vin_adc_k_coef * 1000;
 }
 static void set_vin_adc_k(ui_number_t *item) {
-    vin_adc_k_coef = item->value / 1000.0f;
+    vin_adc_k_coef = item->value / (item->color == RED) ? -1000.0f : 1000.0f;
 }
 static int32_t get_vin_adc_c() {
     return vin_adc_c_coef * 1000;
 }
 static void set_vin_adc_c(ui_number_t *item) {
-    vin_adc_c_coef = item->value / 1000.0f;
+    vin_adc_c_coef = item->value / (item->color == RED) ? -1000.0f : 1000.0f;
 }
 
 
@@ -224,7 +224,7 @@ ui_number_t settings_field[] = {
         .can_focus = true,
     },
     .font_size = FONT_FULL_SMALL,
-    .alignment = ui_text_left_aligned,
+    .alignment = ui_text_right_aligned,
     .pad_dot = false,
     .color = WHITE,
     .value = 0,
@@ -245,7 +245,7 @@ ui_number_t settings_field[] = {
         .can_focus = true,
     },
     .font_size = FONT_FULL_SMALL,
-    .alignment = ui_text_left_aligned,
+    .alignment = ui_text_right_aligned,
     .pad_dot = false,
     .color = WHITE,
     .value = 0,
@@ -266,7 +266,7 @@ ui_number_t settings_field[] = {
         .can_focus = true,
     },
     .font_size = FONT_FULL_SMALL,
-    .alignment = ui_text_left_aligned,
+    .alignment = ui_text_right_aligned,
     .pad_dot = false,
     .color = WHITE,
     .value = 0,
@@ -287,7 +287,7 @@ ui_number_t settings_field[] = {
         .can_focus = true,
     },
     .font_size = FONT_FULL_SMALL,
-    .alignment = ui_text_left_aligned,
+    .alignment = ui_text_right_aligned,
     .pad_dot = false,
     .color = WHITE,
     .value = 0,
@@ -308,7 +308,7 @@ ui_number_t settings_field[] = {
         .can_focus = true,
     },
     .font_size = FONT_FULL_SMALL,
-    .alignment = ui_text_left_aligned,
+    .alignment = ui_text_right_aligned,
     .pad_dot = false,
     .color = WHITE,
     .value = 0,
@@ -476,7 +476,16 @@ static void set_page(int8_t page) {
         }
        
         // update field value using value from the get function
-        settings_field[page_offset + i].value = get_functions[page_offset + i]();
+        int32_t value = get_functions[page_offset + i]();
+        if (value < 0) {
+            // because uui_number doesn't support signed values (i think??)
+            // color represents the sign
+            settings_field[i].value = -value;
+            settings_field[i].color = RED;
+        } else {
+            settings_field[i].value = value;
+            settings_field[i].color = WHITE;
+        }
     }
 
     // debug:
@@ -490,7 +499,7 @@ static void settings_tick(void) {
     int8_t page_offset = current_page * ITEMS_PER_PAGE;
 
     // draw each field with its corresponding label
-    for (uint8_t i = 0; i < 5; i++) {
+    for (uint8_t i = 0; i < ITEMS_PER_PAGE; i++) {
         uint16_t x = settings_field[i].ui.x;
         uint16_t y = settings_field[i].ui.y;
 
@@ -507,7 +516,7 @@ static void settings_tick(void) {
                     TFT_WIDTH/2, FONT_FULL_SMALL_MAX_GLYPH_HEIGHT,
                     WHITE, false);
 
-            settings_field[page_offset + i].ui.draw(&settings_field[page_offset + i].ui);
+            settings_field[i].ui.draw(&settings_field[i].ui);
         }
     }
 }
@@ -518,7 +527,7 @@ static void settings_tick(void) {
  * @param      ui    The user interface
  */
 void func_settings_init(uui_t *ui) {
-    for (uint8_t i = 0; i < 5; i++) {
+    for (uint8_t i = 0; i < ITEMS_PER_PAGE; i++) {
         number_init(&settings_field[i]); 
     }
 
