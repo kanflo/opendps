@@ -55,6 +55,9 @@ static void settings_reset(void);
 static void past_save(past_t *past);
 static void past_restore(past_t *past);
 
+static void activated(void);
+static void deactivated(void);
+
 static bool event(uui_t *ui, event_t event, uint8_t data);
 static void field_changed(ui_number_t *item);
 static void set_page(int8_t page);
@@ -182,6 +185,8 @@ static int8_t current_page = 0;
 static int8_t current_item = 0; // 0 through 4
 
 get_func get_functions[] = {
+    &get_brightness,
+    &get_refresh,
     &get_v_adc_k,
     &get_v_adc_c,
     &get_v_dac_k,
@@ -192,11 +197,11 @@ get_func get_functions[] = {
     &get_a_dac_c,
     &get_vin_adc_k,
     &get_vin_adc_c,
-    &get_brightness,
-    &get_refresh
 };
 
 set_func set_functions[] = {
+    &set_brightness,
+    &set_refresh,
     &set_v_adc_k,
     &set_v_adc_c,
     &set_v_dac_k,
@@ -207,12 +212,12 @@ set_func set_functions[] = {
     &set_a_dac_c,
     &set_vin_adc_k,
     &set_vin_adc_c,
-    &set_brightness,
-    &set_refresh
 };
 
 // fields that can be changed
 const char* const field_label[] = {
+    "Scr-LED",
+    "Refresh",
     "V ADC K",
     "V ADC C",
     "V DAC K",
@@ -223,8 +228,6 @@ const char* const field_label[] = {
     "I DAC C",
     "Vin ADC C",
     "Vin ADC K",
-    "Scr-LED",
-    "Refresh",
 };
 
 
@@ -366,8 +369,8 @@ ui_screen_t settings_screen = {
     .icon_width = GFX_CROSSHAIR_WIDTH,
     .icon_height = GFX_CROSSHAIR_HEIGHT,
     .event = event,
-    .activated = NULL,
-    .deactivated = NULL,
+    .activated = &activated,
+    .deactivated = &deactivated,
     .enable = &settings_enable,
     .past_save = &past_save,
     .past_restore = NULL,
@@ -583,6 +586,12 @@ static void past_save(past_t *past) {
     pwrctl_past_save(past);
 }
 
+static void activated() {
+    current_item = 0;
+}
+
+static void deactivated() {
+}
 
 /**
  * @brief      Initialise the CV module and add its screen to the UI
