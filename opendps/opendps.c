@@ -87,9 +87,6 @@
 #include "logo.h"
 #endif // CONFIG_SPLASH_SCREEN
 
-#define TFT_HEIGHT  (128)
-#define TFT_WIDTH   (128)
-
 /** Timeout for waiting for wifi connction (ms) */
 #define WIFI_CONNECT_TIMEOUT  (10000)
 
