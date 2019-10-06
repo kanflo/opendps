@@ -75,6 +75,9 @@
 #ifdef CONFIG_FUNCGEN_ENABLE
 #include "func_gen.h"
 #endif // CONFIG_FUNCGEN_ENABLE
+#ifdef CONFIG_SETTINGS_ENABLE
+#include "func_settings.h"
+#endif // CONFIG_SETTINGS_ENABLE
 
 #ifdef DPS_EMULATOR
 #include "dpsemul.h"

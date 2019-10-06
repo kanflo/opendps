@@ -34,6 +34,7 @@
 #include "mini-printf.h"
 #include "dps-model.h"
 #include "ili9163c.h"
+#include "font-full_small.h"
 
 /*
  * This is the implementation of the Settings screen.
@@ -50,6 +51,8 @@ static void set_page(int8_t page);
 
 static set_param_status_t set_parameter(char *name, char *value);
 static set_param_status_t get_parameter(char *name, char *value, uint32_t value_len);
+
+static bool select_mode;
 
 // want to calibrate V_ADC,DAC  A_ADC,DAC   VIN_DAC   Brightness,  refresh timing
 // so 12 fields in total...
@@ -113,7 +116,7 @@ static void set_a_dac_c(ui_number_t *item) {
 
 
 static int32_t get_vin_adc_k() {
-    return vin_dac_c_coef * 1000;
+    return vin_adc_k_coef * 1000;
 }
 static void set_vin_adc_k(ui_number_t *item) {
     vin_adc_k_coef = item->value / 1000.0f;
@@ -145,9 +148,9 @@ static void set_refresh(ui_number_t *item) {
 typedef void (*set_func)(struct ui_number_t *item);
 typedef int32_t (*get_func)();
 
-#define ITEMS_PER_PAGE = 5
-#define ITEMS = 12;
-#define PAGES = 3; // 12 / 5  = 3 pages worth
+#define ITEMS_PER_PAGE 5
+#define ITEMS 12;
+#define PAGES 3; // 12 / 5  = 3 pages worth
 
 // which page we are currently on.
 static int8_t current_page = 0;
@@ -201,7 +204,7 @@ const char* const field_label[] = {
 
 
 // 5 fields
-ui_number_t field[] = {
+ui_number_t settings_field[] = {
 {
     {
         .type = ui_item_number,
@@ -307,7 +310,7 @@ ui_number_t field[] = {
     .unit = unit_none,
     .changed = NULL,
 }
-}
+};
 
 
 ui_screen_t settings_screen = {
