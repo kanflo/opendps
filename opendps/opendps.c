@@ -116,7 +116,7 @@ static void check_master_reset(void);
 static uint16_t bg_color;
 static uint32_t ui_width;
 static uint32_t ui_height;
-uint16_t opendps_update_interval = 250;
+uint32_t opendps_update_interval = 250;
 
 /** Used to make the screen flash */
 static uint32_t tft_flashing_period;
@@ -888,6 +888,11 @@ static void read_past_settings(void)
     }
     hw_set_backlight(last_tft_brightness);
 
+    if (past_read_unit(&g_past, opendps_update_interval, (const void**) &p, &length)) {
+        if (p) {
+            opendps_update_interval = *p;
+        }
+    }
 
 #ifdef GIT_VERSION
     /** Update app git hash in past if needed */
@@ -934,6 +939,12 @@ static void write_past_settings(void)
             dbg_printf("Error: past write inv failed!\n");
         }
     }
+
+    // save the update interval value
+    if ( ! past_write_unit(past, past_UPDATE_INTERVAL, (void*) &opendps_update_interval, sizeof(opendps_update_interval))) {
+        dbg_printf("Error: past write inv failed!\n");
+    }
+
 }
 
 /**

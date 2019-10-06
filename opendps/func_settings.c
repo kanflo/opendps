@@ -91,8 +91,8 @@ static int32_t get_v_dac_k() {
     return v_dac_k_coef * 1000;
 }
 static void set_v_dac_k(ui_number_t *item) {
-    v_adc_k_coef = item->value / 1000.0f;
-    if (item->color == RED) v_adc_k_coef = - v_adc_k_coef;
+    v_dac_k_coef = item->value / 1000.0f;
+    if (item->color == RED) v_dac_k_coef = - v_dac_k_coef;
 }
 static int32_t get_v_dac_c() {
     return v_dac_c_coef * 1000;
@@ -383,7 +383,7 @@ ui_screen_t settings_screen = {
     .deactivated = &deactivated,
     .enable = &settings_enable,
     .past_save = &past_save,
-    .past_restore = NULL,
+    .past_restore = &past_restore,
     .tick = &settings_tick,
     .num_items = ITEMS_PER_PAGE,
     .items = {
@@ -590,10 +590,15 @@ static void settings_reset() {
     v_dac_c_coef = V_DAC_C;
     vin_adc_k_coef = VIN_ADC_K;
     vin_adc_c_coef = VIN_ADC_C;
+
+    opendps_clear_calibration();
 }
 
 static void past_save(past_t *past) {
     pwrctl_past_save(past);
+}
+
+static void past_restore(past_t *past) {
 }
 
 static void activated() {
