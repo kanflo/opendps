@@ -458,6 +458,9 @@ static void ui_init(void)
 #ifdef CONFIG_FUNCGEN_ENABLE
     func_gen_init(&func_ui);
 #endif // CONFIG_FUNCGEN_ENABLE
+#ifdef CONFIG_SETTINGS_ENABLE
+    func_settings_init(&func_ui);
+#endif // CONFIG_SETTINGS_ENABLE
 
 
     /** Initialise the settings screens */

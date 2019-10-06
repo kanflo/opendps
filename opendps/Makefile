@@ -156,8 +156,8 @@ ifeq ($(FUNCGEN_ENABLE),1)
 	OBJS += func_gen.o uui_icon.o gfx-square.o gfx-saw.o gfx-sin.o
 endif
 
-ifeq ($(FUNCSETTINGS_ENABLE),1)
-	CFLAGS +=-DCONFIG_FUNCSETTINGS_ENABLE
+ifeq ($(SETTINGS_ENABLE),1)
+	CFLAGS +=-DCONFIG_SETTINGS_ENABLE
 	OBJS += func_settings.o
 endif
 
