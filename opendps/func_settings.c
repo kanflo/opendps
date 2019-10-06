@@ -62,6 +62,7 @@ static set_param_status_t set_parameter(char *name, char *value);
 static set_param_status_t get_parameter(char *name, char *value, uint32_t value_len);
 
 static bool select_mode;
+extern uint16_t opendps_update_interval;
 
 // want to calibrate V_ADC,DAC  A_ADC,DAC   VIN_DAC   Brightness,  refresh timing
 // so 12 fields in total...
