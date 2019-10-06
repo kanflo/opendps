@@ -158,8 +158,9 @@ typedef int32_t (*get_func)();
 #define ITEMS_PER_PAGE 5
 #define ITEMS 12
 #define PAGES 3 // 12 / 5  = 3 pages worth
-#define ROW_HEIGHT 30
-#define FIELD_Y_OFFSET 20
+#define ROW_HEIGHT 20
+#define FIELD_Y_OFFSET 0 // 15
+#define FIELD_X_OFFSET 64 // half of screen
 
 // which page we are currently on.
 static int8_t current_page = 0;
@@ -197,18 +198,18 @@ set_func set_functions[] = {
 
 // fields that can be changed
 const char* const field_label[] = {
-    "Voltage ADC K",
-    "Voltage ADC C",
-    "Voltage DAC K",
-    "Voltage DAC C",
-    "Current ADC K",
-    "Current ADC C",
-    "Current DAC K",
-    "Current DAC C",
+    "V ADC K",
+    "V ADC C",
+    "V DAC K",
+    "V DAC C",
+    "I ADC K",
+    "I ADC C",
+    "I DAC K",
+    "I DAC C",
     "Vin ADC C",
     "Vin ADC K",
-    "Brightness",
-    "Refresh Rate",
+    "Scr-LED",
+    "Refresh",
 };
 
 
@@ -218,7 +219,7 @@ ui_number_t settings_field[] = {
     {
         .type = ui_item_number,
         .id = 10,
-        .x = 5,
+        .x = FIELD_X_OFFSET,
         .y = FIELD_Y_OFFSET,
         .can_focus = true,
     },
@@ -239,7 +240,7 @@ ui_number_t settings_field[] = {
     {
         .type = ui_item_number,
         .id = 11,
-        .x = 5,
+        .x = FIELD_X_OFFSET,
         .y = FIELD_Y_OFFSET + (1 * ROW_HEIGHT),
         .can_focus = true,
     },
@@ -260,7 +261,7 @@ ui_number_t settings_field[] = {
     {
         .type = ui_item_number,
         .id = 12,
-        .x = 5,
+        .x = FIELD_X_OFFSET,
         .y = FIELD_Y_OFFSET + (2*ROW_HEIGHT),
         .can_focus = true,
     },
@@ -281,7 +282,7 @@ ui_number_t settings_field[] = {
     {
         .type = ui_item_number,
         .id = 13,
-        .x = 5,
+        .x = FIELD_X_OFFSET,
         .y = FIELD_Y_OFFSET + (3*ROW_HEIGHT),
         .can_focus = true,
     },
@@ -302,7 +303,7 @@ ui_number_t settings_field[] = {
     {
         .type = ui_item_number,
         .id = 14,
-        .x = 5,
+        .x = FIELD_X_OFFSET,
         .y = FIELD_Y_OFFSET + (4*ROW_HEIGHT),
         .can_focus = true,
     },
@@ -392,38 +393,47 @@ static bool event(uui_t *ui, event_t event, uint8_t data) {
 
             // go up
             if ( event == event_button_m1 ) {
-                // first item selected, going up will wrap around to previous page
-                if (current_item <= 0) {
-                    // wrap around to bottom of previous page
-                    current_item = ITEMS_PER_PAGE - 1;
-
-                    // previous page being the last page (if we're on page 0)
-                    if (current_page <= 0) set_page(PAGES - 1);
-                    else set_page(current_page - 1);
-
-                // otherwise, go up one item
-                } else {
+                // not first item, move up one
+                if (current_item > 0) {
                     current_item--;
+                    return false;
                 }
+
+                // we are left with current_item == 0.
+                
+                if (current_page == 0) {
+                    // do nothing for first page/first item
+                    return true;
+                }
+
+                // current_item == 0, and current_page != 0
+                set_page(current_page - 1);
+                return false;
 
             // go down
-            } else if (event == event_button_m2) {
-                // last item selected, going down will go to the next page and first item
-                if (current_item >= ITEMS_PER_PAGE - 1) {
-                    // wrap to first item
-                    current_item = 0;
+            } else {
+                // not last item, go down
+                if (current_item < ITEMS_PER_PAGE - 1) {
+                    // do nothing if we are on the last item already
+                    if ((current_page * ITEMS_PER_PAGE) + current_item >= ITEMS - 1)
+                        return true;
 
-                    // of the next page
-                    if (current_page >= PAGES - 1) set_page(0);
-                    else set_page(current_page + 1);
-
-                // otherwise go to the next item
-                } else {
+                    // otherwise, go down one item
                     current_item++;
+                    return false;
                 }
-            }
 
-            return false;
+                // we are left with current_item == last item
+
+                if (current_page == PAGES - 1) {
+                    // last page. do nothing
+                    return true;
+                }
+
+                // last item, but not last page
+                set_page(current_page + 1);
+                return false;
+            }
 
         case event_button_sel:
             select_mode = ! select_mode;
@@ -489,7 +499,7 @@ static void settings_tick(void) {
             tft_puts(FONT_FULL_SMALL, 
                     field_label[page_offset + i], 
                     0 /* x */,    (i * ROW_HEIGHT) + FONT_FULL_SMALL_MAX_GLYPH_HEIGHT  /* y */ ,
-                    TFT_WIDTH, FONT_FULL_SMALL_MAX_GLYPH_HEIGHT,
+                    TFT_WIDTH/2, FONT_FULL_SMALL_MAX_GLYPH_HEIGHT,
                     WHITE, false);
 
             settings_field[page_offset + i].ui.draw(&settings_field[page_offset + i].ui);
@@ -506,6 +516,9 @@ void func_settings_init(uui_t *ui) {
     for (uint8_t i = 0; i < 5; i++) {
         number_init(&settings_field[i]); 
     }
+
+    // init to page 0
+    set_page(0);
 
     uui_add_screen(ui, &settings_screen);
 }
