@@ -35,6 +35,12 @@
 #include "dps-model.h"
 #include "ili9163c.h"
 #include "font-full_small.h"
+#include "opendps.h"
+#include "gfx-crosshair.h"
+
+
+#define SCREEN_ID  (7)
+
 
 /*
  * This is the implementation of the Settings screen.
@@ -46,6 +52,7 @@ static void settings_tick(void);
 static void past_save(past_t *past);
 static void past_restore(past_t *past);
 
+static bool event(uui_t *ui, event_t event, uint8_t data);
 static void field_changed(ui_number_t *item);
 static void set_page(int8_t page);
 
@@ -149,8 +156,8 @@ typedef void (*set_func)(struct ui_number_t *item);
 typedef int32_t (*get_func)();
 
 #define ITEMS_PER_PAGE 5
-#define ITEMS 12;
-#define PAGES 3; // 12 / 5  = 3 pages worth
+#define ITEMS 12
+#define PAGES 3 // 12 / 5  = 3 pages worth
 
 // which page we are currently on.
 static int8_t current_page = 0;
@@ -316,10 +323,10 @@ ui_number_t settings_field[] = {
 ui_screen_t settings_screen = {
     .id = SCREEN_ID,
     .name = "settings",
-    .icon_data = (uint8_t *) gfx_cv,
-    .icon_data_len = sizeof(gfx_cv),
-    .icon_width = GFX_CV_WIDTH,
-    .icon_height = GFX_CV_HEIGHT,
+    .icon_data = (uint8_t *) gfx_crosshair,
+    .icon_data_len = sizeof(gfx_crosshair),
+    .icon_width = GFX_CROSSHAIR_WIDTH,
+    .icon_height = GFX_CROSSHAIR_HEIGHT,
     .event = event,
     .activated = NULL,
     .deactivated = NULL,
@@ -334,7 +341,7 @@ ui_screen_t settings_screen = {
         (ui_item_t*) &settings_field[2], 
         (ui_item_t*) &settings_field[3], 
         (ui_item_t*) &settings_field[4]
-    }
+    },
     .set_parameter = &set_parameter,
     .get_parameter = &get_parameter,
     .parameters = {
@@ -382,14 +389,14 @@ static bool event(uui_t *ui, event_t event, uint8_t data) {
             }
 
             // go up
-            if ( event == event_buttom_m1 && current_item <= 0) {
+            if ( event == event_button_m1 && current_item <= 0) {
                 // wrap around to bottom
                 current_item = ITEMS_PER_PAGE - 1;
                 if (current_page >= 1) set_page(current_page - 1);
                 if (current_page <= 0) set_page(PAGES - 1);
 
             // go down
-            } else if (event == event_buttom_m2 && current_item >= ITEMS_PER_PAGE - 1) {
+            } else if (event == event_button_m2 && current_item >= ITEMS_PER_PAGE - 1) {
                 // wrap around to top
                 current_item = 0;
                 if (current_page < PAGES - 1) set_page(current_page+1);
