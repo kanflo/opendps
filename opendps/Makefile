@@ -55,6 +55,9 @@ CL_ENABLE ?= 1
 # Enable function generator mode
 FUNCGEN_ENABLE ?= 1
 
+# Enable settings 
+SETTINGS_ENABLE ?= 1
+
 # Enable invert color feature
 INVERT_ENABLE ?= 0
 
@@ -151,6 +154,11 @@ endif
 ifeq ($(FUNCGEN_ENABLE),1)
 	CFLAGS +=-DCONFIG_FUNCGEN_ENABLE
 	OBJS += func_gen.o uui_icon.o gfx-square.o gfx-saw.o gfx-sin.o
+endif
+
+ifeq ($(FUNCSETTINGS_ENABLE),1)
+	CFLAGS +=-DCONFIG_FUNCSETTINGS_ENABLE
+	OBJS += func_settings.o
 endif
 
 ifeq ($(SPLASH_SCREEN),1)
