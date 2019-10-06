@@ -32,6 +32,8 @@
 /** Max number of parameters to a function */
 #define OPENDPS_MAX_PARAMETERS  (8)
 
+extern uint16_t opendps_update_interval;
+
 /**
  * @brief      Enable specified function
  *

@@ -38,6 +38,7 @@
 #include "opendps.h"
 #include "gfx-crosshair.h"
 #include "pastunits.h"
+#include "opendps.h"
 
 
 #define SCREEN_ID  (7)
@@ -62,7 +63,6 @@ static set_param_status_t set_parameter(char *name, char *value);
 static set_param_status_t get_parameter(char *name, char *value, uint32_t value_len);
 
 static bool select_mode;
-extern uint16_t opendps_update_interval;
 
 // want to calibrate V_ADC,DAC  A_ADC,DAC   VIN_DAC   Brightness,  refresh timing
 // so 12 fields in total...
@@ -140,18 +140,29 @@ static void set_vin_adc_c(ui_number_t *item) {
 
 
 static int32_t get_brightness() {
-    return 100 * 1000;
+    return (hw_get_backlight() / 1.28f) * 1000;
 }
 static void set_brightness(ui_number_t *item) {
-    // 
+    if (item->value > 100 * 1000) item->value = 100 * 1000;
+    if (item->value < 0) item->value = 0;
+
+    hw_set_backlight((item->value / 1000.0f) * 1.28f);
 }
 
 static int32_t get_refresh() {
-    return opendps_update_interval;
-    return 250 * 1000;
+    return opendps_update_interval * 1000;
 }
 static void set_refresh(ui_number_t *item) {
-    // 
+    // todo: make this persistent
+    opendps_update_interval = item->value / 1000;
+
+    // ensure sane values
+    if (opendps_update_interval > 1000) {
+        opendps_update_interval = 1000;
+    }
+    if (opendps_update_interval < 10) {
+        opendps_update_interval = 10;
+    }
 }
 
 
@@ -237,7 +248,7 @@ ui_number_t settings_field[] = {
     .num_digits = 3,
     .num_decimals = 3,
     .unit = unit_none,
-    .changed = NULL,
+    .changed = &field_changed,
 },
 {
     {
@@ -258,7 +269,7 @@ ui_number_t settings_field[] = {
     .num_digits = 3,
     .num_decimals = 3,
     .unit = unit_none,
-    .changed = NULL,
+    .changed = &field_changed,
 },
 {
     {
@@ -279,7 +290,7 @@ ui_number_t settings_field[] = {
     .num_digits = 3,
     .num_decimals = 3,
     .unit = unit_none,
-    .changed = NULL,
+    .changed = &field_changed,
 },
 {
     {
@@ -300,7 +311,7 @@ ui_number_t settings_field[] = {
     .num_digits = 3,
     .num_decimals = 3,
     .unit = unit_none,
-    .changed = NULL,
+    .changed = &field_changed,
 },
 {
     {
@@ -321,7 +332,7 @@ ui_number_t settings_field[] = {
     .num_digits = 3,
     .num_decimals = 3,
     .unit = unit_none,
-    .changed = NULL,
+    .changed = &field_changed,
 },
 {
     {
@@ -342,7 +353,7 @@ ui_number_t settings_field[] = {
     .num_digits = 3,
     .num_decimals = 3,
     .unit = unit_none,
-    .changed = NULL,
+    .changed = &field_changed,
 }
 };
 
