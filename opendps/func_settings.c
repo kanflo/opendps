@@ -66,30 +66,30 @@ static bool select_mode;
 // possibly want OCP, OVP, OPP?
 
 static int32_t get_v_adc_k() {
-    return v_adc_k_coef * 1000000;
+    return v_adc_k_coef * 1000;
 }
 static void set_v_adc_k(ui_number_t *item) {
-    v_adc_k_coef = item->value / 1000000.0f;
+    v_adc_k_coef = item->value / 1000.0f;
 }
 static int32_t get_v_adc_c() {
-    return v_adc_c_coef * 1000000;
+    return v_adc_c_coef * 1000;
 }
 static void set_v_adc_c(ui_number_t *item) {
-    v_adc_c_coef = item->value / 1000000.0f;
+    v_adc_c_coef = item->value / 1000.0f;
 }
 
 
 static int32_t get_v_dac_k() {
-    return v_dac_k_coef * 1000000;
+    return v_dac_k_coef * 1000;
 }
 static void set_v_dac_k(ui_number_t *item) {
-    v_adc_k_coef = item->value / 1000000.0f;
+    v_adc_k_coef = item->value / 1000.0f;
 }
 static int32_t get_v_dac_c() {
-    return v_dac_c_coef * 1000000;
+    return v_dac_c_coef * 1000;
 }
 static void set_v_dac_c(ui_number_t *item) {
-    v_adc_c_coef = item->value / 1000000.0f;
+    v_adc_c_coef = item->value / 1000.0f;
 }
 
 
@@ -408,6 +408,7 @@ static bool event(uui_t *ui, event_t event, uint8_t data) {
 
                 // current_item == 0, and current_page != 0
                 set_page(current_page - 1);
+                current_item = ITEMS_PER_PAGE - 1;
                 return false;
 
             // go down
@@ -432,6 +433,7 @@ static bool event(uui_t *ui, event_t event, uint8_t data) {
 
                 // last item, but not last page
                 set_page(current_page + 1);
+                current_item = 0;
                 return false;
             }
 
@@ -476,6 +478,9 @@ static void set_page(int8_t page) {
         // update field value using value from the get function
         settings_field[page_offset + i].value = get_functions[page_offset + i]();
     }
+
+    // debug:
+    tft_clear();
 }
 
 static void settings_enable(bool enabled) {
@@ -519,6 +524,7 @@ void func_settings_init(uui_t *ui) {
 
     // init to page 0
     set_page(0);
+    current_item = 0;
 
     uui_add_screen(ui, &settings_screen);
 }
