@@ -141,6 +141,10 @@ void uui_handle_screen_event(uui_t *ui, event_t event)
         return;
     }
 
+    // If the screen handled the event, do nothing.
+    if (ui->screens[ui->cur_screen]->event && ui->screens[ui->cur_screen]->event(ui, event))
+        return;
+
     switch(event) {
         case event_rot_left_set:
             uui_prev_screen(ui);

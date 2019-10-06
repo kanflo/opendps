@@ -1,7 +1,7 @@
 /*
  * The MIT License (MIT)
  *
- * Copyright (c) 2019
+ * Copyright (c) 2019 Leo Leung <leo@steamr.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -48,12 +48,10 @@
  * This is the implementation of the Settings screen.
  */
 
-static void settings_enable(bool _enable);
 static void settings_tick(void);
 static void settings_reset(void);
 
 static void past_save(past_t *past);
-static void past_restore(past_t *past);
 
 static void activated(void);
 static void deactivated(void);
@@ -67,116 +65,36 @@ static set_param_status_t get_parameter(char *name, char *value, uint32_t value_
 
 static bool select_mode;
 
+
 // want to calibrate V_ADC,DAC  A_ADC,DAC   VIN_DAC   Brightness,  refresh timing
 // so 12 fields in total...
 // possibly want OCP, OVP, OPP?
-
-static int32_t get_v_adc_k() {
-    return v_adc_k_coef * 1000;
-}
-static void set_v_adc_k(ui_number_t *item) {
-    v_adc_k_coef = item->value / 1000.0f;
-    if (item->color == RED) v_adc_k_coef = - v_adc_k_coef;
-}
-static int32_t get_v_adc_c() {
-    return v_adc_c_coef * 1000;
-}
-static void set_v_adc_c(ui_number_t *item) {
-    v_adc_c_coef = item->value / 1000.0f;
-    if (item->color == RED) v_adc_c_coef = - v_adc_c_coef;
-}
-
-
-static int32_t get_v_dac_k() {
-    return v_dac_k_coef * 1000;
-}
-static void set_v_dac_k(ui_number_t *item) {
-    v_dac_k_coef = item->value / 1000.0f;
-    if (item->color == RED) v_dac_k_coef = - v_dac_k_coef;
-}
-static int32_t get_v_dac_c() {
-    return v_dac_c_coef * 1000;
-}
-static void set_v_dac_c(ui_number_t *item) {
-    v_dac_c_coef = item->value / 1000.0f;
-    if (item->color == RED) v_dac_c_coef = - v_dac_c_coef;
-}
-
-
-
-static int32_t get_a_adc_k() {
-    return a_adc_k_coef * 1000;
-}
-static void set_a_adc_k(ui_number_t *item) {
-    a_adc_k_coef = item->value / 1000.0f;
-    if (item->color == RED) a_adc_k_coef = - a_adc_k_coef;
-}
-static int32_t get_a_adc_c() {
-    return a_adc_c_coef * 1000;
-}
-static void set_a_adc_c(ui_number_t *item) {
-    a_adc_c_coef = item->value / 1000.0f;
-    if (item->color == RED) a_adc_c_coef = - a_adc_c_coef;
-}
-
-
-static int32_t get_a_dac_k() {
-    return a_dac_k_coef * 1000;
-}
-static void set_a_dac_k(ui_number_t *item) {
-    a_dac_k_coef = item->value / 1000.0f;
-    if (item->color == RED) a_dac_k_coef = - a_dac_k_coef;
-}
-static int32_t get_a_dac_c() {
-    return a_dac_c_coef * 1000;
-}
-static void set_a_dac_c(ui_number_t *item) {
-    a_dac_c_coef = item->value / 1000.0f;
-    if (item->color == RED) a_dac_c_coef = - a_dac_c_coef;
-}
-
-
-static int32_t get_vin_adc_k() {
-    return vin_adc_k_coef * 1000;
-}
-static void set_vin_adc_k(ui_number_t *item) {
-    vin_adc_k_coef = item->value / 1000.0f;
-    if (item->color == RED) vin_adc_k_coef = - vin_adc_k_coef;
-}
-static int32_t get_vin_adc_c() {
-    return vin_adc_c_coef * 1000;
-}
-static void set_vin_adc_c(ui_number_t *item) {
-    vin_adc_c_coef = item->value / 1000.0f;
-    if (item->color == RED) vin_adc_c_coef = - vin_adc_c_coef;
-}
-
-
-static int32_t get_brightness() {
-    return (hw_get_backlight() / 1.28f) * 1000;
-}
-static void set_brightness(ui_number_t *item) {
-    if (item->value > 100 * 1000) item->value = 100 * 1000;
-    if (item->value < 0) item->value = 0;
-
-    hw_set_backlight((item->value / 1000.0f) * 1.28f);
-}
-
-static int32_t get_refresh() {
-    return opendps_update_interval * 1000;
-}
-static void set_refresh(ui_number_t *item) {
-    // todo: make this persistent
-    opendps_update_interval = item->value / 1000;
-
-    // ensure sane values
-    if (opendps_update_interval > 1000) {
-        opendps_update_interval = 1000;
-    }
-    if (opendps_update_interval < 10) {
-        opendps_update_interval = 10;
-    }
-}
+//
+//
+static int32_t get_v_adc_k(void);
+static void set_v_adc_k(ui_number_t *item);
+static int32_t get_v_adc_c(void);
+static void set_v_adc_c(ui_number_t *item);
+static int32_t get_v_dac_k(void);
+static void set_v_dac_k(ui_number_t *item);
+static int32_t get_v_dac_c(void);
+static void set_v_dac_c(ui_number_t *item);
+static int32_t get_a_adc_k(void);
+static void set_a_adc_k(ui_number_t *item);
+static int32_t get_a_adc_c(void);
+static void set_a_adc_c(ui_number_t *item);
+static int32_t get_a_dac_k(void);
+static void set_a_dac_k(ui_number_t *item);
+static int32_t get_a_dac_c(void);
+static void set_a_dac_c(ui_number_t *item);
+static int32_t get_vin_adc_k(void);
+static void set_vin_adc_k(ui_number_t *item);
+static int32_t get_vin_adc_c(void);
+static void set_vin_adc_c(ui_number_t *item);
+static int32_t get_brightness(void);
+static void set_brightness(ui_number_t *item);
+static int32_t get_refresh(void);
+static void set_refresh(ui_number_t *item);
 
 
 
@@ -381,9 +299,9 @@ ui_screen_t settings_screen = {
     .event = event,
     .activated = &activated,
     .deactivated = &deactivated,
-    .enable = &settings_enable,
+    .enable = NULL,
     .past_save = &past_save,
-    .past_restore = &past_restore,
+    .past_restore = NULL,
     .tick = &settings_tick,
     .num_items = ITEMS_PER_PAGE,
     .items = {
@@ -432,6 +350,118 @@ static set_param_status_t get_parameter(char *name, char *value, uint32_t value_
 }
 
 
+static int32_t get_v_adc_k() {
+    return v_adc_k_coef * 1000;
+}
+static void set_v_adc_k(ui_number_t *item) {
+    v_adc_k_coef = item->value / 1000.0f;
+    if (item->color == RED) v_adc_k_coef = - v_adc_k_coef;
+}
+static int32_t get_v_adc_c() {
+    return v_adc_c_coef * 1000;
+}
+static void set_v_adc_c(ui_number_t *item) {
+    v_adc_c_coef = item->value / 1000.0f;
+    if (item->color == RED) v_adc_c_coef = - v_adc_c_coef;
+}
+
+
+static int32_t get_v_dac_k() {
+    return v_dac_k_coef * 1000;
+}
+static void set_v_dac_k(ui_number_t *item) {
+    v_dac_k_coef = item->value / 1000.0f;
+    if (item->color == RED) v_dac_k_coef = - v_dac_k_coef;
+}
+static int32_t get_v_dac_c() {
+    return v_dac_c_coef * 1000;
+}
+static void set_v_dac_c(ui_number_t *item) {
+    v_dac_c_coef = item->value / 1000.0f;
+    if (item->color == RED) v_dac_c_coef = - v_dac_c_coef;
+}
+
+
+
+static int32_t get_a_adc_k() {
+    return a_adc_k_coef * 1000;
+}
+static void set_a_adc_k(ui_number_t *item) {
+    a_adc_k_coef = item->value / 1000.0f;
+    if (item->color == RED) a_adc_k_coef = - a_adc_k_coef;
+}
+static int32_t get_a_adc_c() {
+    return a_adc_c_coef * 1000;
+}
+static void set_a_adc_c(ui_number_t *item) {
+    a_adc_c_coef = item->value / 1000.0f;
+    if (item->color == RED) a_adc_c_coef = - a_adc_c_coef;
+}
+
+
+static int32_t get_a_dac_k() {
+    return a_dac_k_coef * 1000;
+}
+static void set_a_dac_k(ui_number_t *item) {
+    a_dac_k_coef = item->value / 1000.0f;
+    if (item->color == RED) a_dac_k_coef = - a_dac_k_coef;
+}
+static int32_t get_a_dac_c() {
+    return a_dac_c_coef * 1000;
+}
+static void set_a_dac_c(ui_number_t *item) {
+    a_dac_c_coef = item->value / 1000.0f;
+    if (item->color == RED) a_dac_c_coef = - a_dac_c_coef;
+}
+
+
+static int32_t get_vin_adc_k() {
+    return vin_adc_k_coef * 1000;
+}
+static void set_vin_adc_k(ui_number_t *item) {
+    vin_adc_k_coef = item->value / 1000.0f;
+    if (item->color == RED) vin_adc_k_coef = - vin_adc_k_coef;
+}
+static int32_t get_vin_adc_c() {
+    return vin_adc_c_coef * 1000;
+}
+static void set_vin_adc_c(ui_number_t *item) {
+    vin_adc_c_coef = item->value / 1000.0f;
+    if (item->color == RED) vin_adc_c_coef = - vin_adc_c_coef;
+}
+
+
+static int32_t get_brightness() {
+    return (hw_get_backlight() / 1.28f) * 1000;
+}
+static void set_brightness(ui_number_t *item) {
+    if (item->value > 100 * 1000) item->value = 100 * 1000;
+    if (item->value < 0) item->value = 0;
+
+    hw_set_backlight((item->value / 1000.0f) * 1.28f);
+}
+
+static int32_t get_refresh() {
+    return opendps_update_interval * 1000;
+}
+static void set_refresh(ui_number_t *item) {
+    // todo: make this persistent
+    opendps_update_interval = item->value / 1000;
+
+    // ensure sane values
+    if (opendps_update_interval > 1000) {
+        opendps_update_interval = 1000;
+    }
+    if (opendps_update_interval < 10) {
+        opendps_update_interval = 10;
+    }
+}
+
+
+/**
+ * @brief  event handler: We only care about the SET, M1 and M2 buttons
+ *         used to keep track of where we are in the menu
+ */
 static bool event(uui_t *ui, event_t event, uint8_t data) {
     switch (event) {
         case event_button_m1:
@@ -519,7 +549,10 @@ static void field_changed(ui_number_t *item) {
     set_functions[page_offset + current_item](item);
 }
 
-// called whenever the page is changed
+/**
+ * @brief set_page will change the current settings page
+ *        to the given page number.
+ */
 static void set_page(int8_t page) {
     current_page = page;
 
@@ -535,8 +568,8 @@ static void set_page(int8_t page) {
         // update field value using value from the get function
         int32_t value = get_functions[page_offset + i]();
         if (value < 0) {
-            // because uui_number doesn't support signed values (i think??)
-            // color represents the sign
+            // because uui_number doesn't support signed values
+            // color represents the sign. This is is gross hack, I know.
             settings_field[i].value = -value;
             settings_field[i].color = RED;
         } else {
@@ -545,13 +578,13 @@ static void set_page(int8_t page) {
         }
     }
 
-    // debug:
     tft_clear();
 }
 
-static void settings_enable(bool enabled) {
-}
 
+/**
+ * @brief settings_tick will render the UI
+ */
 static void settings_tick(void) {
     int8_t page_offset = current_page * ITEMS_PER_PAGE;
 
@@ -559,7 +592,6 @@ static void settings_tick(void) {
     for (uint8_t i = 0; i < ITEMS_PER_PAGE; i++) {
         uint16_t x = settings_field[i].ui.x;
         uint16_t y = settings_field[i].ui.y;
-
 
         // if greater than total number of items, clear the area
         if (page_offset + i >= ITEMS) {
@@ -579,6 +611,9 @@ static void settings_tick(void) {
 }
 
 
+/**
+ * @brief resets the settings value.
+ */
 static void settings_reset() {
     a_adc_k_coef = A_ADC_K;
     a_adc_c_coef = A_ADC_C;
@@ -591,22 +626,35 @@ static void settings_reset() {
     vin_adc_k_coef = VIN_ADC_K;
     vin_adc_c_coef = VIN_ADC_C;
 
+    // clear calibration settings from past
     opendps_clear_calibration();
+
+    // reset interval and brightness settings
+    opendps_update_interval = 250;
+    hw_set_backlight(128);
 }
 
+
+/**
+ * @brief ensure power constants are saved
+ */
 static void past_save(past_t *past) {
     pwrctl_past_save(past);
 }
 
-static void past_restore(past_t *past) {
-}
 
+/**
+ * @brief on activation, reset to first page
+ */
 static void activated() {
     set_page(0);
     current_item = 0;
     select_mode = 0;
 }
 
+/**
+ * @brief on deactivation, clear the screen
+ */
 static void deactivated() {
     tft_clear();
 }
