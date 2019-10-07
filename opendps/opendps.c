@@ -971,8 +971,8 @@ static void event_handler(void)
         if ( ! event_get(&event, &data)) {
             hw_longpress_check();
 
-            /** Update on the first call and every UI_UPDATE_INTERVAL_MS ms */
-            if (last <= 0 || get_ticks() - last >= UI_UPDATE_INTERVAL_MS) {
+            /** Update on the first call and every opendps_update_interval ms */
+            if (last <= 0 || get_ticks() - last >= opendps_update_interval) {
                 ui_tick();
                 last = get_ticks();
             }

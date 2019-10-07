@@ -33,15 +33,10 @@
 #define OPENDPS_MAX_PARAMETERS  (8)
 
 /** UI Width/Height */
-<<<<<<< HEAD
-#define TFT_WIDTH   (128)
-#define TFT_HEIGHT  (128)
-=======
 #define TFT_HEIGHT  (128)
 #define TFT_WIDTH   (128)
 
 extern uint32_t opendps_update_interval;
->>>>>>> aea1bc087e81e531f088e06401eabf9177f2cee0
 
 /**
  * @brief      Enable specified function
