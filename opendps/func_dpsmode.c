@@ -637,16 +637,24 @@ static bool event(uui_t *ui, event_t event, uint8_t data) {
             break;
 
         case event_rot_press:
-            // pressing rot should focus on 3rd item if not already in select mode
-            if (third_item && ! single_edit_mode && ! select_mode) {
-                if (((ui_number_t *)third_item)->ui.can_focus) {
-                    uui_focus(ui, (ui_item_t *)third_item);
-                    select_mode = true;
-                    return false;
-                }
+            // let parent handle event if no valid third item exists
+            if ( ! third_item) {
+                return false;
             }
-            break;
 
+            // Let parent handle event if we are in single edit mode, or select mode
+            // This is to avoid interfereing with existing edit selection
+            if (single_edit_mode || select_mode) {
+                return true;
+            }
+
+            // Otherwise, if we have a valid third item and not in any edit mode
+            // we will focus on and edit the third item
+            if (((ui_number_t *)third_item)->ui.can_focus) {
+                uui_focus(ui, (ui_item_t *)third_item);
+                select_mode = true;
+            }
+            return false;
 
         case event_opp:
             // opp mode
