@@ -118,7 +118,7 @@ static void check_master_reset(void);
 static uint16_t bg_color;
 static uint32_t ui_width;
 static uint32_t ui_height;
-uint32_t opendps_update_interval = 250;
+uint32_t opendps_screen_update_ms = 250;
 
 /** Used to make the screen flash */
 static uint32_t tft_flashing_period;
@@ -878,7 +878,7 @@ static void read_past_settings(void)
 
     if (past_read_unit(&g_past, past_UPDATE_INTERVAL, (const void**) &p, &length)) {
         if (p) {
-            opendps_update_interval = *p;
+            opendps_screen_update_ms = *p;
         }
     }
 
@@ -929,7 +929,7 @@ static void write_past_settings(void)
     }
 
     // save the update interval value
-    if ( ! past_write_unit(&g_past, past_UPDATE_INTERVAL, (void*) &opendps_update_interval, sizeof(opendps_update_interval))) {
+    if ( ! past_write_unit(&g_past, past_UPDATE_INTERVAL, (void*) &opendps_screen_update_ms, sizeof(opendps_screen_update_ms))) {
         dbg_printf("Error: past write inv failed!\n");
     }
 
