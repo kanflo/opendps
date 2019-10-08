@@ -663,7 +663,10 @@ static void past_save(past_t *past) {
  * @brief on activation, reset to first page
  */
 static void activated() {
-    set_page(0);
+    // screen activation will cause cur_item to be reset
+    // Ensure current item matches the UI system
+    // Move back to previous page on init.
+    set_page(current_page);
     current_item = 0;
     select_mode = 0;
 }
@@ -688,10 +691,8 @@ void func_settings_init(uui_t *ui) {
         number_init(&settings_field[i]); 
     }
 
-    // screen activation will cause cur_item to be reset
-    // Ensure current item matches the UI system
-    // Move back to previous page on init.
-    set_page(current_page);
+    // initialize page and selected items
+    set_page(0);
     current_item = 0;
     select_mode = 0;
 
