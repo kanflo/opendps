@@ -25,6 +25,7 @@
 #include "pwrctl.h"
 #include "dps-model.h"
 #include "pastunits.h"
+#include "dbg_printf.h"
 #include <gpio.h>
 #include <dac.h>
 
