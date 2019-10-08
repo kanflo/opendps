@@ -629,13 +629,6 @@ static void ui_tick(void)
     static uint64_t last_tft_flash = 0;
     static uint64_t last_lock_flash = 0;
 
-    static uint64_t last = 0;
-    /** Update on the first call and every opendps_screen_update_ms ms */
-    if (last > 0 && get_ticks() - last < opendps_screen_update_ms) {
-        return;
-    }
-
-    last = get_ticks();
     uui_tick(current_ui);
     uui_tick(&main_ui);
 
@@ -966,12 +959,19 @@ static void check_master_reset(void)
   */
 static void event_handler(void)
 {
+    static uint64_t last = 0;
+
     while(1) {
         event_t event;
         uint8_t data = 0;
         if (!event_get(&event, &data)) {
             hw_longpress_check();
-            ui_tick();
+
+            // update every opendps_screen_update_ms
+            if (last <= 0 || get_ticks() - last >= opendps_screen_update_ms) {
+                ui_tick();
+                last = get_ticks();
+            }
         } else {
             if (event) {
                 emu_printf(" Event %d 0x%02x\n", event, data);
@@ -989,6 +989,7 @@ static void event_handler(void)
                     break;
             }
             ui_handle_event(event, data);
+            ui_tick();
         }
     }
 }
