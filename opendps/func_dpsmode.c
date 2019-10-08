@@ -2,7 +2,7 @@
  * The MIT License (MIT)
  *
  * Copyright (c) 2019 Johan Kanflo (github.com/kanflo)
- * Modifications made by Leo Leung <leo@steamr.com>
+ *                    Leo Leung <leo@steamr.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -250,7 +250,7 @@ ui_number_t dpsmode_brightness = {
     .pad_dot = false,
     .color = WHITE,
     .value = 0,
-    .min = 0,
+    .min = 1,
     .max = 100,
     .si_prefix = si_none, // percentage, so 0-100
     .num_digits = 3,
@@ -422,6 +422,7 @@ static void dpsmode_enable(bool enabled)
  */
 static void voltage_changed(ui_number_t *item)
 {
+    // clear recall as values no longer match
     dpsmode_graphics &= ~CUR_GFX_M1_RECALL;
     dpsmode_graphics &= ~CUR_GFX_M2_RECALL;
 
@@ -436,6 +437,7 @@ static void voltage_changed(ui_number_t *item)
  */
 static void current_changed(ui_number_t *item)
 {
+    // clear recall as values no longer match
     dpsmode_graphics &= ~CUR_GFX_M1_RECALL;
     dpsmode_graphics &= ~CUR_GFX_M2_RECALL;
 
@@ -450,11 +452,11 @@ static void current_changed(ui_number_t *item)
  */
 static void power_changed(ui_number_t *item)
 {
+    // clear recall as values no longer match
     dpsmode_graphics &= ~CUR_GFX_M1_RECALL;
     dpsmode_graphics &= ~CUR_GFX_M2_RECALL;
     
     saved_p = item->value;
-    // (void) pwrctl_set_iout(item->value);
 }
 
 /**
@@ -467,15 +469,25 @@ static void watthour_changed(ui_number_t *item) {
 }
 
 static void timer_changed(ui_time_t *item) {
+    // clear recall as values no longer match
     dpsmode_graphics &= ~CUR_GFX_M1_RECALL;
     dpsmode_graphics &= ~CUR_GFX_M2_RECALL;
 
-    // do nothing yet...
+    if (pwrctl_vout_enabled()) {
+        if (saved_t > 0 && dpsmode_timer.value <= 0) {
+            // fire a event_timer event to stop power
+            event_put(event_timer, 0);
+        }
+        return;
+    }
+
+    // update saved timer value
     saved_t = item->value;
 }
 
 static void brightness_changed(ui_number_t *item) {
     // update brightness
+    // 100% = 128, 0% = 0
     hw_set_backlight(item->value * 1.28f);
 }
 
@@ -509,9 +521,31 @@ static bool event(uui_t *ui, event_t event, uint8_t data) {
             return true;
 
         case event_button_sel:
+            // leave single edit mode on any button press
+            if (single_edit_mode) {
+                single_edit_mode = false;
+
+                // toggle focus on anything that is in focus (to unfocus)
+                if (dpsmode_voltage.ui.has_focus) uui_focus(ui, (ui_item_t*) &dpsmode_voltage);
+                if (dpsmode_current.ui.has_focus) uui_focus(ui, (ui_item_t*) &dpsmode_current);
+
+                // do nothing in uui
+                return true;
+            }
+
+            // toggle select mode, so parent can deal with other UI elements
+            // keep track, so this screen will not do anything until we leave this mode
+            select_mode = ! select_mode;
+
+            if (select_mode) { 
+                determine_focused_item(ui, 0);
+                return false;
+            }
+
+            return false;
+
         case event_button_m1:
         case event_button_m2:
-
             // do recall on press_long event_button_m1 or event_button_m2
             if (event == event_button_m1 && data == press_long) {
                 saved_v = recall_v[0];
@@ -527,6 +561,7 @@ static bool event(uui_t *ui, event_t event, uint8_t data) {
                 dpsmode_graphics |= CUR_GFX_M1_RECALL;
                 return true;
             }
+
             if (event == event_button_m2 && data == press_long) {
                 saved_v = recall_v[1];
                 saved_i = recall_i[1];
@@ -542,7 +577,6 @@ static bool event(uui_t *ui, event_t event, uint8_t data) {
                 return true;
             }
 
-
             // leave single edit mode on any button press
             if (single_edit_mode) {
                 single_edit_mode = false;
@@ -550,11 +584,37 @@ static bool event(uui_t *ui, event_t event, uint8_t data) {
                 // toggle focus on anything that is in focus (to unfocus)
                 if (dpsmode_voltage.ui.has_focus) uui_focus(ui, (ui_item_t*) &dpsmode_voltage);
                 if (dpsmode_current.ui.has_focus) uui_focus(ui, (ui_item_t*) &dpsmode_current);
+
                 return true;
             }
 
+            // for either m1/m2 buttons:
+            if (event == event_button_m1) {
+                // if in normal select mode, let parent handle it
+                if (select_mode) {
+                    // third item focused may have changed
+                    determine_focused_item(ui, -1);
 
-            break;
+                    return false;
+                }
+
+                // focus on voltage if not already focused
+                if ( ! dpsmode_voltage.ui.has_focus) uui_focus(ui, (ui_item_t*) &dpsmode_voltage);
+            }
+            if (event == event_button_m2) {
+                if (select_mode) { 
+                    determine_focused_item(ui, 1);
+                    return false;
+                }
+
+                if ( ! dpsmode_current.ui.has_focus) uui_focus(ui, (ui_item_t*) &dpsmode_current);
+            }
+
+            // otherwise, enter single edit mode
+            single_edit_mode = true;
+
+            // we handled it, parent should do nothing
+            return true;
 
         case event_rot_left_down:
         case event_rot_right_down:
@@ -577,60 +637,43 @@ static bool event(uui_t *ui, event_t event, uint8_t data) {
             break;
 
         case event_rot_press:
-            // pressing rot should focus on 3rd item if not already in select mode
-            if (third_item && ! select_mode) {
-                if (((ui_number_t *)third_item)->ui.can_focus) {
-                    uui_focus(ui, (ui_item_t *)third_item);
-                    select_mode = true;
-                    return false;
-                }
-            }
-            break;
-
-        default:
-            break;
-    }
-
-
-    switch(event) {
-        case event_button_m1:
-            // if in normal select mode, let parent handle it
-            if (select_mode) {
-                // third item focused may have changed
-                determine_focused_item(ui, -1);
-
+            // let parent handle event if no valid third item exists
+            if ( ! third_item) {
                 return false;
             }
 
-            // otherwise, enter single edit mode
-            single_edit_mode = true;
-
-            // focus on voltage if not already focused
-            if ( ! dpsmode_voltage.ui.has_focus) uui_focus(ui, (ui_item_t*) &dpsmode_voltage);
-
-            // we handled it, parent should do nothing
-            return true;
-
-        case event_button_m2:
-            if (select_mode) { 
-                determine_focused_item(ui, 1);
-                return false;
+            // Let parent handle event if we are in single edit mode, or select mode
+            // This is to avoid interfereing with existing edit selection
+            if (single_edit_mode || select_mode) {
+                return true;
             }
 
-            single_edit_mode = true;
-            if ( ! dpsmode_current.ui.has_focus) uui_focus(ui, (ui_item_t*) &dpsmode_current);
-            return true;
+            // Otherwise, if we have a valid third item and not in any edit mode
+            // we will focus on and edit the third item
+            if (((ui_number_t *)third_item)->ui.can_focus) {
+                uui_focus(ui, (ui_item_t *)third_item);
+                select_mode = true;
+            }
+            return false;
 
-        case event_button_sel:
-            // toggle select mode, so parent can deal with other UI elements
-            // keep track, so this screen will not do anything until we leave this mode
-            select_mode = ! select_mode;
-
-            if (select_mode) { 
-                determine_focused_item(ui, 0);
-                return false;
+        case event_opp:
+            // opp mode
+            if ( ! single_edit_mode && ! select_mode) {
+                third_item = &dpsmode_power;
+                third_invalidate = true;
             }
 
+            // let uui also handle event_opp to turn off power
+            return false;
+
+        case event_timer:
+            // timer has counted down to zero
+            if ( ! single_edit_mode && ! select_mode) {
+                third_item = &dpsmode_timer;
+                third_invalidate = true;
+            }
+
+            // let uui also handle event_timer to turn off power
             return false;
 
         default:
@@ -700,6 +743,11 @@ static void determine_focused_item(uui_t *ui, int8_t direction) {
     if (focus_index >= 2 && focus_index < screen->num_items) {
         third_item = (ui_item_t *)screen->items[focus_index];
         third_row = focus_index - 2;
+        third_invalidate = true;
+    } else if (focus_index == 1) {
+        // because timer can change the screen's focused item, but not the screen's cur_item
+        // when moving to the 2nd item, both the timer and the last 3rd item are displayed
+        // invalidate this case to ensure this does not happen
         third_invalidate = true;
     }
 }
@@ -881,7 +929,7 @@ static void dpsmode_tick(void)
             dpsmode_graphics &= ~CUR_GFX_TM;
 
             // power off
-            event_put(event_shutoff, 0);
+            event_put(event_opp, 0);
         }
 
         // over 80% power (if defined, or absolute maximum), show warning
@@ -923,17 +971,11 @@ static void dpsmode_tick(void)
             dpsmode_watthour.value += ((power_actual * 1000.0 / 3600.0f) * secs) / 1000;
         }
 
-        // timer enabled, count down
+        // timer started with a non-zero value and it has counted to 0.
         if (saved_t > 0 && dpsmode_timer.value <= 0) {
-            // timer has counted down
-            // show the timer
-            third_item = &dpsmode_timer;
-            third_invalidate = true;
-
-            // power off
-            event_put(event_shutoff, 0);
+            // fire a event_timer event to stop power
+            event_put(event_timer, 0);
         }
-
     }
 
 
@@ -1010,7 +1052,7 @@ static void draw_bars() {
     // draw timer
     if (dpsmode_graphics & CUR_GFX_TM) {
         // blink the timer icon 
-        if ((get_ticks() >> 9) & 1)
+        if ((get_ticks() % 2000) <= 1000)
             tft_blit((uint16_t*) gfx_tmbar,
                     GFX_TMBAR_WIDTH, GFX_TMBAR_HEIGHT,
                     TFT_WIDTH - GFX_TMBAR_WIDTH,
@@ -1025,7 +1067,7 @@ static void draw_bars() {
     // draw opp
     if (dpsmode_graphics & CUR_GFX_OPP) {
         // blink the opp warning
-        if (((get_ticks() >> 9) & 1) == 0)
+        if ((get_ticks() % 2000) > 1000)
             tft_blit((uint16_t*) gfx_oppbar,
                     GFX_OPPBAR_WIDTH, GFX_OPPBAR_HEIGHT,
                     TFT_WIDTH - GFX_OPPBAR_WIDTH,
@@ -1039,7 +1081,7 @@ static void draw_bars() {
     // draw pp
     else if (dpsmode_graphics & CUR_GFX_PP) {
         // if timer (or other icons), blink it so it is visible.
-        if (((get_ticks() >> 9) & 1) == 0)
+        if ((get_ticks() % 2000) > 1000)
             tft_blit((uint16_t*) gfx_ppbar,
                     GFX_PPBAR_WIDTH, GFX_PPBAR_HEIGHT,
                     TFT_WIDTH - GFX_PPBAR_WIDTH,

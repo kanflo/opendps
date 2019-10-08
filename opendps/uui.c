@@ -216,15 +216,17 @@ void uui_handle_screen_event(uui_t *ui, event_t event, uint8_t data)
             }
             break;
 
+        case event_timer:
         case event_shutoff:
         case event_button_enable:
         case event_ocp:
         case event_ovp:
+        case event_opp:
 
             /** If current screen can be enabled */
             if (screen->enable) {
-                if (event == event_shutoff) {
-                    // always turn off with shutoff event
+                if (event == event_shutoff || event == event_timer) {
+                    // always turn off with shutoff or timer event
                     screen->is_enabled = false;
                 } else {
                     // toggle 
