@@ -243,7 +243,7 @@ static void number_draw(ui_item_t *_item)
         if (!digit /** If current digit is a 0 */
             && !_item->has_focus /** and its not in focus (selected) */
             && cur_digit != item->num_decimals /** to prevent 0.123 becoming .123 */
-            && my_pow(10, cur_digit + (item->si_prefix * -1)) > (uint32_t) item->value) /** to prevent 4023 becoming 4 23 */
+            && my_pow(10, cur_digit) > (uint32_t) item->value) /** to prevent 4023 becoming 4 23 */
         {
             /** To prevent from printing 00.123 */
             /** Black out any 0 that has previously been printed */
