@@ -40,9 +40,27 @@
 #include "pastunits.h"
 #include "opendps.h"
 
-
 #define SCREEN_ID  (7)
 
+// Number of fields shown per page
+#define ITEMS_PER_PAGE 6
+
+// Total number of fields that can be edited
+#define ITEMS 12
+
+// PAGES = ceil(ITEMS / ITEMS_PER_PAGE)
+#define PAGES 2 
+
+// UI Row height in pixels
+#define ROW_HEIGHT 17 
+
+// Field X/Y offsets. Fields are shown on the right-hand side of the screen
+#define FIELD_Y_OFFSET 0
+#define FIELD_X_OFFSET 128
+
+// which page we are currently on.
+static int8_t current_page = 0;
+static int8_t current_item = 0;
 
 /*
  * This is the implementation of the Settings screen.
@@ -66,11 +84,9 @@ static set_param_status_t get_parameter(char *name, char *value, uint32_t value_
 static bool select_mode;
 
 
-// want to calibrate V_ADC,DAC  A_ADC,DAC   VIN_DAC   Brightness,  refresh timing
-// so 12 fields in total...
-// possibly want OCP, OVP, OPP?
-//
-//
+/*
+ * Get/Set functions used as callbacks for all editable fields
+ */
 static int32_t get_v_adc_k(void);
 static void set_v_adc_k(ui_number_t *item);
 static int32_t get_v_adc_c(void);
@@ -96,53 +112,9 @@ static void set_brightness(ui_number_t *item);
 static int32_t get_refresh(void);
 static void set_refresh(ui_number_t *item);
 
-
-
-typedef void (*set_func)(struct ui_number_t *item);
-typedef int32_t (*get_func)();
-
-#define ITEMS_PER_PAGE 6
-#define ITEMS 12
-#define PAGES 2 // 12 / 6  = 2 pages worth
-#define ROW_HEIGHT 17 
-#define FIELD_Y_OFFSET 0 // 15
-#define FIELD_X_OFFSET 128 // 64 // half of screen
-
-// which page we are currently on.
-static int8_t current_page = 0;
-static int8_t current_item = 0; // 0 through 4
-
-get_func get_functions[] = {
-    &get_brightness,
-    &get_refresh,
-    &get_v_adc_k,
-    &get_v_adc_c,
-    &get_v_dac_k,
-    &get_v_dac_c,
-    &get_a_adc_k,
-    &get_a_adc_c,
-    &get_a_dac_k,
-    &get_a_dac_c,
-    &get_vin_adc_k,
-    &get_vin_adc_c,
-};
-
-set_func set_functions[] = {
-    &set_brightness,
-    &set_refresh,
-    &set_v_adc_k,
-    &set_v_adc_c,
-    &set_v_dac_k,
-    &set_v_dac_c,
-    &set_a_adc_k,
-    &set_a_adc_c,
-    &set_a_dac_k,
-    &set_a_dac_c,
-    &set_vin_adc_k,
-    &set_vin_adc_c,
-};
-
-// fields that can be changed
+/*
+ * Field labels
+ */
 const char* const field_label[] = {
     "Scr-LED",
     "Refresh",
@@ -158,7 +130,46 @@ const char* const field_label[] = {
     "Vin ADC K",
 };
 
+/*
+ * Field get callbacks
+ */
+get_func get_functions[] = {
+    &get_brightness,
+    &get_refresh,
+    &get_v_adc_k,
+    &get_v_adc_c,
+    &get_v_dac_k,
+    &get_v_dac_c,
+    &get_a_adc_k,
+    &get_a_adc_c,
+    &get_a_dac_k,
+    &get_a_dac_c,
+    &get_vin_adc_k,
+    &get_vin_adc_c,
+};
 
+/*
+ * Field set callbacks
+ */
+set_func set_functions[] = {
+    &set_brightness,
+    &set_refresh,
+    &set_v_adc_k,
+    &set_v_adc_c,
+    &set_v_dac_k,
+    &set_v_dac_c,
+    &set_a_adc_k,
+    &set_a_adc_c,
+    &set_a_dac_k,
+    &set_a_dac_c,
+    &set_vin_adc_k,
+    &set_vin_adc_c,
+};
+
+/*
+ * Field UI elements
+ * One for each row
+ */
 ui_number_t settings_field[] = {
 {
     {
@@ -289,6 +300,9 @@ ui_number_t settings_field[] = {
 };
 
 
+/*
+ * Main screen UI
+ */
 ui_screen_t settings_screen = {
     .id = SCREEN_ID,
     .name = "settings",
@@ -322,7 +336,6 @@ ui_screen_t settings_screen = {
 };
 
 
-
 /**
  * @brief      Set function parameter
  *
@@ -350,6 +363,9 @@ static set_param_status_t get_parameter(char *name, char *value, uint32_t value_
 }
 
 
+/*
+ * Get / Set callback functions
+ */
 static int32_t get_v_adc_k() {
     return v_adc_k_coef * 1000;
 }
@@ -442,18 +458,18 @@ static void set_brightness(ui_number_t *item) {
 }
 
 static int32_t get_refresh() {
-    return opendps_update_interval * 1000;
+    return opendps_screen_update_ms * 1000;
 }
 static void set_refresh(ui_number_t *item) {
     // todo: make this persistent
-    opendps_update_interval = item->value / 1000;
+    opendps_screen_update_ms = item->value / 1000;
 
     // ensure sane values
-    if (opendps_update_interval > 1000) {
-        opendps_update_interval = 1000;
+    if (opendps_screen_update_ms > 1000) {
+        opendps_screen_update_ms = 1000;
     }
-    if (opendps_update_interval < 10) {
-        opendps_update_interval = 10;
+    if (opendps_screen_update_ms < 10) {
+        opendps_screen_update_ms = 10;
     }
 }
 
@@ -630,7 +646,7 @@ static void settings_reset() {
     opendps_clear_calibration();
 
     // reset interval and brightness settings
-    opendps_update_interval = 250;
+    opendps_screen_update_ms = 250;
     hw_set_backlight(128);
 }
 
@@ -672,8 +688,8 @@ void func_settings_init(uui_t *ui) {
         number_init(&settings_field[i]); 
     }
 
-    // init to page 0
-    set_page(0);
+    // screen activation will cause cur_item to be reset
+    // Ensure current item matches the UI system
     current_item = 0;
     select_mode = 0;
 

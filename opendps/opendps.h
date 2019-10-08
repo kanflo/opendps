@@ -36,7 +36,7 @@
 #define TFT_HEIGHT  (128)
 #define TFT_WIDTH   (128)
 
-extern uint32_t opendps_update_interval;
+extern uint32_t opendps_screen_update_ms;
 
 /**
  * @brief      Enable specified function
