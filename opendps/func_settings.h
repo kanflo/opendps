@@ -27,9 +27,6 @@
 
 #include "uui.h"
 
-typedef void (*set_func)(struct ui_number_t *item);
-typedef int32_t (*get_func)();
-
 /**
  * @brief      Add the SETTINGS function to the UI
  *
