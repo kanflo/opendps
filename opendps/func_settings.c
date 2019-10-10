@@ -114,24 +114,26 @@ static void set_refresh(struct ui_number_t *item);
 
 
 struct field_item {
-    char* label;
-    int32_t (*get_func)(void);
-    void (*set_func)(struct ui_number_t *i);
+    const char* label;
+    int32_t min;
+    int32_t max;
+    int32_t (*get)(void);
+    void (*set)(struct ui_number_t *i);
 };
 
 struct field_item field_items[] = {
-    {"Scr-LED",     &get_brightness,     &set_brightness },
-    {"Refresh",     &get_refresh,        &set_refresh },
-    {"V ADC K",     &get_v_adc_k,        &set_v_adc_k },
-    {"V ADC C",     &get_v_adc_c,        &set_v_adc_c },
-    {"V DAC K",     &get_v_dac_k,        &set_v_dac_k },
-    {"V DAC C",     &get_v_dac_c,        &set_v_dac_c },
-    {"I ADC K",     &get_a_adc_k,        &set_a_adc_k },
-    {"I ADC C",     &get_a_adc_c,        &set_a_adc_c },
-    {"I DAC K",     &get_a_dac_k,        &set_a_dac_k },
-    {"I DAC C",     &get_a_dac_c,        &set_a_dac_c },
-    {"Vin ADC C",   &get_vin_adc_k,      &set_vin_adc_k },
-    {"Vin ADC K",   &get_vin_adc_c,      &set_vin_adc_c },
+    {"Scr-LED",    10000,  1000000,    &get_brightness,     &set_brightness },
+    {"Refresh",    100000, 9999999,    &get_refresh,        &set_refresh },
+    {"V ADC K",    0,      9999999,    &get_v_adc_k,        &set_v_adc_k },
+    {"V ADC C",    0,      9999999,    &get_v_adc_c,        &set_v_adc_c },
+    {"V DAC K",    0,      9999999,    &get_v_dac_k,        &set_v_dac_k },
+    {"V DAC C",    0,      9999999,    &get_v_dac_c,        &set_v_dac_c },
+    {"I ADC K",    0,      9999999,    &get_a_adc_k,        &set_a_adc_k },
+    {"I ADC C",    0,      9999999,    &get_a_adc_c,        &set_a_adc_c },
+    {"I DAC K",    0,      9999999,    &get_a_dac_k,        &set_a_dac_k },
+    {"I DAC C",    0,      9999999,    &get_a_dac_c,        &set_a_dac_c },
+    {"Vin ADC C",  0,      9999999,    &get_vin_adc_k,      &set_vin_adc_k },
+    {"Vin ADC K",  0,      9999999,    &get_vin_adc_c,      &set_vin_adc_c },
 };
 
 /*
@@ -435,9 +437,6 @@ static int32_t get_brightness() {
     return (hw_get_backlight() / 1.28f) * 10000;
 }
 static void set_brightness(ui_number_t *item) {
-    if (item->value > 100 * 10000) item->value = 100 * 10000;
-    if (item->value <= 0) item->value = 0;
-
     hw_set_backlight((item->value / 10000.0f) * 1.28f);
 }
 
@@ -445,7 +444,6 @@ static int32_t get_refresh() {
     return opendps_screen_update_ms * 10000;
 }
 static void set_refresh(ui_number_t *item) {
-    // todo: make this persistent
     opendps_screen_update_ms = item->value / 10000;
 
     // ensure sane values
@@ -548,7 +546,7 @@ static void field_changed(struct ui_number_t *item) {
     }
 
     // call the appropriate set function
-    field_items[page_offset + current_item].set_func(item);
+    field_items[page_offset + current_item].set(item);
 }
 
 /**
@@ -568,7 +566,7 @@ static void set_page(int8_t page) {
         }
        
         // update field value using value from the get function
-        int32_t value = field_items[page_offset + i].get_func();
+        int32_t value = field_items[page_offset + i].get();
         if (value < 0) {
             // because uui_number doesn't support signed values
             // color represents the sign. This is is gross hack, I know.
@@ -578,6 +576,9 @@ static void set_page(int8_t page) {
             settings_field[i].value = value;
             settings_field[i].color = WHITE;
         }
+
+        settings_field[i].min = field_items[page_offset + i].min;
+        settings_field[i].max = field_items[page_offset + i].max;
     }
 
     tft_clear();

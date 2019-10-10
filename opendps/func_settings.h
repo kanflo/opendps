@@ -27,7 +27,6 @@
 
 #include "uui.h"
 
-
 /**
  * @brief      Add the SETTINGS function to the UI
  *
