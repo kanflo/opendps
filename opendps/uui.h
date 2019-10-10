@@ -77,6 +77,7 @@ typedef enum {
  */
 typedef enum {
     si_micro = -6,
+    si_decimilli = -4,
     si_milli = -3,
     si_centi = -2,
     si_deci = -1,
