@@ -88,82 +88,50 @@ static bool select_mode;
  * Get/Set functions used as callbacks for all editable fields
  */
 static int32_t get_v_adc_k(void);
-static void set_v_adc_k(ui_number_t *item);
+static void set_v_adc_k(struct ui_number_t *);
 static int32_t get_v_adc_c(void);
-static void set_v_adc_c(ui_number_t *item);
+static void set_v_adc_c(struct ui_number_t *);
 static int32_t get_v_dac_k(void);
-static void set_v_dac_k(ui_number_t *item);
+static void set_v_dac_k(struct ui_number_t *);
 static int32_t get_v_dac_c(void);
-static void set_v_dac_c(ui_number_t *item);
+static void set_v_dac_c(struct ui_number_t *item);
 static int32_t get_a_adc_k(void);
-static void set_a_adc_k(ui_number_t *item);
+static void set_a_adc_k(struct ui_number_t *item);
 static int32_t get_a_adc_c(void);
-static void set_a_adc_c(ui_number_t *item);
+static void set_a_adc_c(struct ui_number_t *item);
 static int32_t get_a_dac_k(void);
-static void set_a_dac_k(ui_number_t *item);
+static void set_a_dac_k(struct ui_number_t *item);
 static int32_t get_a_dac_c(void);
-static void set_a_dac_c(ui_number_t *item);
+static void set_a_dac_c(struct ui_number_t *item);
 static int32_t get_vin_adc_k(void);
-static void set_vin_adc_k(ui_number_t *item);
+static void set_vin_adc_k(struct ui_number_t *item);
 static int32_t get_vin_adc_c(void);
-static void set_vin_adc_c(ui_number_t *item);
+static void set_vin_adc_c(struct ui_number_t *item);
 static int32_t get_brightness(void);
-static void set_brightness(ui_number_t *item);
+static void set_brightness(struct ui_number_t *);
 static int32_t get_refresh(void);
-static void set_refresh(ui_number_t *item);
+static void set_refresh(struct ui_number_t *item);
 
-/*
- * Field labels
- */
-const char* const field_label[] = {
-    "Scr-LED",
-    "Refresh",
-    "V ADC K",
-    "V ADC C",
-    "V DAC K",
-    "V DAC C",
-    "I ADC K",
-    "I ADC C",
-    "I DAC K",
-    "I DAC C",
-    "Vin ADC C",
-    "Vin ADC K",
+
+struct field_item {
+    char* label;
+    int32_t (*get_func)(void);
+    void (*set_func)(struct ui_number_t *i);
 };
 
-/*
- * Field get callbacks
- */
-get_func get_functions[] = {
-    &get_brightness,
-    &get_refresh,
-    &get_v_adc_k,
-    &get_v_adc_c,
-    &get_v_dac_k,
-    &get_v_dac_c,
-    &get_a_adc_k,
-    &get_a_adc_c,
-    &get_a_dac_k,
-    &get_a_dac_c,
-    &get_vin_adc_k,
-    &get_vin_adc_c,
-};
-
-/*
- * Field set callbacks
- */
-set_func set_functions[] = {
-    &set_brightness,
-    &set_refresh,
-    &set_v_adc_k,
-    &set_v_adc_c,
-    &set_v_dac_k,
-    &set_v_dac_c,
-    &set_a_adc_k,
-    &set_a_adc_c,
-    &set_a_dac_k,
-    &set_a_dac_c,
-    &set_vin_adc_k,
-    &set_vin_adc_c,
+struct field_item field_items[] = {
+    {"Scr-LED",     &get_brightness,     &set_brightness },
+    {"Refresh",     &get_refresh,        &set_refresh },
+    {"V ADC K",     &get_v_adc_k,        &set_v_adc_k },
+    {"V ADC C",     &get_v_adc_c,        &set_v_adc_c },
+    {"V DAC K",     &get_v_dac_k,        &set_v_dac_k },
+    {"V DAC C",     &get_v_dac_c,        &set_v_dac_c },
+    {"I ADC K",     &get_a_adc_k,        &set_a_adc_k },
+    {"I ADC C",     &get_a_adc_c,        &set_a_adc_c },
+    {"I DAC K",     &get_a_dac_k,        &set_a_dac_k },
+    {"I DAC C",     &get_a_dac_c,        &set_a_dac_c },
+    {"Vin ADC C",   &get_vin_adc_k,      &set_vin_adc_k },
+    {"Vin ADC K",   &get_vin_adc_c,      &set_vin_adc_c },
 };
 
 /*
@@ -184,7 +152,7 @@ ui_number_t settings_field[] = {
     .pad_dot = false,
     .color = WHITE,
     .value = 0,
-    .min = -9999999,
+    .min = 0,
     .max = 9999999,
     .si_prefix = si_decimilli,
     .num_digits = 3,
@@ -205,7 +173,7 @@ ui_number_t settings_field[] = {
     .pad_dot = false,
     .color = WHITE,
     .value = 0,
-    .min = -9999999,
+    .min = 0,
     .max = 9999999,
     .si_prefix = si_decimilli,
     .num_digits = 3,
@@ -226,7 +194,7 @@ ui_number_t settings_field[] = {
     .pad_dot = false,
     .color = WHITE,
     .value = 0,
-    .min = -9999999,
+    .min = 0,
     .max = 9999999,
     .si_prefix = si_decimilli,
     .num_digits = 3,
@@ -247,7 +215,7 @@ ui_number_t settings_field[] = {
     .pad_dot = false,
     .color = WHITE,
     .value = 0,
-    .min = -9999999,
+    .min = 0,
     .max = 9999999,
     .si_prefix = si_decimilli,
     .num_digits = 3,
@@ -268,7 +236,7 @@ ui_number_t settings_field[] = {
     .pad_dot = false,
     .color = WHITE,
     .value = 0,
-    .min = -9999999,
+    .min = 0,
     .max = 9999999,
     .si_prefix = si_decimilli,
     .num_digits = 3,
@@ -289,7 +257,7 @@ ui_number_t settings_field[] = {
     .pad_dot = false,
     .color = WHITE,
     .value = 0,
-    .min = -9999999,
+    .min = 0,
     .max = 9999999,
     .si_prefix = si_decimilli,
     .num_digits = 3,
@@ -310,7 +278,7 @@ ui_screen_t settings_screen = {
     .icon_data_len = sizeof(gfx_crosshair),
     .icon_width = GFX_CROSSHAIR_WIDTH,
     .icon_height = GFX_CROSSHAIR_HEIGHT,
-    .event = event,
+    .event = &event,
     .activated = &activated,
     .deactivated = &deactivated,
     .enable = &settings_enable,
@@ -344,8 +312,10 @@ ui_screen_t settings_screen = {
  *
  * @retval     set_param_status_t status code
  */
-static set_param_status_t set_parameter(char *name, char *value)
-{
+static set_param_status_t set_parameter(char *name, char *value) {
+    (void)name;
+    (void)value;
+
     return ps_unknown_name;
 }
 
@@ -359,6 +329,10 @@ static set_param_status_t set_parameter(char *name, char *value)
  * @retval     set_param_status_t status code
  */
 static set_param_status_t get_parameter(char *name, char *value, uint32_t value_len) {
+    (void)name;
+    (void)value;
+    (void)value_len;
+
     return ps_unknown_name;
 }
 
@@ -367,106 +341,116 @@ static set_param_status_t get_parameter(char *name, char *value, uint32_t value_
  * Get / Set callback functions
  */
 static int32_t get_v_adc_k() {
-    return v_adc_k_coef * 1000;
+    return v_adc_k_coef * 10000;
 }
 static void set_v_adc_k(ui_number_t *item) {
-    v_adc_k_coef = item->value / 1000.0f;
+    v_adc_k_coef = item->value / 10000.0f;
+    if (v_adc_k_coef <= 0) item->color = (item->color == RED) ? WHITE : RED;
     if (item->color == RED) v_adc_k_coef = - v_adc_k_coef;
 }
 static int32_t get_v_adc_c() {
-    return v_adc_c_coef * 1000;
+    return v_adc_c_coef * 10000;
 }
 static void set_v_adc_c(ui_number_t *item) {
-    v_adc_c_coef = item->value / 1000.0f;
+    v_adc_c_coef = item->value / 10000.0f;
+    if (v_adc_c_coef <= 0) item->color = (item->color == RED) ? WHITE : RED;
     if (item->color == RED) v_adc_c_coef = - v_adc_c_coef;
 }
 
 
 static int32_t get_v_dac_k() {
-    return v_dac_k_coef * 1000;
+    return v_dac_k_coef * 10000;
 }
 static void set_v_dac_k(ui_number_t *item) {
-    v_dac_k_coef = item->value / 1000.0f;
+    v_dac_k_coef = item->value / 10000.0f;
+    if (v_dac_k_coef <= 0) item->color = (item->color == RED) ? WHITE : RED;
     if (item->color == RED) v_dac_k_coef = - v_dac_k_coef;
 }
 static int32_t get_v_dac_c() {
-    return v_dac_c_coef * 1000;
+    return v_dac_c_coef * 10000;
 }
 static void set_v_dac_c(ui_number_t *item) {
-    v_dac_c_coef = item->value / 1000.0f;
+    v_dac_c_coef = item->value / 10000.0f;
+    if (v_dac_c_coef <= 0) item->color = (item->color == RED) ? WHITE : RED;
     if (item->color == RED) v_dac_c_coef = - v_dac_c_coef;
 }
 
 
 
 static int32_t get_a_adc_k() {
-    return a_adc_k_coef * 1000;
+    return a_adc_k_coef * 10000;
 }
 static void set_a_adc_k(ui_number_t *item) {
-    a_adc_k_coef = item->value / 1000.0f;
+    a_adc_k_coef = item->value / 10000.0f;
+    if (a_adc_k_coef <= 0) item->color = (item->color == RED) ? WHITE : RED;
     if (item->color == RED) a_adc_k_coef = - a_adc_k_coef;
 }
 static int32_t get_a_adc_c() {
-    return a_adc_c_coef * 1000;
+    return a_adc_c_coef * 10000;
 }
 static void set_a_adc_c(ui_number_t *item) {
-    a_adc_c_coef = item->value / 1000.0f;
+    a_adc_c_coef = item->value / 10000.0f;
+    if (a_adc_c_coef <= 0) item->color = (item->color == RED) ? WHITE : RED;
     if (item->color == RED) a_adc_c_coef = - a_adc_c_coef;
 }
 
 
 static int32_t get_a_dac_k() {
-    return a_dac_k_coef * 1000;
+    return a_dac_k_coef * 10000;
 }
 static void set_a_dac_k(ui_number_t *item) {
-    a_dac_k_coef = item->value / 1000.0f;
+    a_dac_k_coef = item->value / 10000.0f;
+    if (a_dac_k_coef <= 0) item->color = (item->color == RED) ? WHITE : RED;
     if (item->color == RED) a_dac_k_coef = - a_dac_k_coef;
 }
 static int32_t get_a_dac_c() {
-    return a_dac_c_coef * 1000;
+    return a_dac_c_coef * 10000;
 }
 static void set_a_dac_c(ui_number_t *item) {
-    a_dac_c_coef = item->value / 1000.0f;
+    a_dac_c_coef = item->value / 10000.0f;
+    if (a_dac_c_coef <= 0) item->color = (item->color == RED) ? WHITE : RED;
     if (item->color == RED) a_dac_c_coef = - a_dac_c_coef;
 }
 
 
 static int32_t get_vin_adc_k() {
-    return vin_adc_k_coef * 1000;
+    return vin_adc_k_coef * 10000;
 }
 static void set_vin_adc_k(ui_number_t *item) {
-    vin_adc_k_coef = item->value / 1000.0f;
+    vin_adc_k_coef = item->value / 10000.0f;
+    if (vin_adc_k_coef <= 0) item->color = (item->color == RED) ? WHITE : RED;
     if (item->color == RED) vin_adc_k_coef = - vin_adc_k_coef;
 }
 static int32_t get_vin_adc_c() {
-    return vin_adc_c_coef * 1000;
+    return vin_adc_c_coef * 10000;
 }
 static void set_vin_adc_c(ui_number_t *item) {
-    vin_adc_c_coef = item->value / 1000.0f;
+    vin_adc_c_coef = item->value / 10000.0f;
+    if (vin_adc_k_coef <= 0) item->color = (item->color == RED) ? WHITE : RED;
     if (item->color == RED) vin_adc_c_coef = - vin_adc_c_coef;
 }
 
 
 static int32_t get_brightness() {
-    return (hw_get_backlight() / 1.28f) * 1000;
+    return (hw_get_backlight() / 1.28f) * 10000;
 }
 static void set_brightness(ui_number_t *item) {
-    if (item->value > 100 * 1000) item->value = 100 * 1000;
-    if (item->value < 0) item->value = 0;
+    if (item->value > 100 * 10000) item->value = 100 * 10000;
+    if (item->value <= 0) item->value = 0;
 
-    hw_set_backlight((item->value / 1000.0f) * 1.28f);
+    hw_set_backlight((item->value / 10000.0f) * 1.28f);
 }
 
 static int32_t get_refresh() {
-    return opendps_screen_update_ms * 1000;
+    return opendps_screen_update_ms * 10000;
 }
 static void set_refresh(ui_number_t *item) {
     // todo: make this persistent
-    opendps_screen_update_ms = item->value / 1000;
+    opendps_screen_update_ms = item->value / 10000;
 
     // ensure sane values
-    if (opendps_screen_update_ms > 1000) {
-        opendps_screen_update_ms = 1000;
+    if (opendps_screen_update_ms > 10000) {
+        opendps_screen_update_ms = 10000;
     }
     if (opendps_screen_update_ms < 10) {
         opendps_screen_update_ms = 10;
@@ -479,6 +463,8 @@ static void set_refresh(ui_number_t *item) {
  *         used to keep track of where we are in the menu
  */
 static bool event(uui_t *ui, event_t event, uint8_t data) {
+    (void)ui;
+
     switch (event) {
         case event_button_m1:
         case event_button_m2:
@@ -553,7 +539,7 @@ static bool event(uui_t *ui, event_t event, uint8_t data) {
 
 // generic field change function called by all fields
 // the current item is used to determine the actual field being changed
-static void field_changed(ui_number_t *item) {
+static void field_changed(struct ui_number_t *item) {
     int8_t page_offset = current_page * ITEMS_PER_PAGE;
 
     if (page_offset + current_item >= ITEMS) {
@@ -562,7 +548,7 @@ static void field_changed(ui_number_t *item) {
     }
 
     // call the appropriate set function
-    set_functions[page_offset + current_item](item);
+    field_items[page_offset + current_item].set_func(item);
 }
 
 /**
@@ -582,7 +568,7 @@ static void set_page(int8_t page) {
         }
        
         // update field value using value from the get function
-        int32_t value = get_functions[page_offset + i]();
+        int32_t value = field_items[page_offset + i].get_func();
         if (value < 0) {
             // because uui_number doesn't support signed values
             // color represents the sign. This is is gross hack, I know.
@@ -606,9 +592,6 @@ static void settings_tick(void) {
 
     // draw each field with its corresponding label
     for (uint8_t i = 0; i < ITEMS_PER_PAGE; i++) {
-        uint16_t x = settings_field[i].ui.x;
-        uint16_t y = settings_field[i].ui.y;
-
         // if greater than total number of items, clear the area
         if (page_offset + i >= ITEMS) {
             tft_fill(0 /* x */, i * ROW_HEIGHT /* y */,
@@ -616,7 +599,7 @@ static void settings_tick(void) {
                 BLACK);
         } else {
             tft_puts(FONT_FULL_SMALL, 
-                    field_label[page_offset + i], 
+                    field_items[page_offset + i].label,
                     0 /* x */,    (i * ROW_HEIGHT) + FONT_FULL_SMALL_MAX_GLYPH_HEIGHT  /* y */ ,
                     TFT_WIDTH/2, FONT_FULL_SMALL_MAX_GLYPH_HEIGHT,
                     WHITE, false);
