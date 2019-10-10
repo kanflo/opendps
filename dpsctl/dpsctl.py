@@ -489,7 +489,6 @@ def handle_commands(args):
     Communicate with the DPS device according to the user's wishes
     """
     if args.scan:
-        from uhej import uhej
         uhej_scan()
         return
 
@@ -1085,6 +1084,7 @@ def uhej_worker_thread():
     """
     The worker thread used by uHej for service discovery
     """
+    from uhej import uhej
     global discovery_list
     global sock
     while 1:
@@ -1116,6 +1116,7 @@ def uhej_scan():
     """
     Scan for OpenDPS devices on the local network
     """
+    from uhej import uhej
     global discovery_list
     global sock
     discovery_list = {}
