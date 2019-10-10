@@ -965,7 +965,6 @@ static void event_handler(void)
         if (!event_get(&event, &data)) {
             hw_longpress_check();
 
-            /** Update on the first call and every opendps_screen_update_ms ms */
             if (last <= 0 || get_ticks() - last >= opendps_screen_update_ms) {
                 ui_tick();
                 last = get_ticks();
@@ -987,7 +986,6 @@ static void event_handler(void)
                     break;
             }
             ui_handle_event(event, data);
-            // update UI immediately on event
             ui_tick();
         }
     }

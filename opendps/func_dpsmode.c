@@ -645,7 +645,7 @@ static bool event(uui_t *ui, event_t event, uint8_t data) {
             // Let parent handle event if we are in single edit mode, or select mode
             // This is to avoid interfereing with existing edit selection
             if (single_edit_mode || select_mode) {
-                return true;
+                return false;
             }
 
             // Otherwise, if we have a valid third item and not in any edit mode
