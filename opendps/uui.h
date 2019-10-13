@@ -181,7 +181,7 @@ struct ui_screen {
     void (*activated)(void); /** Called when the screen is switched to */
     void (*deactivated)(void); /** Called when the screen is about to be changed from */
     void (*enable)(bool _enable); /** Called when the enable button is pressed */
-    bool (*event)(uui_t *ui, event_t event); /** Called when an event occurs (eg. button press). Return false if unhandled so main UI can handle it */
+    bool (*event)(uui_t *ui, event_t event, uint8_t data); /** Called when an event occurs (eg. button press). Return false if unhandled so main UI can handle it */
     void (*tick)(void); /** Called periodically allowing the UI to do house keeping */
     void (*past_save)(past_t *past);
     void (*past_restore)(past_t *past);
