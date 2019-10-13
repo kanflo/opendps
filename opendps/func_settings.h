@@ -27,6 +27,13 @@
 
 #include "uui.h"
 
+// Settings
+int8_t settings = 0;
+typedef enum {
+    SCREEN_LOCKED_WHEN_ON = 1,
+};
+
+
 /**
  * @brief      Add the SETTINGS function to the UI
  *
