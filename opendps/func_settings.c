@@ -42,6 +42,28 @@
 
 #define SCREEN_ID  (7)
 
+/*
+ *  The settings screen is layed out as a series of rows of labels and values
+ *  that can be paged using the existing UI subsystem.
+ *
+ *   Label             Value
+ *  -------------------------
+ *  | Brightness       100% |  <- first field / uui_number
+ *  | Refresh Rate    100ms |
+ *  | V ADC K       13.0000 |              ... 
+ *  | V ADC C       13.0000 |
+ *  | V DAC K       13.0000 |
+ *  | V DAC C       13.0000 |  <- sixth field / uui_number
+ *  -------------------------
+ *
+ * When a value is set, it calls the set function callback in order to do something.
+ * Values cannot be 'negative' because uui_number does not support it. Instead, the
+ * set callback function will use the field color as the sign. RED values are treated
+ * as negative numbers while WHITE numbers are positive.
+ *
+ */
+
+
 // Number of fields shown per page
 #define ITEMS_PER_PAGE 6
 
@@ -49,7 +71,7 @@
 #define ITEMS 12
 
 // PAGES = ceil(ITEMS / ITEMS_PER_PAGE)
-#define PAGES 2 
+#define PAGES (ITEMS+(ITEMS_PER_PAGE-1))/ITEMS_PER_PAGE
 
 // UI Row height in pixels
 #define ROW_HEIGHT 17 
@@ -61,6 +83,9 @@
 // which page we are currently on.
 static int8_t current_page = 0;
 static int8_t current_item = 0;
+static bool select_mode;
+
+int8_t ui_settings = 0;
 
 /*
  * This is the implementation of the Settings screen.
@@ -80,8 +105,6 @@ static void set_page(int8_t page);
 
 static set_param_status_t set_parameter(char *name, char *value);
 static set_param_status_t get_parameter(char *name, char *value, uint32_t value_len);
-
-static bool select_mode;
 
 
 /*
@@ -117,28 +140,45 @@ struct field_item {
     const char* label;
     int32_t min;
     int32_t max;
+    int8_t digits;
+    int8_t decimals;
+    int8_t unit;
     int32_t (*get)(void);
     void (*set)(struct ui_number_t *i);
 };
 
+
+/*
+ * Fields that can be edited
+ * Ensure that ITEMS match the number of elements here
+ *
+ * Note: Min values cannot be negative because uui_number cannot handle negative numbers.
+ *       If you want to enable the possibility for negative numbers, set the min value to 0.
+ *       The sign can be toggled by setting a value to 0 in the UI (shown in RED for negative)
+ *       If you do NOT want the possibility for negative numbers, set the min value to a non-zero value.
+ */
 struct field_item field_items[] = {
-    {"Scr-LED",    10000,  1000000,    &get_brightness,     &set_brightness },
-    {"Refresh",    100000, 9999999,    &get_refresh,        &set_refresh },
-    {"V ADC K",    0,      9999999,    &get_v_adc_k,        &set_v_adc_k },
-    {"V ADC C",    0,      9999999,    &get_v_adc_c,        &set_v_adc_c },
-    {"V DAC K",    0,      9999999,    &get_v_dac_k,        &set_v_dac_k },
-    {"V DAC C",    0,      9999999,    &get_v_dac_c,        &set_v_dac_c },
-    {"I ADC K",    0,      9999999,    &get_a_adc_k,        &set_a_adc_k },
-    {"I ADC C",    0,      9999999,    &get_a_adc_c,        &set_a_adc_c },
-    {"I DAC K",    0,      9999999,    &get_a_dac_k,        &set_a_dac_k },
-    {"I DAC C",    0,      9999999,    &get_a_dac_c,        &set_a_dac_c },
-    {"Vin ADC C",  0,      9999999,    &get_vin_adc_k,      &set_vin_adc_k },
-    {"Vin ADC K",  0,      9999999,    &get_vin_adc_c,      &set_vin_adc_c },
+// All values are 10^4 and usess the si_decimilli unit.
+//  LABEL               MIN     MAX         DIGITS,   DEC,  UNIT,          GET callback         SET callback
+    {"Brightness",      10000,  1000000,    3,        0,    unit_none,     &get_brightness,     &set_brightness }, // TODO: Set this to unit_percent from dpsmode PR
+    {"Refresh",         100000, 9990000,    3,        0,    unit_ms,       &get_refresh,        &set_refresh },
+
+    // constants
+    {"V ADC K",         0,      9999999,    3,        4,    unit_none,     &get_v_adc_k,        &set_v_adc_k },
+    {"V ADC C",         0,      9999999,    3,        4,    unit_none,     &get_v_adc_c,        &set_v_adc_c },
+    {"V DAC K",         0,      9999999,    3,        4,    unit_none,     &get_v_dac_k,        &set_v_dac_k },
+    {"V DAC C",         0,      9999999,    3,        4,    unit_none,     &get_v_dac_c,        &set_v_dac_c },
+    {"I ADC K",         0,      9999999,    3,        4,    unit_none,     &get_a_adc_k,        &set_a_adc_k },
+    {"I ADC C",         0,      9999999,    3,        4,    unit_none,     &get_a_adc_c,        &set_a_adc_c },
+    {"I DAC K",         0,      9999999,    3,        4,    unit_none,     &get_a_dac_k,        &set_a_dac_k },
+    {"I DAC C",         0,      9999999,    3,        4,    unit_none,     &get_a_dac_c,        &set_a_dac_c },
+    {"Vin ADC C",       0,      9999999,    3,        4,    unit_none,     &get_vin_adc_k,      &set_vin_adc_k },
+    {"Vin ADC K",       0,      9999999,    3,        4,    unit_none,     &get_vin_adc_c,      &set_vin_adc_c },
 };
 
 /*
  * Field UI elements
- * One for each row
+ * One field for each row
  */
 ui_number_t settings_field[] = {
 {
@@ -579,6 +619,11 @@ static void set_page(int8_t page) {
 
         settings_field[i].min = field_items[page_offset + i].min;
         settings_field[i].max = field_items[page_offset + i].max;
+        settings_field[i].num_digits = field_items[page_offset + i].digits;
+        settings_field[i].num_decimals = field_items[page_offset + i].decimals;
+        settings_field[i].unit = field_items[page_offset + i].unit;
+        // cur_digit may be wrongg after changing digits and decimals, updating it once more:
+        settings_field[i].cur_digit = field_items[page_offset + i].digits + field_items[page_offset + i].decimals - 1;
     }
 
     tft_clear();

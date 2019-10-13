@@ -67,6 +67,8 @@ typedef enum {
     unit_second,
     unit_hertz,
     unit_furlong,
+    unit_ms,
+    unit_bool,
     unit_last = 0xff
 } unit_t;
 
