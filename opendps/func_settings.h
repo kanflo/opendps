@@ -28,8 +28,8 @@
 #include "uui.h"
 
 // Settings
-int8_t settings = 0;
-typedef enum {
+int8_t ui_settings = 0;
+enum SettingsStates {
     SCREEN_LOCKED_WHEN_ON = 1,
 };
 

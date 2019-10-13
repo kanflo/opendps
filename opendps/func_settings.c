@@ -468,14 +468,14 @@ static void set_refresh(ui_number_t *item) {
 }
 
 static int32_t get_on_locked() {
-    return settings | SCREEN_LOCKED_WHEN_ON;
+    return ui_settings | SCREEN_LOCKED_WHEN_ON;
 }
 
 static void set_on_locked(struct ui_number_t *item) {
     if (item->value == 0) {
-        settings = settings & ~SCREEN_LOCKED_WHEN_ON;
+        ui_settings = ui_settings & ~SCREEN_LOCKED_WHEN_ON;
     } else {
-        settings = settings | SCREEN_LOCKED_WHEN_ON;
+        ui_settings = ui_settings | SCREEN_LOCKED_WHEN_ON;
     }
 }
 
