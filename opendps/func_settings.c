@@ -61,6 +61,7 @@
 // which page we are currently on.
 static int8_t current_page = 0;
 static int8_t current_item = 0;
+static bool select_mode;
 
 /*
  * This is the implementation of the Settings screen.
@@ -80,8 +81,6 @@ static void set_page(int8_t page);
 
 static set_param_status_t set_parameter(char *name, char *value);
 static set_param_status_t get_parameter(char *name, char *value, uint32_t value_len);
-
-static bool select_mode;
 
 
 /*
@@ -111,29 +110,42 @@ static int32_t get_brightness(void);
 static void set_brightness(struct ui_number_t *);
 static int32_t get_refresh(void);
 static void set_refresh(struct ui_number_t *item);
+static int32_t get_on_locked(void);
+static void set_on_locked(struct ui_number_t *item);
 
 
 struct field_item {
     const char* label;
     int32_t min;
     int32_t max;
+    int8_t digits;
+    int8_t decimals;
+    int8_t unit;
     int32_t (*get)(void);
     void (*set)(struct ui_number_t *i);
 };
 
+
+/*
+ * Fields that can be edited
+ * Ensure that ITEMS match the number of elements here
+ */
 struct field_item field_items[] = {
-    {"Scr-LED",    10000,  1000000,    &get_brightness,     &set_brightness },
-    {"Refresh",    100000, 9999999,    &get_refresh,        &set_refresh },
-    {"V ADC K",    0,      9999999,    &get_v_adc_k,        &set_v_adc_k },
-    {"V ADC C",    0,      9999999,    &get_v_adc_c,        &set_v_adc_c },
-    {"V DAC K",    0,      9999999,    &get_v_dac_k,        &set_v_dac_k },
-    {"V DAC C",    0,      9999999,    &get_v_dac_c,        &set_v_dac_c },
-    {"I ADC K",    0,      9999999,    &get_a_adc_k,        &set_a_adc_k },
-    {"I ADC C",    0,      9999999,    &get_a_adc_c,        &set_a_adc_c },
-    {"I DAC K",    0,      9999999,    &get_a_dac_k,        &set_a_dac_k },
-    {"I DAC C",    0,      9999999,    &get_a_dac_c,        &set_a_dac_c },
-    {"Vin ADC C",  0,      9999999,    &get_vin_adc_k,      &set_vin_adc_k },
-    {"Vin ADC K",  0,      9999999,    &get_vin_adc_c,      &set_vin_adc_c },
+// All values are 10^4 and usess the si_decimilli unit.
+//  LABEL          MIN     MAX         DIGITS,   DEC,  UNIT,          GET callback         SET callback
+    {"Brightness", 10000,  1000000,    3,        0,    unit_none,     &get_brightness,     &set_brightness },
+    {"Refresh",    100000, 9999999,    3,        0,    unit_ms,       &get_refresh,        &set_refresh },
+    {"ON Locked",  0,      1000,       1,        0,    unit_bool,     &get_on_locked,      &set_on_locked },
+    {"V ADC K",    0,      9999999,    3,        4,    unit_none,     &get_v_adc_k,        &set_v_adc_k },
+    {"V ADC C",    0,      9999999,    3,        4,    unit_none,     &get_v_adc_c,        &set_v_adc_c },
+    {"V DAC K",    0,      9999999,    3,        4,    unit_none,     &get_v_dac_k,        &set_v_dac_k },
+    {"V DAC C",    0,      9999999,    3,        4,    unit_none,     &get_v_dac_c,        &set_v_dac_c },
+    {"I ADC K",    0,      9999999,    3,        4,    unit_none,     &get_a_adc_k,        &set_a_adc_k },
+    {"I ADC C",    0,      9999999,    3,        4,    unit_none,     &get_a_adc_c,        &set_a_adc_c },
+    {"I DAC K",    0,      9999999,    3,        4,    unit_none,     &get_a_dac_k,        &set_a_dac_k },
+    {"I DAC C",    0,      9999999,    3,        4,    unit_none,     &get_a_dac_c,        &set_a_dac_c },
+    {"Vin ADC C",  0,      9999999,    3,        4,    unit_none,     &get_vin_adc_k,      &set_vin_adc_k },
+    {"Vin ADC K",  0,      9999999,    3,        4,    unit_none,     &get_vin_adc_c,      &set_vin_adc_c },
 };
 
 /*
@@ -455,6 +467,19 @@ static void set_refresh(ui_number_t *item) {
     }
 }
 
+static int32_t get_on_locked() {
+    return settings | SCREEN_LOCKED_WHEN_ON;
+}
+
+static void set_on_locked(struct ui_number_t *item) {
+    if (item->value == 0) {
+        settings = settings & ~SCREEN_LOCKED_WHEN_ON;
+    } else {
+        settings = settings | SCREEN_LOCKED_WHEN_ON;
+    }
+}
+
+
 
 /**
  * @brief  event handler: We only care about the SET, M1 and M2 buttons
@@ -579,6 +604,9 @@ static void set_page(int8_t page) {
 
         settings_field[i].min = field_items[page_offset + i].min;
         settings_field[i].max = field_items[page_offset + i].max;
+        settings_field[i].num_digits = field_items[page_offset + i].digits;
+        settings_field[i].num_decimals = field_items[page_offset + i].decimals;
+        settings_field[i].unit = field_items[page_offset + i].unit;
     }
 
     tft_clear();
