@@ -63,6 +63,8 @@ static int8_t current_page = 0;
 static int8_t current_item = 0;
 static bool select_mode;
 
+int8_t ui_settings = 0;
+
 /*
  * This is the implementation of the Settings screen.
  */
