@@ -539,16 +539,6 @@ static void ui_handle_event(event_t event, uint8_t data)
             opendps_change_screen(target_screen_id);
             break;
 
-        case event_rot_left_set:
-        case event_rot_right_set:
-            // lock out set+rotation when power is on
-            if (pwrctl_vout_enabled()) {
-                // TODO: Show only briefly?
-                lock_flashing_period = LOCK_FLASHING_PERIOD;
-                lock_flash_counter = LOCK_FLASHING_COUNTER;
-                return;
-            }
-
         case event_button_enable:
             write_past_settings();
         default:
