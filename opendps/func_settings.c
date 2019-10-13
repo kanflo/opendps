@@ -42,14 +42,36 @@
 
 #define SCREEN_ID  (7)
 
+/*
+ *  The settings screen is layed out as a series of rows of labels and values
+ *  that can be paged using the existing UI subsystem.
+ *
+ *   Label             Value
+ *  -------------------------
+ *  | Brightness       100% |  <- first field / uui_number
+ *  | Refresh Rate    100ms |
+ *  | V ADC K       13.0000 |              ... 
+ *  | V ADC C       13.0000 |
+ *  | V DAC K       13.0000 |
+ *  | V DAC C       13.0000 |  <- sixth field / uui_number
+ *  -------------------------
+ *
+ * When a value is set, it calls the set function callback in order to do something.
+ * Values cannot be 'negative' because uui_number does not support it. Instead, the
+ * set callback function will use the field color as the sign. RED values are treated
+ * as negative numbers while WHITE numbers are positive.
+ *
+ */
+
+
 // Number of fields shown per page
 #define ITEMS_PER_PAGE 6
 
 // Total number of fields that can be edited
-#define ITEMS 12
+#define ITEMS 13
 
 // PAGES = ceil(ITEMS / ITEMS_PER_PAGE)
-#define PAGES 2 
+#define PAGES (ITEMS+(ITEMS_PER_PAGE-1))/ITEMS_PER_PAGE
 
 // UI Row height in pixels
 #define ROW_HEIGHT 17 
@@ -139,26 +161,29 @@ struct field_item {
  */
 struct field_item field_items[] = {
 // All values are 10^4 and usess the si_decimilli unit.
-//  LABEL          MIN     MAX         DIGITS,   DEC,  UNIT,          GET callback         SET callback
-    {"Brightness", 10000,  1000000,    3,        0,    unit_none,     &get_brightness,     &set_brightness },
-    {"Refresh",    100000, 9990000,    3,        0,    unit_ms,       &get_refresh,        &set_refresh },
+//  LABEL               MIN     MAX         DIGITS,   DEC,  UNIT,          GET callback         SET callback
+    {"Brightness",      10000,  1000000,    3,        0,    unit_none,     &get_brightness,     &set_brightness }, // TODO: Set this to unit_percent from dpsmode PR
+    {"Refresh Rate",    100000, 9990000,    3,        0,    unit_ms,       &get_refresh,        &set_refresh },
+
     // lock screen when output enabled
-    {"LockScrEn",  0,        10000,    1,        0,    unit_bool,     &get_on_locked,      &set_on_locked },
-    {"V ADC K",    0,      9999999,    3,        4,    unit_none,     &get_v_adc_k,        &set_v_adc_k },
-    {"V ADC C",    0,      9999999,    3,        4,    unit_none,     &get_v_adc_c,        &set_v_adc_c },
-    {"V DAC K",    0,      9999999,    3,        4,    unit_none,     &get_v_dac_k,        &set_v_dac_k },
-    {"V DAC C",    0,      9999999,    3,        4,    unit_none,     &get_v_dac_c,        &set_v_dac_c },
-    {"I ADC K",    0,      9999999,    3,        4,    unit_none,     &get_a_adc_k,        &set_a_adc_k },
-    {"I ADC C",    0,      9999999,    3,        4,    unit_none,     &get_a_adc_c,        &set_a_adc_c },
-    {"I DAC K",    0,      9999999,    3,        4,    unit_none,     &get_a_dac_k,        &set_a_dac_k },
-    {"I DAC C",    0,      9999999,    3,        4,    unit_none,     &get_a_dac_c,        &set_a_dac_c },
-    {"Vin ADC C",  0,      9999999,    3,        4,    unit_none,     &get_vin_adc_k,      &set_vin_adc_k },
-    {"Vin ADC K",  0,      9999999,    3,        4,    unit_none,     &get_vin_adc_c,      &set_vin_adc_c },
+    {"LockScr-PwrEn",   0,        10000,    1,        0,    unit_bool,     &get_on_locked,      &set_on_locked },
+
+    // constants
+    {"V ADC K",         0,      9999999,    3,        4,    unit_none,     &get_v_adc_k,        &set_v_adc_k },
+    {"V ADC C",         0,      9999999,    3,        4,    unit_none,     &get_v_adc_c,        &set_v_adc_c },
+    {"V DAC K",         0,      9999999,    3,        4,    unit_none,     &get_v_dac_k,        &set_v_dac_k },
+    {"V DAC C",         0,      9999999,    3,        4,    unit_none,     &get_v_dac_c,        &set_v_dac_c },
+    {"I ADC K",         0,      9999999,    3,        4,    unit_none,     &get_a_adc_k,        &set_a_adc_k },
+    {"I ADC C",         0,      9999999,    3,        4,    unit_none,     &get_a_adc_c,        &set_a_adc_c },
+    {"I DAC K",         0,      9999999,    3,        4,    unit_none,     &get_a_dac_k,        &set_a_dac_k },
+    {"I DAC C",         0,      9999999,    3,        4,    unit_none,     &get_a_dac_c,        &set_a_dac_c },
+    {"Vin ADC C",       0,      9999999,    3,        4,    unit_none,     &get_vin_adc_k,      &set_vin_adc_k },
+    {"Vin ADC K",       0,      9999999,    3,        4,    unit_none,     &get_vin_adc_c,      &set_vin_adc_c },
 };
 
 /*
  * Field UI elements
- * One for each row
+ * One field for each row
  */
 ui_number_t settings_field[] = {
 {

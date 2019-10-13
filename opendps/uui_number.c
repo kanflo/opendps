@@ -316,7 +316,7 @@ static void number_draw(ui_item_t *_item)
             break;
         case unit_bool:
             if (item->value > 0)
-                tft_puts(FONT_FULL_SMALL, "ON", xpos, _item->y + h, FONT_FULL_SMALL_MAX_GLYPH_WIDTH * 3, FONT_FULL_SMALL_MAX_GLYPH_HEIGHT, GREEN, false);
+                tft_puts(FONT_FULL_SMALL, " ON", xpos, _item->y + h, FONT_FULL_SMALL_MAX_GLYPH_WIDTH * 3, FONT_FULL_SMALL_MAX_GLYPH_HEIGHT, GREEN, false);
             else
                 tft_puts(FONT_FULL_SMALL, "OFF", xpos, _item->y + h, FONT_FULL_SMALL_MAX_GLYPH_WIDTH * 3, FONT_FULL_SMALL_MAX_GLYPH_HEIGHT, RED, false);
             break;
