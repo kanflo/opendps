@@ -163,10 +163,7 @@ struct field_item field_items[] = {
 // All values are 10^4 and usess the si_decimilli unit.
 //  LABEL               MIN     MAX         DIGITS,   DEC,  UNIT,          GET callback         SET callback
     {"Brightness",      10000,  1000000,    3,        0,    unit_none,     &get_brightness,     &set_brightness }, // TODO: Set this to unit_percent from dpsmode PR
-    {"Refresh Rate",    100000, 9990000,    3,        0,    unit_ms,       &get_refresh,        &set_refresh },
-
-    // lock screen when output enabled
-    {"LockScr-PwrEn",   0,        10000,    1,        0,    unit_bool,     &get_on_locked,      &set_on_locked },
+    {"Refresh",         100000, 9990000,    3,        0,    unit_ms,       &get_refresh,        &set_refresh },
 
     // constants
     {"V ADC K",         0,      9999999,    3,        4,    unit_none,     &get_v_adc_k,        &set_v_adc_k },
@@ -179,6 +176,9 @@ struct field_item field_items[] = {
     {"I DAC C",         0,      9999999,    3,        4,    unit_none,     &get_a_dac_c,        &set_a_dac_c },
     {"Vin ADC C",       0,      9999999,    3,        4,    unit_none,     &get_vin_adc_k,      &set_vin_adc_k },
     {"Vin ADC K",       0,      9999999,    3,        4,    unit_none,     &get_vin_adc_c,      &set_vin_adc_c },
+
+    // lock screen when output enabled
+    {"LockScr-En",      0,        10000,    1,        0,    unit_bool,     &get_on_locked,      &set_on_locked },
 };
 
 /*
