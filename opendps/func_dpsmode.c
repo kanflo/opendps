@@ -127,9 +127,9 @@ enum {
 #define YPOS_POWER   (80)
 
 /* Overriding white color */
-#define COLOR_VOLTAGE   GREEN
-#define COLOR_AMPERAGE  YELLOW
-#define COLOR_WATTAGE   MAGENTA
+#define DPS_COLOR_VOLTAGE   GREEN
+#define DPS_COLOR_AMPERAGE  YELLOW
+#define DPS_COLOR_WATTAGE   MAGENTA
 
 /* This is the definition of the voltage item in the UI */
 ui_number_t dpsmode_voltage = {
@@ -143,7 +143,7 @@ ui_number_t dpsmode_voltage = {
     .font_size = FONT_METER_LARGE, 
     .alignment = ui_text_right_aligned,
     .pad_dot = false,
-    .color = COLOR_VOLTAGE,
+    .color = DPS_COLOR_VOLTAGE,
     .value = 0,
     .min = 0,
     .max = 0, /** Set at init, continously updated in the tick callback */
@@ -165,7 +165,7 @@ ui_number_t dpsmode_current = {
     .font_size = FONT_METER_LARGE,
     .alignment = ui_text_right_aligned,
     .pad_dot = false,
-    .color = COLOR_AMPERAGE,
+    .color = DPS_COLOR_AMPERAGE,
     .value = 0,
     .min = 0,
     .max = CONFIG_DPS_MAX_CURRENT,
@@ -188,11 +188,11 @@ ui_number_t dpsmode_power = {
     .font_size = FONT_METER_LARGE,
     .alignment = ui_text_right_aligned,
     .pad_dot = false,
-    .color = COLOR_WATTAGE,
+    .color = DPS_COLOR_WATTAGE,
     .value = 0,
     .min = 0,
     .max = 0, // set at init
-    .si_prefix = si_micro,
+    .si_prefix = si_micro, // P=IV, where I is in mA and V is mV, so P is uW or 10^-6
     .num_digits = 2,
     .num_decimals = 2,
     .unit = unit_watt,
@@ -300,7 +300,7 @@ ui_screen_t dpsmode_screen = {
         {
             .name = "power",
             .unit = unit_watt,
-            .prefix = si_milli // or micro?
+            .prefix = si_micro
         },
         {
             .name = {'\0'} /** Terminator */
@@ -465,7 +465,7 @@ static void power_changed(ui_number_t *item)
  * @param      item  The current item
  */
 static void watthour_changed(ui_number_t *item) {
-    //
+    (void)item;
 }
 
 static void timer_changed(ui_time_t *item) {
@@ -659,7 +659,7 @@ static bool event(uui_t *ui, event_t event, uint8_t data) {
         case event_opp:
             // opp mode
             if ( ! single_edit_mode && ! select_mode) {
-                third_item = &dpsmode_power;
+                third_item = (ui_item_t*)&dpsmode_power;
                 third_invalidate = true;
             }
 
@@ -669,7 +669,7 @@ static bool event(uui_t *ui, event_t event, uint8_t data) {
         case event_timer:
             // timer has counted down to zero
             if ( ! single_edit_mode && ! select_mode) {
-                third_item = &dpsmode_timer;
+                third_item = (ui_item_t*)&dpsmode_timer;
                 third_invalidate = true;
             }
 
@@ -870,8 +870,6 @@ static void dpsmode_tick(void)
         int32_t vout_actual = pwrctl_calc_vout(v_out_raw);
         int32_t cout_actual = pwrctl_calc_iout(i_out_raw);
         int32_t power_actual = vout_actual * cout_actual;
-
-        // TODO: Issue where focus causes a brief frame where value is incorrect
         
         // Voltage setting has focus, update with the desired value and not output value
         if (dpsmode_voltage.ui.has_focus) {
