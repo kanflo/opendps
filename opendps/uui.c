@@ -148,7 +148,13 @@ void uui_focus(uui_t *ui, ui_item_t *item) {
     focus_switch(item);
 }
 
-
+/**
+ * @brief     Handles UI events that are received
+ *
+ * @param      ui     The user interface
+ * @param      event  The event to be handled
+ * @param      data   Extra event information such as button press long or short
+ */
 void uui_handle_screen_event(uui_t *ui, event_t event, uint8_t data)
 {
     assert(ui);
@@ -162,18 +168,21 @@ void uui_handle_screen_event(uui_t *ui, event_t event, uint8_t data)
     }
 
     // If the screen handled the event, do nothing.
-    if (ui->screens[ui->cur_screen]->event && ui->screens[ui->cur_screen]->event(ui, event))
+    // Screens can override the default behavior defined below by returning true.
+    if (ui->screens[ui->cur_screen]->event && ui->screens[ui->cur_screen]->event(ui, event, data))
         return;
 
+    // Default behavior for certain events defined here.
     switch(event) {
+        // SET + Rot rotation will change to the next/previous screen
         case event_rot_left_set:
             uui_prev_screen(ui);
             break;
-
         case event_rot_right_set:
             uui_next_screen(ui);
             break;
 
+        // Rot events should be passed to focused UI elements
         case event_rot_left:
         case event_rot_right:
         case event_rot_press:
@@ -182,12 +191,14 @@ void uui_handle_screen_event(uui_t *ui, event_t event, uint8_t data)
             }
             break;
 
+        // SET button should focus on the current UI element
         case event_button_sel:
             if (item->can_focus) {
                 focus_switch(item);
             }
             break;
 
+        // M1 should change to the previous UI element
         case event_button_m1:
             if (item->has_focus) {
                 ui_item_t *old_item = item;
@@ -202,6 +213,7 @@ void uui_handle_screen_event(uui_t *ui, event_t event, uint8_t data)
             }
             break;
 
+        // M2 should change to the next UI element
         case event_button_m2:
             if (item->has_focus) {
                 ui_item_t *old_item = item;
@@ -216,13 +228,17 @@ void uui_handle_screen_event(uui_t *ui, event_t event, uint8_t data)
             }
             break;
 
+        // Events that should cause power to shut off and the screen disabled
+        // This includes the timer expiring
         case event_timer:
+        // The screen sending a shutoff event to trigger a power off
         case event_shutoff:
+        // The power button being pressed
         case event_button_enable:
+        // Or the over current/voltage/power events triggered by hardware or screen
         case event_ocp:
         case event_ovp:
         case event_opp:
-
             /** If current screen can be enabled */
             if (screen->enable) {
                 if (event == event_shutoff || event == event_timer) {
@@ -240,6 +256,10 @@ void uui_handle_screen_event(uui_t *ui, event_t event, uint8_t data)
                 screen->enable(screen->is_enabled);
                 opendps_update_power_status(screen->is_enabled); /** @todo: move */
             }
+            break;
+
+        // All other unhandled events do nothing.
+        default:
             break;
     }
 }
