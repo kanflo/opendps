@@ -142,7 +142,8 @@ struct field_item field_items[] = {
 //  LABEL          MIN     MAX         DIGITS,   DEC,  UNIT,          GET callback         SET callback
     {"Brightness", 10000,  1000000,    3,        0,    unit_none,     &get_brightness,     &set_brightness },
     {"Refresh",    100000, 9990000,    3,        0,    unit_ms,       &get_refresh,        &set_refresh },
-    {"ON Locked",  0,        10000,    1,        0,    unit_bool,     &get_on_locked,      &set_on_locked },
+    // lock screen when output enabled
+    {"LockScrEn",  0,        10000,    1,        0,    unit_bool,     &get_on_locked,      &set_on_locked },
     {"V ADC K",    0,      9999999,    3,        4,    unit_none,     &get_v_adc_k,        &set_v_adc_k },
     {"V ADC C",    0,      9999999,    3,        4,    unit_none,     &get_v_adc_c,        &set_v_adc_c },
     {"V DAC K",    0,      9999999,    3,        4,    unit_none,     &get_v_dac_k,        &set_v_dac_k },

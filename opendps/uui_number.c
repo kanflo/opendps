@@ -157,7 +157,6 @@ static uint32_t number_draw_width(ui_item_t *_item)
     /** The unit */
     switch(item->unit) {
         case unit_none:
-        case unit_bool:
             break;
         case unit_volt:
         case unit_ampere:
@@ -166,6 +165,9 @@ static uint32_t number_draw_width(ui_item_t *_item)
         case unit_hertz:
         case unit_ms:
             total_width += 2*FONT_FULL_SMALL_MAX_GLYPH_WIDTH;
+            break;
+        case unit_bool:
+            total_width += 3*FONT_FULL_SMALL_MAX_GLYPH_WIDTH;
             break;
         default:
             assert(0);
@@ -299,7 +301,6 @@ static void number_draw(ui_item_t *_item)
     /** The unit */
     switch(item->unit) {
         case unit_none:
-        case unit_bool:
             break;
         case unit_volt:
             tft_putch(item->font_size, 'V', xpos, _item->y, max_w, h, color, false);
@@ -312,6 +313,12 @@ static void number_draw(ui_item_t *_item)
             break;
         case unit_ms:
             tft_puts(FONT_FULL_SMALL, "ms", xpos, _item->y + h, FONT_FULL_SMALL_MAX_GLYPH_WIDTH * 2, FONT_FULL_SMALL_MAX_GLYPH_HEIGHT, color, false);
+            break;
+        case unit_bool:
+            if (item->value > 0)
+                tft_puts(FONT_FULL_SMALL, "ON", xpos, _item->y + h, FONT_FULL_SMALL_MAX_GLYPH_WIDTH * 3, FONT_FULL_SMALL_MAX_GLYPH_HEIGHT, GREEN, false);
+            else
+                tft_puts(FONT_FULL_SMALL, "OFF", xpos, _item->y + h, FONT_FULL_SMALL_MAX_GLYPH_WIDTH * 3, FONT_FULL_SMALL_MAX_GLYPH_HEIGHT, RED, false);
             break;
         default:
             assert(0);
