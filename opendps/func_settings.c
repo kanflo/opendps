@@ -131,13 +131,18 @@ struct field_item {
 /*
  * Fields that can be edited
  * Ensure that ITEMS match the number of elements here
+ *
+ * Note: Min values cannot be negative because uui_number cannot handle negative numbers.
+ *       If you want to enable the possibility for negative numbers, set the min value to 0.
+ *       The sign can be toggled by setting a value to 0 in the UI (shown in RED for negative)
+ *       If you do NOT want the possibility for negative numbers, set the min value to a non-zero value.
  */
 struct field_item field_items[] = {
 // All values are 10^4 and usess the si_decimilli unit.
 //  LABEL          MIN     MAX         DIGITS,   DEC,  UNIT,          GET callback         SET callback
     {"Brightness", 10000,  1000000,    3,        0,    unit_none,     &get_brightness,     &set_brightness },
-    {"Refresh",    100000, 9999999,    3,        0,    unit_ms,       &get_refresh,        &set_refresh },
-    {"ON Locked",  0,      1000,       1,        0,    unit_bool,     &get_on_locked,      &set_on_locked },
+    {"Refresh",    100000, 9990000,    3,        0,    unit_ms,       &get_refresh,        &set_refresh },
+    {"ON Locked",  0,        10000,    1,        0,    unit_bool,     &get_on_locked,      &set_on_locked },
     {"V ADC K",    0,      9999999,    3,        4,    unit_none,     &get_v_adc_k,        &set_v_adc_k },
     {"V ADC C",    0,      9999999,    3,        4,    unit_none,     &get_v_adc_c,        &set_v_adc_c },
     {"V DAC K",    0,      9999999,    3,        4,    unit_none,     &get_v_dac_k,        &set_v_dac_k },
@@ -470,7 +475,10 @@ static void set_refresh(ui_number_t *item) {
 }
 
 static int32_t get_on_locked() {
-    return ui_settings | SCREEN_LOCKED_WHEN_ON;
+    if (ui_settings | SCREEN_LOCKED_WHEN_ON) {
+        return 10000;
+    }
+    return 0;
 }
 
 static void set_on_locked(struct ui_number_t *item) {
@@ -609,6 +617,8 @@ static void set_page(int8_t page) {
         settings_field[i].num_digits = field_items[page_offset + i].digits;
         settings_field[i].num_decimals = field_items[page_offset + i].decimals;
         settings_field[i].unit = field_items[page_offset + i].unit;
+        // cur_digit may be wrongg after changing digits and decimals, updating it once more:
+        settings_field[i].cur_digit = field_items[page_offset + i].digits + field_items[page_offset + i].decimals - 1;
     }
 
     tft_clear();
