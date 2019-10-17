@@ -245,7 +245,7 @@ static void number_draw(ui_item_t *_item)
         cur_digit = place + item->num_decimals - 1;
 
         // this place value (1 = 1, 2 = 10, 3 = 100, etc., for si_prefix = 0)
-        uint32_t power = my_pow(10, (item->si_prefix * -1) + (place - 1));
+        int32_t power = my_pow(10, (item->si_prefix * -1) + (place - 1));
 
         uint8_t digit = (item->value / power) % 10;
 
