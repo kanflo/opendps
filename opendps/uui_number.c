@@ -234,46 +234,47 @@ static void number_draw(ui_item_t *_item)
         xpos -= number_draw_width(_item);
 
     /** Start printing from left to right */
+    for (uint8_t cur_digit = 0; cur_digit < item->num_digits - 1; cur_digit++) {
+        /* Example:
+            01000  num_digits = 5
+            01234  cur_digit
+            54321  values place
+        */
 
-    /** Digits before the decimal point */
-    for (uint32_t i = item->num_digits - 1; i < item->num_digits; --i) {
+        // values place
+        uint8_t place = item->num_digits - cur_digit; 
+
+        // this place value (1 = 1, 2 = 10, 3 = 100, etc., for si_prefix = 0)
+        uint32_t power = my_pow(10, (item->si_prefix * -1) + place - 1);
+
+        // current digit value
+        uint8_t digit = (item->value / power) % 10;
+
+        // digit selected
         bool highlight = _item->has_focus && item->cur_digit == cur_digit;
-        uint8_t digit = item->value / my_pow(10, (item->si_prefix * -1) + i) % 10;
 
-        if (!digit /** If current digit is a 0 */
-            && !_item->has_focus /** and its not in focus (selected) */
-            && cur_digit != item->num_decimals /** to prevent 0.123 becoming .123 */
-            && my_pow(10, cur_digit + (item->si_prefix * -1)) > (uint32_t) item->value) /** to prevent 4023 becoming 4 23 */
-        {
-            /** To prevent from printing 00.123 */
-            /** Black out any 0 that has previously been printed */
-            if (spacing > 1)
-            {
-                tft_fill(xpos, _item->y, digit_w, h, BLACK);
-                tft_rect(xpos-1, _item->y-1, digit_w+1, h+1, BLACK); /** Remove any potential frame highlight */
+        // Draw the background only if spacing is > 1
+        if (spacing > 1) {
+            if (highlight) {
+                tft_rect(xpos-1, _item->y-1, digit_w+1, h+1, WHITE);
+            } else {
+                tft_rect(xpos-1, _item->y-1, digit_w+1, h+1, BLACK);
             }
-            else
-                tft_fill(xpos, _item->y, digit_w, h, BLACK); /** Black out any 0 that has previously been printed */
         }
-        else
-        {
-            if (spacing > 1) /** Dont frame tiny fonts */
-            {
-                if (highlight) /** Draw an extra pixel wide border around the highlighted item */
-                    tft_rect(xpos-1, _item->y-1, digit_w+1, h+1, WHITE);
-                else
-                    tft_rect(xpos-1, _item->y-1, digit_w+1, h+1, BLACK);
-            }
+
+        // Draw the digit, Only if value >= this place's min value (digit's power)
+        // this prevents the drawing of leading 0's by skipping values that are smaller than that number's place
+        if (item->value >= power) {
+            // ASCII '0' plus digit value for digit ascii offset
             tft_putch(item->font_size, '0' + digit, xpos, _item->y, digit_w, h, color, highlight);
         }
 
-        cur_digit--;
+        // next digit position
         xpos += digit_w + spacing;
     }
 
-    /** Draw the decimal point if there is decimal places */
-    if (item->num_decimals)
-    {
+    /** Draw the decimal point if there are decimal places */
+    if (item->num_decimals) {
         tft_putch(item->font_size, '.', xpos, _item->y, dot_width, h, color, false);
         xpos += dot_width + spacing;
     }
