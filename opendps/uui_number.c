@@ -234,26 +234,25 @@ static void number_draw(ui_item_t *_item)
         xpos -= number_draw_width(_item);
 
     /** Start printing from left to right */
-    for (uint8_t cur_digit = 0; cur_digit < item->num_digits - 1; cur_digit++) {
-        /* Example:
-            01000  num_digits = 5
-            01234  cur_digit
-            54321  values place
+    for (uint8_t place = item->num_digits; place > 0; place--) {
+        /* Example value of 1000 with 5,2:
+            01000 . 00  num_digits = 5, num_decimals = 2
+            54321       values place
+            65432 . 10  cur_digit
         */
 
-        // values place
-        uint8_t place = item->num_digits - cur_digit; 
+        // current digit
+        cur_digit = place + item->num_decimals - 1;
 
         // this place value (1 = 1, 2 = 10, 3 = 100, etc., for si_prefix = 0)
-        uint32_t power = my_pow(10, (item->si_prefix * -1) + place - 1);
+        uint32_t power = my_pow(10, (item->si_prefix * -1) + (place - 1));
 
-        // current digit value
         uint8_t digit = (item->value / power) % 10;
 
         // digit selected
         bool highlight = _item->has_focus && item->cur_digit == cur_digit;
 
-        // Draw the background only if spacing is > 1
+        // Draw background either black, or a highlighted box
         if (spacing > 1) {
             if (highlight) {
                 tft_rect(xpos-1, _item->y-1, digit_w+1, h+1, WHITE);
@@ -262,11 +261,15 @@ static void number_draw(ui_item_t *_item)
             }
         }
 
-        // Draw the digit, Only if value >= this place's min value (digit's power)
-        // this prevents the drawing of leading 0's by skipping values that are smaller than that number's place
-        if (item->value >= power) {
+        // Draw the digit, Only if:
+        //   value >= this place's min value (ie. digit's power)
+        //   in one's place (ensuring 0.xxx has leading 0)
+        //   or item has focus (ensures all digits are drawn when focused)
+        if (item->value >= power || place == 1 || _item->has_focus) {
             // ASCII '0' plus digit value for digit ascii offset
             tft_putch(item->font_size, '0' + digit, xpos, _item->y, digit_w, h, color, highlight);
+        } else {
+            tft_fill(xpos, _item->y, digit_w, h, BLACK);
         }
 
         // next digit position
@@ -280,6 +283,7 @@ static void number_draw(ui_item_t *_item)
     }
 
     /** Digits after the decimal point */
+    cur_digit = item->num_decimals - 1;
     for (uint32_t i = 0; i < item->num_decimals; ++i) {
         bool highlight = _item->has_focus && item->cur_digit == cur_digit;
         uint8_t digit = item->value / my_pow(10, (item->si_prefix * -1) -1 - i) % 10;
