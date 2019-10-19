@@ -1,7 +1,7 @@
 TARGET = dpsemu
 LIBS = -lm -lpthread
 CC = gcc
-CFLAGS = -m32 -g -Wall -I. -I../opendps -DCONFIG_DPS_MAX_CURRENT=5000 -Ddbg_printf=printf -DDPS5005 -DDPS_EMULATOR -DCONFIG_CC_ENABLE -Wmissing-braces
+CFLAGS = -m32 -g -Wall -I. -I../opendps -DCONFIG_DPS_MAX_CURRENT=5000 -Ddbg_printf=printf -DDPS5005 -DDPS_EMULATOR -DCONFIG_CC_ENABLE -DCOLOR_INPUT=WHITE -DCOLOR_VOLTAGE=WHITE -DCOLOR_AMPERAGE=WHITE -Wmissing-braces
 
 .PHONY: default all clean
 
@@ -30,9 +30,19 @@ SRCS = opendps.c \
 	func_cv.c \
 	func_cc.c \
 	misc.c \
-	font-18.c \
-	font-24.c \
-	font-48.c \
+    font-full_small.o \
+    font-meter_small.o \
+    font-meter_medium.o \
+    font-meter_large.o \
+	gfx-cc.o \
+    gfx-crosshair.o \
+    gfx-cv.o \
+    gfx-cl.o \
+    gfx-padlock.o \
+    gfx-thermometer.o \
+    gfx-wifi.o \
+	gfx-power.o \
+	settings_calibration.o \
 
 #OBJECTS = $(patsubst ../%, %, $(patsubst %.c, %.o, $(SRCS)))
 OBJECTS = $(patsubst %.c, %.o, $(SRCS))
