@@ -231,7 +231,7 @@ int32_t uframe_extract_payload(frame_t *frame, uint8_t *data, uint32_t length)
         }
     } while(0);
 
-    if (status != -E_CRC)
+    if (status >= 0)
     {
         memcpy(frame->buffer, data, status);
         frame->length = status;
