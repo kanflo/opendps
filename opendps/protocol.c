@@ -84,7 +84,7 @@ bool protocol_unpack_response(frame_t *frame, command_t *cmd, uint8_t *success)
 
 bool protocol_unpack_query_response(frame_t *frame, uint16_t *v_in, uint16_t *v_out_setting, uint16_t *v_out, uint16_t *i_out, uint16_t *i_limit, uint8_t *power_enabled)
 {
-	command_t cmd;
+	uint8_t cmd;
 	uint8_t status;
 
 	start_frame_unpacking(frame);
@@ -104,7 +104,7 @@ bool protocol_unpack_query_response(frame_t *frame, uint16_t *v_in, uint16_t *v_
 
 bool protocol_unpack_wifi_status(frame_t *frame, wifi_status_t *status)
 {
-	command_t cmd;
+	uint8_t cmd;
 
 	start_frame_unpacking(frame);
 	UNPACK8(frame, &cmd);
@@ -115,7 +115,7 @@ bool protocol_unpack_wifi_status(frame_t *frame, wifi_status_t *status)
 
 bool protocol_unpack_lock(frame_t *frame, uint8_t *locked)
 {
-	command_t cmd;
+	uint8_t cmd;
 
 	start_frame_unpacking(frame);
 	UNPACK8(frame, &cmd);
@@ -127,7 +127,7 @@ bool protocol_unpack_lock(frame_t *frame, uint8_t *locked)
 
 bool protocol_unpack_upgrade_start(frame_t *frame, uint16_t *chunk_size, uint16_t *crc)
 {
-	command_t cmd;
+	uint8_t cmd;
 
 	start_frame_unpacking(frame);
 	UNPACK8(frame, &cmd);
@@ -139,7 +139,7 @@ bool protocol_unpack_upgrade_start(frame_t *frame, uint16_t *chunk_size, uint16_
 
 bool protocol_unpack_ocp(frame_t *frame, uint16_t *i_cut)
 {
-	command_t cmd;
+	uint8_t cmd;
 
 	start_frame_unpacking(frame);
 	UNPACK8(frame, &cmd);
