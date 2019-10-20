@@ -62,6 +62,11 @@ struct sockaddr_in comm_client_sock;
 void dps_emul_send_frame(frame_t *frame)
 {
     int slen = sizeof(comm_client_sock);
+
+    printf("[Com] Transmitted %u bytes\n", frame->length);
+    for (uint32_t i = 0; i < frame->length; ++i)
+         printf(" 0x%02X\n", frame->buffer[i]);
+
     if (sendto(comm_sock, frame->buffer, frame->length, 0, (struct sockaddr*) &comm_client_sock, slen) == -1) {
         printf("Error: sendto()\n");
     }
