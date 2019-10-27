@@ -448,7 +448,6 @@ static int32_t past_find_unit(past_t *past, past_id_t id)
     bool found = false;
     do {
         cur_id = flash_read32(cur_address);
-        cur_size = flash_read32(cur_address + UNIT_SIZE_OFFSET);
         if (id == cur_id) {
             found = true;
             break;
