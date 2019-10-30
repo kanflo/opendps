@@ -46,6 +46,8 @@
  #ifndef CONFIG_DPS_MAX_CURRENT
   #define CONFIG_DPS_MAX_CURRENT (20000) // Please note that the UI currently does not handle settings larger that 9.99A
  #endif
+ #define CURRENT_DIGITS 2
+ #define CURRENT_DECIMALS 2
  #define ADC_CHA_IOUT_GOLDEN_VALUE  (59)
  #define A_ADC_K (float)6.75449f
  #define A_ADC_C (float)-358.73f
