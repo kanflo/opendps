@@ -60,8 +60,10 @@
  #define VIN_ADC_C (float)6.6895f
 #elif defined(DPS5015)
  #ifndef CONFIG_DPS_MAX_CURRENT
-  #define CONFIG_DPS_MAX_CURRENT (15000) // Please note that the UI currently does not handle settings larger that 9.99A
+  #define CONFIG_DPS_MAX_CURRENT (15000)
  #endif
+ #define CURRENT_DIGITS 2
+ #define CURRENT_DECIMALS 2
  #define ADC_CHA_IOUT_GOLDEN_VALUE  (59)
  #define A_ADC_K (float)6.8403f
  #define A_ADC_C (float)-394.06f
@@ -75,6 +77,8 @@
  #ifndef CONFIG_DPS_MAX_CURRENT
   #define CONFIG_DPS_MAX_CURRENT (5000)
  #endif
+ #define CURRENT_DIGITS 1
+ #define CURRENT_DECIMALS 3
  #define ADC_CHA_IOUT_GOLDEN_VALUE  (0x45)
  #define A_ADC_K (float)1.713f
  #define A_ADC_C (float)-118.51f
@@ -88,6 +92,8 @@
  #ifndef CONFIG_DPS_MAX_CURRENT
   #define CONFIG_DPS_MAX_CURRENT (5000)
  #endif
+ #define CURRENT_DIGITS 1
+ #define CURRENT_DECIMALS 3
  #define ADC_CHA_IOUT_GOLDEN_VALUE  (0x45)
  #define A_DAC_K (float)0.6402f
  #define A_DAC_C (float)299.5518f
@@ -101,6 +107,8 @@
  #ifndef CONFIG_DPS_MAX_CURRENT
   #define CONFIG_DPS_MAX_CURRENT (5000)
  #endif
+ #define CURRENT_DIGITS 1
+ #define CURRENT_DECIMALS 3
  #define ADC_CHA_IOUT_GOLDEN_VALUE  (0x00)
  #define A_ADC_K (float)1.751f
  #define A_ADC_C (float)-1.101f
