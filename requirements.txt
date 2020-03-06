@@ -1,2 +1,2 @@
-pycrc==1.21
+git+https://github.com/alexbutirskiy/PyCRC==1.21
 pyserial==3.4
