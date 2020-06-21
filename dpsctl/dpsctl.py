@@ -60,10 +60,10 @@ from protocol import (create_cmd, create_enable_output, create_lock, create_set_
                       unpack_cal_report, unpack_query_response, unpack_version_response)
 
 try:
-    from PyCRC.CRCCCITT import CRCCCITT
+    import crc16
 except ImportError:
-    print("Missing dependency pycrc:")
-    print(" sudo pip{} install pycrc"
+    print("Missing dependency crc16:")
+    print(" sudo pip{} install crc16"
           .format("3" if sys.version_info.major == 3 else ""))
     raise SystemExit()
 try:
@@ -616,7 +616,7 @@ def run_upgrade(comms, fw_file_name, args):
         content = file.read()
         if codecs.encode(content, 'hex')[6:8] != b'20' and not args.force:
             fail("The firmware file does not seem valid, use --force to force upgrade")
-        crc = CRCCCITT().calculate(content)
+        crc = crc16.crc16xmodem(content)
     chunk_size = 1024
     ret_dict = communicate(comms, create_upgrade_start(chunk_size, crc), args)
     if ret_dict["status"] == protocol.UPGRADE_CONTINUE:
