@@ -42,10 +42,30 @@
  * */
 
 /** Contribution by @cleverfox */
-#if defined(DPS5015)
+#if defined(DPS5020)
  #ifndef CONFIG_DPS_MAX_CURRENT
-  #define CONFIG_DPS_MAX_CURRENT (15000) // Please note that the UI currently does not handle settings larger that 9.99A
+  #define CONFIG_DPS_MAX_CURRENT (20000) // Please note that the UI currently does not handle settings larger that 9.99A
  #endif
+ #define CURRENT_DIGITS 2
+ #define CURRENT_DECIMALS 2
+ #define ADC_CHA_IOUT_GOLDEN_VALUE  (59)
+ #define A_ADC_K (float)6.75449f
+ #define A_ADC_C (float)-358.73f
+ #define A_DAC_K (float)0.16587f
+ #define A_DAC_C (float)243.793f
+ #define V_ADC_K (float)13.2930f
+ #define V_ADC_C (float)-179.91f
+ #define V_DAC_K (float)0.07528f
+ #define V_DAC_C (float)6.68949f
+
+ #define VIN_ADC_K (float)16.956f
+ #define VIN_ADC_C (float)6.6895f
+#elif defined(DPS5015)
+ #ifndef CONFIG_DPS_MAX_CURRENT
+  #define CONFIG_DPS_MAX_CURRENT (15000)
+ #endif
+ #define CURRENT_DIGITS 2
+ #define CURRENT_DECIMALS 2
  #define ADC_CHA_IOUT_GOLDEN_VALUE  (59)
  #define A_ADC_K (float)6.8403f
  #define A_ADC_C (float)-394.06f
@@ -59,6 +79,8 @@
  #ifndef CONFIG_DPS_MAX_CURRENT
   #define CONFIG_DPS_MAX_CURRENT (5000)
  #endif
+ #define CURRENT_DIGITS 1
+ #define CURRENT_DECIMALS 3
  #define ADC_CHA_IOUT_GOLDEN_VALUE  (0x45)
  #define A_ADC_K (float)1.713f
  #define A_ADC_C (float)-118.51f
@@ -72,6 +94,8 @@
  #ifndef CONFIG_DPS_MAX_CURRENT
   #define CONFIG_DPS_MAX_CURRENT (5000)
  #endif
+ #define CURRENT_DIGITS 1
+ #define CURRENT_DECIMALS 3
  #define ADC_CHA_IOUT_GOLDEN_VALUE  (0x45)
  #define A_DAC_K (float)0.6402f
  #define A_DAC_C (float)299.5518f
@@ -85,6 +109,8 @@
  #ifndef CONFIG_DPS_MAX_CURRENT
   #define CONFIG_DPS_MAX_CURRENT (5000)
  #endif
+ #define CURRENT_DIGITS 1
+ #define CURRENT_DECIMALS 3
  #define ADC_CHA_IOUT_GOLDEN_VALUE  (0x00)
  #define A_ADC_K (float)1.751f
  #define A_ADC_C (float)-1.101f
@@ -99,8 +125,13 @@
 #endif // MODEL
 
 /** These are constant across all models currently but may require tuning for each model */
-#define VIN_ADC_K (float)16.746f
-#define VIN_ADC_C (float)64.112f
+#ifndef VIN_ADC_K
+ #define VIN_ADC_K (float)16.746f
+#endif
+
+#ifndef VIN_ADC_C
+ #define VIN_ADC_C (float)64.112f
+#endif
 
 #define VIN_VOUT_RATIO (float)1.1f /** (Vin / VIN_VOUT_RATIO) = Max Vout */
 

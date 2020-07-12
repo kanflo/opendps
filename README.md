@@ -2,7 +2,7 @@
 
 #### Give your DPS5005 the upgrade it deserves
 
-OpenDPS is a FOSS firmware replacement for the DPS5005 (and DPS3003, DPS3005, DPS5015, DP50V5A and possibly others) that has the same functionality, has a less cluttered user interface and is remote controllable via wifi (ESP8266) or via a serial port.
+OpenDPS is a FOSS firmware replacement for the DPS5005 (and DPS3003, DPS3005, DPS5015, DP50V5A, DPS5020 and possibly others) that has the same functionality, has a less cluttered user interface and is remote controllable via wifi (ESP8266) or via a serial port.
 
 <p align="center">
 <img src="https://raw.githubusercontent.com/kanflo/opendps/master/image.jpg" alt="A DPS5005 with wifi"/>
@@ -176,7 +176,7 @@ The project consists of four parts:
 
 ### What about other DPS:es?
 
-OpenDPS has been verified to work with other models in the DPSx0xx series, such as the DPS3003, DPS3005 and DPS5015. The maxium settable output current can be defined when building opendps, see the makefile. Plese note that the hardware design might change at any time without any notice (I am not affiliated with its designer). This will render OpenDPS unusable until fixed.
+OpenDPS has been verified to work with other models in the DPSx0xx series, such as the DPS3003, DPS3005, DPS5015 and DPS5020. The maxium settable output current can be defined when building opendps, see the makefile. Plese note that the hardware design might change at any time without any notice (I am not affiliated with its designer). This will render OpenDPS unusable until fixed.
 
 ---
 Licensed under the MIT license. Have fun!

@@ -204,7 +204,7 @@ void pwrctl_enable_vout(bool enable)
     if (v_out_enabled) {
       (void) pwrctl_set_vout(v_out);
       (void) pwrctl_set_iout(i_out);
-#ifdef DPS5015
+#if defined(DPS5015) || defined(DPS5020)
         //gpio_clear(GPIOA, GPIO9); // this is power control on '5015
         gpio_set(GPIOB, GPIO11);    // B11 is fan control on '5015
         gpio_clear(GPIOC, GPIO13);  // C13 is power control on '5015
@@ -212,7 +212,7 @@ void pwrctl_enable_vout(bool enable)
         gpio_clear(GPIOB, GPIO11);  // B11 is power control on '5005
 #endif
     } else {
-#ifdef DPS5015
+#if defined(DPS5015) || defined(DPS5020)
         //gpio_set(GPIOA, GPIO9);    // gpio_set(GPIOB, GPIO11);
         gpio_clear(GPIOB, GPIO11); // B11 is fan control on '5015
         gpio_set(GPIOC, GPIO13);   // C13 is power control on '5015
