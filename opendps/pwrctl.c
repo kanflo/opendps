@@ -296,7 +296,7 @@ uint32_t pwrctl_calc_iout(uint16_t raw)
   * @param i_limit_ma selected I_limit
   * @retval expected raw ADC value
   */
-uint16_t pwrctl_calc_ilimit_adc(uint16_t i_limit_ma)
+uint32_t pwrctl_calc_ilimit_adc(uint16_t i_limit_ma)
 {
     float value = (i_limit_ma - a_adc_c_coef) / a_adc_k_coef + 1;
     if (value <= 0)
@@ -310,7 +310,7 @@ uint16_t pwrctl_calc_ilimit_adc(uint16_t i_limit_ma)
   * @param v_limit_mv selected V_limit
   * @retval expected raw ADC value
   */
-uint16_t pwrctl_calc_vlimit_adc(uint16_t v_limit_mv)
+uint32_t pwrctl_calc_vlimit_adc(uint16_t v_limit_mv)
 {
     float value = (v_limit_mv - v_adc_c_coef) / v_adc_k_coef + 1;
     if (value <= 0)
