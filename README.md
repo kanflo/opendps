@@ -31,8 +31,6 @@ make -C opendps flash
 make -C dpsboot flash
 ```
 
-*Please note that you currently MUST flash the bootloader last as OpenOCD overwrites the bootloader when flashing the firmware. Currently no idea why :-/ *
-
 Check [the blog](https://johan.kanflo.com/upgrading-your-dps5005/) for instructions on how to unlock and flash your DPS5005.
 
 Second, build and flash the ESP8266 firmware. First you need to create the file `esp8266-proxy/esp-open-rtos/include/private_ssid_config.h` with the following content:
