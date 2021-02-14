@@ -14,4 +14,4 @@ docker build -t opendps_$PROJECT docker
 mkdir -p output
 chmod 777 output
 
-docker run --rm -t -u opendps -v $(readlink -f .):/parent:ro -v $(readlink -f .)/output:/output opendps_$PROJECT /parent/docker/build.sh "$@"
+docker run --rm -t -u opendps -v $(realpath .):/parent:ro -v $(realpath .)/output:/output opendps_$PROJECT /parent/docker/build.sh "$@"
