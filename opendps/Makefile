@@ -95,6 +95,7 @@ OBJS = \
     event.o \
     past.o \
     tick.o \
+    wdog.o \
     tft.o \
     spi_driver.o \
     ringbuf.o \

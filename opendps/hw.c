@@ -40,6 +40,7 @@
 #include "hw.h"
 #include "event.h"
 #include "dps-model.h"
+#include "wdog.h"
 
 /** Linker file symbols */
 extern uint32_t *_ram_vect_start;
@@ -156,6 +157,7 @@ void hw_init(void)
 #ifdef CONFIG_FUNCGEN_ENABLE
     tim3_init();
 #endif
+    wdog_init();
 
 //    AFIO_MAPR |= AFIO_MAPR_PD01_REMAP; /** @todo The original DPS FW does this, things go south if I do it... */
 }

@@ -58,6 +58,7 @@
 #include "font-meter_medium.h"
 #include "font-meter_large.h"
 #include "gpio.h"
+#include "wdog.h"
 #include "past.h"
 #include "pastunits.h"
 #include "uui.h"
@@ -978,6 +979,8 @@ static void event_handler(void)
             }
             ui_handle_event(event, data);
         }
+
+        wdog_kick();
     }
 }
 
