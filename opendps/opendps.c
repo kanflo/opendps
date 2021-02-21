@@ -1038,6 +1038,7 @@ int main(int argc, char const *argv[])
     tft_clear();
     uui_refresh(current_ui, true);
 #endif // CONFIG_SPLASH_SCREEN
+    wdog_init();
     event_handler();
     return 0;
 }
