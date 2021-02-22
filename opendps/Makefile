@@ -47,7 +47,7 @@ TINT ?= ffffff
 CC_ENABLE ?= 0
 
 # Enable CV mode
-CV_ENABLE ?= 0
+CV_ENABLE ?= 1
 
 # Enable cl mode
 CL_ENABLE ?= 1
