@@ -44,7 +44,7 @@ COLOR_INPUT ?= WHITE
 TINT ?= ffffff
 
 # Enable CC mode
-CC_ENABLE ?= 0
+CC_ENABLE ?= 1
 
 # Enable CV mode
 CV_ENABLE ?= 1
