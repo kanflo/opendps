@@ -79,7 +79,6 @@ OBJS = \
     crc16.o \
     uui.o \
     uui_number.o \
-    func_cv.o \
     settings_calibration.o \
     hw.o \
     pwrctl.o \
