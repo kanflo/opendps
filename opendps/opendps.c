@@ -980,7 +980,9 @@ static void event_handler(void)
             ui_handle_event(event, data);
         }
 
+#ifdef CONFIG_WDOG
         wdog_kick();
+#endif // CONFIG_WDOG
     }
 }
 
@@ -1038,7 +1040,9 @@ int main(int argc, char const *argv[])
     tft_clear();
     uui_refresh(current_ui, true);
 #endif // CONFIG_SPLASH_SCREEN
+#ifdef CONFIG_WDOG
     wdog_init();
+#endif // CONFIG_WDOG
     event_handler();
     return 0;
 }

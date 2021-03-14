@@ -27,6 +27,9 @@ WIFI := 1
 # Print debug information on the serial output
 DEBUG ?= 0
 
+# enable HW watchdog
+WDOG ?= 1
+
 # Font file
 METER_FONT_FILE ?= gfx/Ubuntu-C.ttf
 METER_FONT_SMALL_SIZE ?= 18
@@ -95,7 +98,6 @@ OBJS = \
     event.o \
     past.o \
     tick.o \
-    wdog.o \
     tft.o \
     spi_driver.o \
     ringbuf.o \
@@ -123,6 +125,12 @@ ifeq ($(DEBUG),1)
 	CFLAGS +=-DCONFIG_DEBUG
 	OBJS += dbg_printf.o
 endif
+
+ifeq ($(WDOG),1)
+	CFLAGS +=-DCONFIG_WDOG
+	OBJS += wdog.o
+endif
+
 
 ifeq ($(INVERT_ENABLE),1)
 	CFLAGS +=-DCONFIG_INVERT_ENABLE
