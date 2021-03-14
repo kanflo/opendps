@@ -112,6 +112,7 @@ static void chip_init(void)
     uint8_t i;
 
     write_command(CMD_SWRESET); // software reset
+    delay_ms(1);
 
     write_command(CMD_SLPOUT); // exit sleep
 

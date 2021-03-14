@@ -18,3 +18,5 @@ xcuserdata/
 emu/dpsemu
 emu/dpsemu.exe
 esp8266-proxy/private_ssid_config.h
+.*.swp
+.*.swo
