@@ -63,9 +63,11 @@
 #include "uui.h"
 #include "uui_number.h"
 #include "opendps.h"
-#include "func_cv.h"
 #include "settings_calibration.h"
 #include "my_assert.h"
+#ifdef CONFIG_CV_ENABLE
+#include "func_cv.h"
+#endif // CONFIG_CV_ENABLE
 #ifdef CONFIG_CC_ENABLE
 #include "func_cc.h"
 #endif // CONFIG_CC_ENABLE
@@ -448,7 +450,9 @@ static void ui_init(void)
 
     /** Initialise the function screens */
     uui_init(&func_ui, &g_past);
+#ifdef CONFIG_CV_ENABLE
     func_cv_init(&func_ui);
+#endif // CONFIG_CV_ENABLE
 #ifdef CONFIG_CC_ENABLE
     func_cc_init(&func_ui);
 #endif // CONFIG_CC_ENABLE

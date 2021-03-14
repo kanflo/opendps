@@ -49,6 +49,9 @@ TINT ?= ffffff
 # Enable CC mode
 CC_ENABLE ?= 1
 
+# Enable CV mode
+CV_ENABLE ?= 1
+
 # Enable cl mode
 CL_ENABLE ?= 1
 
@@ -88,7 +91,6 @@ OBJS = \
     crc16.o \
     uui.o \
     uui_number.o \
-    func_cv.o \
     settings_calibration.o \
     hw.o \
     pwrctl.o \
@@ -141,6 +143,11 @@ endif
 ifeq ($(CC_ENABLE),1)
 	CFLAGS +=-DCONFIG_CC_ENABLE
 	OBJS += func_cc.o
+endif
+
+ifeq ($(CV_ENABLE),1)
+	CFLAGS +=-DCONFIG_CV_ENABLE
+	OBJS += func_cv.o
 endif
 
 ifeq ($(CL_ENABLE),1)
