@@ -76,8 +76,7 @@ typedef struct {
     struct udp_pcb *upcb;
     ip_addr_t client_addr;
     uint16_t client_port;
-    uint8_t frame[MAX_FRAME_LENGTH];
-    uint32_t frame_length;
+    frame_t frame;
 } tx_item_t;
 
 
@@ -98,8 +97,8 @@ static void udp_receive_callback(void *arg, struct udp_pcb *upcb, struct pbuf *p
         memcpy((void*) &item.client_addr, (void*) addr, sizeof(ip_addr_t));
         item.upcb = upcb;
         item.client_port = port;
-        memcpy((void*) item.frame, (void*) p->payload, p->len);
-        item.frame_length = p->len;
+        memcpy((void*) item.frame.buffer, (void*) p->payload, p->len);
+        item.frame.length = p->len;
         if (pdPASS != xQueueSend(tx_queue, (void*) &item, 1000/portTICK_PERIOD_MS)) {
             printf("Failed to enqueue\n");
             /** @todo Handle queue error */
@@ -170,7 +169,7 @@ void set_dps_wifi_status(wifi_status_t status)
 {
     tx_item_t item;
     item.client_port = 0; // Don't transmit to any client
-    item.frame_length = protocol_create_wifi_status((uint8_t*) item.frame, sizeof(item.frame), status);
+    protocol_create_wifi_status(&item.frame, status);
     if (pdPASS != xQueueSend(tx_queue, (void*) &item, 1000/portTICK_PERIOD_MS)) {
         printf("failed to enqueue %d\n", status);
         /** @todo: handle error */
@@ -236,7 +235,7 @@ static void uart_comm_task(void *arg)
         } else {
             uint8_t buffer[MAX_FRAME_LENGTH];
             uint32_t size;
-            uart_tx((uint8_t*) &item.frame, item.frame_length);
+            uart_tx((uint8_t*) &item.frame, item.frame.length);
 
             size = uart_rx_frame((uint8_t*) &buffer, sizeof(buffer));
             if (size > 0) {

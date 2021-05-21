@@ -27,6 +27,9 @@ WIFI := 1
 # Print debug information on the serial output
 DEBUG ?= 0
 
+# enable HW watchdog
+WDOG ?= 1
+
 # Font file
 METER_FONT_FILE ?= gfx/nf.ttf
 METER_FONT_SMALL_SIZE ?= 16
@@ -55,6 +58,9 @@ CC_ENABLE ?= 0
 
 # Enable CV mode
 CV_ENABLE ?= 0
+
+# Enable CV mode
+CV_ENABLE ?= 1
 
 # Enable cl mode
 CL_ENABLE ?= 1
@@ -133,6 +139,12 @@ ifeq ($(DEBUG),1)
 	CFLAGS +=-DCONFIG_DEBUG
 	OBJS += dbg_printf.o
 endif
+
+ifeq ($(WDOG),1)
+	CFLAGS +=-DCONFIG_WDOG
+	OBJS += wdog.o
+endif
+
 
 ifeq ($(INVERT_ENABLE),1)
 	CFLAGS +=-DCONFIG_INVERT_ENABLE

@@ -12,7 +12,7 @@ jobs:
       script:
         - mkdir output
         - chmod 777 output
-        - docker run --rm -t -u opendps -v $(readlink -f .):/parent:ro -v $(readlink -f .)/output:/output opendps /parent/docker/build.sh
+        - docker run --rm -t -u opendps -v $(realpath .):/parent:ro -v $(realpath .)/output:/output opendps /parent/docker/build.sh
       
       deploy:
         provider: releases

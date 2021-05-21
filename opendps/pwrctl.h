@@ -153,14 +153,14 @@ uint32_t pwrctl_calc_iout(uint16_t raw);
   * @param i_limit_ma selected I_limit
   * @retval expected raw ADC value
   */
-uint16_t pwrctl_calc_ilimit_adc(uint16_t i_limit_ma);
+uint32_t pwrctl_calc_ilimit_adc(uint16_t i_limit_ma);
 
 /**
   * @brief Calculate expected raw ADC value based on selected V_limit
   * @param v_limit_mv selected V_limit
   * @retval expected raw ADC value
   */
-uint16_t pwrctl_calc_vlimit_adc(uint16_t v_limit_mv);
+uint32_t pwrctl_calc_vlimit_adc(uint16_t v_limit_mv);
 
 /**
   * @brief Calculate DAC setting for constant current mode

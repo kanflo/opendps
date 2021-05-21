@@ -77,25 +77,25 @@ void protocol_create_ocp(frame_t *frame, uint16_t i_cut)
 bool protocol_unpack_response(frame_t *frame, command_t *cmd, uint8_t *success)
 {
 	start_frame_unpacking(frame);
-	unpack8(frame, cmd);
-	unpack8(frame, success);
+	UNPACK8(frame, cmd);
+	UNPACK8(frame, success);
 	return frame->length == 0;
 }
 
 bool protocol_unpack_query_response(frame_t *frame, uint16_t *v_in, uint16_t *v_out_setting, uint16_t *v_out, uint16_t *i_out, uint16_t *i_limit, uint8_t *power_enabled)
 {
-	command_t cmd;
+	uint8_t cmd;
 	uint8_t status;
 
 	start_frame_unpacking(frame);
-	unpack8(frame, &cmd);
-	unpack8(frame, &status);
-	unpack16(frame, v_in);
-	unpack16(frame, v_out_setting);
-	unpack16(frame, v_out);
-	unpack16(frame, i_out);
-	unpack16(frame, i_limit);
-	unpack8(frame, power_enabled);
+	UNPACK8(frame, &cmd);
+	UNPACK8(frame, &status);
+	UNPACK16(frame, v_in);
+	UNPACK16(frame, v_out_setting);
+	UNPACK16(frame, v_out);
+	UNPACK16(frame, i_out);
+	UNPACK16(frame, i_limit);
+	UNPACK8(frame, power_enabled);
 	*power_enabled = !!(*power_enabled);
 	(void) status;
 
@@ -104,22 +104,22 @@ bool protocol_unpack_query_response(frame_t *frame, uint16_t *v_in, uint16_t *v_
 
 bool protocol_unpack_wifi_status(frame_t *frame, wifi_status_t *status)
 {
-	command_t cmd;
+	uint8_t cmd;
 
 	start_frame_unpacking(frame);
-	unpack8(frame, &cmd);
-	unpack8(frame, status);
+	UNPACK8(frame, &cmd);
+	UNPACK8(frame, status);
 
 	return frame->length == 0 && cmd == cmd_wifi_status;
 }
 
 bool protocol_unpack_lock(frame_t *frame, uint8_t *locked)
 {
-	command_t cmd;
+	uint8_t cmd;
 
 	start_frame_unpacking(frame);
-	unpack8(frame, &cmd);
-	unpack8(frame, locked);
+	UNPACK8(frame, &cmd);
+	UNPACK8(frame, locked);
 	*locked = !!(*locked);
 
 	return frame->length == 0 && cmd == cmd_lock;
@@ -127,23 +127,23 @@ bool protocol_unpack_lock(frame_t *frame, uint8_t *locked)
 
 bool protocol_unpack_upgrade_start(frame_t *frame, uint16_t *chunk_size, uint16_t *crc)
 {
-	command_t cmd;
+	uint8_t cmd;
 
 	start_frame_unpacking(frame);
-	unpack8(frame, &cmd);
-	unpack16(frame, chunk_size);
-	unpack16(frame, crc);
+	UNPACK8(frame, &cmd);
+	UNPACK16(frame, chunk_size);
+	UNPACK16(frame, crc);
 
 	return frame->length == 0 && cmd == cmd_upgrade_start;
 }
 
 bool protocol_unpack_ocp(frame_t *frame, uint16_t *i_cut)
 {
-	command_t cmd;
+	uint8_t cmd;
 
 	start_frame_unpacking(frame);
-	unpack8(frame, &cmd);
-	unpack16(frame, i_cut);
+	UNPACK8(frame, &cmd);
+	UNPACK16(frame, i_cut);
 
 	return frame->length == 0 && cmd == cmd_ocp_event;
 }

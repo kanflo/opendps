@@ -61,6 +61,13 @@ uint32_t unpack8(frame_t *frame, uint8_t *data);
 uint32_t unpack16(frame_t *frame, uint16_t *data);
 uint32_t unpack32(frame_t *frame, uint32_t *data);
 
+/** Helpers to remove compiler warnings like 'passing argument ... from
+ *  incompatible pointer type '
+ */
+#define UNPACK8(frame, data) unpack8(frame, (uint8_t*) data)
+#define UNPACK16(frame, data) unpack16(frame, (uint16_t*) data)
+#define UNPACK32(frame, data) unpack32(frame, (uint32_t*) data)
+
 /**
   * @brief Extract payload from frame following deframing, unescaping and
   *       crc checking.

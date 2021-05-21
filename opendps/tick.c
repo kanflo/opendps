@@ -27,7 +27,8 @@
 #include <nvic.h>
 #include "tick.h"
 
-static volatile uint64_t tick_ms;
+static volatile uint32_t ticks_lower;
+static volatile uint32_t ticks_upper;
 
 /**
   * @brief Initialize the systick module
@@ -51,20 +52,24 @@ void systick_init(void)
   * @param delay time in milliseconds
   * @retval none
   */
-
 void delay_ms(uint32_t delay)
 {
-    uint64_t start = tick_ms;
-    while (tick_ms < start + delay) ;    
+    uint32_t start = ticks_lower;
+
+    while ((ticks_lower - start) < delay)
+    {}
 }
 
 /**
   * @brief Get systick
-  * @retval number of milliseconcs since powerup
+  * @retval number of milliseconds since powerup
   */
 uint64_t get_ticks(void)
 {
-    return tick_ms;
+    systick_interrupt_disable();
+    uint64_t ticks = ((uint64_t) ticks_upper << 32) | ((uint64_t) ticks_lower);
+    systick_interrupt_enable();
+    return ticks;
 }
 
 /**
@@ -73,6 +78,8 @@ uint64_t get_ticks(void)
   */
 void sys_tick_handler(void)
 {
-    tick_ms++;
+    ticks_lower++;
+    if (ticks_lower == 0) // If an overflow has occured
+        ticks_upper++;
 }
 
