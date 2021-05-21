@@ -100,7 +100,6 @@ OBJS = \
     uui.o \
     uui_number.o \
     uui_time.o \
-    func_cv.o \
     settings_calibration.o \
     hw.o \
     pwrctl.o \
