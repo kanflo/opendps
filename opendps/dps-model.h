@@ -82,18 +82,14 @@
  #define CURRENT_DIGITS 1
  #define CURRENT_DECIMALS 3
  #define ADC_CHA_IOUT_GOLDEN_VALUE  (0x45)
- #define A_ADC_K (float) 1.7068604363612f
- #define A_ADC_C (float) -127.302771802896f
-
-
- #define A_DAC_K (float) 0.65093572009764f
- #define A_DAC_C (float) 271.440195280716f
-
- #define V_DAC_K (float) 0.076447899114725f
- #define V_DAC_C (float) 3.22404026358549f
-
- #define V_ADC_K (float) 13.0802536979635f
- #define V_ADC_C (float) -108.032224145859f
+ #define A_ADC_K (float)1.713f
+ #define A_ADC_C (float)-118.51f
+ #define A_DAC_K (float)0.652f
+ #define A_DAC_C (float)288.611f
+ #define V_DAC_K (float)0.072f
+ #define V_DAC_C (float)1.85f
+ #define V_ADC_K (float)13.164f
+ #define V_ADC_C (float)-100.751f
 #elif defined(DP50V5A)
  #ifndef CONFIG_DPS_MAX_CURRENT
   #define CONFIG_DPS_MAX_CURRENT (5000)
@@ -101,15 +97,14 @@
  #define CURRENT_DIGITS 1
  #define CURRENT_DECIMALS 3
  #define ADC_CHA_IOUT_GOLDEN_VALUE  (0x45)
- #define A_DAC_K (float)0.641025641025641f
- #define A_DAC_C (float)301.282051282051f
- #define A_ADC_K (float)1.72894209590626f
- #define A_ADC_C (float)-122.667008351117f
-
- #define V_DAC_K (float)0.0754503442421956f
- #define V_DAC_C (float)1.38640007545034f
- #define V_ADC_K (float)13.2447613492391f
- #define V_ADC_C (float)-110.983897477628f
+ #define A_DAC_K (float)0.6402f
+ #define A_DAC_C (float)299.5518f
+ #define A_ADC_K (float)1.74096f
+ #define A_ADC_C (float)-121.3943805f
+ #define V_DAC_K (float)0.07544f
+ #define V_DAC_C (float)2.1563f
+ #define V_ADC_K (float)13.253f
+ #define V_ADC_C (float)-103.105f
 #elif defined(DPS3005)
  #ifndef CONFIG_DPS_MAX_CURRENT
   #define CONFIG_DPS_MAX_CURRENT (5000)
