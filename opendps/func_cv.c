@@ -48,6 +48,7 @@ static void cv_enable(bool _enable);
 static void voltage_changed(ui_number_t *item);
 static void current_changed(ui_number_t *item);
 static void cv_tick(void);
+static void activated(void);
 static void deactivated(void);
 static void past_save(past_t *past);
 static void past_restore(past_t *past);
@@ -117,7 +118,7 @@ ui_screen_t cv_screen = {
     .icon_data_len = sizeof(gfx_cv),
     .icon_width = GFX_CV_WIDTH,
     .icon_height = GFX_CV_HEIGHT,
-    .activated = NULL,
+    .activated = &activated,
     .deactivated = &deactivated,
     .enable = &cv_enable,
     .past_save = &past_save,
@@ -255,6 +256,19 @@ static void deactivated(void)
 {
     tft_clear();
 }
+
+/**
+ * @brief      Do any required clean up before changing away from this screen
+ */
+static void activated(void)
+{
+    ui_screen_t *screen = &cv_screen;
+    for (uint8_t i = 0; i < screen->num_items; i++) {
+        screen->items[i]->draw(screen->items[i]);
+        screen->items[i]->needs_redraw = false;
+    }
+}
+
 
 /**
  * @brief      Save persistent parameters

@@ -602,7 +602,10 @@ static void set_page(int8_t page) {
         settings_field[i].cur_digit = field_items[page_offset + i].digits + field_items[page_offset + i].decimals - 1;
     }
 
-    tft_clear();
+    // clear the first column on the table
+    tft_fill(0 /* x */, FIELD_Y_OFFSET + FONT_FULL_SMALL_MAX_GLYPH_HEIGHT + 1/* y */,
+        TFT_WIDTH, ITEMS_PER_PAGE * ROW_HEIGHT,
+        BLACK);
 }
 
 

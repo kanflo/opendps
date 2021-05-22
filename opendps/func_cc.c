@@ -50,6 +50,7 @@ static void cc_enable(bool _enable);
 static void voltage_changed(ui_number_t *item);
 static void current_changed(ui_number_t *item);
 static void cc_tick(void);
+static void activated(void);
 static void deactivated(void);
 static void past_save(past_t *past);
 static void past_restore(past_t *past);
@@ -119,7 +120,7 @@ ui_screen_t cc_screen = {
     .icon_data_len = sizeof(gfx_cc),
     .icon_width = GFX_CC_WIDTH,
     .icon_height = GFX_CC_HEIGHT,
-    .activated = NULL,
+    .activated = &activated,
     .deactivated = &deactivated,
     .enable = &cc_enable,
     .past_save = &past_save,
@@ -255,6 +256,18 @@ static void current_changed(ui_number_t *item)
 static void deactivated(void)
 {
     tft_clear();
+}
+
+/**
+ * @brief      Do any required clean up before changing away from this screen
+ */
+static void activated(void)
+{
+    ui_screen_t *screen = &cc_screen;
+    for (uint8_t i = 0; i < screen->num_items; i++) {
+        screen->items[i]->draw(screen->items[i]);
+        screen->items[i]->needs_redraw = false;
+    }
 }
 
 

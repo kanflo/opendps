@@ -111,8 +111,7 @@ void uui_activate(uui_t *ui)
                 break;
             }
         }
-        /** @todo: add activation callback for each screen allowing for updating of U/I settings */
-        uui_refresh(ui, true);
+
         tft_blit((uint16_t*) screen->icon_data, screen->icon_width, screen->icon_height, XPOS_ICON, 128-screen->icon_height);
         if (screen->activated) {
             screen->activated();

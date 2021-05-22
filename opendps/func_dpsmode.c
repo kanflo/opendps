@@ -606,11 +606,6 @@ static bool event(uui_t *ui, event_t event, uint8_t data) {
             break;
 
         case event_rot_press:
-            // let parent handle event if no valid third item exists
-            if ( ! third_item) {
-                return false;
-            }
-
             // Let parent handle event if we are in single edit mode, or select mode
             // This is to avoid interfereing with existing edit selection
             if (single_edit_mode || select_mode) {
@@ -657,7 +652,6 @@ static bool event(uui_t *ui, event_t event, uint8_t data) {
  */
 static void activated(void) {
     clear_bars(true);
-    clear_third_region();
 
     // reset any odd modes
     single_edit_mode = false;
@@ -665,6 +659,12 @@ static void activated(void) {
 
     // reset watthour value when we leave the screen.
     dpsmode_watthour.value = 0;
+
+    ui_screen_t *screen = &dpsmode_screen;
+    for (uint8_t i = 0; i < screen->num_items; i++) {
+        screen->items[i]->needs_redraw = false;
+    }
+
 }
 
 static void determine_focused_item(uui_t *ui, int8_t direction) {
@@ -943,20 +943,14 @@ static void dpsmode_tick(void)
     dpsmode_voltage.ui.draw(&dpsmode_voltage.ui);
     dpsmode_current.ui.draw(&dpsmode_current.ui);
 
-    // draw 3rd row item...
-    if ( third_item ) {
-        // blank out the whole 3rd row area
-        if (third_invalidate) {
-            third_invalidate = false;
-            clear_third_region();
-        }
-
-        // draw 3rd item
-        ((ui_number_t *)third_item)->ui.draw(& ((ui_number_t *)third_item)->ui);
-
-    } else {
-        dpsmode_power.ui.draw(&dpsmode_power.ui);
+    // blank out the whole 3rd row area
+    if (third_invalidate) {
+        third_invalidate = false;
+        clear_third_region();
     }
+
+    // draw 3rd row item...
+    ((ui_number_t *)third_item)->ui.draw(& ((ui_number_t *)third_item)->ui);
 
     // draw bars on right
     draw_bars();
@@ -1119,4 +1113,8 @@ void func_dpsmode_init(uui_t *ui)
     time_init(&dpsmode_timer);
 
     uui_add_screen(ui, &dpsmode_screen);
+
+    // init third item to the 3rd item on the screen
+    ui_screen_t *screen = &dpsmode_screen;
+    third_item = screen->items[2];
 }
