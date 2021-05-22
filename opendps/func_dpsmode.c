@@ -58,7 +58,6 @@
  *      * Power limit (over power protection, 0 to disable)
  *      * Timer
  *      * Watt-hour
- *      * Brightness
  */
 
 static void dpsmode_enable(bool _enable);
@@ -66,7 +65,6 @@ static void voltage_changed(ui_number_t *item);
 static void current_changed(ui_number_t *item);
 static void power_changed(ui_number_t *item);
 static void watthour_changed(ui_number_t *item);
-static void brightness_changed(ui_number_t *item);
 static void timer_changed(ui_time_t *item);
 static void dpsmode_tick(void);
 static void activated(void);
@@ -237,28 +235,6 @@ ui_time_t dpsmode_timer = {
     .changed = &timer_changed,
 };
 
-ui_number_t dpsmode_brightness = {
-    {
-        .type = ui_item_number,
-        .id = 15,
-        .x = XPOS_METER,
-        .y = YPOS_POWER + 5, // +5 since we are using a smaller font
-        .can_focus = true,
-    },
-    .font_size = FONT_METER_MEDIUM,
-    .alignment = ui_text_right_aligned,
-    .pad_dot = false,
-    .color = WHITE,
-    .value = 0,
-    .min = 1,
-    .max = 100,
-    .si_prefix = si_none, // percentage, so 0-100
-    .num_digits = 3,
-    .num_decimals = 0,
-    .unit = unit_percent,
-    .changed = &brightness_changed,
-};
-
 
 /* This is the screen definition */
 ui_screen_t dpsmode_screen = {
@@ -277,14 +253,13 @@ ui_screen_t dpsmode_screen = {
     .tick = &dpsmode_tick,
     .set_parameter = &set_parameter,
     .get_parameter = &get_parameter,
-    .num_items = 6,
+    .num_items = 5,
     .items = { 
         (ui_item_t*) &dpsmode_voltage, 
         (ui_item_t*) &dpsmode_current, 
         (ui_item_t*) &dpsmode_power,
         (ui_item_t*) &dpsmode_watthour,
         (ui_item_t*) &dpsmode_timer,
-        (ui_item_t*) &dpsmode_brightness,
     },
     .parameters = {
         {
@@ -483,12 +458,6 @@ static void timer_changed(ui_time_t *item) {
 
     // update saved timer value
     saved_t = item->value;
-}
-
-static void brightness_changed(ui_number_t *item) {
-    // update brightness
-    // 100% = 128, 0% = 0
-    hw_set_backlight(item->value * 1.28f);
 }
 
 static bool event(uui_t *ui, event_t event, uint8_t data) {
@@ -696,9 +665,6 @@ static void activated(void) {
 
     // reset watthour value when we leave the screen.
     dpsmode_watthour.value = 0;
-
-    // get brightness
-    dpsmode_brightness.value = hw_get_backlight();
 }
 
 static void determine_focused_item(uui_t *ui, int8_t direction) {
@@ -863,10 +829,6 @@ static void dpsmode_tick(void)
     // set the maximum power based on max voltage and max amps
     dpsmode_power.max = dpsmode_voltage.max * CONFIG_DPS_MAX_CURRENT;
 
-    // update brightness if 0 (because it's most likely not set)
-    if (dpsmode_brightness.value == 0)
-        dpsmode_brightness.value = hw_get_backlight() / 1.28f;
-
     // power enabled
     if (pwrctl_vout_enabled()) {
         // get the actual voltage and current being supplied
@@ -989,13 +951,6 @@ static void dpsmode_tick(void)
             clear_third_region();
         }
 
-        // if drawing brightness, show "Brightness:" before value.
-        if (third_item == (ui_item_t *)&dpsmode_brightness) {
-            tft_puts(FONT_FULL_SMALL, "Brightness:", 5, YPOS_POWER + (FONT_FULL_SMALL_MAX_GLYPH_HEIGHT << 1) - 7,
-                    FONT_FULL_SMALL_MAX_GLYPH_WIDTH * 12, FONT_FULL_SMALL_MAX_GLYPH_HEIGHT,
-                    WHITE, false);
-        }
-
         // draw 3rd item
         ((ui_number_t *)third_item)->ui.draw(& ((ui_number_t *)third_item)->ui);
 
@@ -1071,7 +1026,7 @@ static void draw_bars() {
                     TFT_WIDTH - GFX_OPPBAR_WIDTH,
                     YPOS_POWER + FONT_METER_LARGE_MAX_GLYPH_HEIGHT - GFX_OPPBAR_HEIGHT );
         // no timer (or other icons), paint black over it.
-        else if ( (dpsmode_graphics & CUR_GFX_TM) != 1)
+        else if ( ! (dpsmode_graphics & CUR_GFX_TM))
             tft_fill(TFT_WIDTH - GFX_OPPBAR_WIDTH, YPOS_POWER + FONT_METER_LARGE_MAX_GLYPH_HEIGHT - GFX_OPPBAR_HEIGHT,
                         GFX_OPPBAR_WIDTH, GFX_OPPBAR_HEIGHT,
                         BLACK);
@@ -1162,7 +1117,6 @@ void func_dpsmode_init(uui_t *ui)
     number_init(&dpsmode_power);
     number_init(&dpsmode_watthour);
     time_init(&dpsmode_timer);
-    number_init(&dpsmode_brightness);
 
     uui_add_screen(ui, &dpsmode_screen);
 }
