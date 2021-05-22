@@ -65,7 +65,7 @@
 
 
 // Number of fields shown per page
-#define ITEMS_PER_PAGE 6
+#define ITEMS_PER_PAGE 5
 
 // Total number of fields that can be edited
 #define ITEMS 13
@@ -74,10 +74,10 @@
 #define PAGES (ITEMS+(ITEMS_PER_PAGE-1))/ITEMS_PER_PAGE
 
 // UI Row height in pixels
-#define ROW_HEIGHT 17 
+#define ROW_HEIGHT 17
 
 // Field X/Y offsets. Fields are shown on the right-hand side of the screen
-#define FIELD_Y_OFFSET 0
+#define FIELD_Y_OFFSET 5
 #define FIELD_X_OFFSET 128
 
 // which page we are currently on.
@@ -166,16 +166,16 @@ struct field_item field_items[] = {
     {"Refresh",         100000, 9990000,    3,        0,    unit_ms,       &get_refresh,        &set_refresh },
 
     // constants
-    {"V ADC K",         0,      9999999,    3,        4,    unit_none,     &get_v_adc_k,        &set_v_adc_k },
-    {"V ADC C",         0,      9999999,    3,        4,    unit_none,     &get_v_adc_c,        &set_v_adc_c },
-    {"V DAC K",         0,      9999999,    3,        4,    unit_none,     &get_v_dac_k,        &set_v_dac_k },
-    {"V DAC C",         0,      9999999,    3,        4,    unit_none,     &get_v_dac_c,        &set_v_dac_c },
-    {"I ADC K",         0,      9999999,    3,        4,    unit_none,     &get_a_adc_k,        &set_a_adc_k },
-    {"I ADC C",         0,      9999999,    3,        4,    unit_none,     &get_a_adc_c,        &set_a_adc_c },
-    {"I DAC K",         0,      9999999,    3,        4,    unit_none,     &get_a_dac_k,        &set_a_dac_k },
-    {"I DAC C",         0,      9999999,    3,        4,    unit_none,     &get_a_dac_c,        &set_a_dac_c },
-    {"Vin ADC C",       0,      9999999,    3,        4,    unit_none,     &get_vin_adc_k,      &set_vin_adc_k },
-    {"Vin ADC K",       0,      9999999,    3,        4,    unit_none,     &get_vin_adc_c,      &set_vin_adc_c },
+    {"V ADC K",         -9999999,  9999999,  3,       4,    unit_none,     &get_v_adc_k,        &set_v_adc_k },
+    {"V ADC C",         -9999999,  9999999,  3,       4,    unit_none,     &get_v_adc_c,        &set_v_adc_c },
+    {"V DAC K",         -9999999,  9999999,  3,       4,    unit_none,     &get_v_dac_k,        &set_v_dac_k },
+    {"V DAC C",         -9999999,  9999999,  3,       4,    unit_none,     &get_v_dac_c,        &set_v_dac_c },
+    {"I ADC K",         -9999999,  9999999,  3,       4,    unit_none,     &get_a_adc_k,        &set_a_adc_k },
+    {"I ADC C",         -9999999,  9999999,  3,       4,    unit_none,     &get_a_adc_c,        &set_a_adc_c },
+    {"I DAC K",         -9999999,  9999999,  3,       4,    unit_none,     &get_a_dac_k,        &set_a_dac_k },
+    {"I DAC C",         -9999999,  9999999,  3,       4,    unit_none,     &get_a_dac_c,        &set_a_dac_c },
+    {"Vin ADC C",       -9999999,  9999999,  3,       4,    unit_none,     &get_vin_adc_k,      &set_vin_adc_k },
+    {"Vin ADC K",       -9999999,  9999999,  3,       4,    unit_none,     &get_vin_adc_c,      &set_vin_adc_c },
 
     // lock screen when output enabled
     {"LockScr-En",      0,        10000,    1,        0,    unit_bool,     &get_on_locked,      &set_on_locked },
@@ -186,27 +186,6 @@ struct field_item field_items[] = {
  * One field for each row
  */
 ui_number_t settings_field[] = {
-{
-    {
-        .type = ui_item_number,
-        .id = 10,
-        .x = FIELD_X_OFFSET,
-        .y = FIELD_Y_OFFSET,
-        .can_focus = true,
-    },
-    .font_size = FONT_FULL_SMALL,
-    .alignment = ui_text_right_aligned,
-    .pad_dot = false,
-    .color = WHITE,
-    .value = 0,
-    .min = 0,
-    .max = 9999999,
-    .si_prefix = si_decimilli,
-    .num_digits = 3,
-    .num_decimals = 4,
-    .unit = unit_none,
-    .changed = &field_changed,
-},
 {
     {
         .type = ui_item_number,
@@ -338,8 +317,7 @@ ui_screen_t settings_screen = {
         (ui_item_t*) &settings_field[1], 
         (ui_item_t*) &settings_field[2], 
         (ui_item_t*) &settings_field[3], 
-        (ui_item_t*) &settings_field[4],
-        (ui_item_t*) &settings_field[5]
+        (ui_item_t*) &settings_field[4]
     },
     .set_parameter = &set_parameter,
     .get_parameter = &get_parameter,
@@ -392,16 +370,12 @@ static int32_t get_v_adc_k() {
 }
 static void set_v_adc_k(ui_number_t *item) {
     v_adc_k_coef = item->value / 10000.0f;
-    if (v_adc_k_coef <= 0) item->color = (item->color == RED) ? WHITE : RED;
-    if (item->color == RED) v_adc_k_coef = - v_adc_k_coef;
 }
 static int32_t get_v_adc_c() {
     return v_adc_c_coef * 10000;
 }
 static void set_v_adc_c(ui_number_t *item) {
     v_adc_c_coef = item->value / 10000.0f;
-    if (v_adc_c_coef <= 0) item->color = (item->color == RED) ? WHITE : RED;
-    if (item->color == RED) v_adc_c_coef = - v_adc_c_coef;
 }
 
 
@@ -410,16 +384,12 @@ static int32_t get_v_dac_k() {
 }
 static void set_v_dac_k(ui_number_t *item) {
     v_dac_k_coef = item->value / 10000.0f;
-    if (v_dac_k_coef <= 0) item->color = (item->color == RED) ? WHITE : RED;
-    if (item->color == RED) v_dac_k_coef = - v_dac_k_coef;
 }
 static int32_t get_v_dac_c() {
     return v_dac_c_coef * 10000;
 }
 static void set_v_dac_c(ui_number_t *item) {
     v_dac_c_coef = item->value / 10000.0f;
-    if (v_dac_c_coef <= 0) item->color = (item->color == RED) ? WHITE : RED;
-    if (item->color == RED) v_dac_c_coef = - v_dac_c_coef;
 }
 
 
@@ -429,16 +399,12 @@ static int32_t get_a_adc_k() {
 }
 static void set_a_adc_k(ui_number_t *item) {
     a_adc_k_coef = item->value / 10000.0f;
-    if (a_adc_k_coef <= 0) item->color = (item->color == RED) ? WHITE : RED;
-    if (item->color == RED) a_adc_k_coef = - a_adc_k_coef;
 }
 static int32_t get_a_adc_c() {
     return a_adc_c_coef * 10000;
 }
 static void set_a_adc_c(ui_number_t *item) {
     a_adc_c_coef = item->value / 10000.0f;
-    if (a_adc_c_coef <= 0) item->color = (item->color == RED) ? WHITE : RED;
-    if (item->color == RED) a_adc_c_coef = - a_adc_c_coef;
 }
 
 
@@ -447,16 +413,12 @@ static int32_t get_a_dac_k() {
 }
 static void set_a_dac_k(ui_number_t *item) {
     a_dac_k_coef = item->value / 10000.0f;
-    if (a_dac_k_coef <= 0) item->color = (item->color == RED) ? WHITE : RED;
-    if (item->color == RED) a_dac_k_coef = - a_dac_k_coef;
 }
 static int32_t get_a_dac_c() {
     return a_dac_c_coef * 10000;
 }
 static void set_a_dac_c(ui_number_t *item) {
     a_dac_c_coef = item->value / 10000.0f;
-    if (a_dac_c_coef <= 0) item->color = (item->color == RED) ? WHITE : RED;
-    if (item->color == RED) a_dac_c_coef = - a_dac_c_coef;
 }
 
 
@@ -465,16 +427,12 @@ static int32_t get_vin_adc_k() {
 }
 static void set_vin_adc_k(ui_number_t *item) {
     vin_adc_k_coef = item->value / 10000.0f;
-    if (vin_adc_k_coef <= 0) item->color = (item->color == RED) ? WHITE : RED;
-    if (item->color == RED) vin_adc_k_coef = - vin_adc_k_coef;
 }
 static int32_t get_vin_adc_c() {
     return vin_adc_c_coef * 10000;
 }
 static void set_vin_adc_c(ui_number_t *item) {
     vin_adc_c_coef = item->value / 10000.0f;
-    if (vin_adc_k_coef <= 0) item->color = (item->color == RED) ? WHITE : RED;
-    if (item->color == RED) vin_adc_c_coef = - vin_adc_c_coef;
 }
 
 
@@ -527,15 +485,15 @@ static bool event(uui_t *ui, event_t event, uint8_t data) {
     switch (event) {
         case event_button_m1:
         case event_button_m2:
-            if ( ! select_mode) {
-                return false;
-            }
 
             // go up
             if ( event == event_button_m1 ) {
+                ui_screen_t *screen = ui->screens[ui->cur_screen];
+
                 // not first item, move up one
                 if (current_item > 0) {
                     current_item--;
+                    if ( ! select_mode) screen->cur_item = current_item;
                     return false;
                 }
 
@@ -549,10 +507,13 @@ static bool event(uui_t *ui, event_t event, uint8_t data) {
                 // current_item == 0, and current_page != 0
                 set_page(current_page - 1);
                 current_item = ITEMS_PER_PAGE - 1;
+                if ( ! select_mode) screen->cur_item = current_item;
                 return false;
 
             // go down
             } else {
+                ui_screen_t *screen = ui->screens[ui->cur_screen];
+
                 // not last item, go down
                 if (current_item < ITEMS_PER_PAGE - 1) {
                     // do nothing if we are on the last item already
@@ -561,6 +522,7 @@ static bool event(uui_t *ui, event_t event, uint8_t data) {
 
                     // otherwise, go down one item
                     current_item++;
+                    if ( ! select_mode) screen->cur_item = current_item;
                     return false;
                 }
 
@@ -574,6 +536,7 @@ static bool event(uui_t *ui, event_t event, uint8_t data) {
                 // last item, but not last page
                 set_page(current_page + 1);
                 current_item = 0;
+                if ( ! select_mode) screen->cur_item = current_item;
                 return false;
             }
 
@@ -587,6 +550,7 @@ static bool event(uui_t *ui, event_t event, uint8_t data) {
             }
 
             select_mode = ! select_mode;
+
             return false;
 
         default:
@@ -628,16 +592,7 @@ static void set_page(int8_t page) {
        
         // update field value using value from the get function
         int32_t value = field_items[page_offset + i].get();
-        if (value < 0) {
-            // because uui_number doesn't support signed values
-            // color represents the sign. This is is gross hack, I know.
-            settings_field[i].value = -value;
-            settings_field[i].color = RED;
-        } else {
-            settings_field[i].value = value;
-            settings_field[i].color = WHITE;
-        }
-
+        settings_field[i].value = value;
         settings_field[i].min = field_items[page_offset + i].min;
         settings_field[i].max = field_items[page_offset + i].max;
         settings_field[i].num_digits = field_items[page_offset + i].digits;
@@ -661,19 +616,33 @@ static void settings_tick(void) {
     for (uint8_t i = 0; i < ITEMS_PER_PAGE; i++) {
         // if greater than total number of items, clear the area
         if (page_offset + i >= ITEMS) {
-            tft_fill(0 /* x */, i * ROW_HEIGHT /* y */,
+            tft_fill(0 /* x */, FIELD_Y_OFFSET + ((1 + i) * ROW_HEIGHT) /* y, +1 because first row is the header */,
                 TFT_WIDTH, ROW_HEIGHT,
                 BLACK);
         } else {
             tft_puts(FONT_FULL_SMALL, 
                     field_items[page_offset + i].label,
-                    0 /* x */,    (i * ROW_HEIGHT) + FONT_FULL_SMALL_MAX_GLYPH_HEIGHT  /* y */ ,
+                    0 /* x, 1st px for select bar */,  FIELD_Y_OFFSET + ((1 + i) * ROW_HEIGHT) + FONT_FULL_SMALL_MAX_GLYPH_HEIGHT  /* y */ ,
                     TFT_WIDTH/2, FONT_FULL_SMALL_MAX_GLYPH_HEIGHT,
-                    WHITE, false);
+                    current_item == i ? ORANGE : WHITE, false);
+
+            // vertical separator |, for each entry
+            ili9163c_draw_vline(TFT_WIDTH/2 + 3, FIELD_Y_OFFSET + FONT_FULL_SMALL_MAX_GLYPH_HEIGHT + (i * ROW_HEIGHT), 
+                    ROW_HEIGHT,
+                    WHITE);
 
             settings_field[i].ui.draw(&settings_field[i].ui);
         }
     }
+
+    // print the header
+    tft_puts(FONT_FULL_SMALL, "OpenDPS Settings", 1 /*x*/, FONT_FULL_SMALL_MAX_GLYPH_HEIGHT /*y*/,
+            FONT_FULL_SMALL_MAX_GLYPH_WIDTH * 16, FONT_FULL_SMALL_MAX_GLYPH_HEIGHT,
+            GREEN, false);
+
+    // header separator _____
+    ili9163c_draw_hline(0,  FIELD_Y_OFFSET + FONT_FULL_SMALL_MAX_GLYPH_HEIGHT, TFT_WIDTH, WHITE);
+
 }
 
 
@@ -718,7 +687,6 @@ static void activated() {
     // Move back to previous page on init.
     set_page(current_page);
     current_item = 0;
-    select_mode = 0;
 }
 
 /**
@@ -745,7 +713,6 @@ void func_settings_init(uui_t *ui) {
     // initialize page and selected items
     set_page(0);
     current_item = 0;
-    select_mode = 0;
 
     uui_add_screen(ui, &settings_screen);
 }
