@@ -188,7 +188,7 @@ endif
 
 ifeq ($(SETTINGS_ENABLE),1)
 	CFLAGS +=-DCONFIG_SETTINGS_ENABLE
-	OBJS += func_settings.o
+	OBJS += func_settings.o gfx-gear.o
 endif
 
 ifeq ($(SPLASH_SCREEN),1)

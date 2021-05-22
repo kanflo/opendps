@@ -36,7 +36,7 @@
 #include "ili9163c.h"
 #include "font-full_small.h"
 #include "opendps.h"
-#include "gfx-crosshair.h"
+#include "gfx-gear.h"
 #include "pastunits.h"
 #include "opendps.h"
 
@@ -300,10 +300,10 @@ ui_number_t settings_field[] = {
 ui_screen_t settings_screen = {
     .id = SCREEN_ID,
     .name = "settings",
-    .icon_data = (uint8_t *) gfx_crosshair,
-    .icon_data_len = sizeof(gfx_crosshair),
-    .icon_width = GFX_CROSSHAIR_WIDTH,
-    .icon_height = GFX_CROSSHAIR_HEIGHT,
+    .icon_data = (uint8_t *) gfx_gear,
+    .icon_data_len = sizeof(gfx_gear),
+    .icon_width = GFX_GEAR_WIDTH,
+    .icon_height = GFX_GEAR_HEIGHT,
     .event = &event,
     .activated = &activated,
     .deactivated = &deactivated,
