@@ -693,7 +693,6 @@ static void settings_tick(void) {
 
         if ((ticks - popup_message_ticks) < popup_message_duration) {
             if (popup_message_type == POPUP_MESSAGE_NONE) return;
-            popup_message_type = POPUP_MESSAGE_NONE;
 
             // show the popup message
             tft_fill( 10, (TFT_HEIGHT / 2) - FONT_FULL_SMALL_MAX_GLYPH_HEIGHT - FONT_FULL_SMALL_MAX_GLYPH_HEIGHT,
@@ -707,6 +706,8 @@ static void settings_tick(void) {
                     20 /*x*/, (TFT_HEIGHT / 2)  /*y*/,
                     FONT_FULL_SMALL_MAX_GLYPH_WIDTH * 20, FONT_FULL_SMALL_MAX_GLYPH_HEIGHT,
                     GREENYELLOW, false);
+
+            popup_message_type = POPUP_MESSAGE_NONE;
 
             return;
         } else {
