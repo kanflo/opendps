@@ -483,38 +483,39 @@ static bool event(uui_t *ui, event_t event, uint8_t data) {
             break;
 
         case event_button_sel_m1:
+            // save values to m1, show m1 graphics
+            recall_v[0] = saved_v;
+            recall_i[0] = saved_i;
+            recall_p[0] = saved_p;
+            recall_t[0] = saved_t;
+            dpsmode_graphics &= ~CUR_GFX_M2_RECALL;
+            dpsmode_graphics |= CUR_GFX_M1_RECALL;
+
+            // save
+            past_write_unit(past, (SCREEN_ID << 24) | (PAST_V << 2), (void*) &recall_v[0], 4);
+            past_write_unit(past, (SCREEN_ID << 24) | (PAST_I << 2), (void*) &recall_i[0], 4);
+            past_write_unit(past, (SCREEN_ID << 24) | (PAST_P << 2), (void*) &recall_p[0], 4);
+            past_write_unit(past, (SCREEN_ID << 24) | (PAST_T << 2), (void*) &recall_t[0], 4);
+            
+            // Turn off power
+            event_put(event_shutoff, 0);
+
+            return true;
+
         case event_button_sel_m2:
-            // save values to recall
-            if (event == event_button_sel_m1) {
-                // save values to m1, show m1 graphics
-                recall_v[0] = saved_v;
-                recall_i[0] = saved_i;
-                recall_p[0] = saved_p;
-                recall_t[0] = saved_t;
-                dpsmode_graphics &= ~CUR_GFX_M2_RECALL;
-                dpsmode_graphics |= CUR_GFX_M1_RECALL;
+            // save values to m2, show m2 graphics
+            recall_v[1] = saved_v;
+            recall_i[1] = saved_i;
+            recall_p[1] = saved_p;
+            recall_t[1] = saved_t;
+            dpsmode_graphics &= ~CUR_GFX_M1_RECALL;
+            dpsmode_graphics |= CUR_GFX_M2_RECALL;
 
-                // save
-                past_write_unit(past, (SCREEN_ID << 24) | (PAST_V << 2), (void*) &recall_v[0], 4);
-                past_write_unit(past, (SCREEN_ID << 24) | (PAST_I << 2), (void*) &recall_i[0], 4);
-                past_write_unit(past, (SCREEN_ID << 24) | (PAST_P << 2), (void*) &recall_p[0], 4);
-                past_write_unit(past, (SCREEN_ID << 24) | (PAST_T << 2), (void*) &recall_t[0], 4);
-
-            } else {
-                // save values to m2, show m2 graphics
-                recall_v[1] = saved_v;
-                recall_i[1] = saved_i;
-                recall_p[1] = saved_p;
-                recall_t[1] = saved_t;
-                dpsmode_graphics &= ~CUR_GFX_M1_RECALL;
-                dpsmode_graphics |= CUR_GFX_M2_RECALL;
-
-                // save
-                past_write_unit(past, (SCREEN_ID << 24) | (PAST_V << 4), (void*) &recall_v[1], 4);
-                past_write_unit(past, (SCREEN_ID << 24) | (PAST_I << 4), (void*) &recall_i[1], 4);
-                past_write_unit(past, (SCREEN_ID << 24) | (PAST_P << 4), (void*) &recall_p[1], 4);
-                past_write_unit(past, (SCREEN_ID << 24) | (PAST_T << 4), (void*) &recall_t[1], 4);
-            }
+            // save
+            past_write_unit(past, (SCREEN_ID << 24) | (PAST_V << 4), (void*) &recall_v[1], 4);
+            past_write_unit(past, (SCREEN_ID << 24) | (PAST_I << 4), (void*) &recall_i[1], 4);
+            past_write_unit(past, (SCREEN_ID << 24) | (PAST_P << 4), (void*) &recall_p[1], 4);
+            past_write_unit(past, (SCREEN_ID << 24) | (PAST_T << 4), (void*) &recall_t[1], 4);
 
             // Turn off power
             event_put(event_shutoff, 0);
@@ -546,9 +547,9 @@ static bool event(uui_t *ui, event_t event, uint8_t data) {
             return false;
 
         case event_button_m1:
-        case event_button_m2:
+
             // do recall on press_long event_button_m1 or event_button_m2
-            if (event == event_button_m1 && data == press_long) {
+            if (data == press_long) {
                 saved_v = recall_v[0];
                 saved_i = recall_i[0];
                 saved_p = recall_p[0];
@@ -562,8 +563,41 @@ static bool event(uui_t *ui, event_t event, uint8_t data) {
                 dpsmode_graphics |= CUR_GFX_M1_RECALL;
                 return true;
             }
+            
+            if (single_edit_mode) {
+                // Change focus to voltage if current is selected
+                if (dpsmode_current.ui.has_focus) {
+                    uui_focus(ui, (ui_item_t*) &dpsmode_current);
+                    uui_focus(ui, (ui_item_t*) &dpsmode_voltage);
+                } else {
+                    // otherwise, leave single edit mode
+                    if (dpsmode_voltage.ui.has_focus)
+                        uui_focus(ui, (ui_item_t*) &dpsmode_voltage);
+                    single_edit_mode = false;
+                }
 
-            if (event == event_button_m2 && data == press_long) {
+                return true;
+            }
+
+            // if in normal select mode, let parent handle it
+            if (select_mode) {
+                // third item focused may have changed
+                determine_focused_item(ui, -1);
+                return false;
+            }
+
+            // focus on voltage if not already focused
+            if ( ! dpsmode_voltage.ui.has_focus)
+                uui_focus(ui, (ui_item_t*) &dpsmode_voltage);
+
+            // otherwise, enter single edit mode
+            single_edit_mode = true;
+
+            // we handled it, parent should do nothing
+            return true;
+
+        case event_button_m2:
+            if (data == press_long) {
                 saved_v = recall_v[1];
                 saved_i = recall_i[1];
                 saved_p = recall_p[1];
@@ -578,43 +612,32 @@ static bool event(uui_t *ui, event_t event, uint8_t data) {
                 return true;
             }
 
-            // leave single edit mode on any button press
             if (single_edit_mode) {
-                single_edit_mode = false;
-
-                // toggle focus on anything that is in focus (to unfocus)
-                if (dpsmode_voltage.ui.has_focus) uui_focus(ui, (ui_item_t*) &dpsmode_voltage);
-                if (dpsmode_current.ui.has_focus) uui_focus(ui, (ui_item_t*) &dpsmode_current);
+                // Change focus to current if voltage is selected
+                if (dpsmode_voltage.ui.has_focus) {
+                    uui_focus(ui, (ui_item_t*) &dpsmode_voltage);
+                    uui_focus(ui, (ui_item_t*) &dpsmode_current);
+                } else {
+                    // otherwise, leave single edit mode
+                    if (dpsmode_current.ui.has_focus)
+                        uui_focus(ui, (ui_item_t*) &dpsmode_current);
+                    single_edit_mode = false;
+                }
 
                 return true;
             }
 
-            // for either m1/m2 buttons:
-            if (event == event_button_m1) {
-                // if in normal select mode, let parent handle it
-                if (select_mode) {
-                    // third item focused may have changed
-                    determine_focused_item(ui, -1);
-
-                    return false;
-                }
-
-                // focus on voltage if not already focused
-                if ( ! dpsmode_voltage.ui.has_focus) uui_focus(ui, (ui_item_t*) &dpsmode_voltage);
+            if (select_mode) { 
+                determine_focused_item(ui, 1);
+                return false;
             }
-            if (event == event_button_m2) {
-                if (select_mode) { 
-                    determine_focused_item(ui, 1);
-                    return false;
-                }
 
-                if ( ! dpsmode_current.ui.has_focus) uui_focus(ui, (ui_item_t*) &dpsmode_current);
-            }
+            if ( ! dpsmode_current.ui.has_focus)
+                uui_focus(ui, (ui_item_t*) &dpsmode_current);
 
             // otherwise, enter single edit mode
             single_edit_mode = true;
 
-            // we handled it, parent should do nothing
             return true;
 
         case event_rot_left_down:
@@ -684,6 +707,10 @@ static bool event(uui_t *ui, event_t event, uint8_t data) {
  */
 static void activated(void) {
     clear_bars(true);
+
+    // determine if M1/M2 settings match and enable those bars
+    if (recall_v[0] == saved_v && recall_i[0] == saved_i && recall_p[0] == saved_p && recall_t[0] == saved_t) dpsmode_graphics |= CUR_GFX_M1_RECALL;
+    if (recall_v[1] == saved_v && recall_i[1] == saved_i && recall_p[1] == saved_p && recall_t[1] == saved_t) dpsmode_graphics |= CUR_GFX_M2_RECALL;
 
     // reset any odd modes
     single_edit_mode = false;

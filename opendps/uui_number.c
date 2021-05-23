@@ -260,6 +260,11 @@ static void number_draw(ui_item_t *_item)
     if (item->alignment == ui_text_right_aligned)
         xpos -= number_draw_width(_item);
 
+
+    if (item->unit == unit_bool) {
+        tft_rect(xpos-1, _item->y-1, digit_w * 4, h+1, _item->has_focus ? WHITE : BLACK);
+    } else {
+
     /** Start printing from left to right */
     for (uint8_t place = item->num_digits; place > 0; place--) {
         /* Example value of 1000 with 5,2:
@@ -302,6 +307,8 @@ static void number_draw(ui_item_t *_item)
 
         // next digit position
         xpos += digit_w + spacing;
+    }
+
     }
 
     /** Draw the decimal point if there are decimal places */
@@ -360,7 +367,7 @@ static void number_draw(ui_item_t *_item)
             break;
         case unit_bool:
             if (item->value > 0)
-                tft_puts(FONT_FULL_SMALL, "ON  ", xpos, _item->y + h, FONT_FULL_SMALL_MAX_GLYPH_WIDTH * 3, FONT_FULL_SMALL_MAX_GLYPH_HEIGHT, GREEN, false);
+                tft_puts(FONT_FULL_SMALL, "ON ", xpos, _item->y + h, FONT_FULL_SMALL_MAX_GLYPH_WIDTH * 3, FONT_FULL_SMALL_MAX_GLYPH_HEIGHT, GREEN, false);
             else
                 tft_puts(FONT_FULL_SMALL, "OFF ", xpos, _item->y + h, FONT_FULL_SMALL_MAX_GLYPH_WIDTH * 3, FONT_FULL_SMALL_MAX_GLYPH_HEIGHT, RED, false);
             break;

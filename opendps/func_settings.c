@@ -175,8 +175,8 @@ struct field_item {
 struct field_item field_items[] = {
 // All values are 10^4 and usess the si_decimilli unit.
 //  LABEL               MIN     MAX         DIGITS,   DEC,  UNIT,          GET callback         SET callback
-    {"Brightness",      10000,  1000000,    3,        0,    unit_percent,  &get_brightness,     &set_brightness },
-    {"Refresh Int",     100000, 9990000,    3,        0,    unit_ms,       &get_refresh,        &set_refresh },
+    {"Brightness",      10000,     1000000,  3,       0,    unit_percent,  &get_brightness,     &set_brightness },
+    {"Refresh",         100000,   50000000,  4,       0,    unit_ms,       &get_refresh,        &set_refresh },
 
     // constants
     {"V ADC K",         -9999999,  9999999,  3,       4,    unit_none,     &get_v_adc_k,        &set_v_adc_k },
@@ -191,7 +191,7 @@ struct field_item field_items[] = {
     {"Vin ADC K",       -9999999,  9999999,  3,       4,    unit_none,     &get_vin_adc_c,      &set_vin_adc_c },
 
     // lock screen when output enabled
-    {"Reset Cfg",        0,        10000,    1,        0,    unit_bool,     &get_resetcfg,       &set_resetcfg },
+    {"Reset Cfg",        0,        10000,    1,       0,    unit_bool,     &get_resetcfg,       &set_resetcfg },
 };
 
 /*
