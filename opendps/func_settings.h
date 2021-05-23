@@ -32,6 +32,12 @@ enum SettingsStates {
     SCREEN_LOCKED_WHEN_ON = 1,
 };
 
+enum PopupMessage {
+    POPUP_MESSAGE_NONE = 0,
+    POPUP_MESSAGE_SAVED = 1,
+    POPUP_MESSAGE_RESET = 2,
+};
+
 
 /**
  * @brief      Add the SETTINGS function to the UI

@@ -48,12 +48,12 @@
  *
  *   Label             Value
  *  -------------------------
+ *  | OpenDPS Settings      |  <- header
  *  | Brightness       100% |  <- first field / uui_number
  *  | Refresh Rate    100ms |
  *  | V ADC K       13.0000 |              ... 
  *  | V ADC C       13.0000 |
- *  | V DAC K       13.0000 |
- *  | V DAC C       13.0000 |  <- sixth field / uui_number
+ *  | V DAC K       13.0000 |  <- fifth field / uui_number
  *  -------------------------
  *
  * When a value is set, it calls the set function callback in order to do something.
@@ -80,10 +80,20 @@
 #define FIELD_Y_OFFSET 5
 #define FIELD_X_OFFSET 128
 
+// popup message duration, in ms
+#define POPUP_MESSAGE_TIME 500
+
 // which page we are currently on.
 static int8_t current_page = 0;
-static int8_t current_item = 0;
+static int8_t current_item = 0;   // current item on this page (0 - ITEMS_PER_PAGE-1)
 static bool select_mode;
+
+// keep track of changes and if we are prompting the user to save
+static bool changes_made;
+static uint64_t popup_message_ticks; // number of ticks to show the saved message overlay
+static uint32_t popup_message_duration;
+static int8_t popup_message_type;
+static event_t event_after_popup;
 
 int8_t ui_settings = 0;
 
@@ -105,6 +115,9 @@ static void set_page(int8_t page);
 
 static set_param_status_t set_parameter(char *name, char *value);
 static set_param_status_t get_parameter(char *name, char *value, uint32_t value_len);
+
+static void reset_open_popup(void);
+static void show_popup(uint8_t message, event_t event);
 
 
 /*
@@ -134,8 +147,8 @@ static int32_t get_brightness(void);
 static void set_brightness(struct ui_number_t *);
 static int32_t get_refresh(void);
 static void set_refresh(struct ui_number_t *item);
-static int32_t get_on_locked(void);
-static void set_on_locked(struct ui_number_t *item);
+static int32_t get_resetcfg(void);
+static void set_resetcfg(struct ui_number_t *item);
 
 
 struct field_item {
@@ -162,8 +175,8 @@ struct field_item {
 struct field_item field_items[] = {
 // All values are 10^4 and usess the si_decimilli unit.
 //  LABEL               MIN     MAX         DIGITS,   DEC,  UNIT,          GET callback         SET callback
-    {"Brightness",      10000,  1000000,    3,        0,    unit_none,     &get_brightness,     &set_brightness }, // TODO: Set this to unit_percent from dpsmode PR
-    {"Refresh",         100000, 9990000,    3,        0,    unit_ms,       &get_refresh,        &set_refresh },
+    {"Brightness",      10000,  1000000,    3,        0,    unit_percent,  &get_brightness,     &set_brightness },
+    {"Refresh Int",     100000, 9990000,    3,        0,    unit_ms,       &get_refresh,        &set_refresh },
 
     // constants
     {"V ADC K",         -9999999,  9999999,  3,       4,    unit_none,     &get_v_adc_k,        &set_v_adc_k },
@@ -178,7 +191,7 @@ struct field_item field_items[] = {
     {"Vin ADC K",       -9999999,  9999999,  3,       4,    unit_none,     &get_vin_adc_c,      &set_vin_adc_c },
 
     // lock screen when output enabled
-    {"LockScr-En",      0,        10000,    1,        0,    unit_bool,     &get_on_locked,      &set_on_locked },
+    {"Reset Cfg",        0,        10000,    1,        0,    unit_bool,     &get_resetcfg,       &set_resetcfg },
 };
 
 /*
@@ -362,6 +375,29 @@ static set_param_status_t get_parameter(char *name, char *value, uint32_t value_
 }
 
 
+/**
+ * @brief        Resets the open popup message
+ */
+static void reset_open_popup() {
+    // if (popup_message_ticks > 0) popup_message_ticks = 1;
+    popup_message_duration = 0;
+    popup_message_type = POPUP_MESSAGE_NONE;
+}
+
+/**
+ * @brief        Shows a popup message
+ *
+ * @param[in]  message    message type
+ * @param[in]  event      event to fire after popup is cleared
+ */
+static void show_popup(uint8_t message, event_t event) {
+    popup_message_duration = POPUP_MESSAGE_TIME;
+    popup_message_ticks = get_ticks();
+    popup_message_type = message;
+    event_after_popup = event;
+}
+
+
 /*
  * Get / Set callback functions
  */
@@ -458,21 +494,22 @@ static void set_refresh(ui_number_t *item) {
     }
 }
 
-static int32_t get_on_locked() {
-    if (ui_settings | SCREEN_LOCKED_WHEN_ON) {
-        return 10000;
-    }
+
+static int32_t get_resetcfg() {
     return 0;
 }
+static void set_resetcfg(struct ui_number_t *item) {
+    // non-zero values will trigger a settings reset
+    if (item->value != 1) {
+        // reset
+        settings_reset();
 
-static void set_on_locked(struct ui_number_t *item) {
-    if (item->value == 0) {
-        ui_settings = ui_settings & ~SCREEN_LOCKED_WHEN_ON;
-    } else {
-        ui_settings = ui_settings | SCREEN_LOCKED_WHEN_ON;
+        // update page to update values
+        set_page(current_page);
+
+        show_popup(POPUP_MESSAGE_RESET, event_none);
     }
 }
-
 
 
 /**
@@ -481,76 +518,110 @@ static void set_on_locked(struct ui_number_t *item) {
  */
 static bool event(uui_t *ui, event_t event, uint8_t data) {
     (void)ui;
+    (void)data;
 
+    // reset popup when an event is received
+    reset_open_popup();
+
+    ui_screen_t *screen = ui->screens[ui->cur_screen];
+
+    // handle events
     switch (event) {
-        case event_button_m1:
-        case event_button_m2:
 
-            // go up
-            if ( event == event_button_m1 ) {
-                ui_screen_t *screen = ui->screens[ui->cur_screen];
+        // Override the on/off button as a save button
+        // Settings screen should not enable power.
+        case event_button_enable:
+            if (changes_made) {
+                // save changes
+                screen->past_save(ui->past);
 
-                // not first item, move up one
-                if (current_item > 0) {
-                    current_item--;
-                    if ( ! select_mode) screen->cur_item = current_item;
-                    return false;
-                }
-
-                // we are left with current_item == 0.
-                
-                if (current_page == 0) {
-                    // do nothing for first page/first item
-                    return true;
-                }
-
-                // current_item == 0, and current_page != 0
-                set_page(current_page - 1);
-                current_item = ITEMS_PER_PAGE - 1;
-                if ( ! select_mode) screen->cur_item = current_item;
-                return false;
-
-            // go down
-            } else {
-                ui_screen_t *screen = ui->screens[ui->cur_screen];
-
-                // not last item, go down
-                if (current_item < ITEMS_PER_PAGE - 1) {
-                    // do nothing if we are on the last item already
-                    if ((current_page * ITEMS_PER_PAGE) + current_item >= ITEMS - 1)
-                        return true;
-
-                    // otherwise, go down one item
-                    current_item++;
-                    if ( ! select_mode) screen->cur_item = current_item;
-                    return false;
-                }
-
-                // we are left with current_item == last item
-
-                if (current_page == PAGES - 1) {
-                    // last page. do nothing
-                    return true;
-                }
-
-                // last item, but not last page
-                set_page(current_page + 1);
-                current_item = 0;
-                if ( ! select_mode) screen->cur_item = current_item;
-                return false;
+                // show popup message
+                show_popup(POPUP_MESSAGE_SAVED, event_none);
             }
 
-        case event_button_sel:
-            // long SET press will reest all values
-            if (data == press_long) {
-                settings_reset();
-                // update page to update values
-                set_page(current_page);
+            // override default behavior; do nothing
+            return true;
+
+        // Override the change screen key combination so that when changing
+        // screens, we will automatically trigger a save along with a popup
+        // message.
+        case event_rot_left_set:
+        case event_rot_right_set:
+            if (changes_made) {
+                // save changes
+                screen->past_save(ui->past);
+
+                // show popup message
+                show_popup(POPUP_MESSAGE_SAVED, event);
                 return true;
             }
 
-            select_mode = ! select_mode;
+            // No changes; default to default behavior
+            return false;
 
+        // M1 to go up one setting option
+        case event_button_m1:
+            // not first item, move up one
+            if (current_item > 0) {
+                current_item--;
+                if ( ! select_mode) screen->cur_item = current_item;
+                return false;
+            }
+
+            // Otherwise, first item. Go up one page unless we are on the first page
+            if (current_page == 0) {
+                return true;
+            }
+
+            // go up one page
+            set_page(current_page - 1);
+            current_item = ITEMS_PER_PAGE - 1;
+
+            // if in editing mode, keep track of the next item
+            if ( ! select_mode) screen->cur_item = current_item;
+
+            return false;
+
+        // M2 to go down
+        case event_button_m2:
+            // not last item, go down
+            if (current_item < ITEMS_PER_PAGE - 1) {
+                // do nothing if we are on the last item already
+                if ((current_page * ITEMS_PER_PAGE) + current_item >= ITEMS - 1)
+                    return true;
+
+                // otherwise, go down one item
+                current_item++;
+
+                // if in editing mode, keep track of the next item
+                if ( ! select_mode) screen->cur_item = current_item;
+                return false;
+            }
+
+            // Dealing with the last item. Last page? do nothing
+            if (current_page == PAGES - 1) {
+                return true;
+            }
+
+            // Otherwise, go to next page.
+            set_page(current_page + 1);
+            current_item = 0;
+
+            // if in editing mode, keep track of the next item
+            if ( ! select_mode) screen->cur_item = current_item;
+
+            return false;
+
+        // keep track of whether we are in editing mode
+        case event_button_sel:
+            select_mode = ! select_mode;
+            return false;
+
+        // We assume that the user made changes if they triggered the 
+        // rotary while in select mode.
+        case event_rot_left:
+        case event_rot_right:
+            if (select_mode) changes_made = true;
             return false;
 
         default:
@@ -615,6 +686,43 @@ static void set_page(int8_t page) {
 static void settings_tick(void) {
     int8_t page_offset = current_page * ITEMS_PER_PAGE;
 
+    uint64_t ticks = get_ticks();
+
+    // draw popup message
+    if (popup_message_ticks > 0) {
+
+        if ((ticks - popup_message_ticks) < popup_message_duration) {
+            if (popup_message_type == POPUP_MESSAGE_NONE) return;
+            popup_message_type = POPUP_MESSAGE_NONE;
+
+            // show the popup message
+            tft_fill( 10, (TFT_HEIGHT / 2) - FONT_FULL_SMALL_MAX_GLYPH_HEIGHT - FONT_FULL_SMALL_MAX_GLYPH_HEIGHT,
+                    TFT_WIDTH - 20, (FONT_FULL_SMALL_MAX_GLYPH_HEIGHT * 3),
+                    BLACK);
+            tft_rect( 10, (TFT_HEIGHT / 2) - FONT_FULL_SMALL_MAX_GLYPH_HEIGHT - FONT_FULL_SMALL_MAX_GLYPH_HEIGHT,
+                    TFT_WIDTH - 20, FONT_FULL_SMALL_MAX_GLYPH_HEIGHT * 3,
+                    LIGHTGREY);
+
+            tft_puts(FONT_FULL_SMALL, (popup_message_type == POPUP_MESSAGE_SAVED) ? "Settings Saved!!" : "Settings Reset!",
+                    20 /*x*/, (TFT_HEIGHT / 2)  /*y*/,
+                    FONT_FULL_SMALL_MAX_GLYPH_WIDTH * 20, FONT_FULL_SMALL_MAX_GLYPH_HEIGHT,
+                    GREENYELLOW, false);
+
+            return;
+        } else {
+            // reset popup message
+            popup_message_ticks = 0;
+            popup_message_duration = 0;
+
+            // reproduce the inital event after showing the message
+            if (event_after_popup != event_none) {
+                event_put(event_after_popup, press_short);
+            }
+            tft_clear();
+        }
+    }
+
+
     // draw each field with its corresponding label
     for (uint8_t i = 0; i < ITEMS_PER_PAGE; i++) {
         // if greater than total number of items, clear the area
@@ -678,6 +786,7 @@ static void settings_reset() {
  */
 static void past_save(past_t *past) {
     pwrctl_past_save(past);
+    changes_made = false;
 }
 
 
@@ -690,6 +799,8 @@ static void activated() {
     // Move back to previous page on init.
     set_page(current_page);
     current_item = 0;
+    popup_message_ticks = 0;
+    select_mode = false;
 }
 
 /**
@@ -716,6 +827,8 @@ void func_settings_init(uui_t *ui) {
     // initialize page and selected items
     set_page(0);
     current_item = 0;
+    popup_message_ticks = 0;
+    select_mode = false;
 
     uui_add_screen(ui, &settings_screen);
 }
