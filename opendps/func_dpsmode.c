@@ -480,6 +480,7 @@ static bool event(uui_t *ui, event_t event, uint8_t data) {
             if (past_read_unit(past, (SCREEN_ID << 24) | PAST_T, (const void**) &past_data, &length)) {
                 if (*past_data != saved_t) past_write_unit(past, (SCREEN_ID << 24) | PAST_T, (void*) &saved_t, 4);
             }
+
             break;
 
         case event_button_sel_m1:
@@ -492,10 +493,10 @@ static bool event(uui_t *ui, event_t event, uint8_t data) {
             dpsmode_graphics |= CUR_GFX_M1_RECALL;
 
             // save
-            past_write_unit(past, (SCREEN_ID << 24) | (PAST_V << 2), (void*) &recall_v[0], 4);
-            past_write_unit(past, (SCREEN_ID << 24) | (PAST_I << 2), (void*) &recall_i[0], 4);
-            past_write_unit(past, (SCREEN_ID << 24) | (PAST_P << 2), (void*) &recall_p[0], 4);
-            past_write_unit(past, (SCREEN_ID << 24) | (PAST_T << 2), (void*) &recall_t[0], 4);
+            past_write_unit(past, ((SCREEN_ID << 24) | PAST_V) + 4, (void*) &recall_v[0], 4);
+            past_write_unit(past, ((SCREEN_ID << 24) | PAST_I) + 4, (void*) &recall_i[0], 4);
+            past_write_unit(past, ((SCREEN_ID << 24) | PAST_P) + 4, (void*) &recall_p[0], 4);
+            past_write_unit(past, ((SCREEN_ID << 24) | PAST_T) + 4, (void*) &recall_t[0], 4);
             
             // Turn off power
             event_put(event_shutoff, 0);
@@ -512,10 +513,10 @@ static bool event(uui_t *ui, event_t event, uint8_t data) {
             dpsmode_graphics |= CUR_GFX_M2_RECALL;
 
             // save
-            past_write_unit(past, (SCREEN_ID << 24) | (PAST_V << 4), (void*) &recall_v[1], 4);
-            past_write_unit(past, (SCREEN_ID << 24) | (PAST_I << 4), (void*) &recall_i[1], 4);
-            past_write_unit(past, (SCREEN_ID << 24) | (PAST_P << 4), (void*) &recall_p[1], 4);
-            past_write_unit(past, (SCREEN_ID << 24) | (PAST_T << 4), (void*) &recall_t[1], 4);
+            past_write_unit(past, ((SCREEN_ID << 24) | PAST_V) + 8, (void*) &recall_v[1], 4);
+            past_write_unit(past, ((SCREEN_ID << 24) | PAST_I) + 8, (void*) &recall_i[1], 4);
+            past_write_unit(past, ((SCREEN_ID << 24) | PAST_P) + 8, (void*) &recall_p[1], 4);
+            past_write_unit(past, ((SCREEN_ID << 24) | PAST_T) + 8, (void*) &recall_t[1], 4);
 
             // Turn off power
             event_put(event_shutoff, 0);
@@ -558,9 +559,6 @@ static bool event(uui_t *ui, event_t event, uint8_t data) {
                 // Turn off power
                 event_put(event_shutoff, 0);
 
-                // show the M1 recall graphics
-                dpsmode_graphics &= ~CUR_GFX_M2_RECALL;
-                dpsmode_graphics |= CUR_GFX_M1_RECALL;
                 return true;
             }
             
@@ -606,9 +604,6 @@ static bool event(uui_t *ui, event_t event, uint8_t data) {
                 // Turn off power
                 event_put(event_shutoff, 0);
 
-                // show the M2 recall graphics
-                dpsmode_graphics &= ~CUR_GFX_M1_RECALL;
-                dpsmode_graphics |= CUR_GFX_M2_RECALL;
                 return true;
             }
 
@@ -707,10 +702,6 @@ static bool event(uui_t *ui, event_t event, uint8_t data) {
  */
 static void activated(void) {
     clear_bars(true);
-
-    // determine if M1/M2 settings match and enable those bars
-    if (recall_v[0] == saved_v && recall_i[0] == saved_i && recall_p[0] == saved_p && recall_t[0] == saved_t) dpsmode_graphics |= CUR_GFX_M1_RECALL;
-    if (recall_v[1] == saved_v && recall_i[1] == saved_i && recall_p[1] == saved_p && recall_t[1] == saved_t) dpsmode_graphics |= CUR_GFX_M2_RECALL;
 
     // reset any odd modes
     single_edit_mode = false;
@@ -818,29 +809,29 @@ static void past_restore(past_t *past)
         saved_t = dpsmode_timer.value = *p;
     }
 
-    if (past_read_unit(past, (SCREEN_ID << 24) | (PAST_V << 2), (const void**) &p, &length)) {
+    if (past_read_unit(past, ((SCREEN_ID << 24) | PAST_V) + 4, (const void**) &p, &length)) {
         recall_v[0] = *p;
     }
-    if (past_read_unit(past, (SCREEN_ID << 24) | (PAST_I << 2), (const void**) &p, &length)) {
+    if (past_read_unit(past, ((SCREEN_ID << 24) | PAST_I) + 4, (const void**) &p, &length)) {
         recall_i[0] = *p;
     }
-    if (past_read_unit(past, (SCREEN_ID << 24) | (PAST_P << 2), (const void**) &p, &length)) {
+    if (past_read_unit(past, ((SCREEN_ID << 24) | PAST_P) + 4, (const void**) &p, &length)) {
         recall_p[0] = *p;
     }
-    if (past_read_unit(past, (SCREEN_ID << 24) | (PAST_T << 2), (const void**) &p, &length)) {
+    if (past_read_unit(past, ((SCREEN_ID << 24) | PAST_T) + 4, (const void**) &p, &length)) {
         recall_t[0] = *p;
     }
 
-    if (past_read_unit(past, (SCREEN_ID << 24) | (PAST_V << 4), (const void**) &p, &length)) {
+    if (past_read_unit(past, ((SCREEN_ID << 24) | PAST_V) + 8, (const void**) &p, &length)) {
         recall_v[1] = *p;
     }
-    if (past_read_unit(past, (SCREEN_ID << 24) | (PAST_I << 4), (const void**) &p, &length)) {
+    if (past_read_unit(past, ((SCREEN_ID << 24) | PAST_I) + 8, (const void**) &p, &length)) {
         recall_i[1] = *p;
     }
-    if (past_read_unit(past, (SCREEN_ID << 24) | (PAST_P << 4), (const void**) &p, &length)) {
+    if (past_read_unit(past, ((SCREEN_ID << 24) | PAST_P) + 8, (const void**) &p, &length)) {
         recall_p[1] = *p;
     }
-    if (past_read_unit(past, (SCREEN_ID << 24) | (PAST_T << 4), (const void**) &p, &length)) {
+    if (past_read_unit(past, ((SCREEN_ID << 24) | PAST_T) + 8, (const void**) &p, &length)) {
         recall_t[1] = *p;
     }
 
@@ -1109,13 +1100,16 @@ static void clear_bars(bool all) {
     if (all) {
         // clears opp as well as the others
         dpsmode_graphics &= ~0x3ff; // exclude m1/m2, so not CUR_GFX_NOT_DRAWN;
-        return;
+    } else {
+        // clear just cc/cv/pp otherwise
+        dpsmode_graphics = dpsmode_graphics & ~CUR_GFX_CC;
+        dpsmode_graphics = dpsmode_graphics & ~CUR_GFX_CV;
+        dpsmode_graphics = dpsmode_graphics & ~CUR_GFX_PP;
     }
 
-    // clear just cc/cv/pp otherwise
-    dpsmode_graphics = dpsmode_graphics & ~CUR_GFX_CC;
-    dpsmode_graphics = dpsmode_graphics & ~CUR_GFX_CV;
-    dpsmode_graphics = dpsmode_graphics & ~CUR_GFX_PP;
+    // determine if M1/M2 settings match and enable those bars
+    if (recall_v[0] == saved_v && recall_i[0] == saved_i && recall_p[0] == saved_p && recall_t[0] == saved_t) dpsmode_graphics |= CUR_GFX_M1_RECALL;
+    if (recall_v[1] == saved_v && recall_i[1] == saved_i && recall_p[1] == saved_p && recall_t[1] == saved_t) dpsmode_graphics |= CUR_GFX_M2_RECALL;
 }
 
 
