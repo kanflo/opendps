@@ -29,7 +29,7 @@
 #include "dbg_printf.h"
 
 #ifdef CONFIG_RELEASE
- #define assert(x) scb_reset_system()
+ #define assert(x) if (!(x)) { scb_reset_system(); }
 #else // CONFIG_RELEASE
  #define assert(x) if (!(x)) { dbg_printf("Assertion %s failed on line %d of %s\n", #x, __LINE__, __FILE__); while(1); }
 #endif // CONFIG_RELEASE
