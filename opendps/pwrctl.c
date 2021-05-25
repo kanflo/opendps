@@ -25,6 +25,7 @@
 #include "pwrctl.h"
 #include "dps-model.h"
 #include "pastunits.h"
+#include "hw.h"
 #include <gpio.h>
 #include <dac.h>
 
@@ -33,7 +34,7 @@
   * https://docs.google.com/spreadsheets/d/1AhGsU_gvZjqZyr2ZYrnkz6BeUqMquzh9UNYoTqy_Zp4/edit?usp=sharing
   */
 
-static uint32_t i_out, v_out, i_limit, v_limit;
+static uint32_t i_out, v_out, i_limit, v_limit, vin_limit;
 static bool v_out_enabled;
 
 float a_adc_k_coef = A_ADC_K;
@@ -106,6 +107,10 @@ bool pwrctl_set_vout(uint32_t value_mv)
 {
     /** @todo Check with max Vout, currently filtered by ui.c */
     v_out = value_mv;
+
+    /** Set the vin limit so we turn off if the input voltage drops too low */
+    vin_limit = v_out * VIN_VOUT_RATIO + 0.5f;
+
     if (v_out_enabled) {
         /** Needed for the DPS5005 "communications version" (the one with BT/USB) */
         DAC_DHR12R1 = pwrctl_calc_vout_dac(v_out);
@@ -202,8 +207,6 @@ void pwrctl_enable_vout(bool enable)
 {
     v_out_enabled = enable;
     if (v_out_enabled) {
-      (void) pwrctl_set_vout(v_out);
-      (void) pwrctl_set_iout(i_out);
 #if defined(DPS5015) || defined(DPS5020)
         //gpio_clear(GPIOA, GPIO9); // this is power control on '5015
         gpio_set(GPIOB, GPIO11);    // B11 is fan control on '5015
@@ -219,10 +222,37 @@ void pwrctl_enable_vout(bool enable)
 #else
         gpio_set(GPIOB, GPIO11);  // B11 is power control on '5005
 #endif
-      (void) pwrctl_set_vout(v_out);
-      (void) pwrctl_set_iout(i_out);
     }
+
+    (void) pwrctl_set_vout(v_out);
+    (void) pwrctl_set_iout(i_out);
 }
+
+/**
+  * @brief Check that we are operating within set limits
+  * @retval Bool: Handled / Not Handled (i.e. power off)
+  */
+bool pwrctl_check_limits(void)
+{
+    bool ret = true;
+    uint16_t i_out_raw, v_in_raw, v_out_raw;
+    hw_get_adc_values(&i_out_raw, &v_in_raw, &v_out_raw);
+
+    if (pwrctl_calc_vin(v_in_raw) < vin_limit) {
+        pwrctl_enable_vout(false);
+        ret = false;
+    }
+
+#if defined(DPS5015) || defined(DPS5020)
+        /** Control the fan for DPS5020 (stock firmware enables fan above 10A) */
+        if (pwrctl_calc_iout(i_out_raw) > 5000)
+            gpio_set(GPIOB, GPIO11);
+        else
+            gpio_clear(GPIOB, GPIO11);
+#endif
+
+    return ret;
+ }
 
 /**
   * @brief Return power output status

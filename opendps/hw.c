@@ -104,10 +104,8 @@ static volatile bool m1_and_m2_pressed = false;
   */
 #define STARTUP_SKIP_COUNT   (40)
 
-
 /** Apply ADC oversampling to reduce jitter in values */
 #define ADC_OVERSAMPLE_BITS  (8)
-
 
 #ifdef CONFIG_ADC_BENCHMARK
 static uint64_t adc_tick_start;
@@ -361,7 +359,7 @@ void adc1_2_isr(void)
         }
 
         /** Check to see if an over current limit has been triggered */
-		if (i_out_adc > pwrctl_i_limit_raw) { /** OCP! */
+		if (i_out_adc > pwrctl_i_limit_raw || !pwrctl_check_limits()) { /** OCP! */
 		    handle_ocp(i);
 		}
     }
