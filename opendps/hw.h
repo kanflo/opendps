@@ -37,7 +37,7 @@
 #define TFT_RST_PIN  GPIO12
 #define TFT_A0_PORT  GPIOB
 #define TFT_A0_PIN   GPIO14
-#ifdef DPS5015 
+#if(defined DPS5015) || defined(DPS5020) 
 #define TFT_CSN_PORT GPIOA
 #define TFT_CSN_PIN  GPIO8
 #endif
