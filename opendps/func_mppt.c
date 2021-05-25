@@ -141,7 +141,7 @@ ui_number_t mppt_power = {
 /* This is the screen definition */
 ui_screen_t mppt_screen = {
     .id = SCREEN_ID,
-    .name = "cv",
+    .name = "mppt",
     .icon_data = (uint8_t *) gfx_mppt,
     .icon_data_len = sizeof(gfx_mppt),
     .icon_width = GFX_MPPT_WIDTH,
@@ -191,19 +191,19 @@ static set_param_status_t set_parameter(char *name, char *value)
     int32_t ivalue = atoi(value);
     if (strcmp("voltage", name) == 0 || strcmp("u", name) == 0) {
         if (ivalue < mppt_voltage.min || ivalue > mppt_voltage.max) {
-            emu_printf("[CV] Voltage %d is out of range (min:%d max:%d)\n", ivalue, mppt_voltage.min, mppt_voltage.max);
+            emu_printf("[MPPT] Voltage %d is out of range (min:%d max:%d)\n", ivalue, mppt_voltage.min, mppt_voltage.max);
             return ps_range_error;
         }
-        emu_printf("[CV] Setting voltage to %d\n", ivalue);
+        emu_printf("[MPPT] Setting voltage to %d\n", ivalue);
         mppt_voltage.value = ivalue;
         voltage_changed(&mppt_voltage);
         return ps_ok;
     } else if (strcmp("current", name) == 0 || strcmp("i", name) == 0) {
         if (ivalue < mppt_current.min || ivalue > mppt_current.max) {
-            emu_printf("[CV] Current %d is out of range (min:%d max:%d)\n", ivalue, mppt_current.min, mppt_current.max);
+            emu_printf("[MPPT] Current %d is out of range (min:%d max:%d)\n", ivalue, mppt_current.min, mppt_current.max);
             return ps_range_error;
         }
-        emu_printf("[CV] Setting current to %d\n", ivalue);
+        emu_printf("[MPPT] Setting current to %d\n", ivalue);
         mppt_current.value = ivalue;
         current_changed(&mppt_current);
         return ps_ok;
@@ -239,7 +239,7 @@ static set_param_status_t get_parameter(char *name, char *value, uint32_t value_
  */
 static void mppt_enable(bool enabled)
 {
-    emu_printf("[CV] %s output\n", enabled ? "Enable" : "Disable");
+    emu_printf("[MPPT] %s output\n", enabled ? "Enable" : "Disable");
     if (enabled) {
         /** Display will now show the current values, keep the user setting saved */
         saved_u = mppt_voltage.value;

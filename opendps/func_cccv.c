@@ -135,7 +135,7 @@ ui_number_t cccv_power = {
 /* This is the screen definition */
 ui_screen_t cccv_screen = {
     .id = SCREEN_ID,
-    .name = "cv",
+    .name = "cccv",
     .icon_data = (uint8_t *) gfx_cccv,
     .icon_data_len = sizeof(gfx_cccv),
     .icon_width = GFX_CCCV_WIDTH,
@@ -185,19 +185,19 @@ static set_param_status_t set_parameter(char *name, char *value)
     int32_t ivalue = atoi(value);
     if (strcmp("voltage", name) == 0 || strcmp("u", name) == 0) {
         if (ivalue < cccv_voltage.min || ivalue > cccv_voltage.max) {
-            emu_printf("[CV] Voltage %d is out of range (min:%d max:%d)\n", ivalue, cccv_voltage.min, cccv_voltage.max);
+            emu_printf("[CCCV] Voltage %d is out of range (min:%d max:%d)\n", ivalue, cccv_voltage.min, cccv_voltage.max);
             return ps_range_error;
         }
-        emu_printf("[CV] Setting voltage to %d\n", ivalue);
+        emu_printf("[CCCV] Setting voltage to %d\n", ivalue);
         cccv_voltage.value = ivalue;
         voltage_changed(&cccv_voltage);
         return ps_ok;
     } else if (strcmp("current", name) == 0 || strcmp("i", name) == 0) {
         if (ivalue < cccv_current.min || ivalue > cccv_current.max) {
-            emu_printf("[CV] Current %d is out of range (min:%d max:%d)\n", ivalue, cccv_current.min, cccv_current.max);
+            emu_printf("[CCCV] Current %d is out of range (min:%d max:%d)\n", ivalue, cccv_current.min, cccv_current.max);
             return ps_range_error;
         }
-        emu_printf("[CV] Setting current to %d\n", ivalue);
+        emu_printf("[CCCV] Setting current to %d\n", ivalue);
         cccv_current.value = ivalue;
         current_changed(&cccv_current);
         return ps_ok;
@@ -233,7 +233,7 @@ static set_param_status_t get_parameter(char *name, char *value, uint32_t value_
  */
 static void cccv_enable(bool enabled)
 {
-    emu_printf("[CV] %s output\n", enabled ? "Enable" : "Disable");
+    emu_printf("[CCCV] %s output\n", enabled ? "Enable" : "Disable");
     if (enabled) {
         /** Display will now show the current values, keep the user setting saved */
         saved_u = cccv_voltage.value;
