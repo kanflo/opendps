@@ -64,9 +64,12 @@ volatile uint16_t cur_time_hiw;
 #endif
 
 static volatile uint16_t i_out_adc;
+static volatile uint32_t i_out_adc_ovs;
 static volatile uint16_t i_out_trig_adc;
 static volatile uint16_t v_in_adc;
+static volatile uint32_t v_in_adc_ovs;
 static volatile uint16_t v_out_adc;
+static volatile uint32_t v_out_adc_ovs;
 static volatile uint16_t v_out_trig_adc;
 static volatile uint64_t last_button_down;
 
@@ -101,17 +104,10 @@ static volatile bool m1_and_m2_pressed = false;
   */
 #define STARTUP_SKIP_COUNT   (40)
 
-/** Once we are checking for OCP, we need 20 over currents in a row to trigger
-  * OCP. This is due to spikes in the ADC readings.
-  * @todo Investigate if the spikes are real or is a DPS issue
-  */
-#define OCP_FILTER_COUNT (20)
 
-/** Once we are checking for OVP, we need 20 over voltages in a row to trigger
-  * OVP. This is due to spikes in the ADC readings.
-  * @todo Investigate if the spikes are real or is a DPS issue
-  */
-#define OVP_FILTER_COUNT (20)
+/** Apply ADC oversampling to reduce jitter in values */
+#define ADC_OVERSAMPLE_BITS  (8)
+
 
 #ifdef CONFIG_ADC_BENCHMARK
 static uint64_t adc_tick_start;
@@ -291,20 +287,9 @@ bool hw_sel_button_pressed(void)
   */
 static void handle_ocp(uint16_t raw)
 {
-    static uint32_t ocp_count = 0;
-    static uint32_t last_tick_counter = 0;
-    if (last_tick_counter+1 == adc_counter) {
-        ocp_count++;
-        last_tick_counter++;
-        if (ocp_count == OCP_FILTER_COUNT) {
-            i_out_trig_adc = raw;
-            pwrctl_enable_vout(false);
-            event_put(event_ocp, 0);
-        }
-    } else {
-        ocp_count = 0;
-        last_tick_counter = adc_counter;
-    }
+    i_out_trig_adc = raw;
+    pwrctl_enable_vout(false);
+    event_put(event_ocp, 0);
 }
 
 /**
@@ -313,20 +298,9 @@ static void handle_ocp(uint16_t raw)
   */
 static void handle_ovp(uint16_t raw)
 {
-    static uint32_t ovp_count = 0;
-    static uint32_t last_tick_counter = 0;
-    if (last_tick_counter+1 == adc_counter) {
-        ovp_count++;
-        last_tick_counter++;
-        if (ovp_count == OVP_FILTER_COUNT) {
-            v_out_trig_adc = raw;
-            pwrctl_enable_vout(false);
-            event_put(event_ovp, 0);
-        }
-    } else {
-        ovp_count = 0;
-        last_tick_counter = adc_counter;
-    }
+	v_out_trig_adc = raw;
+	pwrctl_enable_vout(false);
+	event_put(event_ovp, 0);
 }
 
 /**
@@ -360,21 +334,36 @@ void adc1_2_isr(void)
     if (pwrctl_i_limit_raw) {
         if (adc_counter >= STARTUP_SKIP_COUNT) {
             i += adc_i_offset;
-            if (i > pwrctl_i_limit_raw && pwrctl_vout_enabled()) { /** OCP! */
-                handle_ocp(i);
-            }
-            i_out_adc = i;
+
+            i_out_adc_ovs -= i_out_adc_ovs >> ADC_OVERSAMPLE_BITS;
+            i_out_adc_ovs += i;
+            i_out_adc = i_out_adc_ovs >> ADC_OVERSAMPLE_BITS;
         }
     }
 
-    v_in_adc = adc_read_injected(ADC1, adc_cha_v_in + 1); // Yes, this is correct
-    v_out_adc = adc_read_injected(ADC1, adc_cha_v_out + 1); // Yes, this is correct
+    uint32_t v_in = adc_read_injected(ADC1, adc_cha_v_in + 1); // Yes, this is correct
+    uint32_t v_out = adc_read_injected(ADC1, adc_cha_v_out + 1); // Yes, this is correct
 
-    /** Check to see if an over voltage limit has been triggered */
-    if (pwrctl_v_limit_raw) {
-        if (v_out_adc > pwrctl_v_limit_raw && pwrctl_vout_enabled()) { /** OVP! */
-            handle_ovp(v_out_adc);
+    v_in_adc_ovs -= v_in_adc_ovs >> ADC_OVERSAMPLE_BITS;
+    v_in_adc_ovs += v_in;
+    v_in_adc = v_in_adc_ovs >> ADC_OVERSAMPLE_BITS;
+
+    v_out_adc_ovs -= v_out_adc_ovs >> ADC_OVERSAMPLE_BITS;
+    v_out_adc_ovs += v_out;
+    v_out_adc = v_out_adc_ovs >> ADC_OVERSAMPLE_BITS;
+
+    if (pwrctl_vout_enabled()) {
+        /** Check to see if an over voltage limit has been triggered */
+        if (pwrctl_v_limit_raw) {
+            if (v_out_adc > pwrctl_v_limit_raw) { /** OVP! */
+                handle_ovp(v_out_adc);
+            }
         }
+
+        /** Check to see if an over current limit has been triggered */
+		if (i_out_adc > pwrctl_i_limit_raw) { /** OCP! */
+		    handle_ocp(i);
+		}
     }
 
 #ifdef CONFIG_FUNCGEN_ENABLE
