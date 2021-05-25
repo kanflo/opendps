@@ -44,7 +44,7 @@
 /** Contribution by @cleverfox */
 #if defined(DPS5020)
  #ifndef CONFIG_DPS_MAX_CURRENT
-  #define CONFIG_DPS_MAX_CURRENT (20000) // Please note that the UI currently does not handle settings larger that 9.99A
+  #define CONFIG_DPS_MAX_CURRENT (20000)
  #endif
  #define CURRENT_DIGITS 2
  #define CURRENT_DECIMALS 2
@@ -150,6 +150,6 @@
  #define VIN_ADC_C (float)64.112f
 #endif
 
-#define VIN_VOUT_RATIO (float)1.1f /** (Vin / VIN_VOUT_RATIO) = Max Vout */
+#define VIN_VOUT_RATIO (float)1.1f /** (Vin / VIN_VOUT_RATIO) = Max Vout (or Min Vin) */
 
 #endif // __DPS_MODEL_H__

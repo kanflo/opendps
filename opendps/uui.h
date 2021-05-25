@@ -51,9 +51,11 @@
  #define MAX_PARAMETER_NAME (10)
 #endif // CONFIG_UI_MAX_PARAMETER_NAME
 
-/** The position for the screen icon on the status bar */ 
-#define XPOS_ICON    (43)   
-
+/** Blit positions */
+#define XPOS_WIFI    (40)
+#define XPOS_LOCK    (96)
+#define XPOS_INVOLT  (40) /* Right aligned to this position */
+#define XPOS_ICON    (54)
 
 /**
  * Describes units in the user interface
@@ -99,7 +101,8 @@ typedef enum {
  */
 typedef enum {
     ui_text_left_aligned,
-    ui_text_right_aligned
+    ui_text_right_aligned,
+    ui_text_center_aligned
 } ui_text_alignment_t;
 
 /**

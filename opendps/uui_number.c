@@ -233,6 +233,8 @@ static void number_draw(ui_item_t *_item)
     /** Adjust drawing position if right aligned */
     if (item->alignment == ui_text_right_aligned)
         xpos -= number_draw_width(_item);
+    else if (item->alignment == ui_text_center_aligned)
+        xpos -= number_draw_width(_item) / 2;
 
     /** Start printing from left to right */
     for (uint8_t place = item->num_digits; place > 0; place--) {

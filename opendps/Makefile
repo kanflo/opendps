@@ -34,7 +34,7 @@ WDOG ?= 1
 METER_FONT_FILE ?= gfx/Ubuntu-C.ttf
 METER_FONT_SMALL_SIZE ?= 18
 METER_FONT_MEDIUM_SIZE ?= 24
-METER_FONT_LARGE_SIZE ?= 48
+METER_FONT_LARGE_SIZE ?= 40
 FULL_FONT_FILE ?= gfx/ProggyClean.ttf
 FULL_FONT_SMALL_SIZE ?= 16
 
@@ -49,14 +49,8 @@ COLOR_INPUT ?= WHITE
 # Optional tinting for UI elements
 TINT ?= ffffff
 
-# Enable CC mode
-CC_ENABLE ?= 1
-
-# Enable CV mode
-CV_ENABLE ?= 1
-
-# Enable cl mode
-CL_ENABLE ?= 1
+# Enable CC/CV mode
+CCCV_ENABLE ?= 1
 
 # Enable function generator mode
 FUNCGEN_ENABLE ?= 1
@@ -110,10 +104,7 @@ OBJS = \
     font-meter_small.o \
     font-meter_medium.o \
     font-meter_large.o \
-    gfx-cc.o \
     gfx-crosshair.o \
-    gfx-cv.o \
-    gfx-cl.o \
     gfx-padlock.o \
     gfx-thermometer.o \
     gfx-wifi.o \
@@ -124,8 +115,10 @@ ifdef MAX_CURRENT
 endif
 
 ifeq ($(DEBUG),1)
-	CFLAGS +=-DCONFIG_DEBUG
+	CFLAGS +=-DCONFIG_DEBUG -g -O1
 	OBJS += dbg_printf.o
+else
+    CFLAGS +=-DCONFIG_RELEASE -g -Os
 endif
 
 ifeq ($(WDOG),1)
@@ -149,19 +142,9 @@ ifeq ($(POWER_OFF_VISIBLE),1)
 	CFLAGS +=-DCONFIG_POWER_OFF_VISIBLE
 endif
 
-ifeq ($(CC_ENABLE),1)
-	CFLAGS +=-DCONFIG_CC_ENABLE
-	OBJS += func_cc.o
-endif
-
-ifeq ($(CV_ENABLE),1)
-	CFLAGS +=-DCONFIG_CV_ENABLE
-	OBJS += func_cv.o
-endif
-
-ifeq ($(CL_ENABLE),1)
-	CFLAGS +=-DCONFIG_CL_ENABLE
-	OBJS += func_cl.o
+ifeq ($(CCCV_ENABLE),1)
+	CFLAGS +=-DCONFIG_CCCV_ENABLE
+	OBJS += func_cccv.o gfx-cccv.o
 endif
 
 ifeq ($(FUNCGEN_ENABLE),1)
@@ -192,11 +175,11 @@ endif
 include ../libopencm3.target.mk
 
 fonts:
-	@python ./gen_lookup.py -l -o gfx_lookup
-	@python ./gen_lookup.py -f $(FULL_FONT_FILE) -s $(FULL_FONT_SMALL_SIZE) -o full_small -a
-	@python ./gen_lookup.py -f $(METER_FONT_FILE) -s $(METER_FONT_SMALL_SIZE) -o meter_small
-	@python ./gen_lookup.py -f $(METER_FONT_FILE) -s $(METER_FONT_MEDIUM_SIZE) -o meter_medium
-	@python ./gen_lookup.py -f $(METER_FONT_FILE) -s $(METER_FONT_LARGE_SIZE) -o meter_large
+	@python2 ./gen_lookup.py -l -o gfx_lookup
+	@python2 ./gen_lookup.py -f $(FULL_FONT_FILE) -s $(FULL_FONT_SMALL_SIZE) -o full_small -a
+	@python2 ./gen_lookup.py -f $(METER_FONT_FILE) -s $(METER_FONT_SMALL_SIZE) -o meter_small
+	@python2 ./gen_lookup.py -f $(METER_FONT_FILE) -s $(METER_FONT_MEDIUM_SIZE) -o meter_medium
+	@python2 ./gen_lookup.py -f $(METER_FONT_FILE) -s $(METER_FONT_LARGE_SIZE) -o meter_large
 
 test:
 	@make -C tests
