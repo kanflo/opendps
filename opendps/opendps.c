@@ -69,6 +69,9 @@
 #ifdef CONFIG_CCCV_ENABLE
 #include "func_cccv.h"
 #endif // CONFIG_CCCV_ENABLE
+#ifdef CONFIG_MPPT_ENABLE
+#include "func_mppt.h"
+#endif // CONFIG_MPPT_ENABLE
 #ifdef CONFIG_FUNCGEN_ENABLE
 #include "func_gen.h"
 #endif // CONFIG_FUNCGEN_ENABLE
@@ -443,6 +446,9 @@ static void ui_init(void)
 #ifdef CONFIG_CCCV_ENABLE
     func_cccv_init(&func_ui);
 #endif // CONFIG_CCCV_ENABLE
+#ifdef CONFIG_MPPT_ENABLE
+    func_mppt_init(&func_ui);
+#endif // CONFIG_MPPT_ENABLE
 #ifdef CONFIG_FUNCGEN_ENABLE
     func_gen_init(&func_ui);
 #endif // CONFIG_FUNCGEN_ENABLE

@@ -17,7 +17,7 @@ THERMAL_LOCKOUT := 0
 
 # Build wifi version (only change being that the wifi icon will start flashing
 # on power up)
-WIFI := 1
+WIFI := 0
 
 # Maximum current your DPS model can provide. Eg 5000mA for the DPS5005
 # This is usually set by MODEL but you can override it here
@@ -51,6 +51,11 @@ TINT ?= ffffff
 
 # Enable CC/CV mode
 CCCV_ENABLE ?= 1
+
+# Enable MPPT mode (Solar panel Maximum Power Point Tracking)
+# WARNING: This screen automatically enables the output and ramps up to maximum current.
+# Make sure you set the Voltage and Current limits before connecting a load!
+MPPT_ENABLE ?= 0
 
 # Enable function generator mode
 FUNCGEN_ENABLE ?= 1
@@ -145,6 +150,11 @@ endif
 ifeq ($(CCCV_ENABLE),1)
 	CFLAGS +=-DCONFIG_CCCV_ENABLE
 	OBJS += func_cccv.o gfx-cccv.o
+endif
+
+ifeq ($(MPPT_ENABLE),1)
+	CFLAGS +=-DCONFIG_MPPT_ENABLE
+	OBJS += func_mppt.o gfx-mppt.o
 endif
 
 ifeq ($(FUNCGEN_ENABLE),1)
