@@ -5,12 +5,12 @@ COMMANDLINE := 0
 BAUDRATE ?= 9600
 
 # Set build model, defaults to DPS5005
-MODEL := DPS5005
+MODEL := DPS5020
 
 BINARY = opendps_$(MODEL)
 
 # Include splash screen
-SPLASH_SCREEN := 0
+SPLASH_SCREEN := 1
 
 # Include support for thermal lockout via the serial interface
 THERMAL_LOCKOUT := 0
@@ -42,8 +42,9 @@ FULL_FONT_SMALL_SIZE ?= 16
 COLORSPACE ?= 0
 
 # Colors for the main UI elements -- see ili9163c.h for list of colors
-COLOR_VOLTAGE ?= WHITE
-COLOR_AMPERAGE ?= WHITE
+COLOR_VOLTAGE ?= 0x87F0
+COLOR_AMPERAGE ?= 0xFFF0
+COLOR_WATTAGE ?= 0xC41F
 COLOR_INPUT ?= WHITE
 
 # Optional tinting for UI elements
@@ -55,7 +56,7 @@ CCCV_ENABLE ?= 1
 # Enable MPPT mode (Solar panel Maximum Power Point Tracking)
 # WARNING: This screen automatically enables the output and ramps up to maximum current.
 # Make sure you set the Voltage and Current limits before connecting a load!
-MPPT_ENABLE ?= 0
+MPPT_ENABLE ?= 1
 
 # Enable function generator mode
 FUNCGEN_ENABLE ?= 1
@@ -64,7 +65,7 @@ FUNCGEN_ENABLE ?= 1
 INVERT_ENABLE ?= 0
 
 # Power buttons in color
-POWER_COLORED ?= 1
+POWER_COLORED ?= 0
 
 # Power off button visible
 POWER_OFF_VISIBLE ?= 0
@@ -81,6 +82,7 @@ CFLAGS += \
           -DCOLORSPACE=$(COLORSPACE) \
           -DCOLOR_VOLTAGE=$(COLOR_VOLTAGE) \
           -DCOLOR_AMPERAGE=$(COLOR_AMPERAGE) \
+          -DCOLOR_WATTAGE=$(COLOR_WATTAGE) \
           -DCOLOR_INPUT=$(COLOR_INPUT) \
           -D$(MODEL)
 
@@ -130,7 +132,6 @@ ifeq ($(WDOG),1)
 	CFLAGS +=-DCONFIG_WDOG
 	OBJS += wdog.o
 endif
-
 
 ifeq ($(INVERT_ENABLE),1)
 	CFLAGS +=-DCONFIG_INVERT_ENABLE

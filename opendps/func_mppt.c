@@ -68,7 +68,8 @@ static int32_t saved_i;
 
 /** Delay after adjusting current to wait for the input to settle.
   * Value is in UI ticks (250ms). */
-#define SWEEP_DELAY (8)
+#define SWEEP_DELAY (12)
+#define INCREASE_DELAY (8)
 
 /* This is the definition of the voltage item in the UI */
 ui_number_t mppt_voltage = {
@@ -128,7 +129,7 @@ ui_number_t mppt_power = {
     .font_size = FONT_METER_LARGE,
     .alignment = ui_text_center_aligned,
     .pad_dot = false,
-    .color = COLOR_AMPERAGE,
+    .color = COLOR_WATTAGE,
     .value = 0,
     .min = 0,
     .max = 0,
@@ -364,6 +365,7 @@ static void mppt_tick(void)
         int32_t new_i = pwrctl_calc_iout(i_out_raw);
         int32_t new_p = new_u * new_i / 1000;
         int32_t new_v_in = pwrctl_calc_vin(v_in_raw);
+        bool update_iout = false;
 
         if (mppt_sweep) {
             mppt_wait++;
@@ -372,7 +374,7 @@ static void mppt_tick(void)
                 mppt_wait = 0;
 
                 if (new_i < mppt_max_i - 10 ||
-                    mppt_i_step < 5) {
+                    mppt_i_step < 10) {
                     /** We're at min input / min step.
                       * Abort the sweep */
                     mppt_sweep = false;
@@ -387,16 +389,23 @@ static void mppt_tick(void)
                     mppt_v_in = new_v_in;
             }
             new_i = mppt_max_i;
+            update_iout = true;
         } else {
             /** Keep tracking around the mpp input voltage */
-            if (new_v_in <= mppt_v_in) {
-                new_i -= 15;
+            if (new_v_in < mppt_v_in) {
+                new_i -= 100;
                 if (new_i < 0) {
                     next_sweep = tick_count;
                     new_i = 0;
                 }
-            } else {
-                new_i += 10;
+                update_iout = true;
+            } else if (new_v_in > mppt_v_in + 250) {
+                mppt_wait++;
+                if (mppt_wait > INCREASE_DELAY) {
+                    mppt_wait = 0;
+                    new_i += 10;
+                    update_iout = true;
+                }
             }
         }
 
@@ -404,8 +413,10 @@ static void mppt_tick(void)
         if (new_i > saved_i)
             new_i = saved_i;
 
-        /** Apply the new current setting */
-        pwrctl_set_iout(new_i);
+        if (update_iout) {
+            /** Apply the new current setting */
+            pwrctl_set_iout(new_i);
+        }
 
         if (mppt_voltage.ui.has_focus) {
             /** If the voltage setting has focus, make sure we're displaying

@@ -102,6 +102,10 @@
 #define TFT_FLASHING_PERIOD               (100)
 #define TFT_FLASHING_COUNTER                (2)
 
+#ifndef GFX_POWERON_HEIGHT
+    #define GFX_POWERON_HEIGHT GFX_POWER_HEIGHT
+#endif
+
 static void ui_flash(void);
 static void read_past_settings(void);
 static void write_past_settings(void);
@@ -443,12 +447,12 @@ static void ui_init(void)
 
     /** Initialise the function screens */
     uui_init(&func_ui, &g_past);
-#ifdef CONFIG_CCCV_ENABLE
-    func_cccv_init(&func_ui);
-#endif // CONFIG_CCCV_ENABLE
 #ifdef CONFIG_MPPT_ENABLE
     func_mppt_init(&func_ui);
 #endif // CONFIG_MPPT_ENABLE
+#ifdef CONFIG_CCCV_ENABLE
+    func_cccv_init(&func_ui);
+#endif // CONFIG_CCCV_ENABLE
 #ifdef CONFIG_FUNCGEN_ENABLE
     func_gen_init(&func_ui);
 #endif // CONFIG_FUNCGEN_ENABLE
@@ -517,7 +521,7 @@ static void ui_handle_event(event_t event, uint8_t data)
                 uint16_t trig = hw_get_itrig_ma();
                 dbg_printf("%10u OCP: trig:%umA limit:%umA cur:%umA\n", (uint32_t) (get_ticks()), pwrctl_calc_iout(trig), pwrctl_calc_iout(pwrctl_i_limit_raw), pwrctl_calc_iout(i_out_raw));
 #endif // CONFIG_OCP_DEBUGGING
-                ui_flash(); /** @todo When OCP kicks in, show last I_out on screen */
+                //ui_flash(); /** @todo When OCP kicks in, show last I_out on screen */
                 opendps_update_power_status(false);
                 uui_handle_screen_event(current_ui, event);
             }
