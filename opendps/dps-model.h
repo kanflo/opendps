@@ -49,14 +49,14 @@
  #define CURRENT_DIGITS 2
  #define CURRENT_DECIMALS 2
  #define ADC_CHA_IOUT_GOLDEN_VALUE  (59)
- #define A_ADC_K (float)6.75449f
- #define A_ADC_C (float)-358.73f
- #define A_DAC_K (float)0.16587f
- #define A_DAC_C (float)243.793f
- #define V_ADC_K (float)13.2930f
- #define V_ADC_C (float)-179.91f
- #define V_DAC_K (float)0.07528f
- #define V_DAC_C (float)6.68949f
+ #define A_ADC_K (float)6.810f
+ #define A_ADC_C (float)-397.0f
+ #define A_DAC_K (float)0.1655f
+ #define A_DAC_C (float)273.0f
+ #define V_ADC_K (float)13.01f
+ #define V_ADC_C (float)-171.0f
+ #define V_DAC_K (float)0.077f
+ #define V_DAC_C (float)5.09f
 
  #define VIN_ADC_K (float)16.956f
  #define VIN_ADC_C (float)6.6895f
