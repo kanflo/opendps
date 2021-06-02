@@ -27,6 +27,8 @@
 
 #include "uui.h"
 
+extern bool dpsmode_cfg_initstate;
+
 // Settings
 enum SettingsStates {
     SCREEN_LOCKED_WHEN_ON = 1,

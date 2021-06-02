@@ -95,7 +95,7 @@ static uint32_t popup_message_duration;
 static int8_t popup_message_type;
 static event_t event_after_popup;
 
-int8_t ui_settings = 0;
+int8_t dps_settings = 0;
 
 /*
  * This is the implementation of the Settings screen.
@@ -149,6 +149,8 @@ static int32_t get_refresh(void);
 static void set_refresh(struct ui_number_t *item);
 static int32_t get_resetcfg(void);
 static void set_resetcfg(struct ui_number_t *item);
+static int32_t get_initstate(void);
+static void set_initstate(struct ui_number_t *item);
 
 
 struct field_item {
@@ -190,7 +192,8 @@ struct field_item field_items[] = {
     {"Vin ADC C",       -9999999,  9999999,  3,       4,    unit_none,     &get_vin_adc_k,      &set_vin_adc_k },
     {"Vin ADC K",       -9999999,  9999999,  3,       4,    unit_none,     &get_vin_adc_c,      &set_vin_adc_c },
 
-    // lock screen when output enabled
+    // Initial output state
+    {"Init State",       0,        10000,    1,       0,    unit_bool,     &get_initstate,      &set_initstate },
     {"Reset Cfg",        0,        10000,    1,       0,    unit_bool,     &get_resetcfg,       &set_resetcfg },
 };
 
@@ -511,6 +514,13 @@ static void set_resetcfg(struct ui_number_t *item) {
     }
 }
 
+static int32_t get_initstate() {
+    return dpsmode_cfg_initstate ? 1 : 0;
+}
+static void set_initstate(struct ui_number_t *item) {
+    dpsmode_cfg_initstate = (item->value == 1);
+}
+
 
 /**
  * @brief  event handler: We only care about the SET, M1 and M2 buttons
@@ -779,6 +789,9 @@ static void settings_reset() {
     // reset interval and brightness settings
     opendps_screen_update_ms = 250;
     hw_set_backlight(128);
+
+    // dpsmode initial state. (PSU output is off by default)
+    dpsmode_cfg_initstate = false;
 }
 
 
@@ -787,6 +800,8 @@ static void settings_reset() {
  */
 static void past_save(past_t *past) {
     pwrctl_past_save(past);
+    dpsmode_past_save(past);
+
     changes_made = false;
 }
 

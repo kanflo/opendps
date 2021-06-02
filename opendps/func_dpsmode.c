@@ -70,7 +70,6 @@ static void dpsmode_tick(void);
 static void activated(void);
 static void deactivated(void);
 static bool event(uui_t *ui, event_t event, uint8_t data);
-static void past_save(past_t *past);
 static void past_restore(past_t *past);
 static set_param_status_t set_parameter(char *name, char *value);
 static set_param_status_t get_parameter(char *name, char *value, uint32_t value_len);
@@ -100,6 +99,10 @@ static int8_t third_row = 0;
 ui_item_t *third_item;
 static bool third_invalidate;
 
+
+// config
+bool dpsmode_cfg_initstate = false;
+
 enum {
     CUR_GFX_NOT_DRAWN = 0, 
     CUR_GFX_CV = 1,
@@ -117,6 +120,7 @@ enum {
 #define PAST_I     (1)
 #define PAST_P     (2)
 #define PAST_T     (3)
+#define PAST_CFG   (4)
 #define XPOS_CCCV  (25)
 
 #define XPOS_METER   (117)
@@ -248,7 +252,7 @@ ui_screen_t dpsmode_screen = {
     .activated = &activated,
     .deactivated = &deactivated,
     .enable = &dpsmode_enable,
-    .past_save = &past_save,
+    .past_save = NULL,
     .past_restore = &past_restore,
     .tick = &dpsmode_tick,
     .set_parameter = &set_parameter,
@@ -715,6 +719,10 @@ static void activated(void) {
         screen->items[i]->needs_redraw = false;
     }
 
+    // init state on?
+    if (dpsmode_cfg_initstate) {
+        dpsmode_enable(true);
+    }
 }
 
 static void determine_focused_item(uui_t *ui, int8_t direction) {
@@ -776,15 +784,17 @@ static void deactivated(void)
     tft_clear();
 }
 
+
 /**
- * @brief      Save persistent parameters
- *
- * @param      past  The past
+ * @brief      Saves dpsmode configs
  */
-static void past_save(past_t *past)
-{
-    (void)past;
-}
+void dpsmode_past_save(past_t *past) {
+    uint32_t config = 0;
+
+    config |= dpsmode_cfg_initstate ? 1 : 0;
+
+    past_write_unit(past, (SCREEN_ID << 24) | PAST_CFG, (void*) &config,  4);
+} 
 
 /**
  * @brief      Restore persistent parameters
@@ -834,6 +844,13 @@ static void past_restore(past_t *past)
     if (past_read_unit(past, ((SCREEN_ID << 24) | PAST_T) + 8, (const void**) &p, &length)) {
         recall_t[1] = *p;
     }
+
+    // load configs, referenced by the settings screen
+    if (past_read_unit(past, (SCREEN_ID << 24) | PAST_CFG, (const void**) &p, &length)) {
+        uint32_t configs = *p;
+        dpsmode_cfg_initstate = configs & 0x1;
+    }
+
 
 }
 

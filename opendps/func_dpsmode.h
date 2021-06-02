@@ -28,11 +28,21 @@
 
 #include "uui.h"
 
+
 /**
  * @brief      Add the CV function to the UI
  *
  * @param      ui    The user interface
  */
 void func_dpsmode_init(uui_t *ui);
+
+
+
+/**
+  * @brief Saves past data
+  * @retval none
+  */
+void dpsmode_past_save(past_t *past);
+
 
 #endif // __FUNC_DPSMODE_H__
