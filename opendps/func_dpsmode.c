@@ -105,11 +105,12 @@ bool dpsmode_cfg_initstate = false;
 
 enum {
     CUR_GFX_NOT_DRAWN = 0, 
-    CUR_GFX_CV = 1,
-    CUR_GFX_CC = 2,
-    CUR_GFX_PP  = 4,
-    CUR_GFX_OPP = 8,
-    CUR_GFX_TM = 16,
+    CUR_GFX_CV = 1,  // constant voltage
+    CUR_GFX_CC = 2,  // constant current
+    CUR_GFX_PP  = 4, // power
+    CUR_GFX_OPP = 8, // over power protection
+    CUR_GFX_TM = 16, // timer
+    CUR_GFX_LOWVIN = 32, // low input voltage
 
     CUR_GFX_M1_RECALL = 1024,
     CUR_GFX_M2_RECALL = 2048,
@@ -722,6 +723,9 @@ static void activated(void) {
     // init state on?
     if (dpsmode_cfg_initstate) {
         dpsmode_enable(true);
+        screen->is_enabled = true;
+        screen->enable(screen->is_enabled);
+        opendps_update_power_status(screen->is_enabled);
     }
 }
 
@@ -910,18 +914,27 @@ static void dpsmode_tick(void)
         }
 
         /** Determine if we are in CV or CC mode and display it */
+        int32_t vin = pwrctl_calc_vin(v_in_raw); /** @todo: subtract for LDO */
         int32_t vout_diff = abs(saved_v - vout_actual);
         int32_t cout_diff = abs(saved_i - cout_actual);
 
-        if (cout_diff < vout_diff) {
+        if (saved_v > vin) {
+            // we are limited by low input voltage
+            dpsmode_graphics |= CUR_GFX_LOWVIN;
+            dpsmode_graphics &= ~CUR_GFX_CV;
+            dpsmode_graphics &= ~CUR_GFX_CC;
+
+        } else if (cout_diff < vout_diff) {
             // current diff smaller than voltage diff (constant current)
             dpsmode_graphics |= CUR_GFX_CC;
             dpsmode_graphics &= ~CUR_GFX_CV;
+            dpsmode_graphics &= ~CUR_GFX_LOWVIN;
 
         } else {
             // current diff larger than voltage diff (constant voltage)
             dpsmode_graphics |= CUR_GFX_CV;
             dpsmode_graphics &= ~CUR_GFX_CC;
+            dpsmode_graphics &= ~CUR_GFX_LOWVIN;
         }
 
 
@@ -1035,7 +1048,7 @@ static void draw_bars() {
                 GFX_CVBAR_WIDTH, GFX_CVBAR_HEIGHT,
                 TFT_WIDTH - GFX_CVBAR_WIDTH,
                 YPOS_VOLTAGE + FONT_METER_LARGE_MAX_GLYPH_HEIGHT - GFX_CVBAR_HEIGHT );
-    } else {
+    } else if ( ! (dpsmode_graphics & (CUR_GFX_LOWVIN|CUR_GFX_CV))) {
         tft_fill(TFT_WIDTH - GFX_CVBAR_WIDTH, YPOS_VOLTAGE + FONT_METER_LARGE_MAX_GLYPH_HEIGHT - GFX_CVBAR_HEIGHT,
                     GFX_CVBAR_WIDTH, GFX_CVBAR_HEIGHT,
                     BLACK);
@@ -1079,6 +1092,18 @@ static void draw_bars() {
                     GFX_PPBAR_WIDTH, GFX_PPBAR_HEIGHT,
                     TFT_WIDTH - GFX_PPBAR_WIDTH,
                     YPOS_POWER + FONT_METER_LARGE_MAX_GLYPH_HEIGHT - GFX_PPBAR_HEIGHT );
+    }
+
+    // draw low voltage warning at the constant voltage area
+    if (dpsmode_graphics & CUR_GFX_LOWVIN) {
+        tft_blit((uint16_t*) gfx_ppbar,
+                GFX_PPBAR_WIDTH, GFX_PPBAR_HEIGHT,
+                TFT_WIDTH - GFX_PPBAR_WIDTH,
+                YPOS_VOLTAGE + FONT_METER_LARGE_MAX_GLYPH_HEIGHT - GFX_PPBAR_HEIGHT );
+    } else if ( ! (dpsmode_graphics & (CUR_GFX_LOWVIN|CUR_GFX_CV))) {
+        tft_fill(TFT_WIDTH - GFX_PPBAR_WIDTH, YPOS_VOLTAGE + FONT_METER_LARGE_MAX_GLYPH_HEIGHT - GFX_PPBAR_HEIGHT,
+                    GFX_PPBAR_WIDTH, GFX_PPBAR_HEIGHT,
+                    BLACK);
     }
 
 

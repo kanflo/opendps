@@ -68,7 +68,7 @@
 #define ITEMS_PER_PAGE 5
 
 // Total number of fields that can be edited
-#define ITEMS 13
+#define ITEMS 14
 
 // PAGES = ceil(ITEMS / ITEMS_PER_PAGE)
 #define PAGES (ITEMS+(ITEMS_PER_PAGE-1))/ITEMS_PER_PAGE
@@ -193,7 +193,7 @@ struct field_item field_items[] = {
     {"Vin ADC K",       -9999999,  9999999,  3,       4,    unit_none,     &get_vin_adc_c,      &set_vin_adc_c },
 
     // Initial output state
-    {"Init State",       0,        10000,    1,       0,    unit_bool,     &get_initstate,      &set_initstate },
+    {"PwrOnState",       0,            1,    1,       0,    unit_bool,     &get_initstate,      &set_initstate },
     {"Reset Cfg",        0,        10000,    1,       0,    unit_bool,     &get_resetcfg,       &set_resetcfg },
 };
 
@@ -515,10 +515,10 @@ static void set_resetcfg(struct ui_number_t *item) {
 }
 
 static int32_t get_initstate() {
-    return dpsmode_cfg_initstate ? 1 : 0;
+    return dpsmode_cfg_initstate & 0x01;
 }
 static void set_initstate(struct ui_number_t *item) {
-    dpsmode_cfg_initstate = (item->value == 1);
+    dpsmode_cfg_initstate = item->value & 0x01;
 }
 
 
