@@ -475,15 +475,26 @@ static bool event(uui_t *ui, event_t event, uint8_t data) {
             // save settings on power on
             if (past_read_unit(past, (SCREEN_ID << 24) | PAST_V, (const void**) &past_data, &length)) {
                 if (*past_data != saved_v) past_write_unit(past, (SCREEN_ID << 24) | PAST_V, (void*) &saved_v, 4);
+            } else {
+                past_write_unit(past, (SCREEN_ID << 24) | PAST_V, (void*) &saved_v, 4);
             }
+
             if (past_read_unit(past, (SCREEN_ID << 24) | PAST_I, (const void**) &past_data, &length)) {
                 if (*past_data != saved_i) past_write_unit(past, (SCREEN_ID << 24) | PAST_I, (void*) &saved_i, 4);
+            } else {
+                past_write_unit(past, (SCREEN_ID << 24) | PAST_I, (void*) &saved_i, 4);
             }
+
             if (past_read_unit(past, (SCREEN_ID << 24) | PAST_P, (const void**) &past_data, &length)) {
                 if (*past_data != saved_p) past_write_unit(past, (SCREEN_ID << 24) | PAST_P, (void*) &saved_p, 4);
+            } else {
+                past_write_unit(past, (SCREEN_ID << 24) | PAST_P, (void*) &saved_p, 4);
             }
+
             if (past_read_unit(past, (SCREEN_ID << 24) | PAST_T, (const void**) &past_data, &length)) {
                 if (*past_data != saved_t) past_write_unit(past, (SCREEN_ID << 24) | PAST_T, (void*) &saved_t, 4);
+            } else {
+                past_write_unit(past, (SCREEN_ID << 24) | PAST_T, (void*) &saved_t, 4);
             }
 
             break;
@@ -561,6 +572,9 @@ static bool event(uui_t *ui, event_t event, uint8_t data) {
                 saved_p = recall_p[0];
                 saved_t = recall_t[0];
 
+                dpsmode_graphics &= ~CUR_GFX_M2_RECALL;
+                dpsmode_graphics |= CUR_GFX_M1_RECALL;
+
                 // Turn off power
                 event_put(event_shutoff, 0);
 
@@ -605,6 +619,9 @@ static bool event(uui_t *ui, event_t event, uint8_t data) {
                 saved_i = recall_i[1];
                 saved_p = recall_p[1];
                 saved_t = recall_t[1];
+
+                dpsmode_graphics &= ~CUR_GFX_M1_RECALL;
+                dpsmode_graphics |= CUR_GFX_M2_RECALL;
 
                 // Turn off power
                 event_put(event_shutoff, 0);
@@ -1150,8 +1167,8 @@ static void clear_bars(bool all) {
     }
 
     // determine if M1/M2 settings match and enable those bars
-    if (recall_v[0] == saved_v && recall_i[0] == saved_i && recall_p[0] == saved_p && recall_t[0] == saved_t) dpsmode_graphics |= CUR_GFX_M1_RECALL;
-    if (recall_v[1] == saved_v && recall_i[1] == saved_i && recall_p[1] == saved_p && recall_t[1] == saved_t) dpsmode_graphics |= CUR_GFX_M2_RECALL;
+    if (recall_v[0] == saved_v && recall_i[0] == saved_i && recall_p[0] == saved_p && recall_t[0] == saved_t && saved_v != 0 && saved_i != 0) dpsmode_graphics |= CUR_GFX_M1_RECALL;
+    if (recall_v[1] == saved_v && recall_i[1] == saved_i && recall_p[1] == saved_p && recall_t[1] == saved_t && saved_v != 0 && saved_i != 0) dpsmode_graphics |= CUR_GFX_M2_RECALL;
 }
 
 

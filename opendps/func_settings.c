@@ -28,6 +28,7 @@
 #include <string.h>
 #include "hw.h"
 #include "func_settings.h"
+#include "func_dpsmode.h"
 #include "uui.h"
 #include "uui_number.h"
 #include "dbg_printf.h"
