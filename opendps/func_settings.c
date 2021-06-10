@@ -190,8 +190,8 @@ struct field_item field_items[] = {
     {"I ADC C",         -9999999,  9999999,  3,       4,    unit_none,     &get_a_adc_c,        &set_a_adc_c },
     {"I DAC K",         -9999999,  9999999,  3,       4,    unit_none,     &get_a_dac_k,        &set_a_dac_k },
     {"I DAC C",         -9999999,  9999999,  3,       4,    unit_none,     &get_a_dac_c,        &set_a_dac_c },
-    {"Vin ADC C",       -9999999,  9999999,  3,       4,    unit_none,     &get_vin_adc_k,      &set_vin_adc_k },
-    {"Vin ADC K",       -9999999,  9999999,  3,       4,    unit_none,     &get_vin_adc_c,      &set_vin_adc_c },
+    {"Vin ADC K",       -9999999,  9999999,  3,       4,    unit_none,     &get_vin_adc_k,      &set_vin_adc_k },
+    {"Vin ADC C",       -9999999,  9999999,  3,       4,    unit_none,     &get_vin_adc_c,      &set_vin_adc_c },
 
     // Initial output state
     {"PwrOnState",       0,            1,    1,       0,    unit_bool,     &get_initstate,      &set_initstate },
