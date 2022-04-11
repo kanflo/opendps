@@ -71,7 +71,7 @@ POWER_COLORED ?= 1
 POWER_OFF_VISIBLE ?= 0
 
 GIT_VERSION := $(shell git describe --abbrev=4 --dirty --always --tags)
-CFLAGS = -I. -DGIT_VERSION=\"$(GIT_VERSION)\" -Wno-missing-braces
+CFLAGS = -I. -DGIT_VERSION=\"$(GIT_VERSION)\" -Wno-missing-braces -O2
 
 # Output voltage and current limit are persisted in flash,
 # this is the default setting
