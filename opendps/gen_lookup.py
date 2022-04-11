@@ -374,7 +374,7 @@ def main():
 
         # If this is a font file ensure that a font_size has been specified
         if args.font_size:
-            characters = "0123456789.VA" # The characters to generate a lookup table of
+            characters = "0123456789.VAW" # The characters to generate a lookup table of
             if args.ascii:
                 characters = ""
                 for ch in range(0x21,0x7F): # skip <Space>, <Del>
