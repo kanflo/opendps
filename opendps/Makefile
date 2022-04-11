@@ -27,6 +27,9 @@ WIFI := 1
 # Print debug information on the serial output
 DEBUG ?= 0
 
+# enable HW watchdog
+WDOG ?= 1
+
 # Font file
 METER_FONT_FILE ?= gfx/Ubuntu-C.ttf
 METER_FONT_SMALL_SIZE ?= 18
@@ -48,6 +51,9 @@ TINT ?= ffffff
 
 # Enable CC mode
 CC_ENABLE ?= 1
+
+# Enable CV mode
+CV_ENABLE ?= 1
 
 # Enable cl mode
 CL_ENABLE ?= 1
@@ -88,7 +94,6 @@ OBJS = \
     crc16.o \
     uui.o \
     uui_number.o \
-    func_cv.o \
     settings_calibration.o \
     hw.o \
     pwrctl.o \
@@ -123,6 +128,12 @@ ifeq ($(DEBUG),1)
 	OBJS += dbg_printf.o
 endif
 
+ifeq ($(WDOG),1)
+	CFLAGS +=-DCONFIG_WDOG
+	OBJS += wdog.o
+endif
+
+
 ifeq ($(INVERT_ENABLE),1)
 	CFLAGS +=-DCONFIG_INVERT_ENABLE
 endif
@@ -141,6 +152,11 @@ endif
 ifeq ($(CC_ENABLE),1)
 	CFLAGS +=-DCONFIG_CC_ENABLE
 	OBJS += func_cc.o
+endif
+
+ifeq ($(CV_ENABLE),1)
+	CFLAGS +=-DCONFIG_CV_ENABLE
+	OBJS += func_cv.o
 endif
 
 ifeq ($(CL_ENABLE),1)

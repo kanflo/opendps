@@ -102,8 +102,8 @@ ui_number_t cv_current = {
     .min = 0,
     .max = CONFIG_DPS_MAX_CURRENT,
     .si_prefix = si_milli,
-    .num_digits = 1,
-    .num_decimals = 3,
+    .num_digits = CURRENT_DIGITS,
+    .num_decimals = CURRENT_DECIMALS,
     .unit = unit_ampere,
     .changed = &current_changed,
 };

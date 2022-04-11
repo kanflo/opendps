@@ -58,14 +58,17 @@
 #include "font-meter_medium.h"
 #include "font-meter_large.h"
 #include "gpio.h"
+#include "wdog.h"
 #include "past.h"
 #include "pastunits.h"
 #include "uui.h"
 #include "uui_number.h"
 #include "opendps.h"
-#include "func_cv.h"
 #include "settings_calibration.h"
 #include "my_assert.h"
+#ifdef CONFIG_CV_ENABLE
+#include "func_cv.h"
+#endif // CONFIG_CV_ENABLE
 #ifdef CONFIG_CC_ENABLE
 #include "func_cc.h"
 #endif // CONFIG_CC_ENABLE
@@ -448,7 +451,9 @@ static void ui_init(void)
 
     /** Initialise the function screens */
     uui_init(&func_ui, &g_past);
+#ifdef CONFIG_CV_ENABLE
     func_cv_init(&func_ui);
+#endif // CONFIG_CV_ENABLE
 #ifdef CONFIG_CC_ENABLE
     func_cc_init(&func_ui);
 #endif // CONFIG_CC_ENABLE
@@ -978,6 +983,10 @@ static void event_handler(void)
             }
             ui_handle_event(event, data);
         }
+
+#ifdef CONFIG_WDOG
+        wdog_kick();
+#endif // CONFIG_WDOG
     }
 }
 
@@ -1035,6 +1044,9 @@ int main(int argc, char const *argv[])
     tft_clear();
     uui_refresh(current_ui, true);
 #endif // CONFIG_SPLASH_SCREEN
+#ifdef CONFIG_WDOG
+    wdog_init();
+#endif // CONFIG_WDOG
     event_handler();
     return 0;
 }

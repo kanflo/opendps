@@ -60,10 +60,10 @@ from protocol import (create_cmd, create_enable_output, create_lock, create_set_
                       unpack_cal_report, unpack_query_response, unpack_version_response)
 
 try:
-    from PyCRC.CRCCCITT import CRCCCITT
+    import crc16
 except ImportError:
-    print("Missing dependency pycrc:")
-    print(" sudo pip{} install pycrc"
+    print("Missing dependency crc16:")
+    print(" sudo pip{} install crc16"
           .format("3" if sys.version_info.major == 3 else ""))
     raise SystemExit()
 try:
@@ -616,7 +616,7 @@ def run_upgrade(comms, fw_file_name, args):
         content = file.read()
         if codecs.encode(content, 'hex')[6:8] != b'20' and not args.force:
             fail("The firmware file does not seem valid, use --force to force upgrade")
-        crc = CRCCCITT().calculate(content)
+        crc = crc16.crc16xmodem(content)
     chunk_size = 1024
     ret_dict = communicate(comms, create_upgrade_start(chunk_size, crc), args)
     if ret_dict["status"] == protocol.UPGRADE_CONTINUE:
@@ -720,7 +720,7 @@ def do_calibration(comms, args):
     print("\t2 stable input voltages\r\n")
     print("Please ensure nothing is connected to the output of the DPS before starting calibration!\r\n")
 
-    t = raw_input("Would you like to proceed? (y/n): ")
+    t = input("Would you like to proceed? (y/n): ")
     if t.lower() != 'y':
         return
 
@@ -733,13 +733,13 @@ def do_calibration(comms, args):
 
     print("Please hook up the first lower supply voltage to the DPS now")
     print("ensuring that the serial connection is connected after boot")
-    calibration_input_voltage.append(float(raw_input("Type input voltage in mV: ")))
+    calibration_input_voltage.append(float(input("Type input voltage in mV: ")))
     calibration_vin_adc.append(get_average_calibration_result(comms, 'vin_adc'))
 
     # Do second Voltage Hookup
     print("\r\nPlease hook up the second higher supply voltage to the DPS now")
     print("ensuring that the serial connection is connected after boot")
-    calibration_input_voltage.append(float(raw_input("Type input voltage in mV: ")))
+    calibration_input_voltage.append(float(input("Type input voltage in mV: ")))
     
     # Ensure that we are still on the settings screen
     communicate(comms, create_change_screen(protocol.CHANGE_SCREEN_SETTINGS), args, quiet=True)
@@ -836,7 +836,7 @@ def do_calibration(comms, args):
     payload = create_set_parameter(args.parameter)
     communicate(comms, payload, args, quiet=True)
     communicate(comms, create_enable_output("on"), args, quiet=True)  # Turn the output on
-    calibration_real_voltage.append(float(raw_input("Type measured voltage on output in mV: ")))
+    calibration_real_voltage.append(float(input("Type measured voltage on output in mV: ")))
     calibration_v_adc.append(get_average_calibration_result(comms, 'vout_adc'))
     calibration_v_dac.append(output_dac)
 
@@ -845,7 +845,7 @@ def do_calibration(comms, args):
     args.parameter = ["V_DAC={}".format(output_dac)]
     payload = create_set_parameter(args.parameter)
     communicate(comms, payload, args, quiet=True)
-    calibration_real_voltage.append(float(raw_input("Type measured voltage on output in mV: ")))
+    calibration_real_voltage.append(float(input("Type measured voltage on output in mV: ")))
     calibration_v_adc.append(get_average_calibration_result(comms, 'vout_adc'))
     calibration_v_dac.append(output_dac)
 
@@ -900,9 +900,9 @@ def do_calibration(comms, args):
         plt.show()
 
     print("\r\nOutput Current Calibration:")
-    max_dps_current = float(raw_input("Max output current of your DPS (e.g 5 for the DPS5005) in amps: "))
-    load_resistance = float(raw_input("Load resistance in ohms: "))
-    load_max_wattage = float(raw_input("Load wattage rating in watts: "))
+    max_dps_current = float(input("Max output current of your DPS (e.g 5 for the DPS5005) in amps: "))
+    load_resistance = float(input("Load resistance in ohms: "))
+    load_max_wattage = float(input("Load wattage rating in watts: "))
 
     # There are three potential limiting factors for the output voltage, these are:
     output_voltage_based_on_input_voltage_mv = calibration_input_voltage[1] * 0.9  # 90% of input voltage
@@ -913,7 +913,7 @@ def do_calibration(comms, args):
 
     # The more max_output_voltage_mv is maximised the more accurate the results of the current calibration will be
 
-    raw_input("Please connect the load to the output of the DPS, then press enter")
+    input("Please connect the load to the output of the DPS, then press enter")
 
     # Take multiple current readings at different voltages and construct an Iout vs Iadc array
     print("Calibrating output current ADC", end='')
@@ -965,7 +965,7 @@ def do_calibration(comms, args):
         plt.show()
 
     print("\r\nConstant Current Calibration:")
-    raw_input("Please short the output of the DPS with a thick wire capable of carrying {}A, then press enter".format(max_dps_current))
+    input("Please short the output of the DPS with a thick wire capable of carrying {}A, then press enter".format(max_dps_current))
 
     # Set the V_DAC output to the maximum
     args.parameter = ["V_DAC={}".format(4095)]

@@ -1,2 +1,2 @@
-pycrc==1.21
+crc16==0.1.1
 pyserial==3.4

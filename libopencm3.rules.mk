@@ -234,36 +234,36 @@ styleclean: $(STYLECHECKFILES:=.styleclean)
 ifeq ($(STLINK_PORT),)
 ifeq ($(BMP_PORT),)
 ifeq ($(OOCD_FILE),)
-%.flash: %.elf
+%.flash: %.srec
 	@printf "  FLASH   $<\n"
-	(echo "halt; program $(realpath $(*).elf) verify reset" | nc -4 localhost 4444 2>/dev/null) || \
+	(echo "halt; program $(realpath $(*).srec) verify reset" | nc -4 localhost 4444 2>/dev/null) || \
 		$(OOCD) -f interface/$(OOCD_INTERFACE).cfg \
 		-f target/$(OOCD_TARGET).cfg \
-		-c "program $(*).elf verify reset exit" \
+		-c "program $(*).srec verify reset exit" \
 		$(NULL)
 else
-%.flash: %.elf
+%.flash: %.srec
 	@printf "  FLASH   $<\n"
-	(echo "halt; program $(realpath $(*).elf) verify reset" | nc -4 localhost 4444 2>/dev/null) || \
+	(echo "halt; program $(realpath $(*).srec) verify reset" | nc -4 localhost 4444 2>/dev/null) || \
 		$(OOCD) -f $(OOCD_FILE) \
-		-c "program $(*).elf verify reset exit" \
+		-c "program $(*).srec verify reset exit" \
 		$(NULL)
 endif
 else
-%.flash: %.elf
-	@printf "  GDB   $(*).elf (flash)\n"
+%.flash: %.srec
+	@printf "  GDB   $(*).srec (flash)\n"
 	$(GDB) --batch \
 		   -ex 'target extended-remote $(BMP_PORT)' \
 		   -x $(SCRIPT_DIR)/black_magic_probe_flash.scr \
-		   $(*).elf
+		   $(*).srec
 endif
 else
-%.flash: %.elf
-	@printf "  GDB   $(*).elf (flash)\n"
+%.flash: %.srec
+	@printf "  GDB   $(*).srec (flash)\n"
 	$(GDB) --batch \
 		   -ex 'target extended-remote $(STLINK_PORT)' \
 		   -x $(SCRIPT_DIR)/stlink_flash.scr \
-		   $(*).elf
+		   $(*).srec
 endif
 
 .PHONY: images clean stylecheck styleclean elf bin hex srec list
