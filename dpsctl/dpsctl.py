@@ -803,6 +803,10 @@ def do_calibration(comms, args):
         k, _ = best_fit(output_dac[x:x+2], output_adc[x:x+2])
         output_gradient.append(k)
 
+    # Initialise max_v_dac to being the last sample, this will be overridden
+    # if the output is non-linear
+    max_v_dac = max(output_dac)
+
     # If the gradient is near zero then we know this is our maximum
     for x in range(len(output_gradient)):
         if output_gradient[x] < 0.1:
@@ -831,6 +835,7 @@ def do_calibration(comms, args):
     args.parameter = ["V_DAC={}".format(output_dac)]
     payload = create_set_parameter(args.parameter)
     communicate(comms, payload, args, quiet=True)
+    communicate(comms, create_enable_output("on"), args, quiet=True)  # Turn the output on
     calibration_real_voltage.append(float(input("Type measured voltage on output in mV: ")))
     calibration_v_adc.append(get_average_calibration_result(comms, 'vout_adc'))
     calibration_v_dac.append(output_dac)
