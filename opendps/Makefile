@@ -5,19 +5,19 @@ COMMANDLINE := 0
 BAUDRATE ?= 9600
 
 # Set build model, defaults to DPS5005
-MODEL := DPS5005
+MODEL := DPS5020
 
 BINARY = opendps_$(MODEL)
 
 # Include splash screen
-SPLASH_SCREEN := 0
+SPLASH_SCREEN := 1
 
 # Include support for thermal lockout via the serial interface
 THERMAL_LOCKOUT := 0
 
 # Build wifi version (only change being that the wifi icon will start flashing
 # on power up)
-WIFI := 1
+WIFI := 0
 
 # Maximum current your DPS model can provide. Eg 5000mA for the DPS5005
 # This is usually set by MODEL but you can override it here
@@ -34,7 +34,7 @@ WDOG ?= 1
 METER_FONT_FILE ?= gfx/Ubuntu-C.ttf
 METER_FONT_SMALL_SIZE ?= 18
 METER_FONT_MEDIUM_SIZE ?= 24
-METER_FONT_LARGE_SIZE ?= 48
+METER_FONT_LARGE_SIZE ?= 40
 FULL_FONT_FILE ?= gfx/ProggyClean.ttf
 FULL_FONT_SMALL_SIZE ?= 16
 
@@ -42,21 +42,21 @@ FULL_FONT_SMALL_SIZE ?= 16
 COLORSPACE ?= 0
 
 # Colors for the main UI elements -- see ili9163c.h for list of colors
-COLOR_VOLTAGE ?= WHITE
-COLOR_AMPERAGE ?= WHITE
+COLOR_VOLTAGE ?= 0x87F0
+COLOR_AMPERAGE ?= 0xFFF0
+COLOR_WATTAGE ?= 0xC41F
 COLOR_INPUT ?= WHITE
 
 # Optional tinting for UI elements
 TINT ?= ffffff
 
-# Enable CC mode
-CC_ENABLE ?= 1
+# Enable CC/CV mode
+CCCV_ENABLE ?= 1
 
-# Enable CV mode
-CV_ENABLE ?= 1
-
-# Enable cl mode
-CL_ENABLE ?= 1
+# Enable MPPT mode (Solar panel Maximum Power Point Tracking)
+# WARNING: This screen automatically enables the output and ramps up to maximum current.
+# Make sure you set the Voltage and Current limits before connecting a load!
+MPPT_ENABLE ?= 1
 
 # Enable function generator mode
 FUNCGEN_ENABLE ?= 1
@@ -65,7 +65,7 @@ FUNCGEN_ENABLE ?= 1
 INVERT_ENABLE ?= 0
 
 # Power buttons in color
-POWER_COLORED ?= 1
+POWER_COLORED ?= 0
 
 # Power off button visible
 POWER_OFF_VISIBLE ?= 0
@@ -82,6 +82,7 @@ CFLAGS += \
           -DCOLORSPACE=$(COLORSPACE) \
           -DCOLOR_VOLTAGE=$(COLOR_VOLTAGE) \
           -DCOLOR_AMPERAGE=$(COLOR_AMPERAGE) \
+          -DCOLOR_WATTAGE=$(COLOR_WATTAGE) \
           -DCOLOR_INPUT=$(COLOR_INPUT) \
           -D$(MODEL)
 
@@ -110,10 +111,7 @@ OBJS = \
     font-meter_small.o \
     font-meter_medium.o \
     font-meter_large.o \
-    gfx-cc.o \
     gfx-crosshair.o \
-    gfx-cv.o \
-    gfx-cl.o \
     gfx-padlock.o \
     gfx-thermometer.o \
     gfx-wifi.o \
@@ -124,15 +122,16 @@ ifdef MAX_CURRENT
 endif
 
 ifeq ($(DEBUG),1)
-	CFLAGS +=-DCONFIG_DEBUG
+	CFLAGS +=-DCONFIG_DEBUG -g -O1
 	OBJS += dbg_printf.o
+else
+    CFLAGS +=-DCONFIG_RELEASE -g -Os
 endif
 
 ifeq ($(WDOG),1)
 	CFLAGS +=-DCONFIG_WDOG
 	OBJS += wdog.o
 endif
-
 
 ifeq ($(INVERT_ENABLE),1)
 	CFLAGS +=-DCONFIG_INVERT_ENABLE
@@ -149,19 +148,14 @@ ifeq ($(POWER_OFF_VISIBLE),1)
 	CFLAGS +=-DCONFIG_POWER_OFF_VISIBLE
 endif
 
-ifeq ($(CC_ENABLE),1)
-	CFLAGS +=-DCONFIG_CC_ENABLE
-	OBJS += func_cc.o
+ifeq ($(CCCV_ENABLE),1)
+	CFLAGS +=-DCONFIG_CCCV_ENABLE
+	OBJS += func_cccv.o gfx-cccv.o
 endif
 
-ifeq ($(CV_ENABLE),1)
-	CFLAGS +=-DCONFIG_CV_ENABLE
-	OBJS += func_cv.o
-endif
-
-ifeq ($(CL_ENABLE),1)
-	CFLAGS +=-DCONFIG_CL_ENABLE
-	OBJS += func_cl.o
+ifeq ($(MPPT_ENABLE),1)
+	CFLAGS +=-DCONFIG_MPPT_ENABLE
+	OBJS += func_mppt.o gfx-mppt.o
 endif
 
 ifeq ($(FUNCGEN_ENABLE),1)
@@ -192,11 +186,11 @@ endif
 include ../libopencm3.target.mk
 
 fonts:
-	@python ./gen_lookup.py -l -o gfx_lookup
-	@python ./gen_lookup.py -f $(FULL_FONT_FILE) -s $(FULL_FONT_SMALL_SIZE) -o full_small -a
-	@python ./gen_lookup.py -f $(METER_FONT_FILE) -s $(METER_FONT_SMALL_SIZE) -o meter_small
-	@python ./gen_lookup.py -f $(METER_FONT_FILE) -s $(METER_FONT_MEDIUM_SIZE) -o meter_medium
-	@python ./gen_lookup.py -f $(METER_FONT_FILE) -s $(METER_FONT_LARGE_SIZE) -o meter_large
+	@python2 ./gen_lookup.py -l -o gfx_lookup
+	@python2 ./gen_lookup.py -f $(FULL_FONT_FILE) -s $(FULL_FONT_SMALL_SIZE) -o full_small -a
+	@python2 ./gen_lookup.py -f $(METER_FONT_FILE) -s $(METER_FONT_SMALL_SIZE) -o meter_small
+	@python2 ./gen_lookup.py -f $(METER_FONT_FILE) -s $(METER_FONT_MEDIUM_SIZE) -o meter_medium
+	@python2 ./gen_lookup.py -f $(METER_FONT_FILE) -s $(METER_FONT_LARGE_SIZE) -o meter_large
 
 test:
 	@make -C tests

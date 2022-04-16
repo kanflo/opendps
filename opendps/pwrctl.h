@@ -49,14 +49,14 @@ extern float vin_adc_c_coef;
 void pwrctl_init(past_t *past);
 
 /**
-  * @brief Set voltage output
+  * @brief Set voltage output (HW controlled)
   * @param value_mv voltage in millivolt
   * @retval true requested voltage was within specs
   */
 bool pwrctl_set_vout(uint32_t value_mv);
 
 /**
-  * @brief Set current output
+  * @brief Set current output (HW controlled)
  * @param value_ma current in milli ampere
   * @retval true requested current was within specs
   */
@@ -75,7 +75,7 @@ uint32_t pwrctl_get_iout(void);
 uint32_t pwrctl_get_vout(void);
 
 /**
-  * @brief Set current limit
+  * @brief Set current limit (SW limit used for OCP)
   * @param value_ma limit in milliampere
   * @retval true requested current was within specs
   */
@@ -88,7 +88,7 @@ bool pwrctl_set_ilimit(uint32_t value_ma);
 uint32_t pwrctl_get_ilimit(void);
 
 /**
-  * @brief Set voltage limit
+  * @brief Set voltage limit (SW limit used for OVP)
   * @param value_mv limit in millivolts
   * @retval true requested voltage was within specs
   */
@@ -106,6 +106,12 @@ uint32_t pwrctl_get_vlimit(void);
   * @retval none
   */
 void pwrctl_enable_vout(bool enable);
+
+/**
+  * @brief Check that we are operating within set limits
+  * @retval Bool: Handled / Not Handled (i.e. power off)
+  */
+bool pwrctl_check_limits(void);
 
 /**
   * @brief Return power output status

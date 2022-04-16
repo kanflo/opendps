@@ -22,16 +22,16 @@
  * THE SOFTWARE.
  */
 
-#ifndef __FUNC_CV_H__
-#define __FUNC_CV_H__
+#ifndef __FUNC_CCCV_H__
+#define __FUNC_CCCV_H__
 
 #include "uui.h"
 
 /**
- * @brief      Add the CV function to the UI
+ * @brief      Add the CC/CV function to the UI
  *
  * @param      ui    The user interface
  */
-void func_cv_init(uui_t *ui);
+void func_cccv_init(uui_t *ui);
 
-#endif // __FUNC_CV_H__
+#endif // __FUNC_CCCV_H__

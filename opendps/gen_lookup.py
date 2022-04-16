@@ -56,7 +56,7 @@ def image_to_bgr565(im):
 Generate the lookup table for bytes consisting of packed 2bpp pixels
 """
 def generate_pixel_lookup_table(output_filename):
-    print "Generating lookup table for pixels as %s.c/.h" % (output_filename)
+    print("Generating lookup table for pixels as %s.c/.h", output_filename)
     source_filename = "%s.c" % (output_filename)
     header_filename = "%s.h" % (output_filename)
 
@@ -155,7 +155,7 @@ def get_space_width(font_fname, font_size):
 Convert the specified font to a pair of .c/.h C language lookup tables in mono 2bpp format
 """
 def convert_font_to_c(font_fname, characters, font_size, font_spacing, output_filename):
-    print "Converting %s %dpt to font-%s.c/h" % (font_fname, font_size, output_filename)
+    print("Converting %s %dpt to font-%s.c/h", font_fname, font_size, output_filename)
 
     character_images = generate_font_images(font_fname, characters, font_size)
     (_, character_heights) = character_images[0].size
@@ -294,7 +294,7 @@ def convert_font_to_c(font_fname, characters, font_size, font_spacing, output_fi
 Convert the specified font to a pair of .c/.h C language lookup tables in BGR565 format
 """
 def convert_graphic_to_c(graphic_fname, output_filename):
-    print "Converting %s to gfx-%s.c/h" % (graphic_fname, output_filename)
+    print("Converting %s to gfx-%s.c/h", graphic_fname, output_filename)
 
     graphic_image = Image.open(graphic_fname)
 
@@ -374,7 +374,7 @@ def main():
 
         # If this is a font file ensure that a font_size has been specified
         if args.font_size:
-            characters = "0123456789.VA" # The characters to generate a lookup table of
+            characters = "0123456789.VAW" # The characters to generate a lookup table of
             if args.ascii:
                 characters = ""
                 for ch in range(0x21,0x7F): # skip <Space>, <Del>

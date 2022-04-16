@@ -2,6 +2,7 @@
  * The MIT License (MIT)
  *
  * Copyright (c) 2018 Johan Kanflo (github.com/kanflo)
+ * Copyright (c) 2021 Richard Taylor (github.com/art103)
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -22,16 +23,16 @@
  * THE SOFTWARE.
  */
 
-#ifndef __FUNC_CC_H__
-#define __FUNC_CC_H__
+#ifndef __FUNC_MPPT_H__
+#define __FUNC_MPPT_H__
 
 #include "uui.h"
 
 /**
- * @brief      Add the CV function to the UI
+ * @brief      Add the MPPT function to the UI
  *
  * @param      ui    The user interface
  */
-void func_cc_init(uui_t *ui);
+void func_mppt_init(uui_t *ui);
 
-#endif // __FUNC_CC_H__
+#endif // __FUNC_MPPT_H__

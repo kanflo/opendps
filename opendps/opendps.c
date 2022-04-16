@@ -66,15 +66,12 @@
 #include "opendps.h"
 #include "settings_calibration.h"
 #include "my_assert.h"
-#ifdef CONFIG_CV_ENABLE
-#include "func_cv.h"
-#endif // CONFIG_CV_ENABLE
-#ifdef CONFIG_CC_ENABLE
-#include "func_cc.h"
-#endif // CONFIG_CC_ENABLE
-#ifdef CONFIG_CL_ENABLE
-#include "func_cl.h"
-#endif // CONFIG_CL_ENABLE
+#ifdef CONFIG_CCCV_ENABLE
+#include "func_cccv.h"
+#endif // CONFIG_CCCV_ENABLE
+#ifdef CONFIG_MPPT_ENABLE
+#include "func_mppt.h"
+#endif // CONFIG_MPPT_ENABLE
 #ifdef CONFIG_FUNCGEN_ENABLE
 #include "func_gen.h"
 #endif // CONFIG_FUNCGEN_ENABLE
@@ -96,11 +93,6 @@
 /** Timeout for waiting for wifi connction (ms) */
 #define WIFI_CONNECT_TIMEOUT  (10000)
 
-/** Blit positions */
-#define XPOS_WIFI     (4)
-#define XPOS_LOCK    (27)
-#define XPOS_INVOLT  (108) /* Right aligned to this position */
-
 /** Constants describing how certain things on the screen flash when needed */
 #define WIFI_CONNECTING_FLASHING_PERIOD  (1000)
 #define WIFI_ERROR_FLASHING_PERIOD        (500)
@@ -109,6 +101,10 @@
 #define LOCK_FLASHING_COUNTER               (4)
 #define TFT_FLASHING_PERIOD               (100)
 #define TFT_FLASHING_COUNTER                (2)
+
+#ifndef GFX_POWERON_HEIGHT
+    #define GFX_POWERON_HEIGHT GFX_POWER_HEIGHT
+#endif
 
 static void ui_flash(void);
 static void read_past_settings(void);
@@ -187,7 +183,7 @@ ui_number_t input_voltage = {
     {
         .type = ui_item_number,
         .id = 10,
-        .x = 0,
+        .x = XPOS_INVOLT,
         .y = 0,
         .can_focus = false,
     },
@@ -451,15 +447,12 @@ static void ui_init(void)
 
     /** Initialise the function screens */
     uui_init(&func_ui, &g_past);
-#ifdef CONFIG_CV_ENABLE
-    func_cv_init(&func_ui);
-#endif // CONFIG_CV_ENABLE
-#ifdef CONFIG_CC_ENABLE
-    func_cc_init(&func_ui);
-#endif // CONFIG_CC_ENABLE
-#ifdef CONFIG_CL_ENABLE
-    func_cl_init(&func_ui);
-#endif // CONFIG_CL_ENABLE
+#ifdef CONFIG_MPPT_ENABLE
+    func_mppt_init(&func_ui);
+#endif // CONFIG_MPPT_ENABLE
+#ifdef CONFIG_CCCV_ENABLE
+    func_cccv_init(&func_ui);
+#endif // CONFIG_CCCV_ENABLE
 #ifdef CONFIG_FUNCGEN_ENABLE
     func_gen_init(&func_ui);
 #endif // CONFIG_FUNCGEN_ENABLE
@@ -472,8 +465,7 @@ static void ui_init(void)
     /** Initialise the main screens */
     uui_init(&main_ui, &g_past);
     number_init(&input_voltage);
-    input_voltage.ui.x = XPOS_INVOLT;
-    input_voltage.ui.y = ui_height - font_meter_small_height;
+    input_voltage.ui.y = ui_height - font_meter_small_height - (GFX_POWERON_HEIGHT - font_meter_small_height) / 2;
     uui_add_screen(&main_ui, &main_screen);
 
     /** Activate the UIs */
@@ -529,7 +521,7 @@ static void ui_handle_event(event_t event, uint8_t data)
                 uint16_t trig = hw_get_itrig_ma();
                 dbg_printf("%10u OCP: trig:%umA limit:%umA cur:%umA\n", (uint32_t) (get_ticks()), pwrctl_calc_iout(trig), pwrctl_calc_iout(pwrctl_i_limit_raw), pwrctl_calc_iout(i_out_raw));
 #endif // CONFIG_OCP_DEBUGGING
-                ui_flash(); /** @todo When OCP kicks in, show last I_out on screen */
+                //ui_flash(); /** @todo When OCP kicks in, show last I_out on screen */
                 opendps_update_power_status(false);
                 uui_handle_screen_event(current_ui, event);
             }
