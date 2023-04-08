@@ -396,8 +396,8 @@ static command_status_t handle_cal_report(void)
     pack16(&frame, v_out_raw);
     pack16(&frame, v_in_raw);
     pack16(&frame, i_out_raw);
-    pack16(&frame, DAC_DHR12R2);
-    pack16(&frame, DAC_DHR12R1);
+    pack16(&frame, DAC_DHR12R2(DAC1));
+    pack16(&frame, DAC_DHR12R1(DAC1));
     pack_float(&frame, a_adc_k_coef);
     pack_float(&frame, a_adc_c_coef);
     pack_float(&frame, a_dac_k_coef);

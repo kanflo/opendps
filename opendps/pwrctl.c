@@ -108,9 +108,9 @@ bool pwrctl_set_vout(uint32_t value_mv)
     v_out = value_mv;
     if (v_out_enabled) {
         /** Needed for the DPS5005 "communications version" (the one with BT/USB) */
-        DAC_DHR12R1 = pwrctl_calc_vout_dac(v_out);
+        DAC_DHR12R1(DAC1) = pwrctl_calc_vout_dac(v_out);
     } else {
-        DAC_DHR12R1 = 0;
+        DAC_DHR12R1(DAC1) = 0;
     }
     return true;
 }
@@ -124,9 +124,9 @@ bool pwrctl_set_iout(uint32_t value_ma)
 {
     i_out = value_ma;
     if (v_out_enabled) {
-        DAC_DHR12R2 = pwrctl_calc_iout_dac(value_ma);
+        DAC_DHR12R2(DAC1) = pwrctl_calc_iout_dac(value_ma);
     } else {
-        DAC_DHR12R2 = 0;
+        DAC_DHR12R2(DAC1) = 0;
     }
     return true;
 }
