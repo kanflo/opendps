@@ -11,7 +11,7 @@ try:
     from PIL import ImageFont
     from PIL import ImageChops
 except ImportError:
-    print("%s depends on the Python Image Library, please install:" % sys.argv[0])
+    print(f"{sys.argv[0]} depends on the Python Image Library, please install:")
     print("pip install Pillow")
     sys.exit(0)
 
@@ -28,12 +28,12 @@ Convert an image to a packed mono 2bpp byte array
 """
 def image_to_mono2bpp(im):
     image_bytes = im.tobytes("raw", "R") # Create a byte array from the red channel of the input image
-    image_bytes += '\0\0\0' # Dummy value at the end for alignment
+    image_bytes += b"\0\0\0" # Dummy value at the end for alignment
 
     # Convert 8bpp to packed 2bpp
     mono2array = []
-    for x in range(len(image_bytes) / 4):
-        mono2array.append(int(ord(image_bytes[x*4+3]) / 64.0) << 6 | int(ord(image_bytes[x*4+2]) / 64.0) << 4 | int(ord(image_bytes[x*4+1]) / 64.0) << 2 | int(ord(image_bytes[x*4]) / 64.0))
+    for x in range(len(image_bytes) // 4):
+        mono2array.append((image_bytes[x*4+3] // 64) << 6 | (image_bytes[x*4+2] // 64) << 4 | (image_bytes[x*4+1] // 64) << 2 | (image_bytes[x*4] // 64))
 
     return mono2array
 
@@ -56,7 +56,7 @@ def image_to_bgr565(im):
 Generate the lookup table for bytes consisting of packed 2bpp pixels
 """
 def generate_pixel_lookup_table(output_filename):
-    print "Generating lookup table for pixels as %s.c/.h" % (output_filename)
+    print(f"Generating lookup table for pixels as {output_filename}.c/.h")
     source_filename = "%s.c" % (output_filename)
     header_filename = "%s.h" % (output_filename)
 
@@ -155,7 +155,7 @@ def get_space_width(font_fname, font_size):
 Convert the specified font to a pair of .c/.h C language lookup tables in mono 2bpp format
 """
 def convert_font_to_c(font_fname, characters, font_size, font_spacing, output_filename):
-    print "Converting %s %dpt to font-%s.c/h" % (font_fname, font_size, output_filename)
+    print(f"Converting {font_fname} {font_size}pt to font-{output_filename}.c/h")
 
     character_images = generate_font_images(font_fname, characters, font_size)
     (_, character_heights) = character_images[0].size
@@ -294,7 +294,7 @@ def convert_font_to_c(font_fname, characters, font_size, font_spacing, output_fi
 Convert the specified font to a pair of .c/.h C language lookup tables in BGR565 format
 """
 def convert_graphic_to_c(graphic_fname, output_filename):
-    print "Converting %s to gfx-%s.c/h" % (graphic_fname, output_filename)
+    print(f"Converting {graphic_fname} to gfx-{output_filename}.c/h")
 
     graphic_image = Image.open(graphic_fname)
 
@@ -369,7 +369,7 @@ def main():
 
         # Check font file actually exists
         if not os.path.exists(args.font_file):
-            print("Can't find file %s" % (args.font_file))
+            print(f"Can't find file {args.font_file}")
             sys.exit(1)
 
         # If this is a font file ensure that a font_size has been specified
@@ -388,7 +388,7 @@ def main():
 
         # Check image file actually exists
         if not os.path.exists(args.image_file):
-            print("Can't find file %s" % (args.image_file))
+            print("Can't find file {args.image_file}")
             sys.exit(1)
 
         convert_graphic_to_c(args.image_file, args.output)
