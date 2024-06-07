@@ -111,8 +111,7 @@ void uui_activate(uui_t *ui)
                 break;
             }
         }
-        /** @todo: add activation callback for each screen allowing for updating of U/I settings */
-        uui_refresh(ui, true);
+
         tft_blit((uint16_t*) screen->icon_data, screen->icon_width, screen->icon_height, XPOS_ICON, 128-screen->icon_height);
         if (screen->activated) {
             screen->activated();
@@ -129,7 +128,33 @@ static void focus_switch(ui_item_t *item)
     }
 }
 
-void uui_handle_screen_event(uui_t *ui, event_t event)
+/**
+ * @brief      Focus on a given user interface item
+ *
+ * @param      ui    The user interface
+ * @param      item  The user interface item to focus on
+ */
+void uui_focus(uui_t *ui, ui_item_t *item) {
+    ui_screen_t *screen = ui->screens[ui->cur_screen];
+
+    for (uint8_t i = 0; i < screen->num_items; i++) {
+        if (screen->items[i] == item) {
+            screen->cur_item = i;
+            break;
+        }
+    }
+
+    focus_switch(item);
+}
+
+/**
+ * @brief     Handles UI events that are received
+ *
+ * @param      ui     The user interface
+ * @param      event  The event to be handled
+ * @param      data   Extra event information such as button press long or short
+ */
+void uui_handle_screen_event(uui_t *ui, event_t event, uint8_t data)
 {
     assert(ui);
     ui_screen_t *screen = ui->screens[ui->cur_screen];
@@ -141,15 +166,22 @@ void uui_handle_screen_event(uui_t *ui, event_t event)
         return;
     }
 
+    // If the screen handled the event, do nothing.
+    // Screens can override the default behavior defined below by returning true.
+    if (ui->screens[ui->cur_screen]->event && ui->screens[ui->cur_screen]->event(ui, event, data))
+        return;
+
+    // Default behavior for certain events defined here.
     switch(event) {
+        // SET + Rot rotation will change to the next/previous screen
         case event_rot_left_set:
             uui_prev_screen(ui);
             break;
-
         case event_rot_right_set:
             uui_next_screen(ui);
             break;
 
+        // Rot events should be passed to focused UI elements
         case event_rot_left:
         case event_rot_right:
         case event_rot_press:
@@ -158,12 +190,14 @@ void uui_handle_screen_event(uui_t *ui, event_t event)
             }
             break;
 
+        // SET button should focus on the current UI element
         case event_button_sel:
             if (item->can_focus) {
                 focus_switch(item);
             }
             break;
 
+        // M1 should change to the previous UI element
         case event_button_m1:
             if (item->has_focus) {
                 ui_item_t *old_item = item;
@@ -178,6 +212,7 @@ void uui_handle_screen_event(uui_t *ui, event_t event)
             }
             break;
 
+        // M2 should change to the next UI element
         case event_button_m2:
             if (item->has_focus) {
                 ui_item_t *old_item = item;
@@ -192,22 +227,39 @@ void uui_handle_screen_event(uui_t *ui, event_t event)
             }
             break;
 
+        // Events that should cause power to shut off and the screen disabled
+        // This includes the timer expiring
+        case event_timer:
+        // The screen sending a shutoff event to trigger a power off
+        case event_shutoff:
+        // The power button being pressed
         case event_button_enable:
+        // Or the over current/voltage/power events triggered by hardware or screen
         case event_ocp:
         case event_ovp:
+        case event_opp:
             /** If current screen can be enabled */
             if (screen->enable) {
-                screen->is_enabled = !screen->is_enabled;
+                if (event == event_shutoff || event == event_timer) {
+                    // always turn off with shutoff or timer event
+                    screen->is_enabled = false;
+                } else {
+                    // toggle 
+                    screen->is_enabled = ! screen->is_enabled;
+                }
+
                 if (screen->is_enabled && screen->past_save) {
                     screen->past_save(ui->past);
                 }
+
                 screen->enable(screen->is_enabled);
                 opendps_update_power_status(screen->is_enabled); /** @todo: move */
             }
             break;
 
+        // All other unhandled events do nothing.
         default:
-            assert(0);
+            break;
     }
 }
 
