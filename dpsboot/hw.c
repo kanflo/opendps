@@ -95,6 +95,7 @@ void usart1_isr(void)
 static void clock_init(void)
 {
     rcc_clock_setup_in_hsi_out_48mhz();
+    // rcc_clock_setup_pll(&rcc_hsi_configs[RCC_CLOCK_HSI_48MHZ]);
     rcc_periph_clock_enable(RCC_GPIOA);
     rcc_periph_clock_enable(RCC_GPIOB);
     rcc_periph_clock_enable(RCC_GPIOC);
