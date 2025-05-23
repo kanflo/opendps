@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 """
 The MIT License (MIT)
@@ -35,8 +35,6 @@ time, add it tht the environment variable DPSIF.
 
 """
 
-from __future__ import print_function
-from __future__ import division
 
 import argparse
 import codecs
@@ -59,13 +57,6 @@ from protocol import (create_cmd, create_enable_output, create_lock, create_set_
                       create_upgrade_data, create_upgrade_start, create_change_screen,
                       unpack_cal_report, unpack_query_response, unpack_version_response)
 
-try:
-    import crc16
-except ImportError:
-    print("Missing dependency crc16:")
-    print(" sudo pip{} install crc16"
-          .format("3" if sys.version_info.major == 3 else ""))
-    raise SystemExit()
 try:
     import serial
 except ImportError:
@@ -606,6 +597,12 @@ def chunk_from_file(filename, chunk_size):
             else:
                 break
 
+def crc16xmodem(data: bytes):
+    crc = 0
+    for octet in data:
+        crc = uframe.crc16_ccitt(crc, octet)
+
+    return crc
 
 def run_upgrade(comms, fw_file_name, args):
     """
@@ -616,7 +613,7 @@ def run_upgrade(comms, fw_file_name, args):
         content = file.read()
         if codecs.encode(content, 'hex')[6:8] != b'20' and not args.force:
             fail("The firmware file does not seem valid, use --force to force upgrade")
-        crc = crc16.crc16xmodem(content)
+        crc = crc16xmodem(content)
     chunk_size = 1024
     ret_dict = communicate(comms, create_upgrade_start(chunk_size, crc), args)
     if ret_dict["status"] == protocol.UPGRADE_CONTINUE:
