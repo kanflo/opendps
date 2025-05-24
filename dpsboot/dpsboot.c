@@ -181,7 +181,7 @@ static void send_frame(const frame_t *frame)
 }
 
 /**
-  * @brief Handle a receved frame
+  * @brief Handle a received frame
   * @param frame the received frame
   * @param length length of frame
   * @retval None
@@ -228,7 +228,7 @@ static void handle_frame(uint8_t *payload, uint32_t length)
                             /** Note, payload contains 1 frame type byte and N bytes data */
                             for (uint32_t i = 0; i < (uint32_t) chunk_length; i+=4) {
                                 word = payload[i+4] << 24 | payload[i+3] << 16 | payload[i+2] << 8 | payload[i+1];
-                                /** @todo: Handle binaries not size aliged to 4 bytes */
+                                /** @todo: Handle binaries not size aligned to 4 bytes */
                                 if (!flash_write32(cur_flash_address+i, word)) {
                                     status = upgrade_flash_error;
                                     break;
