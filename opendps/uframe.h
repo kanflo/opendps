@@ -33,7 +33,7 @@
 #define _EOF 0x7f
 
 /** Errors returned by uframe_unescape(...) */
-#define E_LEN 1 // Received frame is too short to be a uframe
+#define E_LEN 1 // Received frame is too short or too long to be a uframe
 #define E_FRM 2 // Received data has no framing
 #define E_CRC 3 // CRC mismatch
 
