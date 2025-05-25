@@ -33,7 +33,7 @@
 #define _EOF 0x7f
 
 /** Errors returned by uframe_unescape(...) */
-#define E_LEN 1 // Received frame is too short to be a uframe
+#define E_LEN 1 // Received frame is too short or too long to be a uframe
 #define E_FRM 2 // Received data has no framing
 #define E_CRC 3 // CRC mismatch
 
@@ -71,14 +71,35 @@ uint32_t unpack32(frame_t *frame, uint32_t *data);
 /**
   * @brief Extract payload from frame following deframing, unescaping and
   *       crc checking.
-  * @note The frame is processed 'in place', when exiting the payload will be
-  *       the first byte of 'frame'. If the frame contains two valid frames,
-  *       -E_CRC will be returned.
+  * @note Like @ref uframe_extract_payload_inplace but `memcpy()`s the data
+  *       into @p frame.
   * @param frame  the returned processed frame
   * @param data   the raw data to be processed
   * @param length length of frame
   * @retval length of payload or -E_* in case of errors (see uframe.h)
   */
 int32_t uframe_extract_payload(frame_t *frame, uint8_t *data, uint32_t length);
+
+/**
+  * @brief Extract payload from frame following deframing, unescaping and
+  *       crc checking.
+  * @note The frame is processed 'in place', when exiting the payload will be
+  *       the first byte of 'frame'. If the frame contains two valid frames,
+  *       -E_CRC will be returned.
+  * @param data   the raw data to be processed
+  * @param length length of frame
+  * @retval length of payload or -E_* in case of errors (see uframe.h)
+  */
+int32_t uframe_extract_payload_inplace(uint8_t *data, uint32_t length);
+
+/**
+  * @brief Initializes an `frame_t` with the already extracted data
+  * @param frame  The frame to initialize
+  * @param data   The already extracted data (see @ref uframe_extract_payload_inplace)
+  * @param length The length of @p data
+  *
+  * @note You will probably want to use @ref uframe_extract_payload instead
+  */
+void uframe_from_extracted_payload(frame_t *frame, const uint8_t *data, uint32_t length);
 
 #endif // __UFRAME_H__

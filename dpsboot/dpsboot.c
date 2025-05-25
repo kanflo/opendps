@@ -190,15 +190,16 @@ static void handle_frame(uint8_t *payload, uint32_t length)
 {
     command_t cmd = cmd_response;
     upgrade_status_t status;
-    frame_t frame;
-    int32_t payload_len = uframe_extract_payload(&frame, payload, length);
+    int32_t payload_len = uframe_extract_payload_inplace(payload, length);
 
     if (payload_len > 0) {
-        cmd = frame.buffer[0];
+        cmd = payload[0];
         switch(cmd) {
             case cmd_upgrade_start:
             {
                 {
+                    frame_t frame;
+                    uframe_from_extracted_payload(&frame, payload, payload_len);
                     start_frame_unpacking(&frame);
                     unpack8(&frame, &cmd);
                     unpack16(&frame, &chunk_size);
