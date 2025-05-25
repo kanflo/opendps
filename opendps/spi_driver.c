@@ -53,7 +53,7 @@ void spi_init(void)
 
     rcc_periph_clock_enable(RCC_SPI2);
     rcc_periph_clock_enable(RCC_DMA1);
-    spi_reset(SPI2);
+    rcc_periph_reset_pulse(RST_SPI2);
     SPI2_I2SCFGR = 0;
     spi_init_master(SPI2, SPI_CR1_BAUDRATE_FPCLK_DIV_2, SPI_CR1_CPOL_CLK_TO_1_WHEN_IDLE, SPI_CR1_CPHA_CLK_TRANSITION_2, SPI_CR1_DFF_8BIT, SPI_CR1_MSBFIRST);
 

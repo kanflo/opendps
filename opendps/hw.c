@@ -181,7 +181,7 @@ void hw_get_adc_values(uint16_t *i_out_raw, uint16_t *v_in_raw, uint16_t *v_out_
   */
 void hw_set_voltage_dac(uint16_t v_dac)
 {
-    DAC_DHR12R1 = v_dac;
+    DAC_DHR12R1(DAC1) = v_dac;
 }
 
 /**
@@ -191,7 +191,7 @@ void hw_set_voltage_dac(uint16_t v_dac)
   */
 void hw_set_current_dac(uint16_t i_dac)
 {
-    DAC_DHR12R2 = i_dac;
+    DAC_DHR12R2(DAC1) = i_dac;
 }
 
 /**
@@ -413,7 +413,7 @@ void usart1_isr(void)
   */
 static void clock_init(void)
 {
-    rcc_clock_setup_in_hsi_out_48mhz();
+    rcc_clock_setup_pll(&rcc_hsi_configs[RCC_CLOCK_HSI_48MHZ]);
     rcc_periph_clock_enable(RCC_GPIOA);
     rcc_periph_clock_enable(RCC_GPIOB);
     rcc_periph_clock_enable(RCC_GPIOC);
@@ -722,11 +722,11 @@ static void exti_init(void)
 static void dac_init(void)
 {
     rcc_periph_clock_enable(RCC_DAC);
-    DAC_CR       = 0;          // 0x40007400 disable
-    DAC_SWTRIGR  = 0x00000000; // 0x40007404
-    DAC_DHR12R1  = 0x00000000; // 0x40007408 0V output
-    DAC_DHR12R2  = 0x00000000; // 0x40007414
-    DAC_CR       = 0x00030003; // 0x40007400 BOFF2, EN2, BOFF1, EN1
+    DAC_CR(DAC1)      = 0;          // 0x40007400 disable
+    DAC_SWTRIGR(DAC1) = 0x00000000; // 0x40007404
+    DAC_DHR12R1(DAC1) = 0x00000000; // 0x40007408 0V output
+    DAC_DHR12R2(DAC1) = 0x00000000; // 0x40007414
+    DAC_CR(DAC1)      = 0x00030003; // 0x40007400 BOFF2, EN2, BOFF1, EN1
 }
 
 /**
