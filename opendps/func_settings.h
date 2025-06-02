@@ -1,7 +1,7 @@
 /*
  * The MIT License (MIT)
  *
- * Copyright (c) 2017 Johan Kanflo (github.com/kanflo)
+ * Copyright (c) 2019 Leo Leung <leo@steamr.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -22,35 +22,30 @@
  * THE SOFTWARE.
  */
 
-#ifndef __PASTUNITS_H__
-#define __PASTUNITS_H__
+#ifndef __FUNC_SETTINGS_H__
+#define __FUNC_SETTINGS_H__
 
-/** Parameters stored in flash */
-typedef enum {
-    /** stored as [I_limit:16] | [V_out:16] */
-    past_power = 1,
-    /** stored as 0 or 1 */
-    past_tft_inversion,
-    /** stored as strings */
-    past_boot_git_hash, /** WARN: Moving past_boot_git_hash requires a recompile and flash of DPSBoot! */
-    past_app_git_hash,
-    /** stored as floats */
-    past_A_ADC_K,
-    past_A_ADC_C,
-    past_A_DAC_K,
-    past_A_DAC_C,
-    past_V_DAC_K,
-    past_V_DAC_C,
-    past_V_ADC_K,
-    past_V_ADC_C,
-    past_VIN_ADC_K,
-    past_VIN_ADC_C,
-    past_tft_brightness,
-    past_UPDATE_INTERVAL,
-    /** A past unit who's precense indicates we have a non finished upgrade and
-    must not boot */
-    past_upgrade_started = 0xff
-} parameter_id_t;
+#include "uui.h"
+
+extern bool dpsmode_cfg_initstate;
+
+// Settings
+enum SettingsStates {
+    SCREEN_LOCKED_WHEN_ON = 1,
+};
+
+enum PopupMessage {
+    POPUP_MESSAGE_NONE = 0,
+    POPUP_MESSAGE_SAVED = 1,
+    POPUP_MESSAGE_RESET = 2,
+};
 
 
-#endif // __PASTUNITS_H__
+/**
+ * @brief      Add the SETTINGS function to the UI
+ *
+ * @param      ui    The user interface
+ */
+void func_settings_init(uui_t *ui);
+
+#endif // __FUNC_SETTINGS_H__

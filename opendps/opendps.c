@@ -75,9 +75,15 @@
 #ifdef CONFIG_CL_ENABLE
 #include "func_cl.h"
 #endif // CONFIG_CL_ENABLE
+#ifdef CONFIG_DPSMODE_ENABLE
+#include "func_dpsmode.h"
+#endif // CONFIG_DPSMODE_ENABLE
 #ifdef CONFIG_FUNCGEN_ENABLE
 #include "func_gen.h"
 #endif // CONFIG_FUNCGEN_ENABLE
+#ifdef CONFIG_SETTINGS_ENABLE
+#include "func_settings.h"
+#endif // CONFIG_SETTINGS_ENABLE
 
 #ifdef DPS_EMULATOR
 #include "dpsemul.h"
@@ -86,12 +92,6 @@
 #ifdef CONFIG_SPLASH_SCREEN
 #include "logo.h"
 #endif // CONFIG_SPLASH_SCREEN
-
-#define TFT_HEIGHT  (128)
-#define TFT_WIDTH   (128)
-
-/** How ofter we update the measurements in the UI (ms) */
-#define UI_UPDATE_INTERVAL_MS  (250)
 
 /** Timeout for waiting for wifi connction (ms) */
 #define WIFI_CONNECT_TIMEOUT  (10000)
@@ -119,6 +119,7 @@ static void check_master_reset(void);
 static uint16_t bg_color;
 static uint32_t ui_width;
 static uint32_t ui_height;
+uint32_t opendps_screen_update_ms = 250;
 
 /** Used to make the screen flash */
 static uint32_t tft_flashing_period;
@@ -460,9 +461,15 @@ static void ui_init(void)
 #ifdef CONFIG_CL_ENABLE
     func_cl_init(&func_ui);
 #endif // CONFIG_CL_ENABLE
+#ifdef CONFIG_DPSMODE_ENABLE
+    func_dpsmode_init(&func_ui);
+#endif // CONFIG_DPSMODE_ENABLE
 #ifdef CONFIG_FUNCGEN_ENABLE
     func_gen_init(&func_ui);
 #endif // CONFIG_FUNCGEN_ENABLE
+#ifdef CONFIG_SETTINGS_ENABLE
+    func_settings_init(&func_ui);
+#endif // CONFIG_SETTINGS_ENABLE
 
 
     /** Initialise the settings screens */
@@ -502,20 +509,9 @@ static void ui_handle_event(event_t event, uint8_t data)
     }
 
     if (is_locked) {
-        switch(event) {
-            case event_button_m1:
-            case event_button_m2:
-            case event_button_sel:
-            case event_rot_press:
-            case event_rot_left:
-            case event_rot_right:
-            case event_button_enable:
-                lock_flashing_period = LOCK_FLASHING_PERIOD;
-                lock_flash_counter = LOCK_FLASHING_COUNTER;
-                return;
-            default:
-                break;
-        }
+        lock_flashing_period = LOCK_FLASHING_PERIOD;
+        lock_flash_counter = LOCK_FLASHING_COUNTER;
+        return;
     }
 
     switch(event) {
@@ -531,7 +527,6 @@ static void ui_handle_event(event_t event, uint8_t data)
 #endif // CONFIG_OCP_DEBUGGING
                 ui_flash(); /** @todo When OCP kicks in, show last I_out on screen */
                 opendps_update_power_status(false);
-                uui_handle_screen_event(current_ui, event);
             }
             break;
         case event_ovp:
@@ -546,31 +541,21 @@ static void ui_handle_event(event_t event, uint8_t data)
 #endif // CONFIG_OVP_DEBUGGING
                 ui_flash(); /** @todo When OVP kicks in, show last V_out on screen */
                 opendps_update_power_status(false);
-                uui_handle_screen_event(current_ui, event);
             }
             break;
-        case event_buttom_m1_and_m2: ;
+        case event_button_m1_and_m2:;
             uint8_t target_screen_id = current_ui == &func_ui ? SETTINGS_UI_ID : FUNC_UI_ID; /** Change between the settings and functional screen */
             opendps_change_screen(target_screen_id);
             break;
+
         case event_button_enable:
-#pragma GCC diagnostic ignored "-Wimplicit-fallthrough"
             write_past_settings();
-            /** Deliberate fallthrough */
-        case event_button_m1:
-        case event_button_m2:
-        case event_button_sel:
-        case event_rot_press:
-        case event_rot_left:
-        case event_rot_right:
-        case event_rot_left_set:
-        case event_rot_right_set:
-            uui_handle_screen_event(current_ui, event);
-            uui_refresh(current_ui, false);
-            break;
         default:
             break;
     }
+
+    uui_handle_screen_event(current_ui, event, data);
+    uui_refresh(current_ui, false);
 }
 
 /**
@@ -633,13 +618,6 @@ static void ui_tick(void)
     static uint64_t last_tft_flash = 0;
     static uint64_t last_lock_flash = 0;
 
-    static uint64_t last = 0;
-    /** Update on the first call and every UI_UPDATE_INTERVAL_MS ms */
-    if (last > 0 && get_ticks() - last < UI_UPDATE_INTERVAL_MS) {
-        return;
-    }
-
-    last = get_ticks();
     uui_tick(current_ui);
     uui_tick(&main_ui);
 
@@ -889,6 +867,11 @@ static void read_past_settings(void)
     }
     hw_set_backlight(last_tft_brightness);
 
+    if (past_read_unit(&g_past, past_UPDATE_INTERVAL, (const void**) &p, &length)) {
+        if (p) {
+            opendps_screen_update_ms = *p;
+        }
+    }
 
 #ifdef GIT_VERSION
     /** Update app git hash in past if needed */
@@ -935,6 +918,12 @@ static void write_past_settings(void)
             dbg_printf("Error: past write inv failed!\n");
         }
     }
+
+    // save the update interval value
+    if ( ! past_write_unit(&g_past, past_UPDATE_INTERVAL, (void*) &opendps_screen_update_ms, sizeof(opendps_screen_update_ms))) {
+        dbg_printf("Error: past write inv failed!\n");
+    }
+
 }
 
 /**
@@ -959,12 +948,18 @@ static void check_master_reset(void)
   */
 static void event_handler(void)
 {
+    static uint64_t last = 0;
+
     while(1) {
         event_t event;
         uint8_t data = 0;
         if (!event_get(&event, &data)) {
             hw_longpress_check();
-            ui_tick();
+
+            if (last <= 0 || get_ticks() - last >= opendps_screen_update_ms) {
+                ui_tick();
+                last = get_ticks();
+            }
         } else {
             if (event) {
                 emu_printf(" Event %d 0x%02x\n", event, data);
@@ -982,6 +977,7 @@ static void event_handler(void)
                     break;
             }
             ui_handle_event(event, data);
+            ui_tick();
         }
 
 #ifdef CONFIG_WDOG
