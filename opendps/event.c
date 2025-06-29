@@ -26,6 +26,7 @@
 #include <stdbool.h>
 #include <stdlib.h>
 #include <string.h>
+#include <libopencm3/cm3/cortex.h>
 #include "ringbuf.h"
 #include "event.h"
 
@@ -55,6 +56,7 @@ bool event_get(event_t *event, uint8_t *data)
 {
 	bool got_event = true;
 	uint16_t e;
+	cm_disable_interrupts();
 	if (!ringbuf_get(&events, &e)) {
 		*event = event_none;
 		*data = 0;
@@ -64,6 +66,7 @@ bool event_get(event_t *event, uint8_t *data)
 		*data = e & 0xff;
 
 	}
+	cm_enable_interrupts();
 	return got_event;
 }
 
@@ -75,5 +78,8 @@ bool event_get(event_t *event, uint8_t *data)
   */
 bool event_put(event_t event, uint8_t data)
 {
-	return ringbuf_put(&events, (uint16_t) (event << 8 | data));
+	cm_disable_interrupts();
+	bool result = ringbuf_put(&events, (uint16_t) (event << 8 | data));
+	cm_enable_interrupts();
+	return result;
 }

@@ -32,6 +32,7 @@
 #include <gpio.h>
 #include <nvic.h>
 #include <exti.h>
+#include <libopencm3/cm3/cortex.h>
 #include <usart.h>
 #include <scb.h>
 #include "tick.h"
@@ -169,9 +170,11 @@ void hw_init(void)
   */
 void hw_get_adc_values(uint16_t *i_out_raw, uint16_t *v_in_raw, uint16_t *v_out_raw)
 {
+    cm_disable_interrupts();
     *i_out_raw = i_out_adc;
     *v_in_raw = v_in_adc;
     *v_out_raw = v_out_adc;
+    cm_enable_interrupts();
 }
 
 /**
