@@ -243,6 +243,8 @@ uint32_t pwrctl_calc_vin(uint16_t raw)
     float value = vin_adc_k_coef * raw + vin_adc_c_coef;
     if (value <= 0)
         return 0;
+    else if (value > 65000) /** Sanity limit for input voltage (65V max) */
+        return 65000;
     else
         return value + 0.5f; /** Add 0.5f to value so it is correctly rounded when it is truncated */
 }
@@ -257,6 +259,8 @@ uint32_t pwrctl_calc_vout(uint16_t raw)
     float value = v_adc_k_coef * raw + v_adc_c_coef;
     if (value <= 0)
         return 0;
+    else if (value > 60000) /** Sanity limit for output voltage (60V max for DPS5015) */
+        return 60000;
     else
         return value + 0.5f; /** Add 0.5f to value so it is correctly rounded when it is truncated */
 }
@@ -287,6 +291,8 @@ uint32_t pwrctl_calc_iout(uint16_t raw)
     float value = a_adc_k_coef * raw + a_adc_c_coef;
     if (value <= 0)
         return 0;
+    else if (value > 20000) /** Sanity limit for current (20A max to handle all DPS models) */
+        return 20000;
     else
         return value + 0.5f; /** Add 0.5f to value so correct rounding is done when truncated */
 }
