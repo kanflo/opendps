@@ -332,29 +332,46 @@ set_param_status_t opendps_set_parameter(char *name, char *value)
 set_param_status_t opendps_set_calibration(char *name, float *value)
 {
     past_id_t param;
+    float min_val, max_val;
 
     if (strcmp(name,"A_ADC_K")==0){
         param = past_A_ADC_K;
+        min_val = 0.1f; max_val = 100.0f;  // Current ADC gain coefficient
     } else if(strcmp(name,"A_ADC_C")==0){
         param = past_A_ADC_C;
+        min_val = -1000.0f; max_val = 1000.0f;  // Current ADC offset
     } else if(strcmp(name,"A_DAC_K")==0){
         param = past_A_DAC_K;
+        min_val = 0.01f; max_val = 10.0f;  // Current DAC gain coefficient
     } else if(strcmp(name,"A_DAC_C")==0){
         param = past_A_DAC_C;
+        min_val = 0.0f; max_val = 1000.0f;  // Current DAC offset
     } else if(strcmp(name,"V_ADC_K")==0){
         param = past_V_ADC_K;
+        min_val = 1.0f; max_val = 100.0f;  // Voltage ADC gain coefficient
     } else if(strcmp(name,"V_ADC_C")==0){
         param = past_V_ADC_C;
+        min_val = -1000.0f; max_val = 1000.0f;  // Voltage ADC offset
     } else if(strcmp(name,"V_DAC_K")==0){
         param = past_V_DAC_K;
+        min_val = 0.01f; max_val = 1.0f;  // Voltage DAC gain coefficient
     } else if(strcmp(name,"V_DAC_C")==0){
         param = past_V_DAC_C;
+        min_val = 0.0f; max_val = 100.0f;  // Voltage DAC offset
     } else if(strcmp(name,"VIN_ADC_K")==0){
         param = past_VIN_ADC_K;
+        min_val = 1.0f; max_val = 100.0f;  // Input voltage ADC gain coefficient
     } else if(strcmp(name,"VIN_ADC_C")==0){
         param = past_VIN_ADC_C;
+        min_val = -1000.0f; max_val = 1000.0f;  // Input voltage ADC offset
     } else {
         return ps_not_supported;
+    }
+
+    // Validate calibration parameter is within reasonable bounds
+    if (*value < min_val || *value > max_val) {
+        dbg_printf("Error: calibration value %f out of range [%f, %f]\n", *value, min_val, max_val);
+        return ps_range_error;
     }
 
     if (!past_write_unit(&g_past, param, (void*) value, sizeof(*value))) {

@@ -51,6 +51,8 @@ typedef enum {
     cmd_success_but_i_actually_sent_my_own_status_thank_you_very_much,
 } command_status_t;
 
+#define MIN(a,b) ((a) < (b) ? (a) : (b))
+
 static uint8_t frame_buffer[MAX_FRAME_LENGTH];
 static uint32_t rx_idx = 0;
 static bool receiving_frame = false;
@@ -209,11 +211,13 @@ static command_status_t handle_set_parameters(frame_t *frame)
             name = value = 0;
             /** This is quite ugly, please don't look */
             name = (char*) &frame->buffer[frame->unpack_pos];
-            frame->unpack_pos += strlen(name) + 1;
-            frame->length -= strlen(name) + 1;
+            size_t name_len = MIN(frame->length, strlen(name));
+            frame->unpack_pos += name_len + 1;
+            frame->length -= name_len + 1;
             value = (char*) &frame->buffer[frame->unpack_pos];
-            frame->unpack_pos += strlen(value) + 1;
-            frame->length -= strlen(value) + 1;
+            size_t value_len = MIN(frame->length, strlen(value));
+            frame->unpack_pos += value_len + 1;
+            frame->length -= value_len + 1;
             if (name && value) {
                 stats[status_index++] = opendps_set_parameter(name, value);
             }
@@ -251,8 +255,9 @@ static command_status_t handle_set_calibration(frame_t *frame)
             name = 0;
             /** This is quite ugly (again), please don't look */
             name = (char*) &frame->buffer[frame->unpack_pos];
-            frame->unpack_pos += strlen(name) + sizeof(char);
-            frame->length -= strlen(name) + sizeof(char);
+            size_t name_len = MIN(frame->length, strlen(name));
+            frame->unpack_pos += name_len + sizeof(char);
+            frame->length -= name_len + sizeof(char);
             value = (float*) &frame->buffer[frame->unpack_pos];
             frame->unpack_pos += sizeof(float);
             frame->length -= sizeof(float);
