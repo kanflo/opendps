@@ -51,6 +51,32 @@ typedef enum {
     cmd_success_but_i_actually_sent_my_own_status_thank_you_very_much,
 } command_status_t;
 
+static size_t safe_strlen(const char *str, size_t max_len) {
+    size_t len = 0;
+    while (len < max_len && str[len] != '\0') {
+        len++;
+    }
+    return len;
+}
+
+static bool unpack_string(frame_t *frame, const char **str_out) {
+    if (frame->length == 0) return false;
+    
+    const char *str_start = (const char*)&frame->buffer[frame->unpack_pos];
+    size_t str_len = safe_strlen(str_start, frame->length);
+    
+    if (str_len >= frame->length) {
+        return false;
+    }
+    
+    *str_out = str_start;
+    
+    frame->unpack_pos += str_len + 1;
+    frame->length -= str_len + 1;
+    
+    return true;
+}
+
 static uint8_t frame_buffer[MAX_FRAME_LENGTH];
 static uint32_t rx_idx = 0;
 static bool receiving_frame = false;
@@ -143,6 +169,7 @@ static command_status_t handle_set_function(frame_t *frame)
         unpack8(frame, &cmd);
         (void) cmd;
         do {
+            if (frame->length == 0) break;
             unpack8(frame, &ch);
             func_name[i++] = ch;
         } while(i < sizeof(func_name) - 1 && ch && frame->length);
@@ -206,17 +233,11 @@ static command_status_t handle_set_parameters(frame_t *frame)
         (void) cmd;
         do {
             /** Extract all occurences of <name>=<value>\0 ... */
-            name = value = 0;
-            /** This is quite ugly, please don't look */
-            name = (char*) &frame->buffer[frame->unpack_pos];
-            frame->unpack_pos += strlen(name) + 1;
-            frame->length -= strlen(name) + 1;
-            value = (char*) &frame->buffer[frame->unpack_pos];
-            frame->unpack_pos += strlen(value) + 1;
-            frame->length -= strlen(value) + 1;
-            if (name && value) {
-                stats[status_index++] = opendps_set_parameter(name, value);
+            if (!unpack_string(frame, (const char**)&name) ||
+                !unpack_string(frame, (const char**)&value)) {
+                break;
             }
+            stats[status_index++] = opendps_set_parameter(name, value);
         } while(frame->length && status_index < OPENDPS_MAX_PARAMETERS);
     }
 
@@ -247,18 +268,17 @@ static command_status_t handle_set_calibration(frame_t *frame)
         unpack8(frame, &cmd);
         (void) cmd;
         do {
-            /** Extract all occurences of <name>=<value> ... */
-            name = 0;
-            /** This is quite ugly (again), please don't look */
-            name = (char*) &frame->buffer[frame->unpack_pos];
-            frame->unpack_pos += strlen(name) + sizeof(char);
-            frame->length -= strlen(name) + sizeof(char);
+            /** Extract <name>=<float_value> ... */
+            if (!unpack_string(frame, (const char**)&name)) {
+                break;
+            }
+            if (frame->length < sizeof(float)) {
+                break;
+            }
             value = (float*) &frame->buffer[frame->unpack_pos];
             frame->unpack_pos += sizeof(float);
             frame->length -= sizeof(float);
-            if (name && value) {
-                stats[status_index++] = opendps_set_calibration(name, value);
-            }
+            stats[status_index++] = opendps_set_calibration(name, value);
         } while(frame->length && status_index < OPENDPS_MAX_PARAMETERS);
     }
 
@@ -610,6 +630,8 @@ void serial_handle_rx_char(char c)
             }
         } else {
             dbg_printf("Error: RX buffer overflow!\n");
+            receiving_frame = false;
+            rx_idx = 0;
         }
     }
 }
