@@ -52,7 +52,8 @@
 #else
 #include "gfx-power.h"
 #endif //CONFIG_POWER_COLORED
-#include "gfx-network.h"
+#include "gfx-wifi.h"
+#include "gfx-ethernet.h"
 #include "font-full_small.h"
 #include "font-meter_small.h"
 #include "font-meter_medium.h"
@@ -96,6 +97,10 @@
 /** Timeout for waiting for network connction (ms) */
 #define NETWORK_CONNECT_TIMEOUT  (10000)
 
+/** GFX sizes */
+#define GFX_NETWORK_WIDTH 19
+#define GFX_NETWORK_HEIGHT 16
+
 /** Blit positions */
 #define XPOS_NETWORK_STATUS     (4)
 #define XPOS_LOCK    (27)
@@ -126,9 +131,7 @@ static uint32_t tft_flash_counter;
 
 /** Used for flashing the network icon */
 static uint32_t network_status_flashing_period;
-static uint32_t network_status_flashing_period;
 static bool network_status_visible;
-std::string last_network_update_source = "";
 
 /** Used for flashing the lock icon */
 static uint32_t lock_flashing_period;
@@ -661,10 +664,11 @@ static void ui_tick(void)
         if (network_status_visible) {
             tft_fill(XPOS_NETWORK_STATUS, ui_height-GFX_NETWORK_HEIGHT, GFX_NETWORK_WIDTH, GFX_NETWORK_HEIGHT, bg_color);
         } else {
-	    if (last_network_update_source == "ethernet")
-	        tft_blit((uint16_t*) gfx_wifi, GFX_NETWORK_WIDTH, GFX_NETWORK_HEIGHT, XPOS_NETWORK_STATUS, ui_height-GFX_NETWORK_HEIGHT);
-	    else
+#ifdef CONFIG_NETWORK_ETHERNET
+	        tft_blit((uint16_t*) gfx_ethernet, GFX_NETWORK_WIDTH, GFX_NETWORK_HEIGHT, XPOS_NETWORK_STATUS, ui_height-GFX_NETWORK_HEIGHT);
+#else
 		tft_blit((uint16_t*) gfx_wifi, GFX_NETWORK_WIDTH, GFX_NETWORK_HEIGHT, XPOS_NETWORK_STATUS, ui_height-GFX_NETWORK_HEIGHT);
+#endif
         }
         network_status_visible = !network_status_visible;
     }
@@ -720,13 +724,12 @@ void opendps_update_network_status(network_status_t status)
     if (network_status != status) {
         network_status = status;
         switch(network_status) {
-            case nework_off:
+            case network_off:
                 network_status_flashing_period = 0;
                 network_status_visible = true;
                 tft_fill(XPOS_NETWORK_STATUS, ui_height-GFX_NETWORK_HEIGHT, GFX_NETWORK_WIDTH, GFX_NETWORK_HEIGHT, bg_color);
                 break;
             case wifi_connecting:
-		last_network_update_source = "wifi";
                 network_status_flashing_period = NETWORK_CONNECTING_FLASHING_PERIOD;
 		tft_blit((uint16_t*) gfx_wifi, GFX_NETWORK_WIDTH, GFX_NETWORK_HEIGHT, XPOS_NETWORK_STATUS, ui_height-GFX_NETWORK_HEIGHT);
                 break;
@@ -736,7 +739,6 @@ void opendps_update_network_status(network_status_t status)
                 tft_blit((uint16_t*) gfx_wifi, GFX_NETWORK_WIDTH, GFX_NETWORK_HEIGHT, XPOS_NETWORK_STATUS, ui_height-GFX_NETWORK_HEIGHT);
                 break;
 	    case ethernet_connecting:
-		last_network_update_source = "ethernet";
                 network_status_flashing_period = NETWORK_CONNECTING_FLASHING_PERIOD;
                 tft_blit((uint16_t*) gfx_ethernet, GFX_NETWORK_WIDTH, GFX_NETWORK_HEIGHT, XPOS_NETWORK_STATUS, ui_height-GFX_NETWORK_HEIGHT);
                 break;
@@ -745,13 +747,13 @@ void opendps_update_network_status(network_status_t status)
 		network_status_visible = false;
 		tft_blit((uint16_t*) gfx_ethernet, GFX_NETWORK_WIDTH, GFX_NETWORK_HEIGHT, XPOS_NETWORK_STATUS, ui_height-GFX_NETWORK_HEIGHT);
 		break;
-            case network_error:
+            case ethernet_error:
+	    case wifi_error:
                 network_status_flashing_period = NETWORK_ERROR_FLASHING_PERIOD;
                 break;
-            case network_upgrading:
+            case wifi_upgrading:
                 network_status_flashing_period = NETWORK_UPGRADING_FLASHING_PERIOD;
 		network_status_visible = false;
-		tft_blit((uint16_t*) gfx_update, GFX_NETWORK_WIDTH, GFX_NETWORK_HEIGHT, XPOS_NETWORK_STATUS, ui_height-GFX_NETWORK_HEIGHT);
                 break;
         }
     }
@@ -1051,7 +1053,11 @@ int main(int argc, char const *argv[])
       * ui module will turn off the network icon after 10s to save the user's
       * sanity
       */
-    opendps_update_network_status(network_connecting);
+#ifdef CONFIG_NETWORK_ETHERNET
+    opendps_update_network_status(ethernet_connecting);
+#else
+    opendps_update_network_status(wifi_connecting);
+#endif // CONFIG_NETWORK_ETHERNET
 #endif // CONFIG_NETWORK
 
 #ifdef CONFIG_SPLASH_SCREEN

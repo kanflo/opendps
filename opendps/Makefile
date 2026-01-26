@@ -18,6 +18,8 @@ THERMAL_LOCKOUT := 0
 # Build network version (only change being that the network icon will start flashing/be shown
 # on power up)
 NETWORK := 1
+# If ethernet is used
+ETHERNET := 1
 
 # Maximum current your DPS model can provide. Eg 5000mA for the DPS5005
 # This is usually set by MODEL but you can override it here
@@ -114,10 +116,10 @@ OBJS = \
     gfx-crosshair.o \
     gfx-cv.o \
     gfx-cl.o \
+    gfx-ethernet.o \
     gfx-padlock.o \
     gfx-thermometer.o \
     gfx-wifi.o \
-#    gfx-ethernet.o \
     opendps.o
 
 ifdef MAX_CURRENT
@@ -134,6 +136,9 @@ ifeq ($(WDOG),1)
 	OBJS += wdog.o
 endif
 
+ifeq ($(ETHERNET),1)
+        CFLAGS +=-DCONFIG_NETWORK_ETHERNET
+endif
 
 ifeq ($(INVERT_ENABLE),1)
 	CFLAGS +=-DCONFIG_INVERT_ENABLE

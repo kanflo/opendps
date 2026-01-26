@@ -45,8 +45,8 @@ def image_to_bgr565(im):
 
     # Convert 24-bit RGB to 16-bit BGR
     bgr565array = []
-    for x in range(len(image_bytes) / 3):
-        bgr565 = rgb888_to_bgr565(ord(image_bytes[x*3]), ord(image_bytes[x*3+1]), ord(image_bytes[x*3+2]))
+    for x in range(len(image_bytes) // 3):
+        bgr565 = rgb888_to_bgr565(image_bytes[x*3], image_bytes[x*3+1], image_bytes[x*3+2])
         bgr565array.append((bgr565 >> 8) & 0xFF)
         bgr565array.append(bgr565 & 0xFF)
 
@@ -343,11 +343,6 @@ def convert_graphic_to_c(graphic_fname, output_filename):
     gfx_header_file.write("#define GFX_%s_WIDTH  (%d)\n\n" % (output_filename.upper(), width))
 
     gfx_header_file.write("extern const uint8_t gfx_%s[%d];\n\n" % (output_filename, len(graphic_data)))
-
-    gfx_header_file.write("#ifndef __GFX_NETWORK_H__\n")
-    gfx_header_file.write("#define GFX_NETWORK_HEIGHT (%d)\n" % 16)
-    gfx_header_file.write("#define GFX_NETWORK_WIDTH  (%d)\n" % 19)
-    gfx_header_file.write("#endif // __GFX_NETWORK_H\n")
 
     gfx_header_file.write("#endif // __GFX_%s_H__" % (output_filename.upper()))
 

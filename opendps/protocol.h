@@ -69,7 +69,6 @@ typedef enum {
     wifi_connected,
     wifi_error,
     wifi_upgrading, // Used by the ESP8266 when doing FOTA
-    ethernet_off,
     ethernet_connecting,
     ethernet_connected,
     ethernet_error
