@@ -52,7 +52,7 @@
 #else
 #include "gfx-power.h"
 #endif //CONFIG_POWER_COLORED
-#include "gfx-wifi.h"
+#include "gfx-network.h"
 #include "font-full_small.h"
 #include "font-meter_small.h"
 #include "font-meter_medium.h"
@@ -93,18 +93,18 @@
 /** How ofter we update the measurements in the UI (ms) */
 #define UI_UPDATE_INTERVAL_MS  (250)
 
-/** Timeout for waiting for wifi connction (ms) */
-#define WIFI_CONNECT_TIMEOUT  (10000)
+/** Timeout for waiting for network connction (ms) */
+#define NETWORK_CONNECT_TIMEOUT  (10000)
 
 /** Blit positions */
-#define XPOS_WIFI     (4)
+#define XPOS_NETWORK_STATUS     (4)
 #define XPOS_LOCK    (27)
 #define XPOS_INVOLT  (108) /* Right aligned to this position */
 
 /** Constants describing how certain things on the screen flash when needed */
-#define WIFI_CONNECTING_FLASHING_PERIOD  (1000)
-#define WIFI_ERROR_FLASHING_PERIOD        (500)
-#define WIFI_UPGRADING_FLASHING_PERIOD    (250)
+#define NETWORK_CONNECTING_FLASHING_PERIOD  (1000)
+#define NETWORK_ERROR_FLASHING_PERIOD        (500)
+#define NETWORK_UPGRADING_FLASHING_PERIOD    (250)
 #define LOCK_FLASHING_PERIOD              (250)
 #define LOCK_FLASHING_COUNTER               (4)
 #define TFT_FLASHING_PERIOD               (100)
@@ -124,9 +124,11 @@ static uint32_t ui_height;
 static uint32_t tft_flashing_period;
 static uint32_t tft_flash_counter;
 
-/** Used for flashing the wifi icon */
-static uint32_t wifi_status_flashing_period;
-static bool wifi_status_visible;
+/** Used for flashing the network icon */
+static uint32_t network_status_flashing_period;
+static uint32_t network_status_flashing_period;
+static bool network_status_visible;
+std::string last_network_update_source = "";
 
 /** Used for flashing the lock icon */
 static uint32_t lock_flashing_period;
@@ -134,7 +136,7 @@ static bool lock_visible;
 static uint32_t lock_flash_counter;
 
 /** Current icon settings */
-static wifi_status_t wifi_status;
+static network_status_t network_status;
 static bool is_locked;
 static bool is_temperature_locked;
 static bool is_enabled;
@@ -629,7 +631,7 @@ void opendps_temperature_lock(bool lock)
   */
 static void ui_tick(void)
 {
-    static uint64_t last_wifi_update = 0;
+    static uint64_t last_network_update = 0;
     static uint64_t last_tft_flash = 0;
     static uint64_t last_lock_flash = 0;
 
@@ -654,14 +656,17 @@ static void ui_tick(void)
     }
 #endif // CONFIG_SPLASH_SCREEN
 
-    if (wifi_status_flashing_period > 0 && get_ticks() - last_wifi_update > wifi_status_flashing_period) {
-        last_wifi_update = get_ticks();
-        if (wifi_status_visible) {
-            tft_fill(XPOS_WIFI, ui_height-GFX_WIFI_HEIGHT, GFX_WIFI_WIDTH, GFX_WIFI_HEIGHT, bg_color);
+    if (network_status_flashing_period > 0 && get_ticks() - last_network_update > network_status_flashing_period) {
+        last_network_update = get_ticks();
+        if (network_status_visible) {
+            tft_fill(XPOS_NETWORK_STATUS, ui_height-GFX_NETWORK_HEIGHT, GFX_NETWORK_WIDTH, GFX_NETWORK_HEIGHT, bg_color);
         } else {
-            tft_blit((uint16_t*) gfx_wifi, GFX_WIFI_WIDTH, GFX_WIFI_HEIGHT, XPOS_WIFI, ui_height-GFX_WIFI_HEIGHT);
+	    if (last_network_update_source == "ethernet")
+	        tft_blit((uint16_t*) gfx_wifi, GFX_NETWORK_WIDTH, GFX_NETWORK_HEIGHT, XPOS_NETWORK_STATUS, ui_height-GFX_NETWORK_HEIGHT);
+	    else
+		tft_blit((uint16_t*) gfx_wifi, GFX_NETWORK_WIDTH, GFX_NETWORK_HEIGHT, XPOS_NETWORK_STATUS, ui_height-GFX_NETWORK_HEIGHT);
         }
-        wifi_status_visible = !wifi_status_visible;
+        network_status_visible = !network_status_visible;
     }
 
     if (lock_flashing_period > 0 && get_ticks() - last_lock_flash > lock_flashing_period) {
@@ -691,8 +696,8 @@ static void ui_tick(void)
         }
     }
 
-    if (wifi_status == wifi_connecting && get_ticks() > WIFI_CONNECT_TIMEOUT) {
-        opendps_update_wifi_status(wifi_off);
+    if ((network_status == wifi_connecting || network_status == ethernet_connecting) && get_ticks() > NETWORK_CONNECT_TIMEOUT) {
+        opendps_update_network_status(network_off);
     }
 }
 
@@ -706,38 +711,51 @@ void opendps_handle_ping(void)
 }
 
 /**
-  * @brief Update wifi status icon
-  * @param status new wifi status
+  * @brief Update status icon
+  * @param status new network status
   * @retval none
   */
-void opendps_update_wifi_status(wifi_status_t status)
+void opendps_update_network_status(network_status_t status)
 {
-    if (wifi_status != status) {
-        wifi_status = status;
-        switch(wifi_status) {
-            case wifi_off:
-                wifi_status_flashing_period = 0;
-                wifi_status_visible = true;
-                tft_fill(XPOS_WIFI, ui_height-GFX_WIFI_HEIGHT, GFX_WIFI_WIDTH, GFX_WIFI_HEIGHT, bg_color);
+    if (network_status != status) {
+        network_status = status;
+        switch(network_status) {
+            case nework_off:
+                network_status_flashing_period = 0;
+                network_status_visible = true;
+                tft_fill(XPOS_NETWORK_STATUS, ui_height-GFX_NETWORK_HEIGHT, GFX_NETWORK_WIDTH, GFX_NETWORK_HEIGHT, bg_color);
                 break;
             case wifi_connecting:
-                wifi_status_flashing_period = WIFI_CONNECTING_FLASHING_PERIOD;
+		last_network_update_source = "wifi";
+                network_status_flashing_period = NETWORK_CONNECTING_FLASHING_PERIOD;
+		tft_blit((uint16_t*) gfx_wifi, GFX_NETWORK_WIDTH, GFX_NETWORK_HEIGHT, XPOS_NETWORK_STATUS, ui_height-GFX_NETWORK_HEIGHT);
                 break;
             case wifi_connected:
-                wifi_status_flashing_period = 0;
-                wifi_status_visible = false;
-                tft_blit((uint16_t*) gfx_wifi, GFX_WIFI_WIDTH, GFX_WIFI_HEIGHT, XPOS_WIFI, ui_height-GFX_WIFI_HEIGHT);
+                network_status_flashing_period = 0;
+                network_status_visible = false;
+                tft_blit((uint16_t*) gfx_wifi, GFX_NETWORK_WIDTH, GFX_NETWORK_HEIGHT, XPOS_NETWORK_STATUS, ui_height-GFX_NETWORK_HEIGHT);
                 break;
-            case wifi_error:
-                wifi_status_flashing_period = WIFI_ERROR_FLASHING_PERIOD;
+	    case ethernet_connecting:
+		last_network_update_source = "ethernet";
+                network_status_flashing_period = NETWORK_CONNECTING_FLASHING_PERIOD;
+                tft_blit((uint16_t*) gfx_ethernet, GFX_NETWORK_WIDTH, GFX_NETWORK_HEIGHT, XPOS_NETWORK_STATUS, ui_height-GFX_NETWORK_HEIGHT);
                 break;
-            case wifi_upgrading:
-                wifi_status_flashing_period = WIFI_UPGRADING_FLASHING_PERIOD;
+	    case ethernet_connected:
+		network_status_flashing_period = 0;
+		network_status_visible = false;
+		tft_blit((uint16_t*) gfx_ethernet, GFX_NETWORK_WIDTH, GFX_NETWORK_HEIGHT, XPOS_NETWORK_STATUS, ui_height-GFX_NETWORK_HEIGHT);
+		break;
+            case network_error:
+                network_status_flashing_period = NETWORK_ERROR_FLASHING_PERIOD;
+                break;
+            case network_upgrading:
+                network_status_flashing_period = NETWORK_UPGRADING_FLASHING_PERIOD;
+		network_status_visible = false;
+		tft_blit((uint16_t*) gfx_update, GFX_NETWORK_WIDTH, GFX_NETWORK_HEIGHT, XPOS_NETWORK_STATUS, ui_height-GFX_NETWORK_HEIGHT);
                 break;
         }
     }
 }
-
 /**
   * @brief Update power enable status icon
   * @param enabled new power status
@@ -1025,16 +1043,16 @@ int main(int argc, char const *argv[])
     read_past_settings();
     ui_init();
 
-#ifdef CONFIG_WIFI
+#ifdef CONFIG_NETWORK
     /** Rationale: the ESP8266 could send this message when it starts up but
-      * the current implementation spews wifi/network related messages on the
+      * the current implementation spews network related messages on the
       * UART meaning this message got lost. The ESP will however send the
-      * wifi_connected status when it connects but if that does not happen, the
-      * ui module will turn off the wifi icon after 10s to save the user's
+      * twork_connected status when it connects but if that does not happen, the
+      * ui module will turn off the network icon after 10s to save the user's
       * sanity
       */
-    opendps_update_wifi_status(wifi_connecting);
-#endif // CONFIG_WIFI
+    opendps_update_network_status(network_connecting);
+#endif // CONFIG_NETWORK
 
 #ifdef CONFIG_SPLASH_SCREEN
     tft_clear();

@@ -344,6 +344,11 @@ def convert_graphic_to_c(graphic_fname, output_filename):
 
     gfx_header_file.write("extern const uint8_t gfx_%s[%d];\n\n" % (output_filename, len(graphic_data)))
 
+    gfx_header_file.write("#ifndef __GFX_NETWORK_H__\n")
+    gfx_header_file.write("#define GFX_NETWORK_HEIGHT (%d)\n" % 16)
+    gfx_header_file.write("#define GFX_NETWORK_WIDTH  (%d)\n" % 19)
+    gfx_header_file.write("#endif // __GFX_NETWORK_H\n")
+
     gfx_header_file.write("#endif // __GFX_%s_H__" % (output_filename.upper()))
 
     gfx_header_file.close()

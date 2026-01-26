@@ -274,11 +274,11 @@ static bool test_status_response(char *test_name)
     return true;
 }
 
-static bool test_wifi(char *test_name)
+static bool test_network(char *test_name)
 {
     uint8_t frame[FRAME_OVERHEAD(MAX_FRAME_SIZE)], *f = (uint8_t*) frame;
-    wifi_status_t out, in = wifi_connected;
-    uint32_t len = protocol_create_wifi_status(f, g_max_frame_size, in);
+    network_status_t out, in = wifi_connected;
+    uint32_t len = protocol_create_network_status(f, g_max_frame_size, in);
     if (len == 0) {
         if (!g_expecting_failure) {
             printf(" %s: frame creation failed\n", test_name);
@@ -286,7 +286,7 @@ static bool test_wifi(char *test_name)
         return false;
     }
     EXTRACT_PAYLOAD();
-    if (!protocol_unpack_wifi_status(f, res, &out)) {
+    if (!protocol_unpack_network_status(f, res, &out)) {
         printf("%s: unpack response failed\n", test_name);
         return false;
     }
@@ -398,7 +398,7 @@ int main(int argc, char const *argv[])
     RUN_PROTOCOL_TEST(test_ilimit);
     RUN_PROTOCOL_TEST(test_status);
     RUN_PROTOCOL_TEST(test_status_response);
-    RUN_PROTOCOL_TEST(test_wifi);
+    RUN_PROTOCOL_TEST(test_network);
     RUN_PROTOCOL_TEST(test_lock);
     RUN_PROTOCOL_TEST(test_ocp);
     RUN_PROTOCOL_TEST(test_power_enable);
@@ -413,7 +413,7 @@ int main(int argc, char const *argv[])
     RUN_PROTOCOL_TEST(test_ilimit);
     RUN_PROTOCOL_TEST(test_status);
     RUN_PROTOCOL_TEST(test_status_response);
-    RUN_PROTOCOL_TEST(test_wifi);
+    RUN_PROTOCOL_TEST(test_network);
     RUN_PROTOCOL_TEST(test_lock);
     RUN_PROTOCOL_TEST(test_ocp);
 

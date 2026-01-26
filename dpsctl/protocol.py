@@ -278,6 +278,7 @@ def unpack_query_response(uframe):
             temp2 -= 0x10000
         data['temp2'] = temp2 / 10
     data['temp_shutdown'] = uframe.unpack8()
+    data['display_brightness'] = uframe.unpack8()
     data['cur_func'] = uframe.unpack_cstr()
     data['params'] = {}
     while not uframe.eof():

@@ -43,7 +43,7 @@ typedef enum {
     __obsolete_cmd_set_ilimit,
     cmd_query,
     __obsolete_cmd_power_enable,
-    cmd_wifi_status,
+    cmd_network_status,
     cmd_lock,
     cmd_ocp_event,
     cmd_upgrade_start,
@@ -64,12 +64,16 @@ typedef enum {
 } command_t;
 
 typedef enum {
-    wifi_off = 0,
+    network_off = 0,
     wifi_connecting,
     wifi_connected,
     wifi_error,
-    wifi_upgrading // Used by the ESP8266 when doing FOTA
-} wifi_status_t;
+    wifi_upgrading, // Used by the ESP8266 when doing FOTA
+    ethernet_off,
+    ethernet_connecting,
+    ethernet_connected,
+    ethernet_error
+} network_status_t;
 
 typedef enum {
     upgrade_continue = 0, /** device sent go-ahead for continued upgrade */
@@ -116,7 +120,7 @@ void protocol_create_vout(frame_t *frame, uint16_t vout_mv);
 void protocol_create_ilimit(frame_t *frame, uint16_t ilimit_ma);
 void protocol_create_status(frame_t *frame);
 void protocol_create_query_response(frame_t *frame, uint16_t v_in, uint16_t v_out_setting, uint16_t v_out, uint16_t i_out, uint16_t i_limit, uint8_t power_enabled);
-void protocol_create_wifi_status(frame_t *frame, wifi_status_t status);
+void protocol_create_network_status(frame_t *frame, network_status_t status);
 void protocol_create_lock(frame_t *frame, uint8_t locked);
 void protocol_create_ocp(frame_t *frame, uint16_t i_cut);
 
@@ -132,7 +136,7 @@ bool protocol_unpack_power_enable(frame_t *frame, uint8_t *enable);
 bool protocol_unpack_vout(frame_t *frame, uint16_t *vout_mv);
 bool protocol_unpack_ilimit(frame_t *frame, uint16_t *ilimit_ma);
 bool protocol_unpack_query_response(frame_t *frame, uint16_t *v_in, uint16_t *v_out_setting, uint16_t *v_out, uint16_t *i_out, uint16_t *i_limit, uint8_t *power_enabled);
-bool protocol_unpack_wifi_status(frame_t *frame, wifi_status_t *status);
+bool protocol_unpack_network_status(frame_t *frame, network_status_t *status);
 bool protocol_unpack_lock(frame_t *frame, uint8_t *locked);
 bool protocol_unpack_ocp(frame_t *frame, uint16_t *i_cut);
 bool protocol_unpack_upgrade_start(frame_t *frame, uint16_t *chunk_size, uint16_t *crc);
@@ -208,7 +212,7 @@ bool protocol_unpack_upgrade_start(frame_t *frame, uint16_t *chunk_size, uint16_
  *
  *
  * === Receiving a temperature report ===
- * This command is used by a wifi companion with the ability to measure
+ * This command is used by a network companion with the ability to measure
  * temperature. Two temperatures are included as signed 16 bit integers x10
  * and 0xffff indicates an illegal temperature. You can decide for yourself
  * if your temperature unit is Celcius, Farenheit, Kelvin or one you just made
@@ -218,12 +222,12 @@ bool protocol_unpack_upgrade_start(frame_t *frame, uint16_t *chunk_size, uint16_
  *  DPS:    [cmd_response | cmd_temperature_report] ]
  *
  *
- * === Setting wifi status ===
- * This command is used to set the wifi indicator on the screen. Status will be
- * one of the wifi_status_t enums
+ * === Setting network status ===
+ * This command is used to set the network indicator symbols on the screen. Status will be
+ * one of the networ_status_t enums
  *
- *  HOST:   [cmd_wifi_status] [<wifi_status_t>]
- *  DPS:    [cmd_response | cmd_wifi_status] [1]
+ *  HOST:   [cmd_network_status] [<network_status_t>]
+ *  DPS:    [cmd_response | cmd_network_status] [1]
  *
  *
  * === Locking the controls ===

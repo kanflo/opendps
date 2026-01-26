@@ -136,11 +136,11 @@ bool opendps_enable_output(bool enable);
 void opendps_update_power_status(bool enabled);
 
 /**
-  * @brief Update wifi status icon
-  * @param status new wifi status
+  * @brief Update network status icon
+  * @param status new network status
   * @retval none
   */
-void opendps_update_wifi_status(wifi_status_t status);
+void opendps_update_network_status(network_status_t status);
 
 /**
   * @brief Handle ping

@@ -2,7 +2,7 @@
 COMMANDLINE := 0
 
 # The baudrate used for serial communications, defaults to 9600
-BAUDRATE ?= 9600
+BAUDRATE ?= 19200
 
 # Set build model, defaults to DPS5005
 MODEL := DPS5005
@@ -10,14 +10,14 @@ MODEL := DPS5005
 BINARY = opendps_$(MODEL)
 
 # Include splash screen
-SPLASH_SCREEN := 0
+SPLASH_SCREEN := 1
 
 # Include support for thermal lockout via the serial interface
 THERMAL_LOCKOUT := 0
 
-# Build wifi version (only change being that the wifi icon will start flashing
+# Build network version (only change being that the network icon will start flashing/be shown
 # on power up)
-WIFI := 1
+NETWORK := 1
 
 # Maximum current your DPS model can provide. Eg 5000mA for the DPS5005
 # This is usually set by MODEL but you can override it here
@@ -117,6 +117,7 @@ OBJS = \
     gfx-padlock.o \
     gfx-thermometer.o \
     gfx-wifi.o \
+#    gfx-ethernet.o \
     opendps.o
 
 ifdef MAX_CURRENT
@@ -173,8 +174,8 @@ ifeq ($(SPLASH_SCREEN),1)
 	CFLAGS +=-DCONFIG_SPLASH_SCREEN
 endif
 
-ifeq ($(WIFI),1)
-	CFLAGS +=-DCONFIG_WIFI
+ifeq ($(NETWORK),1)
+	CFLAGS +=-DCONFIG_NETWORK
 endif
 
 ifeq ($(COMMANDLINE),1)
