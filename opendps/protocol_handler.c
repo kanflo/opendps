@@ -394,7 +394,7 @@ static command_status_t handle_cal_report(void)
     frame_t frame;
     set_frame_header(&frame);
     pack8(&frame, cmd_response | cmd_cal_report);
-    pack8(&frame, 1); 
+    pack8(&frame, 0);
     pack16(&frame, v_out_raw);
     pack16(&frame, v_in_raw);
     pack16(&frame, i_out_raw);
