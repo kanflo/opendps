@@ -2,7 +2,7 @@
 COMMANDLINE := 0
 
 # The baudrate used for serial communications, defaults to 9600
-BAUDRATE ?= 19200
+BAUDRATE ?= 9600
 
 # Set build model, defaults to DPS5005
 MODEL := DPS5005
@@ -10,7 +10,7 @@ MODEL := DPS5005
 BINARY = opendps_$(MODEL)
 
 # Include splash screen
-SPLASH_SCREEN := 1
+SPLASH_SCREEN := 0
 
 # Include support for thermal lockout via the serial interface
 THERMAL_LOCKOUT := 0
@@ -136,10 +136,6 @@ ifeq ($(WDOG),1)
 	OBJS += wdog.o
 endif
 
-ifeq ($(ETHERNET),1)
-        CFLAGS +=-DCONFIG_NETWORK_ETHERNET
-endif
-
 ifeq ($(INVERT_ENABLE),1)
 	CFLAGS +=-DCONFIG_INVERT_ENABLE
 endif
@@ -180,6 +176,11 @@ ifeq ($(SPLASH_SCREEN),1)
 endif
 
 ifeq ($(NETWORK),1)
+	CFLAGS +=-DCONFIG_NETWORK
+endif
+
+
+ifeq ($(WIFI),1)
 	CFLAGS +=-DCONFIG_NETWORK
 endif
 
