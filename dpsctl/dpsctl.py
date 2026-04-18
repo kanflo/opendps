@@ -54,8 +54,9 @@ import protocol
 import uframe
 from protocol import (create_cmd, create_enable_output, create_lock, create_set_calibration,
                       create_set_function, create_set_parameter, create_temperature, create_set_brightness,
-                      create_upgrade_data, create_upgrade_start, create_change_screen,
-                      unpack_cal_report, unpack_query_response, unpack_version_response)
+                      create_set_baud, create_upgrade_data, create_upgrade_start, create_change_screen,
+                      unpack_cal_report, unpack_query_response, unpack_version_response,
+                      VALID_BAUD_RATES)
 
 try:
     import serial
@@ -139,6 +140,11 @@ class tty_interface(comm_interface):
             if b == uframe._EOF:
                 break
         return bytes_
+
+    def set_baudrate(self, baudrate):
+        if self._port_handle:
+            self._port_handle.baudrate = baudrate
+        self._baudrate = baudrate
 
 
 class tcp_interface(comm_interface):
@@ -435,6 +441,14 @@ def handle_response(command, frame, args, quiet=False):
         pass
     elif resp_command == protocol.CMD_SET_BRIGHTNESS:
         pass
+    elif resp_command == protocol.CMD_SET_BAUD:
+        cmd = frame.unpack8()
+        success = frame.unpack8()
+        if not quiet:
+            if success:
+                print("Baud rate changed successfully.")
+            else:
+                print("Error: device rejected baud rate.")
     else:
         print("Unknown response {:d} from device.".format(resp_command))
 
@@ -573,6 +587,15 @@ def handle_commands(args):
         else:
             fail("brightness must be between 0 and 100")
 
+    if args.set_baud:
+        if args.set_baud not in VALID_BAUD_RATES:
+            fail("Invalid baud rate {:d}. Valid: {}".format(args.set_baud, VALID_BAUD_RATES))
+        communicate(comms, create_set_baud(args.set_baud), args)
+        if isinstance(comms, tty_interface):
+            time.sleep(0.1)
+            comms.set_baudrate(args.set_baud)
+            print("Serial port switched to {:d} baud.".format(args.set_baud))
+
 
 
 def is_ip_address(if_name):
@@ -606,26 +629,40 @@ def crc16xmodem(data: bytes):
 
 def run_upgrade(comms, fw_file_name, args):
     """
-    Run OpenDPS firmware upgrade
+    Run OpenDPS firmware upgrade.
+    Bootloader always starts at 9600. If args.upgrade_baud is set and > 9600,
+    send cmd_set_baud to the bootloader after upgrade_start ACK, then switch
+    the serial port to the faster rate for data transfer.
     """
     with open(fw_file_name, mode='rb') as file:
-        # crc = binascii.crc32(file.read()) % (1<<32)
         content = file.read()
         if codecs.encode(content, 'hex')[6:8] != b'20' and not args.force:
             fail("The firmware file does not seem valid, use --force to force upgrade")
         crc = crc16xmodem(content)
     chunk_size = 1024
+
+    upgrade_baud = getattr(args, 'upgrade_baud', None)
+    if upgrade_baud and upgrade_baud not in VALID_BAUD_RATES:
+        fail("Invalid upgrade baud rate {:d}. Valid: {}".format(upgrade_baud, VALID_BAUD_RATES))
+
     ret_dict = communicate(comms, create_upgrade_start(chunk_size, crc), args)
     if ret_dict["status"] == protocol.UPGRADE_CONTINUE:
         if chunk_size != ret_dict["chunk_size"]:
             print("Device selected chunk size {:d}".format(ret_dict["chunk_size"]))
             chunk_size = ret_dict["chunk_size"]
+
+        # Switch to faster baud if requested
+        if upgrade_baud and upgrade_baud != 9600 and isinstance(comms, tty_interface):
+            print("Switching bootloader to {:d} baud for data transfer...".format(upgrade_baud))
+            communicate(comms, create_set_baud(upgrade_baud), args, quiet=True)
+            time.sleep(0.1)  # Let bootloader switch before we do
+            comms.set_baudrate(upgrade_baud)
+
         counter = 0
         for chunk in chunk_from_file(fw_file_name, chunk_size):
             counter += len(chunk)
             sys.stdout.write("\rDownload progress: {:d}% ".format(int(counter / len(content) * 100)))
             sys.stdout.flush()
-            # print(" {:d} bytes".format(counter))
 
             ret_dict = communicate(comms, create_upgrade_data(chunk), args)
             status = ret_dict["status"]
@@ -1171,6 +1208,10 @@ def main():
     parser.add_argument('-d', '--device', help="OpenDPS device to connect to. Can be a /dev/tty device, IP address for UDP protocol or tcp:IP for TCP protocol. If omitted, dpsctl.py will try the environment variable DPSIF", default='')
     parser.add_argument('-b', '--baudrate', type=int, dest="baudrate", help="Set baudrate used for serial communications", default=9600)
     parser.add_argument('-B', '--brightness', type=int, help="Set display brightness (0..100)")
+    parser.add_argument('--set-baud', type=int, dest="set_baud", default=None,
+                        help="Set device UART baud rate (saved to flash). Valid: 9600, 19200, 38400, 57600, 115200")
+    parser.add_argument('--upgrade-baud', type=int, dest="upgrade_baud", default=None,
+                        help="Use faster baud rate for firmware data transfer (bootloader switches after upgrade_start ACK)")
     parser.add_argument('-S', '--scan', action="store_true", help="Scan for OpenDPS wifi devices")
     parser.add_argument('-f', '--function', nargs='?', help="Set active function")
     parser.add_argument('-F', '--list-functions', action='store_true', help="List available functions")
