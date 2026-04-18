@@ -391,7 +391,9 @@ void adc1_2_isr(void)
     }
 
     /** Accumulate for averaging (display/query only — OCP/OVP use raw values above) */
-    uint32_t i_corrected = (adc_counter >= STARTUP_SKIP_COUNT && !measure_i_out)
+    /* i already has adc_i_offset applied when pwrctl_i_limit_raw != 0 (line above);
+     * apply it here only when that block was skipped (limit not yet set from past) */
+    uint32_t i_corrected = (!measure_i_out && adc_counter >= STARTUP_SKIP_COUNT && !pwrctl_i_limit_raw)
                            ? (uint32_t)((int32_t)i + adc_i_offset) : i;
     avg_i_out_sum += i_corrected;
     avg_v_in_sum  += v_in_raw;
