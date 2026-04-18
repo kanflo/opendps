@@ -909,6 +909,11 @@ static void read_past_settings(void)
     }
     hw_set_backlight(last_tft_brightness);
 
+    if (past_read_unit(&g_past, past_uart_baud, (const void**) &p, &length)) {
+        if (p) {
+            hw_set_baudrate(*p);
+        }
+    }
 
 #ifdef GIT_VERSION
     /** Update app git hash in past if needed */
@@ -955,6 +960,38 @@ static void write_past_settings(void)
             dbg_printf("Error: past write inv failed!\n");
         }
     }
+}
+
+/**
+  * @brief Check if baud rate is in the supported set
+  * @param baud baud rate to check
+  * @retval true if valid
+  */
+bool opendps_is_valid_baud(uint32_t baud)
+{
+    switch (baud) {
+        case 9600: case 19200: case 38400: case 57600: case 115200:
+            return true;
+        default:
+            return false;
+    }
+}
+
+/**
+  * @brief Set UART baud rate, save to PAST, and switch USART1 immediately
+  * @param baud new baud rate (9600, 19200, 38400, 57600, or 115200)
+  * @retval true if valid and applied
+  */
+bool opendps_set_uart_baud(uint32_t baud)
+{
+    if (!opendps_is_valid_baud(baud)) {
+        return false;
+    }
+    if (!past_write_unit(&g_past, past_uart_baud, (void*) &baud, sizeof(baud))) {
+        dbg_printf("Error: past write uart_baud failed!\n");
+    }
+    hw_set_baudrate(baud);
+    return true;
 }
 
 /**

@@ -48,7 +48,7 @@
 typedef enum {
     cmd_failed = 0,
     cmd_success,
-    cmd_success_but_i_actually_sent_my_own_status_thank_you_very_much,
+    cmd_success_with_response,
 } command_status_t;
 
 static uint8_t frame_buffer[MAX_FRAME_LENGTH];
@@ -128,7 +128,7 @@ static command_status_t handle_query(void)
     end_frame(&frame);
 
     send_frame(&frame);
-    return cmd_success_but_i_actually_sent_my_own_status_thank_you_very_much;
+    return cmd_success_with_response;
 }
 
 static command_status_t handle_set_function(frame_t *frame)
@@ -173,7 +173,7 @@ static command_status_t handle_set_function(frame_t *frame)
         end_frame(&frame_resp);
         send_frame(&frame_resp);
     }
-    return cmd_success_but_i_actually_sent_my_own_status_thank_you_very_much;
+    return cmd_success_with_response;
 }
 
 static command_status_t handle_list_functions(void)
@@ -192,7 +192,7 @@ static command_status_t handle_list_functions(void)
     }
     end_frame(&frame);
     send_frame(&frame);
-    return cmd_success_but_i_actually_sent_my_own_status_thank_you_very_much;
+    return cmd_success_with_response;
 }
 
 static command_status_t handle_set_parameters(frame_t *frame)
@@ -233,7 +233,7 @@ static command_status_t handle_set_parameters(frame_t *frame)
         end_frame(&frame_resp);
         send_frame(&frame_resp);
     }
-    return cmd_success_but_i_actually_sent_my_own_status_thank_you_very_much;
+    return cmd_success_with_response;
 }
 
 static command_status_t handle_set_calibration(frame_t *frame)
@@ -275,7 +275,7 @@ static command_status_t handle_set_calibration(frame_t *frame)
         end_frame(&frame_resp);
         send_frame(&frame_resp);
     }
-    return cmd_success_but_i_actually_sent_my_own_status_thank_you_very_much;
+    return cmd_success_with_response;
 }
 
 static command_status_t handle_list_parameters(void)
@@ -301,7 +301,7 @@ static command_status_t handle_list_parameters(void)
     }
     end_frame(&frame);
     send_frame(&frame);
-    return cmd_success_but_i_actually_sent_my_own_status_thank_you_very_much;
+    return cmd_success_with_response;
 }
 
 static command_status_t handle_enable_output(frame_t *frame)
@@ -332,6 +332,32 @@ static command_status_t handle_set_brightness(frame_t *frame)
     unpack8(frame, &brightness_pct);
     hw_set_backlight(brightness_pct);
     return cmd_success;
+}
+
+static command_status_t handle_set_baud(frame_t *frame)
+{
+    emu_printf("%s\n", __FUNCTION__);
+    uint8_t cmd;
+    uint32_t baud;
+    start_frame_unpacking(frame);
+    unpack8(frame, &cmd);
+    (void) cmd;
+    unpack32(frame, &baud);
+
+    uint8_t success = opendps_is_valid_baud(baud) ? 1 : 0;
+
+    frame_t frame_resp;
+    set_frame_header(&frame_resp);
+    pack8(&frame_resp, cmd_response | cmd_set_baud);
+    pack8(&frame_resp, success);
+    end_frame(&frame_resp);
+    send_frame(&frame_resp);
+
+    if (success) {
+        usart_wait_send_ready(USART1);
+        opendps_set_uart_baud(baud);
+    }
+    return cmd_success_with_response;
 }
 
 #ifdef CONFIG_THERMAL_LOCKOUT
@@ -379,7 +405,7 @@ static command_status_t handle_version(void)
     end_frame(&frame);
 
     send_frame(&frame);
-    return cmd_success_but_i_actually_sent_my_own_status_thank_you_very_much;
+    return cmd_success_with_response;
 }
 
 /**
@@ -412,7 +438,7 @@ static command_status_t handle_cal_report(void)
     pack_float(&frame, vin_adc_c_coef);
     end_frame(&frame);
     send_frame(&frame);
-    return cmd_success_but_i_actually_sent_my_own_status_thank_you_very_much;
+    return cmd_success_with_response;
 }
 
 /**
@@ -577,12 +603,15 @@ static void handle_frame(uint8_t *data, uint32_t length)
             case cmd_set_brightness:
                 success = handle_set_brightness(&frame);
                 break;
+            case cmd_set_baud:
+                success = handle_set_baud(&frame);
+                break;
             default:
                 emu_printf("Got unknown command %d (0x%02x)\n", cmd, cmd);
                 break;
         }
     }
-    if (success != cmd_success_but_i_actually_sent_my_own_status_thank_you_very_much) {
+    if (success != cmd_success_with_response) {
         frame_t frame_resp;
         protocol_create_response(&frame_resp, cmd, success);
         if (frame_resp.length > 0 && cmd != cmd_response) {

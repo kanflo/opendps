@@ -195,4 +195,22 @@ void opendps_upgrade_start(void);
  */
 bool opendps_change_screen(uint8_t screen_id);
 
+/**
+ * @brief      Check if baud rate is in the supported set
+ *
+ * @param[in]  baud  Baud rate to check
+ *
+ * @return     True if valid
+ */
+bool opendps_is_valid_baud(uint32_t baud);
+
+/**
+ * @brief      Set UART baud rate, save to PAST, and switch USART1 immediately
+ *
+ * @param[in]  baud  New baud rate (9600, 19200, 38400, 57600, or 115200)
+ *
+ * @return     True if baud rate is valid and was applied
+ */
+bool opendps_set_uart_baud(uint32_t baud);
+
 #endif // __OPENDPS_H__

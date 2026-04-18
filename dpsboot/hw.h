@@ -44,4 +44,11 @@ void hw_init(ringbuf_t *usart_rx_buf);
   */
 bool hw_check_forced_upgrade(void);
 
+/**
+  * @brief Reconfigure USART1 to the given baud rate (session only, not saved)
+  * @param baud new baud rate (9600, 19200, 38400, 57600, or 115200)
+  * @retval none
+  */
+void hw_set_baudrate_boot(uint32_t baud);
+
 #endif // __HW_H__
