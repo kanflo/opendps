@@ -85,7 +85,8 @@ CFLAGS += \
           -DCOLOR_VOLTAGE=$(COLOR_VOLTAGE) \
           -DCOLOR_AMPERAGE=$(COLOR_AMPERAGE) \
           -DCOLOR_INPUT=$(COLOR_INPUT) \
-          -D$(MODEL)
+          -D$(MODEL) \
+          -DADC_CHA_IOUT_GOLDEN_VALUE=64
 
 # Application linker script
 LDSCRIPT = stm32f100_app.ld
