@@ -400,7 +400,8 @@ void adc1_2_isr(void)
     avg_v_out_sum += v_out_raw;
     avg_count++;
     if (avg_count >= ADC_AVG_SAMPLES) {
-        i_out_adc_avg = (uint16_t)(avg_i_out_sum / ADC_AVG_SAMPLES);
+        uint16_t i_avg = (uint16_t)(avg_i_out_sum / ADC_AVG_SAMPLES);
+        i_out_adc_avg = (i_avg <= 10) ? 0 : i_avg;
         v_in_adc_avg  = (uint16_t)(avg_v_in_sum  / ADC_AVG_SAMPLES);
         v_out_adc_avg = (uint16_t)(avg_v_out_sum / ADC_AVG_SAMPLES);
         avg_i_out_sum = 0;
