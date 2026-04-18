@@ -70,6 +70,17 @@ static volatile uint16_t v_out_adc;
 static volatile uint16_t v_out_trig_adc;
 static volatile uint64_t last_button_down;
 
+/** ADC averaging: accumulate 420 samples (~50 Hz output at ~21kHz ADC rate) */
+#define ADC_AVG_SAMPLES (420)
+static uint32_t avg_i_out_sum;
+static uint32_t avg_v_in_sum;
+static uint32_t avg_v_out_sum;
+static uint16_t avg_count;
+/** Published averaged values, updated every ADC_AVG_SAMPLES conversions */
+static volatile uint16_t i_out_adc_avg;
+static volatile uint16_t v_in_adc_avg;
+static volatile uint16_t v_out_adc_avg;
+
 typedef enum {
     adc_cha_i_out = 0,
     adc_cha_v_in,
@@ -169,9 +180,9 @@ void hw_init(void)
   */
 void hw_get_adc_values(uint16_t *i_out_raw, uint16_t *v_in_raw, uint16_t *v_out_raw)
 {
-    *i_out_raw = i_out_adc;
-    *v_in_raw = v_in_adc;
-    *v_out_raw = v_out_adc;
+    *i_out_raw = i_out_adc_avg;
+    *v_in_raw  = v_in_adc_avg;
+    *v_out_raw = v_out_adc_avg;
 }
 
 /**
@@ -367,14 +378,33 @@ void adc1_2_isr(void)
         }
     }
 
-    v_in_adc = adc_read_injected(ADC1, adc_cha_v_in + 1); // Yes, this is correct
-    v_out_adc = adc_read_injected(ADC1, adc_cha_v_out + 1); // Yes, this is correct
+    uint16_t v_in_raw  = adc_read_injected(ADC1, adc_cha_v_in  + 1); // Yes, this is correct
+    uint16_t v_out_raw = adc_read_injected(ADC1, adc_cha_v_out + 1); // Yes, this is correct
+    v_in_adc  = v_in_raw;
+    v_out_adc = v_out_raw;
 
     /** Check to see if an over voltage limit has been triggered */
     if (pwrctl_v_limit_raw) {
-        if (v_out_adc > pwrctl_v_limit_raw && pwrctl_vout_enabled()) { /** OVP! */
-            handle_ovp(v_out_adc);
+        if (v_out_raw > pwrctl_v_limit_raw && pwrctl_vout_enabled()) { /** OVP! */
+            handle_ovp(v_out_raw);
         }
+    }
+
+    /** Accumulate for averaging (display/query only — OCP/OVP use raw values above) */
+    uint32_t i_corrected = (adc_counter >= STARTUP_SKIP_COUNT && !measure_i_out)
+                           ? (uint32_t)((int32_t)i + adc_i_offset) : i;
+    avg_i_out_sum += i_corrected;
+    avg_v_in_sum  += v_in_raw;
+    avg_v_out_sum += v_out_raw;
+    avg_count++;
+    if (avg_count >= ADC_AVG_SAMPLES) {
+        i_out_adc_avg = (uint16_t)(avg_i_out_sum / ADC_AVG_SAMPLES);
+        v_in_adc_avg  = (uint16_t)(avg_v_in_sum  / ADC_AVG_SAMPLES);
+        v_out_adc_avg = (uint16_t)(avg_v_out_sum / ADC_AVG_SAMPLES);
+        avg_i_out_sum = 0;
+        avg_v_in_sum  = 0;
+        avg_v_out_sum = 0;
+        avg_count     = 0;
     }
 
 #ifdef CONFIG_FUNCGEN_ENABLE
