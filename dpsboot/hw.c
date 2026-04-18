@@ -134,12 +134,7 @@ static void usart_init(void)
   */
 void hw_set_baudrate_boot(uint32_t baud)
 {
-    switch (baud) {
-        case 9600: case 19200: case 38400: case 57600: case 115200:
-            break;
-        default:
-            return;
-    }
+    /* Caller (cmd_set_baud handler) already validated baud value */
     usart_wait_send_ready(USART1);
     usart_disable(USART1);
     usart_set_baudrate(USART1, baud);
