@@ -40,6 +40,7 @@
 #include "hw.h"
 #include "event.h"
 #include "dps-model.h"
+#include "opendps.h"
 
 /** Linker file symbols */
 extern uint32_t *_ram_vect_start;
@@ -400,8 +401,7 @@ void adc1_2_isr(void)
     avg_v_out_sum += v_out_raw;
     avg_count++;
     if (avg_count >= ADC_AVG_SAMPLES) {
-        uint16_t i_avg = (uint16_t)(avg_i_out_sum / ADC_AVG_SAMPLES);
-        i_out_adc_avg = (i_avg <= 10) ? 0 : i_avg;
+        i_out_adc_avg = (uint16_t)(avg_i_out_sum / ADC_AVG_SAMPLES);
         v_in_adc_avg  = (uint16_t)(avg_v_in_sum  / ADC_AVG_SAMPLES);
         v_out_adc_avg = (uint16_t)(avg_v_out_sum / ADC_AVG_SAMPLES);
         avg_i_out_sum = 0;
@@ -521,12 +521,8 @@ static void usart_init(void)
   */
 void hw_set_baudrate(uint32_t baud)
 {
-    switch (baud) {
-        case 9600: case 19200: case 38400: case 57600: case 115200:
-            break;
-        default:
-            return;
-    }
+    if (!opendps_is_valid_baud(baud))
+        return;
     usart_wait_send_ready(USART1);
     usart_disable(USART1);
     usart_set_baudrate(USART1, baud);

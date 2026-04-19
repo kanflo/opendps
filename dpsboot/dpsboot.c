@@ -268,12 +268,7 @@ static void handle_frame(uint8_t *payload, uint32_t length)
                     baud = (uint32_t)payload[1] << 24 | (uint32_t)payload[2] << 16 |
                            (uint32_t)payload[3] << 8  | (uint32_t)payload[4];
                 }
-                uint8_t valid = 0;
-                switch (baud) {
-                    case 9600: case 19200: case 38400: case 57600: case 115200:
-                        valid = 1; break;
-                    default: break;
-                }
+                uint8_t valid = opendps_is_valid_baud(baud) ? 1 : 0;
                 {
                     frame_t frame;
                     set_frame_header(&frame);

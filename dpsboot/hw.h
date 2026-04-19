@@ -51,4 +51,11 @@ bool hw_check_forced_upgrade(void);
   */
 void hw_set_baudrate_boot(uint32_t baud);
 
+/**
+  * @brief Check if baud rate is in the supported set
+  * @param baud baud rate to check
+  * @retval true if valid
+  */
+bool opendps_is_valid_baud(uint32_t baud);
+
 #endif // __HW_H__

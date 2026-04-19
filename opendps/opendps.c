@@ -94,7 +94,7 @@
 /** How ofter we update the measurements in the UI (ms) */
 #define UI_UPDATE_INTERVAL_MS  (250)
 
-/** Timeout for waiting for network connction (ms) */
+/** Timeout for waiting for network connection (ms) */
 #define NETWORK_CONNECT_TIMEOUT  (10000)
 
 /** GFX sizes */
@@ -1086,7 +1086,7 @@ int main(int argc, char const *argv[])
     /** Rationale: the ESP8266 could send this message when it starts up but
       * the current implementation spews network related messages on the
       * UART meaning this message got lost. The ESP will however send the
-      * twork_connected status when it connects but if that does not happen, the
+      * network_connected status when it connects but if that does not happen, the
       * ui module will turn off the network icon after 10s to save the user's
       * sanity
       */

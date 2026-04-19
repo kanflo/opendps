@@ -128,6 +128,21 @@ static void usart_init(void)
 }
 
 /**
+  * @brief Check if baud rate is in the supported set
+  * @param baud baud rate to check
+  * @retval true if valid
+  */
+bool opendps_is_valid_baud(uint32_t baud)
+{
+    switch (baud) {
+        case 9600: case 19200: case 38400: case 57600: case 115200:
+            return true;
+        default:
+            return false;
+    }
+}
+
+/**
   * @brief Reconfigure USART1 to a new baud rate (session only, not saved)
   * @param baud new baud rate (9600, 19200, 38400, 57600, or 115200)
   * @retval none
