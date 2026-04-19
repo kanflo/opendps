@@ -40,6 +40,7 @@
 #include "hw.h"
 #include "event.h"
 #include "dps-model.h"
+#include "uui.h"
 #include "opendps.h"
 
 /** Linker file symbols */
