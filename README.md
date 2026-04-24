@@ -1,11 +1,207 @@
-# OpenDPS
+# OpenDPS (p1ngb4ck fork)
 
 #### Give your DPS5005 the upgrade it deserves
 
-OpenDPS is a FOSS firmware replacement for the DPS5005 (and DPS3003, DPS3005, DPS5015, DP50V5A, DPS5020 and possibly others) that has the same functionality, has a less cluttered user interface and is remote controllable via wifi (ESP8266) or via a serial port.
+> **This is a fork of [kanflo/opendps](https://github.com/kanflo/opendps)** with firmware improvements and an accompanying ESPHome component that replaces the original ESP8266 proxy with a modern ESP32-based integration.
+
+---
+
+## 🙏 Special thanks
+
+A huge, heartfelt thank you to the people without whom this project would not exist in its current form:
+
+**[Johan Kanflo (kanflo)](https://github.com/kanflo)** — for creating OpenDPS in the first place. Reverse-engineering the DPS5005, writing a clean open-source firmware replacement, and maintaining it for years is no small feat. This fork stands entirely on his shoulders.
+
+**Mallow** (Discord) — for invaluable help with the LVGL UI configuration and for creating the [custom LVGL 9.5 component](https://github.com/youkorr/lvgl_9.5) that overrides ESPHome's bundled LVGL version, enabling LVGL 9.5 features on ESP32-P4. Without that work the display integration simply would not have been possible.
+
+---
+
+## What this fork is about
+
+OpenDPS is great firmware — but controlling it previously required either a PC running `dpsctl.py` over serial/Wi-Fi, or a dedicated ESP8266 proxy board. This fork aims to bring **everything you could do with `dpsctl.py` on a PC directly onto an embedded ESP32 device**, with no PC required after initial setup.
+
+The goal is to keep installation as simple as possible: flash the DPS with OpenDPS firmware, flash your ESP32 device with a pre-built ESPHome config, and you're done. No Python environment, no laptop tethered to the bench.
+
+For the best experience, a **display-equipped ESP32-P4 tablet** (such as the Guition JC1060P470_I_W_Y) is recommended — but the ESPHome component works on any ESP32, including headless setups integrated into Home Assistant.
+
+---
+
+## Quick navigation
+
+- [Getting started](#getting-started)
+- [Our additions](#our-additions)
+- [ToDo](#todo)
+- [Screenshots & feature overview](#screenshots--feature-overview)
+
+---
+
+## Getting started
+
+### Step 1 — Flash the DPS with OpenDPS firmware
+
+Follow the original project's flashing guide ([Wiki](Wiki.md) or the [upstream blog post](https://johan.kanflo.com/upgrading-your-dps5005/)) to unlock and flash your DPS device.
+
+**Recommended:** use the firmware from this fork — it includes baud rate switching, improved ADC accuracy and calibration fixes (see [Our additions](#our-additions) below). Build and flash with:
+
+```bash
+git clone --recursive https://github.com/p1ngb4ck/opendps.git
+cd opendps
+make -C libopencm3
+make -C dpsboot flash   # only needed for a fresh device or to update the bootloader
+make -C opendps flash
+```
+
+**Already running upstream OpenDPS?** That's fine — the ESPHome component is backwards compatible with any OpenDPS version that has a working bootloader. You can always upgrade the main firmware later directly from the ESPHome device UI (no PC, no JTAG required), as long as the original `dpsboot` bootloader is intact.
+
+> **Note:** Reflashing the bootloader (`dpsboot`) requires JTAG/SWD access. The main application firmware can be upgraded over UART by the ESPHome device at any time.
+
+---
+
+### Step 2 — Flash the ESPHome device
+
+Install [ESPHome](https://esphome.io) if you haven't already, then compile and flash using our config:
+
+```bash
+# Install ESPHome (if needed)
+pip install esphome
+
+# Compile and flash (USB connected)
+esphome run esphome-config/esphome_config_opendps_JC1060P470_I_W_Y.yaml
+```
+
+Or use the [ESPHome web installer](https://web.esphome.io) / [ESPHome dashboard](https://esphome.io/guides/getting_started_hassio.html) if you prefer a GUI.
+
+The config uses `external_components` to pull the `opendps` component from this project's companion ESPHome repository — no manual component installation needed.
+
+---
+
+### Step 3 — Connect DPS to ESP32
+
+Wire the DPS serial interface to your ESP32:
+
+| DPS pin | ESP32 pin |
+|---------|-----------|
+| TX      | RX (see config) |
+| RX      | TX (see config) |
+| GND     | GND |
+
+Exact GPIO assignments are defined in the ESPHome config file. Logic level is 3.3V on the ESP32 side — check your DPS model's serial voltage before connecting.
+
+---
+
+### Step 4 (optional) — Adapt the config for your hardware
+
+The provided config targets the **Guition JC1060P470_I_W_Y** (ESP32-P4, 10.6" MIPI DSI display, IP101 Ethernet). If you use a different device:
+
+- **Another ESP32-P4 tablet with display:** adjust display, touch and pin assignments in the YAML. The full LVGL UI and all features carry over directly.
+- **Any other ESP32 (no display):** strip out the `display`, `lvgl` and `touchscreen` sections and keep only the `opendps` component with your sensors and automations. All control and monitoring works headlessly via Home Assistant or MQTT.
+
+The `opendps` ESPHome component itself has no display dependency — the UI is purely additive.
+
+---
+
+### ToDo
+
+Features planned for future implementation (not yet available):
+
+- **BLE remote / keyboard support** — control the DPS via Bluetooth keyboard or remote
+- **USB-HID support** — use a USB keyboard or gamepad connected to the ESP32 for local control
+- **Minor UI fixes** — ongoing polish of the LVGL interface
+
+---
+
+## Our additions
+
+### Firmware changes
+
+- **Configurable UART baud rate** — runtime baud rate switching; default changed to 115200 for faster host communication (`b92f6de`, `31a1114`)
+- **ADC oversampling** — averages 420 ADC samples per reading (~50 Hz update rate, ~21 kHz ADC rate) for significantly smoother voltage/current readings (`cdf97dd`)
+- **Current noise floor clamp** — output current is clamped to zero below the 10 mA noise floor, eliminating false micro-amp readings at idle (`dc26352`)
+- **ADC calibration fixes** — corrected `ADC_CHA_IOUT_GOLDEN_VALUE` for the DPS5005 and fixed double-offset bug in current averaging (`963fe78`, `bca649f`, `1f3b9ab`)
+- **Vin display** — input voltage now shown with 2 decimal places (`1f3b9ab`)
+- **Splash screen disabled** — faster boot (`b92f6de`)
+- **dpsctl `--set-baud` / `--upgrade-baud`** — CLI support for baud rate management and baud-rate-aware firmware upgrades (`b76bc6f`)
+- **dpsboot LTO + size trim** — link-time optimisation enabled in the bootloader; `hw_set_baudrate_boot` trimmed to fit in the 5 KB flash budget (`4a9a172`)
+- **Status response fix** — corrected status response code handling (`e53fd42`)
+
+### ESPHome component
+
+The original project used a separate ESP8266 as a Wi-Fi proxy. This fork adds a **native ESPHome component** (`opendps`) that talks directly to the DPS over UART from any ESP32, replacing the proxy entirely.
+
+**Features:**
+- Real-time V_in, V_out, I_out, power and temperature sensors
+- Output enable/disable, voltage/current set, function selection, lock, brightness
+- OTA firmware upgrade of the DPS from USB, SD, LittleFS or network storage (NFS/SMB/FTP) — directly from the device, no PC needed
+- High-speed datalogger with PSRAM-backed triple-buffering (CSV or binary output)
+- Full Home Assistant integration via native API or MQTT
+- Ethernet support (e.g. IP101) for wired connectivity
+
+The component lives in the [p1ngb4ck/esphome](https://github.com/p1ngb4ck/esphome) repository under `esphome/components/opendps/`. See its [README](https://github.com/p1ngb4ck/esphome/blob/dev/esphome/components/opendps/README.md) for full documentation, configuration schema and examples.
+
+### ESPHome configuration — Guition JC1060P470_I_W_Y (ESP32-P4 10.6" tablet)
+
+A complete, ready-to-use ESPHome configuration for the **Guition JC1060P470_I_W_Y** is provided in [`esphome-config/esphome_config_opendps_JC1060P470_I_W_Y.yaml`](esphome-config/esphome_config_opendps_JC1060P470_I_W_Y.yaml).
+
+**Target hardware:**
+- SoC: ESP32-P4 @ 400 MHz
+- Display: 10.6" MIPI DSI, 1024×600, model JC1060P470
+- Touch: GT911 (I2C)
+- Flash: 16 MB
+- PSRAM: Octal, 200 MHz
+- Ethernet: IP101
+
+**What the config provides:**
+- Full LVGL UI with main control screen (voltage, current, power, Vin, temperatures, output toggle)
+- Settings page with network config, calibration editor, OTA firmware upgrade browser (USB/SD), and system info
+- Datalogger integration with start/stop from the UI
+- Calibration read/write with per-field numpad editing
+- Ethernet connectivity (no Wi-Fi dependency)
+
+This config is the reference implementation and is actively running on real hardware.
+
+---
+
+## Screenshots & feature overview
+
+> _Screenshots and photos coming soon._
+
+### OpenDPS supported functions
+
+The OpenDPS firmware (and by extension this ESPHome integration) supports the following operating modes on compatible DPS devices:
+
+| Function | Description |
+|----------|-------------|
+| `cv` | Constant Voltage — hold output voltage at setpoint, current limited |
+| `cc` | Constant Current — hold output current at setpoint, voltage limited |
+| `cp` | Constant Power — hold output power at setpoint (model dependent) |
+
+**Supported devices:** DPS3003, DPS3005, DPS5005, DPS5015, DPS5020, DP50V5A and variants. Hardware revisions may vary — see the [upstream project](https://github.com/kanflo/opendps) for compatibility notes.
+
+**Monitored values (all modes):**
+- V_in — input voltage
+- V_out — output voltage
+- I_out — output current
+- Power — calculated output power (V_out × I_out)
+- Temperature 1 & 2 — internal sensors
+
+**Control:**
+- Enable / disable output
+- Set voltage setpoint
+- Set current limit
+- Switch operating function
+- Lock / unlock front panel
+- Adjust display brightness
+- Upgrade DPS firmware over UART (from ESP32, no PC required)
+- Calibrate ADC/DAC coefficients
+
+---
+
+## Original project
+
+OpenDPS is a FOSS firmware replacement for the DPS5005 (and DPS3003, DPS3005, DPS5015, DP50V5A, DPS5020 and possibly others) that has the same functionality, has a less cluttered user interface and is remote controllable via WiFi (ESP8266) or via a serial port.
 
 <p align="center">
-<img src="https://raw.githubusercontent.com/kanflo/opendps/master/image.jpg" alt="A DPS5005 with wifi"/>
+<img src="https://raw.githubusercontent.com/kanflo/opendps/master/image.jpg" alt="A DPS5005 with OpenDPS"/>
 </p>
 
 There are three accompanying blog posts you might find of interest:
@@ -14,16 +210,9 @@ There are three accompanying blog posts you might find of interest:
 * [Part two](https://johan.kanflo.com/opendps-design/) describes the design of OpenDPS.
 * [Part three](https://johan.kanflo.com/upgrading-your-dps5005/) covers the process of upgrading stock DPS5005:s to OpenDPS.
 
-### Upgrading your DPS5005
+### Cloning & building (upstream)
 
-If you are eager to upgrade your DPS5005, you may skip directly to part three. Oh, and of course you can use OpenDPS for more than a programmable power supply. Why not use it as an interface for your DIY sous vide cooker :D
-
-
-### Cloning & building
-
-First build the OpenDPS firmware:
-
-```
+```bash
 git clone --recursive https://github.com/kanflo/opendps.git
 cd opendps
 make -C libopencm3
@@ -32,19 +221,6 @@ make -C dpsboot flash
 ```
 
 Check [the blog](https://johan.kanflo.com/upgrading-your-dps5005/) for instructions on how to unlock and flash your DPS5005.
-
-Second, build and flash the ESP8266 firmware. First you need to create the file `esp8266-proxy/esp-open-rtos/include/private_ssid_config.h` with the following content:
-
-```
-#define WIFI_SSID "My SSID"
-#define WIFI_PASS "Secret password"
-```
-
-Next:
-
-```
-make -C esp8266-proxy flash
-```
 
 ### Setup dpsctl.py
 
@@ -91,90 +267,32 @@ V_out      : 3.33 V
 I_out      : 0.152 A
 ```
 
-List supported functions of the device:
+### Upgrading DPS firmware over UART
 
-```
-% dpsctl.py -d 172.16.3.203 -F
-Selected OpenDPS supports the cv and cc functions.
-```
-
-List supported functions parameters of current function:
-
-```
-% dpsctl.py -d 172.16.3.203 -P
-Selected OpenDPS supports the voltage (mV) current (mA) parameters for the cv function.
-```
-
-Additionally, `dpsctl.py` can return JSON, eg.:
-
-```
-% dpsctl.py -d 172.16.3.203 -q -j
-{
-    "command": 132,
-    "cur_func": "cv",
-    "i_out": 151,
-    "output_enabled": 1,
-    "params": {
-        "current": "500",
-        "voltage": "3300"
-    },
-    "status": 1,
-    "v_in": 12355,
-    "v_out": 3321
-}
-```
-
-### Upgrading
-
-As newer DPS:es have 1.25mm spaced JTAG pins (JST-GH) and limited space for running the JTAG signals towards the back of the device, a permanent soldered JTAG is somewhat cumbersome. People not activly developing OpenDPS will not need JTAG anyway. To facilitate upgrade, OpenDPS comes with a bootloader enabling upgrade over UART:
+OpenDPS comes with a bootloader enabling firmware upgrade over UART — no JTAG needed for the application firmware:
 
 ```
 % make -C opendps bin
 % dpsctl.py -d /dev/ttyUSB0 -U opendps/opendps.bin
 ```
 
-If you accidentally upgrade to a really b0rken version, the bootloader can be forced to enter upgrade mode if you keep the SEL button pressed while enabling power.
+With this fork's ESPHome integration, firmware upgrades can be triggered directly from the ESP32 device UI or via Home Assistant — no PC or `dpsctl.py` required.
 
-The display will be black during the entire upgrade operation. If it stays black, the bootloader might refuse or fail to start the OpenDPS application, or the application crashed. If you attempt the upgrade operation again, and upgrading begins, the bootloader is running but is refusing to boot your firmware. But why? Well, let's find out. If you append the `-v` option to `dpsctl.py` you will get a dump of the UART traffic.
-
-```
-Communicating with /dev/ttyUSB0
-TX  9 bytes 7e 09 04 00 27 86 0c b2 7f
-RX 9 bytes 7e 89 00 04 00 03 66 0f 7f
-```
-
-The fourth byte from the end in the received data (0x03 in this example) will tell us why the bootloader refused to boot the firmware. See [protocol.h](https://github.com/kanflo/opendps/blob/master/opendps/protocol.h#L72) for the different reasons.
-
-### Custom Fonts
-
-If you would like to use a your own font for OpenDPS you may do so by doing the following:
-
-```
-% make -C opendps fonts \
-    METER_FONT_FILE=<path_to_font> \
-    METER_FONT_SMALL_SIZE=18 \
-    METER_FONT_MEDIUM_SIZE=24 \
-    METER_FONT_LARGE_SIZE=48 \
-    FULL_FONT_FILE=<path_to_font> \
-    FULL_FONT_SMALL_SIZE=15
-```
-
-Supported fonts are .ttf or .otf
+If you accidentally upgrade to a broken version, the bootloader can be forced into upgrade mode by holding the SEL button while powering on.
 
 ### Source code organisation
 
-The project consists of four parts:
-
-* `dpsboot/` The OpenDPS bootloader.
-* `opendps/` The OpenDPS firmware.
-* `esp8266-proxy/` The ESP8266 firmware for wifi connected OpenDPS:es.
-* `dpsctl/` A Python script for controlling your OpenDPS via wifi or a serial port.
-* `emu/` Xcode project and GNU makefile for running an emulated OpenDPS.
-
+* `dpsboot/` — The OpenDPS bootloader
+* `opendps/` — The OpenDPS firmware
+* `esp8266-proxy/` — The original ESP8266 Wi-Fi proxy firmware (superseded by the ESPHome component in this fork)
+* `dpsctl/` — Python script for controlling OpenDPS via Wi-Fi or serial
+* `emu/` — Xcode project and GNU makefile for running an emulated OpenDPS
+* `esphome-config/` — Ready-to-use ESPHome configurations for supported devices
 
 ### What about other DPS:es?
 
-OpenDPS has been verified to work with other models in the DPSx0xx series, such as the DPS3003, DPS3005, DPS5015 and DPS5020. The maxium settable output current can be defined when building opendps, see the makefile. Please note that the hardware design might change at any time without any notice (I am not affiliated with its designer). This will render OpenDPS unusable until fixed.
+OpenDPS has been verified to work with other models in the DPSx0xx series, such as the DPS3003, DPS3005, DPS5015 and DPS5020. The maximum settable output current can be defined when building opendps, see the makefile. Please note that the hardware design might change at any time without any notice (I am not affiliated with its designer). This will render OpenDPS unusable until fixed.
 
 ---
+
 Licensed under the MIT license. Have fun!
