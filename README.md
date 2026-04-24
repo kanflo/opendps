@@ -91,7 +91,7 @@ Exact GPIO assignments are defined in the ESPHome config file. Logic level is 3.
 
 The provided config targets the **Guition JC1060P470_I_W_Y** (ESP32-P4, 10.6" MIPI DSI display, IP101 Ethernet). If you use a different device:
 
-- **Another ESP32-P4 tablet with display:** adjust display, touch and pin assignments in the YAML. The full LVGL UI and all features carry over directly.
+- **Another ESP32-P4 tablet with display:** adjust display, touch and pin assignments in the YAML. Be aware that the UI currently has hardcoded sizes and positions throughout the LVGL config, so it will require manual layout adjustments to fit a different display resolution. Displays of 1024×600 or larger (e.g. 10.1") are the intended target — see the ToDo section for planned auto-sizing support.
 - **Any other ESP32 (no display):** strip out the `display`, `lvgl` and `touchscreen` sections and keep only the `opendps` component with your sensors and automations. All control and monitoring works headlessly via Home Assistant or MQTT.
 
 The `opendps` ESPHome component itself has no display dependency — the UI is purely additive.
@@ -102,6 +102,7 @@ The `opendps` ESPHome component itself has no display dependency — the UI is p
 
 Features planned for future implementation (not yet available):
 
+- **UI auto-sizing** — refactor the LVGL config to derive all sizes and positions from the configured display resolution, so any display of 1024×600 or larger works without manual layout adjustments
 - **BLE remote / keyboard support** — control the DPS via Bluetooth keyboard or remote
 - **USB-HID support** — use a USB keyboard or gamepad connected to the ESP32 for local control
 - **Minor UI fixes** — ongoing polish of the LVGL interface
