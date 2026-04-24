@@ -18,9 +18,7 @@ A huge, heartfelt thank you to the people without whom this project would not ex
 
 ## What this fork is about
 
-OpenDPS is great firmware — but controlling it previously required either a PC running `dpsctl.py` over serial/Wi-Fi, or a dedicated ESP8266 proxy board. This fork aims to bring **everything you could do with `dpsctl.py` on a PC directly onto an embedded ESP32 device**, with no PC required after initial setup.
-
-The goal is to keep installation as simple as possible: flash the DPS with OpenDPS firmware, flash your ESP32 device with a pre-built ESPHome config, and you're done. No Python environment, no laptop tethered to the bench.
+OpenDPS is awesome — so why not make the most of it? This fork pairs OpenDPS with a co-host ESP32 device to bring all of its functions together on a nice big display, with full network integration, datalogging, firmware management and plenty of room to extend further. Flash both devices once, and everything is there.
 
 For the best experience, a **display-equipped ESP32-P4 tablet** (such as the Guition JC1060P470_I_W_Y) is recommended — but the ESPHome component works on any ESP32, including headless setups integrated into Home Assistant.
 
