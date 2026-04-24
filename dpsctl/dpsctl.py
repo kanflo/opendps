@@ -50,13 +50,13 @@ calibration_debug_plotting = False  # Change this to True to enable plotting of 
 if calibration_debug_plotting:
     import matplotlib.pyplot as plt
 
-import protocol
-import uframe
-from protocol import (create_cmd, create_enable_output, create_lock, create_set_calibration,
-                      create_set_function, create_set_parameter, create_temperature, create_set_brightness,
-                      create_set_baud, create_upgrade_data, create_upgrade_start, create_change_screen,
-                      unpack_cal_report, unpack_query_response, unpack_version_response,
-                      VALID_BAUD_RATES)
+import dpsctl.protocol as protocol
+import dpsctl.uframe as uframe
+from dpsctl.protocol import (create_cmd, create_enable_output, create_lock, create_set_calibration,
+                             create_set_function, create_set_parameter, create_temperature, create_set_brightness,
+                             create_set_baud, create_upgrade_data, create_upgrade_start, create_change_screen,
+                             unpack_cal_report, unpack_query_response, unpack_version_response,
+                             VALID_BAUD_RATES)
 
 try:
     import serial

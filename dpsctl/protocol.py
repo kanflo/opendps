@@ -24,7 +24,7 @@ THE SOFTWARE.
 
 import struct
 
-from uframe import uFrame
+from dpsctl.uframe import uFrame
 
 # command_t
 CMD_PING = 1
