@@ -261,6 +261,28 @@ static void handle_frame(uint8_t *payload, uint32_t length)
                     }
                 }
                 break;
+            case cmd_set_baud:
+            {
+                uint32_t baud = 0;
+                if (payload_len >= 5) {
+                    baud = (uint32_t)payload[1] << 24 | (uint32_t)payload[2] << 16 |
+                           (uint32_t)payload[3] << 8  | (uint32_t)payload[4];
+                }
+                uint8_t valid = opendps_is_valid_baud(baud) ? 1 : 0;
+                {
+                    frame_t frame;
+                    set_frame_header(&frame);
+                    pack8(&frame, cmd_response | cmd_set_baud);
+                    pack8(&frame, valid);
+                    end_frame(&frame);
+                    send_frame(&frame);
+                }
+                if (valid) {
+                    usart_wait_send_ready(USART1);
+                    hw_set_baudrate_boot(baud);
+                }
+                break;
+            }
             default:
                 break;
         }

@@ -136,11 +136,11 @@ bool opendps_enable_output(bool enable);
 void opendps_update_power_status(bool enabled);
 
 /**
-  * @brief Update wifi status icon
-  * @param status new wifi status
+  * @brief Update network status icon
+  * @param status new network status
   * @retval none
   */
-void opendps_update_wifi_status(wifi_status_t status);
+void opendps_update_network_status(network_status_t status);
 
 /**
   * @brief Handle ping
@@ -194,5 +194,23 @@ void opendps_upgrade_start(void);
  * @return     True if successful
  */
 bool opendps_change_screen(uint8_t screen_id);
+
+/**
+ * @brief      Check if baud rate is in the supported set
+ *
+ * @param[in]  baud  Baud rate to check
+ *
+ * @return     True if valid
+ */
+bool opendps_is_valid_baud(uint32_t baud);
+
+/**
+ * @brief      Set UART baud rate, save to PAST, and switch USART1 immediately
+ *
+ * @param[in]  baud  New baud rate (9600, 19200, 38400, 57600, or 115200)
+ *
+ * @return     True if baud rate is valid and was applied
+ */
+bool opendps_set_uart_baud(uint32_t baud);
 
 #endif // __OPENDPS_H__

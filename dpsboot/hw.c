@@ -114,7 +114,7 @@ static void usart_init(void)
     gpio_set_mode(GPIOA, GPIO_MODE_INPUT, GPIO_CNF_INPUT_FLOAT, GPIO_USART1_RX);
 
     nvic_enable_irq(NVIC_USART1_IRQ);
-    usart_set_baudrate(USART1, CONFIG_BAUDRATE); /** Baudrate set in makefile */
+    usart_set_baudrate(USART1, 9600); /** Always start at 9600; flasher switches via cmd_set_baud if needed */
     usart_set_databits(USART1, 8);
     usart_set_stopbits(USART1, USART_STOPBITS_1);
     usart_set_mode(USART1, USART_MODE_TX_RX);
@@ -124,6 +124,35 @@ static void usart_init(void)
     // Enable USART1 Receive interrupt.
     USART_CR1(USART1) |= USART_CR1_RXNEIE;
 
+    usart_enable(USART1);
+}
+
+/**
+  * @brief Check if baud rate is in the supported set
+  * @param baud baud rate to check
+  * @retval true if valid
+  */
+bool opendps_is_valid_baud(uint32_t baud)
+{
+    switch (baud) {
+        case 9600: case 19200: case 38400: case 57600: case 115200:
+            return true;
+        default:
+            return false;
+    }
+}
+
+/**
+  * @brief Reconfigure USART1 to a new baud rate (session only, not saved)
+  * @param baud new baud rate (9600, 19200, 38400, 57600, or 115200)
+  * @retval none
+  */
+void hw_set_baudrate_boot(uint32_t baud)
+{
+    /* Caller (cmd_set_baud handler) already validated baud value */
+    usart_wait_send_ready(USART1);
+    usart_disable(USART1);
+    usart_set_baudrate(USART1, baud);
     usart_enable(USART1);
 }
 

@@ -15,9 +15,11 @@ SPLASH_SCREEN := 0
 # Include support for thermal lockout via the serial interface
 THERMAL_LOCKOUT := 0
 
-# Build wifi version (only change being that the wifi icon will start flashing
+# Build network version (only change being that the network icon will start flashing/be shown
 # on power up)
-WIFI := 1
+NETWORK := 1
+# If ethernet is used
+ETHERNET := 1
 
 # Maximum current your DPS model can provide. Eg 5000mA for the DPS5005
 # This is usually set by MODEL but you can override it here
@@ -114,6 +116,7 @@ OBJS = \
     gfx-crosshair.o \
     gfx-cv.o \
     gfx-cl.o \
+    gfx-ethernet.o \
     gfx-padlock.o \
     gfx-thermometer.o \
     gfx-wifi.o \
@@ -132,7 +135,6 @@ ifeq ($(WDOG),1)
 	CFLAGS +=-DCONFIG_WDOG
 	OBJS += wdog.o
 endif
-
 
 ifeq ($(INVERT_ENABLE),1)
 	CFLAGS +=-DCONFIG_INVERT_ENABLE
@@ -173,8 +175,13 @@ ifeq ($(SPLASH_SCREEN),1)
 	CFLAGS +=-DCONFIG_SPLASH_SCREEN
 endif
 
+ifeq ($(NETWORK),1)
+	CFLAGS +=-DCONFIG_NETWORK
+endif
+
+
 ifeq ($(WIFI),1)
-	CFLAGS +=-DCONFIG_WIFI
+	CFLAGS +=-DCONFIG_NETWORK
 endif
 
 ifeq ($(COMMANDLINE),1)

@@ -49,6 +49,7 @@ CMD_SET_CALIBRATION = 19
 CMD_CLEAR_CALIBRATION = 20
 CMD_CHANGE_SCREEN = 21
 CMD_SET_BRIGHTNESS = 22
+CMD_SET_BAUD = 23
 CMD_RESPONSE = 0x80
 
 # wifi_status_t
@@ -219,6 +220,17 @@ def create_set_brightness(brightness):
     return f
 
 
+VALID_BAUD_RATES = [9600, 19200, 38400, 57600, 115200]
+
+
+def create_set_baud(baud):
+    f = uFrame()
+    f.pack8(CMD_SET_BAUD)
+    f.pack32(baud)
+    f.end()
+    return f
+
+
 # ########################################################################## #
 # Helpers for unpacking frames.
 #
@@ -278,6 +290,7 @@ def unpack_query_response(uframe):
             temp2 -= 0x10000
         data['temp2'] = temp2 / 10
     data['temp_shutdown'] = uframe.unpack8()
+    data['display_brightness'] = uframe.unpack8()
     data['cur_func'] = uframe.unpack_cstr()
     data['params'] = {}
     while not uframe.eof():
