@@ -50,13 +50,13 @@ calibration_debug_plotting = False  # Change this to True to enable plotting of 
 if calibration_debug_plotting:
     import matplotlib.pyplot as plt
 
-import protocol
-import uframe
-from protocol import (create_cmd, create_enable_output, create_lock, create_set_calibration,
-                      create_set_function, create_set_parameter, create_temperature, create_set_brightness,
-                      create_set_baud, create_upgrade_data, create_upgrade_start, create_change_screen,
-                      unpack_cal_report, unpack_query_response, unpack_version_response,
-                      VALID_BAUD_RATES)
+import dpsctl.protocol as protocol
+import dpsctl.uframe as uframe
+from dpsctl.protocol import (create_cmd, create_enable_output, create_lock, create_set_calibration,
+                             create_set_function, create_set_parameter, create_temperature, create_set_brightness,
+                             create_set_baud, create_upgrade_data, create_upgrade_start, create_change_screen,
+                             unpack_cal_report, unpack_query_response, unpack_version_response,
+                             VALID_BAUD_RATES)
 
 try:
     import serial
@@ -1205,7 +1205,7 @@ def main():
     testing = '--testing' in sys.argv
     parser = argparse.ArgumentParser(description='Instrument an OpenDPS device')
 
-    parser.add_argument('-d', '--device', help="OpenDPS device to connect to. Can be a /dev/tty device, IP address for UDP protocol or tcp:IP for TCP protocol. If omitted, dpsctl.py will try the environment variable DPSIF", default='')
+    parser.add_argument('-d', '--device', help="OpenDPS device to connect to. Can be a /dev/tty device, IP address for UDP protocol or tcp:IP for TCP protocol. If omitted, dpsctl.py will try the environment variable DPSIF", default=os.getenv('DPSCTL_DEVICE'))
     parser.add_argument('-b', '--baudrate', type=int, dest="baudrate", help="Set baudrate used for serial communications", default=9600)
     parser.add_argument('-B', '--brightness', type=int, help="Set display brightness (0..100)")
     parser.add_argument('--set-baud', type=int, dest="set_baud", default=None,
