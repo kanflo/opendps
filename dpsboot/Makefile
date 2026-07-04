@@ -8,6 +8,12 @@ CFLAGS = -I. -I../opendps -DGIT_VERSION=\"$(GIT_VERSION)\" -DCONFIG_PAST_NO_GC -
 # LTO saves ~600 bytes; requires gcc > 7 (all modern ARM toolchains qualify)
 CFLAGS += -flto
 
+# Build with CLOCK_8MHZ=1 to skip the 48MHz PLL bring-up and run off HSI.
+# For units with clone MCUs that hang or fault during the 48MHz clock setup.
+ifeq ($(CLOCK_8MHZ),1)
+	CFLAGS += -DCONFIG_BOOT_CLOCK_HSI_8MHZ
+endif
+
 EXT_DIR = ../opendps/
 
 DPS_OBJ_DIR = dpsobj

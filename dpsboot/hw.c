@@ -94,8 +94,18 @@ void usart1_isr(void)
   */
 static void clock_init(void)
 {
+#ifdef CONFIG_BOOT_CLOCK_HSI_8MHZ
+    /** Run straight off the 8MHz HSI: no PLL, no flash wait state change.
+      * For units with clone MCUs that misbehave during the 48MHz clock
+      * bring-up. The bootloader has no need for speed and the peripheral
+      * drivers pick the frequency up from the rcc_*_frequency globals. */
+    rcc_ahb_frequency = 8000000;
+    rcc_apb1_frequency = 8000000;
+    rcc_apb2_frequency = 8000000;
+#else
     rcc_clock_setup_in_hsi_out_48mhz();
     // rcc_clock_setup_pll(&rcc_hsi_configs[RCC_CLOCK_HSI_48MHZ]);
+#endif
     rcc_periph_clock_enable(RCC_GPIOA);
     rcc_periph_clock_enable(RCC_GPIOB);
     rcc_periph_clock_enable(RCC_GPIOC);
