@@ -20,12 +20,35 @@
 
 ## 1. Hardware requirements
 ```
-* st-link programmer (or a jtag programmer)
+* st-link programmer (or a jtag programmer, or a Raspberry Pi Pico - see below)
 * USB to serial adapter (i recommend buying your DPS with the USB
   adapter included, but any FTDI / CH340 adapter should work)
 * adjustable DC power supply, to power the DPS under calibration
 * large power resistor for current calibration (i use a 6.8 ohm 150W resistor)
 * multimeter
+```
+
+> Note: keep the programming wires between the programmer and the DPS
+> preferably shorter than 100mm.
+
+### Alternative: Raspberry Pi Pico as programmer
+
+Optionally, instead of an st-link you can use a Raspberry Pi Pico running the
+firmware from https://github.com/raspberrypi/debugprobe.
+When using a standard Pi Pico, the pins that should be used are:
+
+```
+Target NRST  -> Pico GP1 (Physical Pin 2)
+Target GND   -> Pico GND (Physical Pin 3 is a convenient one right in the middle of these)
+Target SWCLK -> Pico GP2 (Physical Pin 4)
+Target SWDIO -> Pico GP3 (Physical Pin 5)
+```
+
+When using the Pico, the openocd interface should be `interface/cmsis-dap.cfg`
+instead of `interface/stlink.cfg` in the commands throughout this guide, e.g.:
+
+```
+openocd -f interface/cmsis-dap.cfg -f target/stm32f1x.cfg
 ```
 
 ## 2. Software requirements
