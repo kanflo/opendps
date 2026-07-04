@@ -137,6 +137,8 @@ The set of functions depends on which firmware you run — list what your device
 
 #### Firmware from this fork (dps_mode based)
 
+The `dpsmode` function, the on-device `settings` screen and the features described below were created by [kohrar](https://github.com/kohrar) — see [upstream PR #240](https://github.com/kanflo/opendps/pull/240). All credit to him for this excellent work.
+
 | Function | Behavior |
 |----------|----------|
 | `dpsmode` | Look-alike of the stock DPS firmware: set a voltage and a current limit, the hardware regulates and transitions between CV and CC (indicator icons show the active mode). A third display line cycles between an over-power protection limit (`0` = disabled), a timer and a watt-hour meter. Supports M1/M2 presets (see below). |
@@ -152,6 +154,14 @@ Additional `dpsmode` controls:
 | **Hold SET and press M1 or M2** | Save the current settings to preset M1 / M2 |
 | **M1** / **M2** long press | Recall preset M1 / M2 (the output is switched off first) |
 | **SET**, **▼ (M2)**, **SET** | To display Wh or time instead of W: press SET to enter edit mode, press the down arrow (M2) to view Wh or time, then press SET again to exit edit mode |
+
+Available settings on the `dpsmode` third display line:
+
+| Setting | Behavior |
+|---------|----------|
+| **Power limit (W)** | Over-power protection: the output is switched off if the power limit is reached. Setting it to `0.00 W` disables the limit. |
+| **Wh counter** | Energy counter: the value can be adjusted, for example set back to zero. |
+| **Timer** | With a value set, it is a countdown timer after which the output is switched off. When set to zero, it counts the time the output has been switched on. |
 
 This fork's firmware also remembers the active function and restores it at power-up.
 
