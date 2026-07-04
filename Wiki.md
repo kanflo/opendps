@@ -1,6 +1,6 @@
 # How to flash opendps from scratch
 
-**This guide is a walk-through on how to how to flash opendps from scratch on Fedora 34. It should be very similar on most other Linux distro's, but no guarantees.**
+**This guide is a walk-through on how to flash opendps from scratch on Fedora 34. It should be very similar on most other Linux distro's, but no guarantees.**
 
 *Disclaimer: before you flash, decide if you have the equipment, technical knowledge and patience to do so. While opendps is a fantastic software, it is not without its bugs and issues. If you end up with a bricked device, there is no guarantee you will be able to recover it.*
 
@@ -38,10 +38,10 @@ firmware from https://github.com/raspberrypi/debugprobe.
 When using a standard Pi Pico, the pins that should be used are:
 
 ```
-Target NRST  -> Pico GP1 (Physical Pin 2)
+Target NRST  -> Pico GPIO1 (Physical Pin 2) (Optional)
 Target GND   -> Pico GND (Physical Pin 3 is a convenient one right in the middle of these)
-Target SWCLK -> Pico GP2 (Physical Pin 4)
-Target SWDIO -> Pico GP3 (Physical Pin 5)
+Target SWCLK -> Pico GPIO2 (Physical Pin 4)
+Target SWDIO -> Pico GPIO3 (Physical Pin 5)
 ```
 
 When using the Pico, the openocd interface should be `interface/cmsis-dap.cfg`
@@ -74,6 +74,11 @@ Restart for the changes to take effect.
 
 ## 3. Installing GNU Arm Embedded Toolchain
 
+> Most distributions also package the toolchain, which may be easier:
+> `sudo dnf install arm-none-eabi-gcc-cs arm-none-eabi-newlib` (Fedora) or
+> `sudo apt install gcc-arm-none-eabi` (Debian/Ubuntu). If you install the
+> toolchain this way you can skip the rest of this section.
+
 [Download the latest GNU Arm Embedded Toolchain.](https://developer.arm.com/tools-and-software/open-source-software/developer-tools/gnu-toolchain/gnu-rm/downloads)
 
 You should download the *GNU-RM* package.
@@ -94,9 +99,9 @@ export PATH="/home/<user>/opt/gcc-arm-none-eabi-<insert version number here>/bin
 
 > You will need to do this every time you open the terminal and want to
 > compile. To add the path permanently, you can append the path to the
-> .bashrc file in you home folder.
+> .bashrc file in your home folder.
 
-Check that the terminal finds gcc and gbd:
+Check that the terminal finds gcc and gdb:
 ```
 arm-none-eabi-gcc --version
 arm-none-eabi-gdb --version
@@ -135,41 +140,12 @@ If your DPS model is NOT the DPS5005, or you want custom settings such as custom
 
 ## 6 - Compile opendps
 
-If you run
-```
-make -C libopencm3
-```
-
-it will give an error:
-```
-/bin/sh: -c: line 0: unexpected EOF while looking for matching `"'
-/bin/sh: -c: line 1: syntax error: unexpected end of file
-make: *** [Makefile:64: lib/stm32/f0] Error 1
-make: Leaving directory '/home/<user>/git/opendps/libopencm3'
-```
-
-This is caused by opendps using an old version of libopencm3 drivers.
-Before we can compile, this needs to be fixed.
-Open the libopencm3 makefile **~/git/opendps/libopencm3/Makefile**
-
-Remove the quotation marks on line 64.
-
-Replace:
-```
-$(Q)$(MAKE) --directory=$@ SRCLIBDIR="$(SRCLIBDIR)"
-```
-
-With:
-```
-$(Q)$(MAKE) --directory=$@ SRCLIBDIR=$(SRCLIBDIR)
-```
-
-Save the file.
-
----
-
-**We are now ready to compile.**
-<br>
+> Note: older versions of opendps shipped a libopencm3 that failed to build
+> with GNU Make 4.3 or later (errors like *"Syntax error: Unterminated quoted
+> string"* or *"unexpected EOF while looking for matching quote"*). If you see
+> such an error, your libopencm3 submodule is outdated - update it by running
+> `git submodule update --init` from the opendps folder. Do not edit the
+> libopencm3 Makefile by hand.
 
 Run:
 ```
@@ -201,9 +177,9 @@ make -C dpsboot
 
 >If successful, the output should end like this:
 >```
->CC      protocol_handler.c
->LD      opendps_DPS5005.elf
->make: Leaving directory '/home/<user>/git/opendps/opendps'
+>CC      tick.c
+>LD      dpsboot.elf
+>make: Leaving directory '/home/<user>/git/opendps/dpsboot'
 >```
 
 You have now compiled opendps!
@@ -239,7 +215,7 @@ We are now ready to unlock and flash!
 
 ## 8 - Unlock and flash opendps
 
-Connect ***GND, SWDIO and SWDCLK*** between your st-link and DPS. I just use some breadboard jumper wires, which fit perfectly!
+Connect ***GND, SWDIO and SWDCLK*** between your st-link and DPS. I just use some breadboard jumper wires, which fit perfectly! *(When using a Raspberry Pi Pico instead, see the wiring in section 1, including the optional NRST wire.)*
 
 <p align="left">
 <img src="
@@ -272,7 +248,7 @@ Repeat by powering on the DPS, and in the openocd terminal run:
 openocd -f interface/stlink.cfg -f target/stm32f1x.cfg
 ```
 
-Again, swith to the python terminal, turn on the output on the DPS (on/off button) and run:
+Again, switch to the python terminal, turn on the output on the DPS (on/off button) and run:
 ```
 ./ocd-client.py all > 5V-on.txt
 ```
@@ -347,14 +323,14 @@ Find out what your adapter is called *(e.g. ttyUSB0)* by running this command in
 dmesg | grep tty
 ```
 
-Open the dpsctl folder:
-```
-cd dpsctl
-```
+Stay in the opendps folder *(~/git/opendps)*. Note that `dpsctl.py` inside
+the *dpsctl* folder is part of a python package and can no longer be run
+directly - use the launcher in the repository root instead (or run
+`pip install .` once to get a `dpsctl` command).
 
 Now ping the DPS:
 ```
-dpsctl.py -d /dev/<ttyXXXX> --ping
+python3 dpsctl.py -d /dev/<ttyXXXX> --ping
 (insert correct device name)
 ```
 
@@ -363,7 +339,7 @@ First, adjust the DPS input voltage fairly low, but still within its range (6 - 
 
 Then run:
 ```
-dpsctl.py -d /dev/<ttyXXXX> -C
+python3 dpsctl.py -d /dev/<ttyXXXX> -C
 ```
 
 Follow the instructions very precisely. Do not have a load connected to the outputs unless specified.
