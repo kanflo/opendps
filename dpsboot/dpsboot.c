@@ -34,6 +34,7 @@
 #include <usart.h>
 #include <timer.h>
 #include <flash.h>
+#include <iwdg.h>
 #include "tick.h"
 #include "hw.h"
 #include "ringbuf.h"
@@ -114,6 +115,11 @@ static void handle_upgrade(void)
 
     while(1) {
         uint16_t b;
+        /** The app may have started the IWDG which keeps running across the
+          * soft reset into this bootloader and cannot be disabled. Keep it
+          * fed or it will reset us mid upgrade (kicking an unstarted IWDG
+          * is harmless). */
+        iwdg_reset();
         if (ringbuf_get(&rx_buf, &b)) {
             if (b == _SOF) {
                 receiving_frame = true;
@@ -191,6 +197,8 @@ static void handle_frame(uint8_t *payload, uint32_t length)
     command_t cmd = cmd_response;
     upgrade_status_t status;
     int32_t payload_len = uframe_extract_payload_inplace(payload, length);
+
+    iwdg_reset(); /** Cover the flash erase/write below in case the app started the IWDG */
 
     if (payload_len > 0) {
         cmd = payload[0];
@@ -304,8 +312,16 @@ int main(void)
     ringbuf_init(&rx_buf, (uint8_t*) buffer, sizeof(buffer));
     hw_init(&rx_buf);
 
+    /** If the app started the IWDG (200ms period) it survives the soft reset
+      * into this bootloader and cannot be disabled. Keep it fed from the very
+      * start or we will be reset over and over during an upgrade, tearing
+      * flash writes and corrupting past. Kicking an unstarted IWDG is a nop. */
+    iwdg_reset();
+
     do {
-        if (hw_check_forced_upgrade()) {
+        bool forced = hw_check_forced_upgrade();
+        iwdg_reset(); /** hw_check_forced_upgrade blocks for 100ms */
+        if (forced) {
             /** This gives us an opportunity to enter upgrade as early as
               * possible in case we flashed something really really fishy. */
             enter_upgrade = true;
