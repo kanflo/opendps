@@ -12,6 +12,8 @@ A huge, heartfelt thank you to the people without whom this project would not ex
 
 **[Johan Kanflo (kanflo)](https://github.com/kanflo)** — for creating OpenDPS in the first place. Reverse-engineering the DPS5005, writing a clean open-source firmware replacement, and maintaining it for years is no small feat. This fork stands entirely on his shoulders.
 
+**[kohrar](https://github.com/kohrar)** — for creating the `dpsmode` function ([upstream PR #240](https://github.com/kanflo/opendps/pull/240)): the stock-firmware-style CV/CC interface with M1/M2 presets, power limit, timer and watt-hour meter, plus the on-device settings screen. His work is the heart of the firmware this fork ships.
+
 **Mallow** (Discord) — for invaluable help with the LVGL UI configuration and for creating the [custom LVGL 9.5 component](https://github.com/youkorr/lvgl_9.5) that overrides ESPHome's bundled LVGL version, enabling LVGL 9.5 features on ESP32-P4. Without that work the display integration simply would not have been possible.
 
 ---
