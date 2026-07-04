@@ -81,7 +81,7 @@
  #endif
  #define CURRENT_DIGITS 1
  #define CURRENT_DECIMALS 3
- #define ADC_CHA_IOUT_GOLDEN_VALUE  (0x45)
+ #define ADC_CHA_IOUT_GOLDEN_VALUE  (64)
  #define A_ADC_K (float)1.713f
  #define A_ADC_C (float)-118.51f
  #define A_DAC_K (float)0.652f

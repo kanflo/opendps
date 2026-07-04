@@ -50,10 +50,10 @@ void protocol_create_status(frame_t *frame)
 	end_frame(frame);
 }
 
-void protocol_create_wifi_status(frame_t *frame, wifi_status_t status)
+void protocol_create_network_status(frame_t *frame, network_status_t status)
 {
 	set_frame_header(frame);
-	pack8(frame, cmd_wifi_status);
+	pack8(frame, cmd_network_status);
 	pack8(frame, status);
 	end_frame(frame);
 }
@@ -102,7 +102,7 @@ bool protocol_unpack_query_response(frame_t *frame, uint16_t *v_in, uint16_t *v_
 	return frame->length == 0 && cmd == (cmd_response | cmd_query);
 }
 
-bool protocol_unpack_wifi_status(frame_t *frame, wifi_status_t *status)
+bool protocol_unpack_network_status(frame_t *frame, network_status_t *status)
 {
 	uint8_t cmd;
 
@@ -110,7 +110,7 @@ bool protocol_unpack_wifi_status(frame_t *frame, wifi_status_t *status)
 	UNPACK8(frame, &cmd);
 	UNPACK8(frame, status);
 
-	return frame->length == 0 && cmd == cmd_wifi_status;
+	return frame->length == 0 && cmd == cmd_network_status;
 }
 
 bool protocol_unpack_lock(frame_t *frame, uint8_t *locked)

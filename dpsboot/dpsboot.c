@@ -181,7 +181,7 @@ static void send_frame(const frame_t *frame)
 }
 
 /**
-  * @brief Handle a receved frame
+  * @brief Handle a received frame
   * @param frame the received frame
   * @param length length of frame
   * @retval None
@@ -190,15 +190,16 @@ static void handle_frame(uint8_t *payload, uint32_t length)
 {
     command_t cmd = cmd_response;
     upgrade_status_t status;
-    frame_t frame;
-    int32_t payload_len = uframe_extract_payload(&frame, payload, length);
+    int32_t payload_len = uframe_extract_payload_inplace(payload, length);
 
     if (payload_len > 0) {
-        cmd = frame.buffer[0];
+        cmd = payload[0];
         switch(cmd) {
             case cmd_upgrade_start:
             {
                 {
+                    frame_t frame;
+                    uframe_from_extracted_payload(&frame, payload, payload_len);
                     start_frame_unpacking(&frame);
                     unpack8(&frame, &cmd);
                     unpack16(&frame, &chunk_size);
@@ -228,7 +229,7 @@ static void handle_frame(uint8_t *payload, uint32_t length)
                             /** Note, payload contains 1 frame type byte and N bytes data */
                             for (uint32_t i = 0; i < (uint32_t) chunk_length; i+=4) {
                                 word = payload[i+4] << 24 | payload[i+3] << 16 | payload[i+2] << 8 | payload[i+1];
-                                /** @todo: Handle binaries not size aliged to 4 bytes */
+                                /** @todo: Handle binaries not size aligned to 4 bytes */
                                 if (!flash_write32(cur_flash_address+i, word)) {
                                     status = upgrade_flash_error;
                                     break;
@@ -260,6 +261,28 @@ static void handle_frame(uint8_t *payload, uint32_t length)
                     }
                 }
                 break;
+            case cmd_set_baud:
+            {
+                uint32_t baud = 0;
+                if (payload_len >= 5) {
+                    baud = (uint32_t)payload[1] << 24 | (uint32_t)payload[2] << 16 |
+                           (uint32_t)payload[3] << 8  | (uint32_t)payload[4];
+                }
+                uint8_t valid = opendps_is_valid_baud(baud) ? 1 : 0;
+                {
+                    frame_t frame;
+                    set_frame_header(&frame);
+                    pack8(&frame, cmd_response | cmd_set_baud);
+                    pack8(&frame, valid);
+                    end_frame(&frame);
+                    send_frame(&frame);
+                }
+                if (valid) {
+                    usart_wait_send_ready(USART1);
+                    hw_set_baudrate_boot(baud);
+                }
+                break;
+            }
             default:
                 break;
         }

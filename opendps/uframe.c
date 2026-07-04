@@ -179,23 +179,11 @@ uint32_t unpack32(frame_t *frame, uint32_t *data)
     return bytes_read;
 }
 
-/**
-  * @brief Extract payload from frame following deframing, unescaping and
-  *       crc checking.
-  * @note The frame is processed 'in place', when exiting the payload will be
-  *       the first byte of 'frame'. If the frame contains two valid frames,
-  *       -E_CRC will be returned.
-  * @param frame the frame to process, payload on exit
-  * @param length length of frame
-  * @retval length of payload or -E_* in case of errors (see uframe.h)
-  */
-int32_t uframe_extract_payload(frame_t *frame, uint8_t *data, uint32_t length)
+int32_t uframe_extract_payload_inplace(uint8_t *data, uint32_t length)
 {
     int32_t status = -1;
     bool seen_dle = false;
     uint16_t frame_crc, calc_crc = 0;
-
-    frame->length = 0;
 
     do {
         if (length < 5) { // _SOF CRC16 _EOF is no usable frame
@@ -231,11 +219,28 @@ int32_t uframe_extract_payload(frame_t *frame, uint8_t *data, uint32_t length)
         }
     } while(0);
 
-    if (status >= 0)
-    {
-        memcpy(frame->buffer, data, status);
-        frame->length = status;
+    return status;
+}
+
+
+int32_t uframe_extract_payload(frame_t *frame, uint8_t *data, uint32_t length)
+{
+    frame->length = 0;
+    int32_t result = uframe_extract_payload_inplace(data, length);
+    if (result > MAX_FRAME_LENGTH) {
+        result = -E_LEN;
     }
 
-    return status;
+    if (result >= 0)
+    {
+        uframe_from_extracted_payload(frame, data, result);
+    }
+
+    return result;
+}
+
+void uframe_from_extracted_payload(frame_t *frame, const uint8_t *data, uint32_t length)
+{
+    memcpy(frame->buffer, data, length);
+    frame->length = length;
 }

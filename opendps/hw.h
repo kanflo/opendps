@@ -150,6 +150,13 @@ void hw_longpress_check(void);
   */
 bool hw_sel_button_pressed(void);
 
+/**
+  * @brief Reconfigure USART1 to the given baud rate
+  * @param baud new baud rate (9600, 19200, 38400, 57600, or 115200)
+  * @retval none
+  */
+void hw_set_baudrate(uint32_t baud);
+
 #ifdef CONFIG_ADC_BENCHMARK
 /**
   * @brief Print ADC speed
