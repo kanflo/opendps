@@ -131,7 +131,7 @@ The DPS front panel has four buttons (**SET**, **M1**, **M2**, **ON/OFF**) and a
 
 ### Functions — how the modes actually behave
 
-This confused us too, so read carefully: the classic OpenDPS `cv` and `cc` functions are **not** the CV/CC behavior of a typical bench supply. Their second value is a **protection cutoff**, not a limit — when it is exceeded, the output **switches off** (the screen flashes). That makes them well suited for battery charging with end-of-charge cutoff, and surprising as a general lab supply. The `cl` function is the one that behaves like a regular bench PSU.
+This confused us too, so read carefully: the classic OpenDPS `cv` and `cc` functions are **not** the CV/CC behavior of a typical bench supply. Their second value is a **protection cutoff**, not a limit — when it is exceeded, the output **switches off** (the screen flashes). That makes `cc` usable for battery charging with an end-of-charge voltage cutoff, but both are surprising as a general lab supply. The `cl` function is the one that behaves like a regular bench PSU.
 
 The set of functions depends on which firmware you run — list what your device supports with `python3 dpsctl.py -d <device> -F`.
 
@@ -148,10 +148,10 @@ Additional `dpsmode` controls:
 
 | Control | Action |
 |---------|--------|
-| **V** / **A** | Press V to enter voltage edit, or press A to enter current edit |
+| **V (M1)** / **A (M2)** | Press V (M1) to enter voltage edit, or press A (M2) to enter current edit |
 | **Hold SET and press M1 or M2** | Save the current settings to preset M1 / M2 |
 | **M1** / **M2** long press | Recall preset M1 / M2 (the output is switched off first) |
-| **SET**, **▼**, **SET** | To display Wh or time instead of W: press SET to enter edit mode, press the down arrow to view Wh or time, then press SET again to exit edit mode |
+| **SET**, **▼ (M2)**, **SET** | To display Wh or time instead of W: press SET to enter edit mode, press the down arrow (M2) to view Wh or time, then press SET again to exit edit mode |
 
 This fork's firmware also remembers the active function and restores it at power-up.
 
@@ -159,7 +159,7 @@ This fork's firmware also remembers the active function and restores it at power
 
 | Function | Behavior |
 |----------|----------|
-| `cv` | Constant Voltage with over-current **cutoff**: holds the set voltage; if the output current exceeds the current setting, the output switches off. Suited for charge termination. |
+| `cv` | Constant Voltage with over-current **cutoff**: holds the set voltage; if the output current exceeds the current setting, the output switches off. |
 | `cc` | Constant Current with over-voltage **cutoff**: drives the set current; the voltage setting acts as the cutoff, e.g. the end-of-charge voltage when charging a battery. |
 | `cl` | **C**urrent **L**imit — classic bench supply CV/CC behavior, as described above. |
 | `funcgen` | Function generator |
