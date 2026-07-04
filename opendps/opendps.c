@@ -449,14 +449,56 @@ static void main_ui_tick(void)
   * @brief Initialize the UI
   * @retval none
   */
+/**
+  * @brief Save the active function to past so it can be restored on power up
+  * @param screen the newly activated function screen
+  */
+static void function_screen_changed(ui_screen_t *screen)
+{
+    /** Zero padded fixed size buffer as past cannot store units smaller than
+      * 4 bytes (short names like "cl" would be rejected) and the padding NUL
+      * terminates the stored name */
+    char name[16];
+    /** The settings screen is transient, do not make it the boot function */
+    if (strcmp(screen->name, "settings") == 0) {
+        return;
+    }
+    memset(name, 0, sizeof(name));
+    strncpy(name, screen->name, sizeof(name) - 1);
+    (void) past_write_unit(&g_past, past_function, (void*) name, sizeof(name));
+}
+
+/**
+  * @brief Restore the function that was active before the last power down.
+  *        Matched by name so it survives builds with a different function set.
+  */
+static void restore_function(void)
+{
+    char *name = 0;
+    uint32_t length = 0;
+    if (past_read_unit(&g_past, past_function, (const void**) &name, &length) && name &&
+        length > 0 && name[length - 1] == '\0') { /** Reject units not written by us */
+        for (uint32_t i = 0; i < func_ui.num_screens; i++) {
+            if (strcmp(func_ui.screens[i]->name, name) == 0) {
+                func_ui.cur_screen = i;
+                break;
+            }
+        }
+    }
+}
+
 static void ui_init(void)
 {
     bg_color = BLACK;
     ui_width = TFT_WIDTH;
     ui_height = TFT_HEIGHT;
 
-    /** Initialise the function screens */
+    /** Initialise the function screens. The first screen registered is the
+      * function active after boot unless past holds a saved function */
     uui_init(&func_ui, &g_past);
+#ifdef CONFIG_DPSMODE_ENABLE
+    func_dpsmode_init(&func_ui);
+#endif // CONFIG_DPSMODE_ENABLE
 #ifdef CONFIG_CV_ENABLE
     func_cv_init(&func_ui);
 #endif // CONFIG_CV_ENABLE
@@ -466,15 +508,17 @@ static void ui_init(void)
 #ifdef CONFIG_CL_ENABLE
     func_cl_init(&func_ui);
 #endif // CONFIG_CL_ENABLE
-#ifdef CONFIG_DPSMODE_ENABLE
-    func_dpsmode_init(&func_ui);
-#endif // CONFIG_DPSMODE_ENABLE
 #ifdef CONFIG_FUNCGEN_ENABLE
     func_gen_init(&func_ui);
 #endif // CONFIG_FUNCGEN_ENABLE
 #ifdef CONFIG_SETTINGS_ENABLE
     func_settings_init(&func_ui);
 #endif // CONFIG_SETTINGS_ENABLE
+
+    /** Restore the function that was active before the last power down and
+      * persist future function changes */
+    restore_function();
+    func_ui.screen_changed = &function_screen_changed;
 
 
     /** Initialise the settings screens */

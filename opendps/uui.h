@@ -164,6 +164,8 @@ typedef struct {
     bool is_visible;
     ui_screen_t *screens[MAX_SCREENS];
     past_t *past;
+    /** Called after the active screen changed (rotary or remote), may be NULL */
+    void (*screen_changed)(ui_screen_t *screen);
 } uui_t;
 
 /**

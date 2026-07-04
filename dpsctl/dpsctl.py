@@ -664,8 +664,12 @@ def run_upgrade(comms, fw_file_name, args):
         # Switch to faster baud if requested
         if upgrade_baud and upgrade_baud != 9600 and isinstance(comms, tty_interface):
             print("Switching bootloader to {:d} baud for data transfer...".format(upgrade_baud))
-            communicate(comms, create_set_baud(upgrade_baud), args, quiet=True)
-            time.sleep(0.1)  # Let bootloader switch before we do
+            # The bootloader may switch baud before the last byte of its ack
+            # has fully left the UART, garbling the response. Send the command
+            # blindly, discard whatever comes back and switch our end too.
+            comms.write(create_set_baud(upgrade_baud).get_frame())
+            time.sleep(0.2)  # Let the (possibly garbled) ack drain and the bootloader switch
+            comms.read()  # Discard it
             comms.set_baudrate(upgrade_baud)
 
         # A chunk can take longer to transfer than the default serial timeout

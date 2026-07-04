@@ -307,6 +307,9 @@ void uui_set_screen(uui_t *ui, uint32_t screen_idx)
             MCALL(item, lost_focus);
         }
         uui_activate(ui);
+        if (ui->screen_changed) {
+            ui->screen_changed(new_screen);
+        }
     }
 }
 

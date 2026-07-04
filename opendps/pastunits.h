@@ -49,6 +49,8 @@ typedef enum {
     /** stored as uint32_t, the operational UART baud rate to switch to after boot */
     past_uart_baud,
     past_UPDATE_INTERVAL,
+    /** stored as a string, the name of the function to activate on power up */
+    past_function,
     /** A past unit who's precense indicates we have a non finished upgrade and
     must not boot */
     past_upgrade_started = 0xff
