@@ -123,8 +123,8 @@ The DPS front panel has four buttons (**SET**, **M1**, **M2**, **ON/OFF**) and a
 | **Rotary press** | Move between the digits of the focused value |
 | **SET** | Focus / unfocus the selected value |
 | **M1** / **M2** | Move to the previous / next value on the screen |
-| **SET + rotary turn** | Switch to the previous / next function screen |
-| **M1 + M2 together** | Toggle between the function screen and the settings screen |
+| **Hold SET and turn rotary** | Switch to the previous / next function screen — this is also how you reach the `settings` screen |
+| **Hold M1 and press M2** | Toggle between the function screen and the calibration screen |
 | **Rotary long press** | Lock / unlock the front panel |
 
 > Recovery tip: holding **SET** while powering on forces the bootloader into firmware upgrade mode.
@@ -142,14 +142,16 @@ The set of functions depends on which firmware you run — list what your device
 | `dpsmode` | Look-alike of the stock DPS firmware: set a voltage and a current limit, the hardware regulates and transitions between CV and CC (indicator icons show the active mode). A third display line cycles between an over-power protection limit (`0` = disabled), a timer and a watt-hour meter. Supports M1/M2 presets (see below). |
 | `cl` | **C**urrent **L**imit — classic bench supply behavior: constant voltage until the set current is reached, then constant current. No shutdown. |
 | `funcgen` | Function generator — square/saw/sine output |
-| `settings` | On-device settings screen: brightness, screen update rate, calibration values, reset to defaults |
+| `settings` | On-device settings screen: brightness, screen update rate, calibration values, reset to defaults. Reached like any other function: hold SET and turn the rotary. |
 
 Additional `dpsmode` controls:
 
 | Control | Action |
 |---------|--------|
-| **SET + M1** / **SET + M2** | Save the current settings to preset M1 / M2 |
+| **V** / **A** | Press V to enter voltage edit, or press A to enter current edit |
+| **Hold SET and press M1 or M2** | Save the current settings to preset M1 / M2 |
 | **M1** / **M2** long press | Recall preset M1 / M2 (the output is switched off first) |
+| **SET**, **▼**, **SET** | To display Wh or time instead of W: press SET to enter edit mode, press the down arrow to view Wh or time, then press SET again to exit edit mode |
 
 This fork's firmware also remembers the active function and restores it at power-up.
 
