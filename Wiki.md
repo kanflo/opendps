@@ -344,6 +344,16 @@ python3 dpsctl.py -d /dev/<ttyXXXX> -C
 
 Follow the instructions very precisely. Do not have a load connected to the outputs unless specified.
 
+If you later need to redo only part of the calibration, you can optionally run
+a single step instead of the whole sequence:
+```
+python3 dpsctl.py -d /dev/<ttyXXXX> -C --step <n>
+```
+where `<n>` is `1` (input voltage), `2` (output voltage) or `3` (output
+current). Subsequent steps are not run automatically. Step 3 depends on values
+produced by steps 1 and 2, which are fetched from the calibration already
+stored on the device.
+
 **Good luck!**
 
 ---
