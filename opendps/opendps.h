@@ -109,6 +109,13 @@ bool opendps_get_curr_function_param_value(char *name, char *value, uint32_t val
 set_param_status_t opendps_set_parameter(char *name, char *value);
 
 /**
+ * @brief      Force a redraw of the current UI. Called by the protocol handler
+ *             after responding to a set parameters command so the (slow)
+ *             redraw does not delay the response.
+ */
+void opendps_refresh_ui(void);
+
+/**
  * @brief      Sets Calibration Data
  *
  * @param      name Name of calibration variable to set

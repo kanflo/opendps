@@ -78,6 +78,7 @@ static void clear_bars(bool all);
 static void draw_bars(void);
 static void determine_focused_item(uui_t *ui, int8_t direction);
 static void clear_third_region(void);
+static void update_third_visibility(void);
 
 /* We need to keep copies of the user settings as the value in the UI will
  * be replaced with measurements when output is active
@@ -317,6 +318,15 @@ static set_param_status_t set_parameter(char *name, char *value)
         dpsmode_current.value = ivalue;
         current_changed(&dpsmode_current);
         return ps_ok;
+    } else if (strcmp("power", name) == 0 || strcmp("p", name) == 0) {
+        if (ivalue < dpsmode_power.min || ivalue > dpsmode_power.max) {
+            emu_printf("[DPS] Power %d is out of range (min:%d max:%d)\n", ivalue, dpsmode_power.min, dpsmode_power.max);
+            return ps_range_error;
+        }
+        emu_printf("[DPS] Setting power to %d\n", ivalue);
+        dpsmode_power.value = ivalue;
+        power_changed(&dpsmode_power);
+        return ps_ok;
     }
     return ps_unknown_name;
 }
@@ -338,6 +348,9 @@ static set_param_status_t get_parameter(char *name, char *value, uint32_t value_
         return ps_ok;
     } else if (strcmp("current", name) == 0 || strcmp("i", name) == 0) {
         (void) mini_snprintf(value, value_len, "%d", pwrctl_vout_enabled() ? saved_i : dpsmode_current.value);
+        return ps_ok;
+    } else if (strcmp("power", name) == 0 || strcmp("p", name) == 0) {
+        (void) mini_snprintf(value, value_len, "%d", pwrctl_vout_enabled() ? saved_p : dpsmode_power.value);
         return ps_ok;
     }
     return ps_unknown_name;
@@ -1015,6 +1028,12 @@ static void dpsmode_tick(void)
     }
 
 
+    /** The three 3rd-row items (power, watt-hour, timer) share the same
+      * position and only one is shown at a time. Keep the inactive ones hidden
+      * so a forced uui_refresh() (e.g. from a remote parameter change) does not
+      * stack them on top of each other. */
+    update_third_visibility();
+
     // redraw
     dpsmode_voltage.ui.draw(&dpsmode_voltage.ui);
     dpsmode_current.ui.draw(&dpsmode_current.ui);
@@ -1036,6 +1055,17 @@ static void clear_third_region() {
     tft_fill(0, YPOS_POWER - 1,
             TFT_WIDTH, FONT_METER_LARGE_MAX_GLYPH_HEIGHT + 2,
             BLACK);
+}
+
+/**
+ * @brief Hide the 3rd-row items that are not currently selected so a generic
+ *        uui_refresh() only draws the visible one. The three items overlap at
+ *        the same screen position.
+ */
+static void update_third_visibility(void) {
+    dpsmode_power.ui.hidden    = third_item != (ui_item_t*) &dpsmode_power;
+    dpsmode_watthour.ui.hidden = third_item != (ui_item_t*) &dpsmode_watthour;
+    dpsmode_timer.ui.hidden    = third_item != (ui_item_t*) &dpsmode_timer;
 }
 
 
@@ -1208,4 +1238,7 @@ void func_dpsmode_init(uui_t *ui)
     // init third item to the 3rd item on the screen
     ui_screen_t *screen = &dpsmode_screen;
     third_item = screen->items[2];
+
+    /** Hide the inactive overlapping 3rd-row items from the start */
+    update_third_visibility();
 }

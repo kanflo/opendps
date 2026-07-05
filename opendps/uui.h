@@ -139,6 +139,8 @@ typedef struct ui_item_t {
     bool can_focus; /** A focusable item is one we can edit */
     bool has_focus;
     bool needs_redraw;
+    bool hidden; /** Skipped by uui_refresh(); used for items that share a
+                     screen position and are shown one at a time */
     uint16_t x, y;
     //uint16_t width, height;
     ui_screen_t *screen;

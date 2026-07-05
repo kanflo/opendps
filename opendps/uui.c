@@ -89,6 +89,9 @@ void uui_refresh(uui_t *ui, bool force)
     assert(screen);
     for (uint8_t i = 0; i < screen->num_items; i++) {
         ui_item_t *item = screen->items[i];
+        if (item->hidden) {
+            continue;
+        }
         if (force || item->needs_redraw) {
             assert(item->draw);
             item->draw(item);
@@ -316,6 +319,7 @@ void uui_set_screen(uui_t *ui, uint32_t screen_idx)
 void ui_item_init(ui_item_t *item)
 {
     item->has_focus = false;
+    item->hidden = false;
     item->got_focus = &item_got_focus;
     item->lost_focus = &item_lost_focus;
 }

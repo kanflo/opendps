@@ -120,7 +120,12 @@ static command_status_t handle_query(void)
     pack_cstr(&frame, curr_func);
     emu_printf("%s:\n", curr_func);
     for (uint32_t i=0; i < num_param; i++) {
-        opendps_get_curr_function_param_value(params[i].name, value, sizeof(value));
+        /** Pack an empty string if the parameter cannot be read, else the
+          * stale contents of the value buffer from the previous parameter
+          * would be reported */
+        if (!opendps_get_curr_function_param_value(params[i].name, value, sizeof(value))) {
+            value[0] = '\0';
+        }
         emu_printf(" %s = %s\n" , params[i].name, value);
         pack_cstr(&frame, params[i].name);
         pack_cstr(&frame, value);
@@ -232,6 +237,16 @@ static command_status_t handle_set_parameters(frame_t *frame)
         }
         end_frame(&frame_resp);
         send_frame(&frame_resp);
+    }
+
+    /** Redraw once, after the response has been sent. The redraw takes several
+      * hundred milliseconds per screen refresh; doing it (per parameter!)
+      * before responding made dpsctl time out on multi parameter commands. */
+    for (uint32_t i = 0; i < status_index; i++) {
+        if (stats[i] == ps_ok) {
+            opendps_refresh_ui();
+            break;
+        }
     }
     return cmd_success_with_response;
 }

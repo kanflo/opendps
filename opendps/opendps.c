@@ -320,11 +320,21 @@ set_param_status_t opendps_set_parameter(char *name, char *value)
     set_param_status_t status = ps_not_supported;
     if (current_ui->screens[current_ui->cur_screen]->set_parameter) {
         status = current_ui->screens[current_ui->cur_screen]->set_parameter(name, value);
-        if (status == ps_ok) {
-            uui_refresh(current_ui, true);
-        }
     }
     return status;
+}
+
+/**
+ * @brief      Force a redraw of the current UI. Called by the protocol handler
+ *             after responding to a set parameters command. The redraw takes
+ *             several hundred milliseconds on function screens with multiple
+ *             large font meters; refreshing once per changed parameter before
+ *             the response was sent made dpsctl time out on multi parameter
+ *             commands.
+ */
+void opendps_refresh_ui(void)
+{
+    uui_refresh(current_ui, true);
 }
 
 /**
@@ -1057,11 +1067,6 @@ static void event_handler(void)
         uint8_t data = 0;
         if (!event_get(&event, &data)) {
             hw_longpress_check();
-
-            if (last <= 0 || get_ticks() - last >= opendps_screen_update_ms) {
-                ui_tick();
-                last = get_ticks();
-            }
         } else {
             if (event) {
                 emu_printf(" Event %d 0x%02x\n", event, data);
@@ -1079,7 +1084,18 @@ static void event_handler(void)
                     break;
             }
             ui_handle_event(event, data);
+        }
+
+        /** Redraw at the screen update interval rather than once per event.
+          * A serial frame arrives as a burst of event_uart_rx events (one per
+          * byte); running a full ui_tick() for every one of them - an expensive
+          * redraw on screens such as dpsmode whose tick always repaints - backed
+          * up the event queue and delayed the protocol response long enough for
+          * dpsctl to time out. Button, rotary and remote changes are still drawn
+          * immediately by ui_handle_event(). */
+        if (last <= 0 || get_ticks() - last >= opendps_screen_update_ms) {
             ui_tick();
+            last = get_ticks();
         }
 
 #ifdef CONFIG_WDOG
