@@ -64,9 +64,13 @@ typedef enum {
     unit_ampere,
     unit_volt,
     unit_watt,
+    unit_watthour,
     unit_second,
     unit_hertz,
+    unit_percent,
     unit_furlong,
+    unit_ms,
+    unit_bool,
     unit_last = 0xff
 } unit_t;
 
@@ -75,6 +79,7 @@ typedef enum {
  */
 typedef enum {
     si_micro = -6,
+    si_decimilli = -4,
     si_milli = -3,
     si_centi = -2,
     si_deci = -1,
@@ -91,6 +96,7 @@ typedef enum {
 typedef enum {
     ui_item_number, /** A control for setting a value (ui_number_t) */
     ui_item_icon, /** A control for showing a icon (ui_icon_t) */
+    ui_item_time, /** A control for showing time (ui_time_t) */
     ui_item_last = 0xff
 } ui_item_type_t;
 
@@ -133,6 +139,8 @@ typedef struct ui_item_t {
     bool can_focus; /** A focusable item is one we can edit */
     bool has_focus;
     bool needs_redraw;
+    bool hidden; /** Skipped by uui_refresh(); used for items that share a
+                     screen position and are shown one at a time */
     uint16_t x, y;
     //uint16_t width, height;
     ui_screen_t *screen;
@@ -148,6 +156,19 @@ typedef struct ui_item_t {
  * @brief      A macro used to call operations on UI elements
  */
 #define MCALL(item, operation, ...) ((ui_item_t*) (item))->operation((ui_item_t*) item, ##__VA_ARGS__)
+
+/**
+ * A UI consists of several screens
+ */
+typedef struct {
+    uint8_t num_screens;
+    uint8_t cur_screen;
+    bool is_visible;
+    ui_screen_t *screens[MAX_SCREENS];
+    past_t *past;
+    /** Called after the active screen changed (rotary or remote), may be NULL */
+    void (*screen_changed)(ui_screen_t *screen);
+} uui_t;
 
 /**
  * A screen has a name and holds num_items UI items
@@ -166,6 +187,7 @@ struct ui_screen {
     void (*activated)(void); /** Called when the screen is switched to */
     void (*deactivated)(void); /** Called when the screen is about to be changed from */
     void (*enable)(bool _enable); /** Called when the enable button is pressed */
+    bool (*event)(uui_t *ui, event_t event, uint8_t data); /** Called when an event occurs (eg. button press). Return false if unhandled so main UI can handle it */
     void (*tick)(void); /** Called periodically allowing the UI to do house keeping */
     void (*past_save)(past_t *past);
     void (*past_restore)(past_t *past);
@@ -173,17 +195,6 @@ struct ui_screen {
     set_param_status_t (*get_parameter)(char *name, char *value, uint32_t value_len);
     ui_item_t *items[];
 };
-
-/**
- * A UI consists of several screens
- */
-typedef struct {
-    uint8_t num_screens;
-    uint8_t cur_screen;
-    bool is_visible;
-    ui_screen_t *screens[MAX_SCREENS];
-    past_t *past;
-} uui_t;
 
 /**
  * @brief      Initialize the UUI instance
@@ -221,7 +232,7 @@ void uui_add_screen(uui_t *ui, ui_screen_t *screen);
  * @param      ui     The user interface
  * @param[in]  event  The event
  */
-void uui_handle_screen_event(uui_t *ui, event_t event);
+void uui_handle_screen_event(uui_t *ui, event_t event, uint8_t data);
 
 /**
  * @brief      Switch to next screen
@@ -272,5 +283,14 @@ void uui_show(uui_t *ui, bool show);
  * @param      ui    The user interface
  */
 void uui_disable_cur_screen(uui_t *ui);
+
+/**
+ * @brief      Focus on a given user interface item
+ *
+ * @param      ui    The user interface
+ * @param      item  The user interface item to focus on
+ */
+void uui_focus(uui_t *ui, ui_item_t *item);
+
 
 #endif // __UUI_H__

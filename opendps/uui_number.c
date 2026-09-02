@@ -23,6 +23,7 @@
  */
 
 #include <stdint.h>
+#include <stdlib.h>
 #include <stdbool.h>
 #include "my_assert.h"
 #include "uui_number.h"
@@ -58,8 +59,16 @@ static void number_got_event(ui_item_t *_item, event_t event)
     bool value_changed = false;
     switch(event) {
         case event_rot_left: {
-            uint32_t diff = my_pow(10, (item->si_prefix * -1) - item->num_decimals + item->cur_digit);
-            item->value -= diff;
+            int32_t diff = my_pow(10, (item->si_prefix * -1) - item->num_decimals + item->cur_digit);
+
+            if (item->value > 0 && item->value - diff < 0) {
+                // roll to negative, maintain value but invert sign
+                item->value = -item->value;
+            } else {
+                // subtract digit value, otherwise
+                item->value -= diff;
+            }
+
             if (item->value < item->min) {
                 item->value = item->min;
             }
@@ -68,8 +77,16 @@ static void number_got_event(ui_item_t *_item, event_t event)
             break;
         }
         case event_rot_right: {
-            uint32_t diff = my_pow(10, (item->si_prefix * -1) - item->num_decimals + item->cur_digit);
-            item->value += diff;
+            int32_t diff = my_pow(10, (item->si_prefix * -1) - item->num_decimals + item->cur_digit);
+
+            if (item->value < 0 && item->value + diff > 0) {
+                // roll to positive, maintain value but invert sign
+                item->value = -item->value;
+            } else {
+                // subtract digit value, otherwise
+                item->value += diff;
+            }
+
             if (item->value > item->max) {
                 item->value = item->max;
             }
@@ -160,10 +177,19 @@ static uint32_t number_draw_width(ui_item_t *_item)
             break;
         case unit_volt:
         case unit_ampere:
+        case unit_watt:
             total_width += max_w;
             break;
+        case unit_percent:
+            total_width += FONT_FULL_SMALL_MAX_GLYPH_WIDTH;
+            break;
         case unit_hertz:
+        case unit_ms:
             total_width += 2*FONT_FULL_SMALL_MAX_GLYPH_WIDTH;
+            break;
+        case unit_watthour:
+        case unit_bool:
+            total_width += 3*FONT_FULL_SMALL_MAX_GLYPH_WIDTH;
             break;
         default:
             assert(0);
@@ -228,10 +254,16 @@ static void number_draw(ui_item_t *_item)
     uint32_t xpos = _item->x;
     uint16_t color = item->color;
     uint32_t cur_digit = item->num_digits + item->num_decimals - 1; /** Which digit are we currently drawing? 0 is the right most digit */
+    uint32_t first_digit_xpos = 0;
 
     /** Adjust drawing position if right aligned */
     if (item->alignment == ui_text_right_aligned)
         xpos -= number_draw_width(_item);
+
+
+    if (item->unit == unit_bool) {
+        tft_rect(xpos-1, _item->y-1, digit_w * 4, h+1, _item->has_focus ? WHITE : BLACK);
+    } else {
 
     /** Start printing from left to right */
     for (uint8_t place = item->num_digits; place > 0; place--) {
@@ -246,8 +278,7 @@ static void number_draw(ui_item_t *_item)
 
         // this place value (1 = 1, 2 = 10, 3 = 100, etc., for si_prefix = 0)
         int32_t power = my_pow(10, (item->si_prefix * -1) + (place - 1));
-
-        uint8_t digit = (item->value / power) % 10;
+        uint8_t digit = (abs(item->value) / power) % 10;
 
         // digit selected
         bool highlight = _item->has_focus && item->cur_digit == cur_digit;
@@ -265,15 +296,19 @@ static void number_draw(ui_item_t *_item)
         //   value >= this place's min value (ie. digit's power)
         //   in one's place (ensuring 0.xxx has leading 0)
         //   or item has focus (ensures all digits are drawn when focused)
-        if (item->value >= power || place == 1 || _item->has_focus) {
+        if (abs(item->value) >= power || place == 1 || _item->has_focus) {
             // ASCII '0' plus digit value for digit ascii offset
             tft_putch(item->font_size, '0' + digit, xpos, _item->y, digit_w, h, color, highlight);
+            if (first_digit_xpos == 0) first_digit_xpos = xpos;
         } else {
-            tft_fill(xpos, _item->y, digit_w, h, BLACK);
+            // x -= 5 and width += 5 to overwrite the negative sign 
+            tft_fill(xpos - 5, _item->y, digit_w + 5, h, BLACK);
         }
 
         // next digit position
         xpos += digit_w + spacing;
+    }
+
     }
 
     /** Draw the decimal point if there are decimal places */
@@ -284,9 +319,10 @@ static void number_draw(ui_item_t *_item)
 
     /** Digits after the decimal point */
     cur_digit = item->num_decimals - 1;
+
     for (uint32_t i = 0; i < item->num_decimals; ++i) {
         bool highlight = _item->has_focus && item->cur_digit == cur_digit;
-        uint8_t digit = item->value / my_pow(10, (item->si_prefix * -1) -1 - i) % 10;
+        uint8_t digit = abs(item->value) / my_pow(10, (item->si_prefix * -1) -1 - i) % 10;
         if (spacing > 1) /** Dont frame tiny fonts */
         {
             if (highlight) /** Draw an extra pixel wide border around the highlighted item */
@@ -302,6 +338,10 @@ static void number_draw(ui_item_t *_item)
     /** The unit */
     switch(item->unit) {
         case unit_none:
+            // dash for negative, assuming small font?
+            ili9163c_draw_hline(first_digit_xpos - (max_w / 2),  _item->y + (h / 2),
+                    max_w / 2, 
+                    item->value < 0 ? WHITE : BLACK);
             break;
         case unit_volt:
             tft_putch(item->font_size, 'V', xpos, _item->y, max_w, h, color, false);
@@ -311,6 +351,25 @@ static void number_draw(ui_item_t *_item)
             break;
         case unit_hertz:
             tft_puts(FONT_FULL_SMALL, "Hz", xpos, _item->y + h, FONT_FULL_SMALL_MAX_GLYPH_WIDTH * 2, FONT_FULL_SMALL_MAX_GLYPH_HEIGHT, color, false);
+            break;
+        case unit_watthour:
+            // units here are milliwatt hours
+            tft_puts(FONT_FULL_SMALL, "mWh", xpos, _item->y + h, FONT_FULL_SMALL_MAX_GLYPH_WIDTH * 3, FONT_FULL_SMALL_MAX_GLYPH_HEIGHT, color, false);
+            break;
+        case unit_watt:
+            tft_putch(item->font_size, 'W', xpos, _item->y, max_w, h, color, false);
+            break;
+        case unit_percent:
+            tft_puts(FONT_FULL_SMALL, "%", xpos, _item->y + h, FONT_FULL_SMALL_MAX_GLYPH_WIDTH * 2, FONT_FULL_SMALL_MAX_GLYPH_HEIGHT, color, false);
+            break;
+        case unit_ms:
+            tft_puts(FONT_FULL_SMALL, "ms", xpos, _item->y + h, FONT_FULL_SMALL_MAX_GLYPH_WIDTH * 2, FONT_FULL_SMALL_MAX_GLYPH_HEIGHT, color, false);
+            break;
+        case unit_bool:
+            if (item->value > 0)
+                tft_puts(FONT_FULL_SMALL, "ON ", xpos, _item->y + h, FONT_FULL_SMALL_MAX_GLYPH_WIDTH * 3, FONT_FULL_SMALL_MAX_GLYPH_HEIGHT, GREEN, false);
+            else
+                tft_puts(FONT_FULL_SMALL, "OFF ", xpos, _item->y + h, FONT_FULL_SMALL_MAX_GLYPH_WIDTH * 3, FONT_FULL_SMALL_MAX_GLYPH_HEIGHT, RED, false);
             break;
         default:
             assert(0);
@@ -329,6 +388,6 @@ void number_init(ui_number_t *item)
     item->ui.got_event = &number_got_event;
     item->ui.get_value = &number_get_value;
     item->ui.draw = &number_draw;
-    item->cur_digit = item->num_digits + item->num_decimals - 1; /** Most signinficant digit */
+    item->cur_digit = item->num_decimals; // edit least significant digit first
     item->ui.needs_redraw = true;
 }

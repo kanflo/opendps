@@ -76,9 +76,15 @@
 #ifdef CONFIG_CL_ENABLE
 #include "func_cl.h"
 #endif // CONFIG_CL_ENABLE
+#ifdef CONFIG_DPSMODE_ENABLE
+#include "func_dpsmode.h"
+#endif // CONFIG_DPSMODE_ENABLE
 #ifdef CONFIG_FUNCGEN_ENABLE
 #include "func_gen.h"
 #endif // CONFIG_FUNCGEN_ENABLE
+#ifdef CONFIG_SETTINGS_ENABLE
+#include "func_settings.h"
+#endif // CONFIG_SETTINGS_ENABLE
 
 #ifdef DPS_EMULATOR
 #include "dpsemul.h"
@@ -87,12 +93,6 @@
 #ifdef CONFIG_SPLASH_SCREEN
 #include "logo.h"
 #endif // CONFIG_SPLASH_SCREEN
-
-#define TFT_HEIGHT  (128)
-#define TFT_WIDTH   (128)
-
-/** How ofter we update the measurements in the UI (ms) */
-#define UI_UPDATE_INTERVAL_MS  (250)
 
 /** Timeout for waiting for network connection (ms) */
 #define NETWORK_CONNECT_TIMEOUT  (10000)
@@ -124,6 +124,7 @@ static void check_master_reset(void);
 static uint16_t bg_color;
 static uint32_t ui_width;
 static uint32_t ui_height;
+uint32_t opendps_screen_update_ms = 250;
 
 /** Used to make the screen flash */
 static uint32_t tft_flashing_period;
@@ -319,11 +320,21 @@ set_param_status_t opendps_set_parameter(char *name, char *value)
     set_param_status_t status = ps_not_supported;
     if (current_ui->screens[current_ui->cur_screen]->set_parameter) {
         status = current_ui->screens[current_ui->cur_screen]->set_parameter(name, value);
-        if (status == ps_ok) {
-            uui_refresh(current_ui, true);
-        }
     }
     return status;
+}
+
+/**
+ * @brief      Force a redraw of the current UI. Called by the protocol handler
+ *             after responding to a set parameters command. The redraw takes
+ *             several hundred milliseconds on function screens with multiple
+ *             large font meters; refreshing once per changed parameter before
+ *             the response was sent made dpsctl time out on multi parameter
+ *             commands.
+ */
+void opendps_refresh_ui(void)
+{
+    uui_refresh(current_ui, true);
 }
 
 /**
@@ -448,14 +459,56 @@ static void main_ui_tick(void)
   * @brief Initialize the UI
   * @retval none
   */
+/**
+  * @brief Save the active function to past so it can be restored on power up
+  * @param screen the newly activated function screen
+  */
+static void function_screen_changed(ui_screen_t *screen)
+{
+    /** Zero padded fixed size buffer as past cannot store units smaller than
+      * 4 bytes (short names like "cl" would be rejected) and the padding NUL
+      * terminates the stored name */
+    char name[16];
+    /** The settings screen is transient, do not make it the boot function */
+    if (strcmp(screen->name, "settings") == 0) {
+        return;
+    }
+    memset(name, 0, sizeof(name));
+    strncpy(name, screen->name, sizeof(name) - 1);
+    (void) past_write_unit(&g_past, past_function, (void*) name, sizeof(name));
+}
+
+/**
+  * @brief Restore the function that was active before the last power down.
+  *        Matched by name so it survives builds with a different function set.
+  */
+static void restore_function(void)
+{
+    char *name = 0;
+    uint32_t length = 0;
+    if (past_read_unit(&g_past, past_function, (const void**) &name, &length) && name &&
+        length > 0 && name[length - 1] == '\0') { /** Reject units not written by us */
+        for (uint32_t i = 0; i < func_ui.num_screens; i++) {
+            if (strcmp(func_ui.screens[i]->name, name) == 0) {
+                func_ui.cur_screen = i;
+                break;
+            }
+        }
+    }
+}
+
 static void ui_init(void)
 {
     bg_color = BLACK;
     ui_width = TFT_WIDTH;
     ui_height = TFT_HEIGHT;
 
-    /** Initialise the function screens */
+    /** Initialise the function screens. The first screen registered is the
+      * function active after boot unless past holds a saved function */
     uui_init(&func_ui, &g_past);
+#ifdef CONFIG_DPSMODE_ENABLE
+    func_dpsmode_init(&func_ui);
+#endif // CONFIG_DPSMODE_ENABLE
 #ifdef CONFIG_CV_ENABLE
     func_cv_init(&func_ui);
 #endif // CONFIG_CV_ENABLE
@@ -468,6 +521,14 @@ static void ui_init(void)
 #ifdef CONFIG_FUNCGEN_ENABLE
     func_gen_init(&func_ui);
 #endif // CONFIG_FUNCGEN_ENABLE
+#ifdef CONFIG_SETTINGS_ENABLE
+    func_settings_init(&func_ui);
+#endif // CONFIG_SETTINGS_ENABLE
+
+    /** Restore the function that was active before the last power down and
+      * persist future function changes */
+    restore_function();
+    func_ui.screen_changed = &function_screen_changed;
 
 
     /** Initialise the settings screens */
@@ -507,20 +568,9 @@ static void ui_handle_event(event_t event, uint8_t data)
     }
 
     if (is_locked) {
-        switch(event) {
-            case event_button_m1:
-            case event_button_m2:
-            case event_button_sel:
-            case event_rot_press:
-            case event_rot_left:
-            case event_rot_right:
-            case event_button_enable:
-                lock_flashing_period = LOCK_FLASHING_PERIOD;
-                lock_flash_counter = LOCK_FLASHING_COUNTER;
-                return;
-            default:
-                break;
-        }
+        lock_flashing_period = LOCK_FLASHING_PERIOD;
+        lock_flash_counter = LOCK_FLASHING_COUNTER;
+        return;
     }
 
     switch(event) {
@@ -536,7 +586,6 @@ static void ui_handle_event(event_t event, uint8_t data)
 #endif // CONFIG_OCP_DEBUGGING
                 ui_flash(); /** @todo When OCP kicks in, show last I_out on screen */
                 opendps_update_power_status(false);
-                uui_handle_screen_event(current_ui, event);
             }
             break;
         case event_ovp:
@@ -551,31 +600,21 @@ static void ui_handle_event(event_t event, uint8_t data)
 #endif // CONFIG_OVP_DEBUGGING
                 ui_flash(); /** @todo When OVP kicks in, show last V_out on screen */
                 opendps_update_power_status(false);
-                uui_handle_screen_event(current_ui, event);
             }
             break;
-        case event_buttom_m1_and_m2: ;
+        case event_button_m1_and_m2:;
             uint8_t target_screen_id = current_ui == &func_ui ? SETTINGS_UI_ID : FUNC_UI_ID; /** Change between the settings and functional screen */
             opendps_change_screen(target_screen_id);
             break;
+
         case event_button_enable:
-#pragma GCC diagnostic ignored "-Wimplicit-fallthrough"
             write_past_settings();
-            /** Deliberate fallthrough */
-        case event_button_m1:
-        case event_button_m2:
-        case event_button_sel:
-        case event_rot_press:
-        case event_rot_left:
-        case event_rot_right:
-        case event_rot_left_set:
-        case event_rot_right_set:
-            uui_handle_screen_event(current_ui, event);
-            uui_refresh(current_ui, false);
-            break;
         default:
             break;
     }
+
+    uui_handle_screen_event(current_ui, event, data);
+    uui_refresh(current_ui, false);
 }
 
 /**
@@ -638,13 +677,6 @@ static void ui_tick(void)
     static uint64_t last_tft_flash = 0;
     static uint64_t last_lock_flash = 0;
 
-    static uint64_t last = 0;
-    /** Update on the first call and every UI_UPDATE_INTERVAL_MS ms */
-    if (last > 0 && get_ticks() - last < UI_UPDATE_INTERVAL_MS) {
-        return;
-    }
-
-    last = get_ticks();
     uui_tick(current_ui);
     uui_tick(&main_ui);
 
@@ -909,6 +941,12 @@ static void read_past_settings(void)
     }
     hw_set_backlight(last_tft_brightness);
 
+    if (past_read_unit(&g_past, past_UPDATE_INTERVAL, (const void**) &p, &length)) {
+        if (p) {
+            opendps_screen_update_ms = *p;
+        }
+    }
+
     if (past_read_unit(&g_past, past_uart_baud, (const void**) &p, &length)) {
         if (p) {
             hw_set_baudrate(*p);
@@ -960,6 +998,12 @@ static void write_past_settings(void)
             dbg_printf("Error: past write inv failed!\n");
         }
     }
+
+    // save the update interval value
+    if ( ! past_write_unit(&g_past, past_UPDATE_INTERVAL, (void*) &opendps_screen_update_ms, sizeof(opendps_screen_update_ms))) {
+        dbg_printf("Error: past write inv failed!\n");
+    }
+
 }
 
 /**
@@ -1016,12 +1060,13 @@ static void check_master_reset(void)
   */
 static void event_handler(void)
 {
+    static uint64_t last = 0;
+
     while(1) {
         event_t event;
         uint8_t data = 0;
         if (!event_get(&event, &data)) {
             hw_longpress_check();
-            ui_tick();
         } else {
             if (event) {
                 emu_printf(" Event %d 0x%02x\n", event, data);
@@ -1039,6 +1084,18 @@ static void event_handler(void)
                     break;
             }
             ui_handle_event(event, data);
+        }
+
+        /** Redraw at the screen update interval rather than once per event.
+          * A serial frame arrives as a burst of event_uart_rx events (one per
+          * byte); running a full ui_tick() for every one of them - an expensive
+          * redraw on screens such as dpsmode whose tick always repaints - backed
+          * up the event queue and delayed the protocol response long enough for
+          * dpsctl to time out. Button, rotary and remote changes are still drawn
+          * immediately by ui_handle_event(). */
+        if (last <= 0 || get_ticks() - last >= opendps_screen_update_ms) {
+            ui_tick();
+            last = get_ticks();
         }
 
 #ifdef CONFIG_WDOG

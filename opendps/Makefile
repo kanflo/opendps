@@ -33,8 +33,8 @@ DEBUG ?= 0
 WDOG ?= 1
 
 # Font file
-METER_FONT_FILE ?= gfx/Ubuntu-C.ttf
-METER_FONT_SMALL_SIZE ?= 18
+METER_FONT_FILE ?= gfx/nf.ttf
+METER_FONT_SMALL_SIZE ?= 16
 METER_FONT_MEDIUM_SIZE ?= 24
 METER_FONT_LARGE_SIZE ?= 48
 FULL_FONT_FILE ?= gfx/ProggyClean.ttf
@@ -46,13 +46,20 @@ COLORSPACE ?= 0
 # Colors for the main UI elements -- see ili9163c.h for list of colors
 COLOR_VOLTAGE ?= WHITE
 COLOR_AMPERAGE ?= WHITE
+COLOR_WATTAGE ?= WHITE
 COLOR_INPUT ?= WHITE
 
 # Optional tinting for UI elements
 TINT ?= ffffff
 
+# Enable DPS-look-alike mode
+DPSMODE_ENABLE ?= 1
+
 # Enable CC mode
-CC_ENABLE ?= 1
+CC_ENABLE ?= 0
+
+# Enable CV mode
+CV_ENABLE ?= 0
 
 # Enable CV mode
 CV_ENABLE ?= 1
@@ -62,6 +69,9 @@ CL_ENABLE ?= 1
 
 # Enable function generator mode
 FUNCGEN_ENABLE ?= 1
+
+# Enable settings 
+SETTINGS_ENABLE ?= 1
 
 # Enable invert color feature
 INVERT_ENABLE ?= 0
@@ -84,6 +94,7 @@ CFLAGS += \
           -DCOLORSPACE=$(COLORSPACE) \
           -DCOLOR_VOLTAGE=$(COLOR_VOLTAGE) \
           -DCOLOR_AMPERAGE=$(COLOR_AMPERAGE) \
+          -DCOLOR_WATTAGE=$(COLOR_WATTAGE) \
           -DCOLOR_INPUT=$(COLOR_INPUT) \
           -D$(MODEL)
 
@@ -96,6 +107,7 @@ OBJS = \
     crc16.o \
     uui.o \
     uui_number.o \
+    uui_time.o \
     settings_calibration.o \
     hw.o \
     pwrctl.o \
@@ -166,9 +178,19 @@ ifeq ($(CL_ENABLE),1)
 	OBJS += func_cl.o
 endif
 
+ifeq ($(DPSMODE_ENABLE),1)
+	CFLAGS +=-DCONFIG_DPSMODE_ENABLE
+	OBJS += func_dpsmode.o gfx-cvbar.o gfx-ccbar.o gfx-ppbar.o gfx-oppbar.o gfx-tmbar.o gfx-m1bar.o gfx-m2bar.o gfx-iconpower.o
+endif
+
 ifeq ($(FUNCGEN_ENABLE),1)
 	CFLAGS +=-DCONFIG_FUNCGEN_ENABLE
 	OBJS += func_gen.o uui_icon.o gfx-square.o gfx-saw.o gfx-sin.o
+endif
+
+ifeq ($(SETTINGS_ENABLE),1)
+	CFLAGS +=-DCONFIG_SETTINGS_ENABLE
+	OBJS += func_settings.o gfx-gear.o
 endif
 
 ifeq ($(SPLASH_SCREEN),1)

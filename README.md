@@ -12,6 +12,8 @@ A huge, heartfelt thank you to the people without whom this project would not ex
 
 **[Johan Kanflo (kanflo)](https://github.com/kanflo)** — for creating OpenDPS in the first place. Reverse-engineering the DPS5005, writing a clean open-source firmware replacement, and maintaining it for years is no small feat. This fork stands entirely on his shoulders.
 
+**[kohrar](https://github.com/kohrar)** — for creating the `dpsmode` function ([upstream PR #240](https://github.com/kanflo/opendps/pull/240)): the stock-firmware-style CV/CC interface with M1/M2 presets, power limit, timer and watt-hour meter, plus the on-device settings screen. His work is the heart of the firmware this fork ships.
+
 **Mallow** (Discord) — for invaluable help with the LVGL UI configuration and for creating the [custom LVGL 9.5 component](https://github.com/youkorr/lvgl_9.5) that overrides ESPHome's bundled LVGL version, enabling LVGL 9.5 features on ESP32-P4. Without that work the display integration simply would not have been possible.
 
 ---
@@ -27,6 +29,7 @@ For the best experience, a **display-equipped ESP32-P4 tablet** (such as the Gui
 ## Quick navigation
 
 - [Getting started](#getting-started)
+- [User manual](#user-manual)
 - [Our additions](#our-additions)
 - [ToDo](#todo)
 - [Screenshots & feature overview](#screenshots--feature-overview)
@@ -109,6 +112,72 @@ Features planned for future implementation (not yet available):
 
 ---
 
+## User manual
+
+### Buttons and rotary encoder
+
+The DPS front panel has four buttons (**SET**, **M1**, **M2**, **ON/OFF**) and a rotary encoder that can be turned and pressed.
+
+| Control | Action |
+|---------|--------|
+| **ON/OFF** | Toggle the output on or off (settings are saved to flash when enabling) |
+| **Rotary turn** | Adjust the focused value |
+| **Rotary press** | Move between the digits of the focused value |
+| **SET** | Focus / unfocus the selected value |
+| **M1** / **M2** | Move to the previous / next value on the screen |
+| **Hold SET and turn rotary** | Switch to the previous / next function screen — this is also how you reach the `settings` screen |
+| **Hold M1 and press M2** | Toggle between the function screen and the calibration screen |
+| **Rotary long press** | Lock / unlock the front panel |
+
+> Recovery tip: holding **SET** while powering on forces the bootloader into firmware upgrade mode.
+
+### Functions — how the modes actually behave
+
+This confused us too, so read carefully: the classic OpenDPS `cv` and `cc` functions are **not** the CV/CC behavior of a typical bench supply. Their second value is a **protection cutoff**, not a limit — when it is exceeded, the output **switches off** (the screen flashes). That makes `cc` usable for battery charging with an end-of-charge voltage cutoff, but both are surprising as a general lab supply. The `cl` function is the one that behaves like a regular bench PSU.
+
+The set of functions depends on which firmware you run — list what your device supports with `python3 dpsctl.py -d <device> -F`.
+
+#### Firmware from this fork (dps_mode based)
+
+The `dpsmode` function, the on-device `settings` screen and the features described below were created by [kohrar](https://github.com/kohrar) — see [upstream PR #240](https://github.com/kanflo/opendps/pull/240). All credit to him for this excellent work.
+
+| Function | Behavior |
+|----------|----------|
+| `dpsmode` | Look-alike of the stock DPS firmware: set a voltage and a current limit, the hardware regulates and transitions between CV and CC (indicator icons show the active mode). A third display line cycles between an over-power protection limit (`0` = disabled), a timer and a watt-hour meter. Supports M1/M2 presets (see below). |
+| `cl` | **C**urrent **L**imit — classic bench supply behavior: constant voltage until the set current is reached, then constant current. No shutdown. |
+| `funcgen` | Function generator — square/saw/sine output |
+| `settings` | On-device settings screen: brightness, screen update rate, calibration values, reset to defaults. Reached like any other function: hold SET and turn the rotary. |
+
+Additional `dpsmode` controls:
+
+| Control | Action |
+|---------|--------|
+| **V (M1)** / **A (M2)** | Press V (M1) to enter voltage edit, or press A (M2) to enter current edit |
+| **Hold SET and press M1 or M2** | Save the current settings to preset M1 / M2 |
+| **M1** / **M2** long press | Recall preset M1 / M2 (the output is switched off first) |
+| **SET**, **▼ (M2)**, **SET** | To display Wh or time instead of W: press SET to enter edit mode, press the down arrow (M2) to view Wh or time, then press SET again to exit edit mode |
+
+Available settings on the `dpsmode` third display line:
+
+| Setting | Behavior |
+|---------|----------|
+| **Power limit (W)** | Over-power protection: the output is switched off if the power limit is reached. Setting it to `0.00 W` disables the limit. |
+| **Wh counter** | Energy counter: the value can be adjusted, for example set back to zero. |
+| **Timer** | With a value set, it is a countdown timer after which the output is switched off. When set to zero, it counts the time the output has been switched on. |
+
+This fork's firmware also remembers the active function and restores it at power-up.
+
+#### Upstream OpenDPS firmware (kanflo master)
+
+| Function | Behavior |
+|----------|----------|
+| `cv` | Constant Voltage with over-current **cutoff**: holds the set voltage; if the output current exceeds the current setting, the output switches off. |
+| `cc` | Constant Current with over-voltage **cutoff**: drives the set current; the voltage setting acts as the cutoff, e.g. the end-of-charge voltage when charging a battery. |
+| `cl` | **C**urrent **L**imit — classic bench supply CV/CC behavior, as described above. |
+| `funcgen` | Function generator |
+
+---
+
 ## Our additions
 
 ### Firmware changes
@@ -166,13 +235,7 @@ This config is the reference implementation and is actively running on real hard
 
 ### OpenDPS supported functions
 
-The OpenDPS firmware (and by extension this ESPHome integration) supports the following operating modes on compatible DPS devices:
-
-| Function | Description |
-|----------|-------------|
-| `cv` | Constant Voltage — hold output voltage at setpoint, current limited |
-| `cc` | Constant Current — hold output current at setpoint, voltage limited |
-| `cp` | Constant Power — hold output power at setpoint (model dependent) |
+The available operating modes depend on the firmware build — see the [User manual](#user-manual) for what each function does and how the fork's function set differs from upstream. In short: `dpsmode` (stock-firmware-style CV/CC with presets), `cl` (bench supply style current limiting), `funcgen` (function generator) and `settings` on this fork; `cv`, `cc`, `cl` and `funcgen` on upstream.
 
 **Supported devices:** DPS3003, DPS3005, DPS5005, DPS5015, DPS5020, DP50V5A and variants. Hardware revisions may vary — see the [upstream project](https://github.com/kanflo/opendps) for compatibility notes.
 
@@ -223,15 +286,17 @@ Check [the blog](https://johan.kanflo.com/upgrading-your-dps5005/) for instructi
 
 ### Setup dpsctl.py
 
-The script runs with python2 and python3. The libraries pycrc and pyserial are required:
+The script requires python3 and the pyserial library:
 
 ```
 pip install -r requirements.txt
 ```
 
+Run it via the launcher in the repository root (`python3 dpsctl.py ...`), or install it as a command with `pip install .`. Note that `dpsctl/dpsctl.py` is part of a python package and can not be run directly.
+
 ### Usage
 
-A vanilla OpenDPS device will support two functions, constant voltage (cv) and constant current (cc). A tool called `dpsctl.py` can be used to talk to an OpenDPS device to query functionality and supported parameters for each function.
+The functions available depend on the firmware build (see the [User manual](#user-manual)). A tool called `dpsctl.py` can be used to talk to an OpenDPS device to query functionality and supported parameters for each function (`-F` lists the functions).
 
 Once upgraded and connected to an ESP8266, type the following at the terminal to find its IP address:
 
@@ -272,8 +337,10 @@ OpenDPS comes with a bootloader enabling firmware upgrade over UART — no JTAG 
 
 ```
 % make -C opendps bin
-% dpsctl.py -d /dev/ttyUSB0 -U opendps/opendps.bin
+% dpsctl.py -d /dev/ttyUSB0 -U opendps/opendps_DPS5005.bin
 ```
+
+(The binary is named after the `MODEL` set in the Makefile. Add `--upgrade-baud 115200` to speed the transfer up considerably.)
 
 With this fork's ESPHome integration, firmware upgrades can be triggered directly from the ESP32 device UI or via Home Assistant — no PC or `dpsctl.py` required.
 

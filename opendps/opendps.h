@@ -32,6 +32,12 @@
 /** Max number of parameters to a function */
 #define OPENDPS_MAX_PARAMETERS  (8)
 
+/** UI Width/Height */
+#define TFT_HEIGHT  (128)
+#define TFT_WIDTH   (128)
+
+extern uint32_t opendps_screen_update_ms;
+
 /**
  * @brief      Enable specified function
  *
@@ -101,6 +107,13 @@ bool opendps_get_curr_function_param_value(char *name, char *value, uint32_t val
  * @return     Status of the operation
  */
 set_param_status_t opendps_set_parameter(char *name, char *value);
+
+/**
+ * @brief      Force a redraw of the current UI. Called by the protocol handler
+ *             after responding to a set parameters command so the (slow)
+ *             redraw does not delay the response.
+ */
+void opendps_refresh_ui(void);
 
 /**
  * @brief      Sets Calibration Data
